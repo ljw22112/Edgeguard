@@ -57,6 +57,44 @@ def publisher():
 
 threading.Thread(target=publisher, daemon=True).start()
 
+# Optional cloud sync: risk summaries and alerts copied to the cloud IN-CSE.
+# Runs on its own queue so a slow or broken WAN never delays local alerts.
+CLOUD = CFG.get("cloud_sync") or {}
+cloud_box: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=500)
+state["cloud"] = {"sent": 0, "failed": 0, "dropped": 0}
+if CLOUD.get("enabled"):
+    from edgeguard.onem2m import OneM2MClient
+    cloud = OneM2MClient(CLOUD["base_url"], CLOUD["cse_rn"], CLOUD.get("origin", CFG["cse"]["origin"]),
+                         str(CLOUD.get("rvi", "2a")), timeout=2.0)
+    CLOUD_AE = CLOUD.get("ae", "EdgeGuard")
+
+    def cloud_worker():
+        ready = False
+        while True:
+            path, con = cloud_box.get()
+            try:
+                if not ready:
+                    cloud.create_ae(CLOUD_AE)
+                    for c in ("risk", "alert"):
+                        cloud.create_container(CLOUD_AE, c)
+                    ready = True
+                cloud.create_cin(f"{CLOUD_AE}/{path}", con)
+                state["cloud"]["sent"] += 1
+            except Exception as e:
+                state["cloud"]["failed"] += 1
+                log.warning("cloud sync failed (%s): %s", path, e)
+
+    threading.Thread(target=cloud_worker, daemon=True).start()
+
+
+def to_cloud(kind, con):
+    if not CLOUD.get("enabled"):
+        return
+    try:
+        cloud_box.put_nowait((kind, con))
+    except queue.Full:
+        state["cloud"]["dropped"] += 1
+
 
 class AlertState:
     """Edge-triggered alerts with debounce and hold, per worker/forklift pair."""
@@ -121,6 +159,7 @@ def handle_sample(p: dict):
                     "src_ts": p.get("ts"), "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
                 }
                 outbox.put_nowait((PATHS["alert"], alert))
+                to_cloud("alert", alert)
                 state["alerts_sent"] += 1
                 state["alert_log"].appendleft({k: alert[k] for k in
                                                ("event", "level", "worker", "forklift", "reason",
@@ -129,7 +168,11 @@ def handle_sample(p: dict):
         hz = MEC.get("risk_publish_hz", 2)
         if risks and now - state["last_risk_pub"] >= 1.0 / hz:
             state["last_risk_pub"] = now
-            outbox.put_nowait((PATHS["risk"], {"ts": now_ms(), "pairs": [r.to_dict() for r in risks]}))
+            summary = {"ts": now_ms(), "pairs": [r.to_dict() for r in risks]}
+            outbox.put_nowait((PATHS["risk"], summary))
+            if now - state.get("last_cloud_risk", 0) >= 1.0 / CLOUD.get("risk_hz", 1):
+                state["last_cloud_risk"] = now
+                to_cloud("risk", summary)
 
 
 app = FastAPI(title="EdgeGuard MEC App")
@@ -146,8 +189,10 @@ async def notify(req: Request):
 
 @app.get("/health")
 def health():
+    ing = sorted(state["ingest_ms"])
     return {"ok": True, "method": engine.method, "samples": state["rx"],
-            "alerts_sent": state["alerts_sent"]}
+            "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
+            "ingest_ms_median": ing[len(ing) // 2] if ing else None}
 
 
 def _paths(w, f):

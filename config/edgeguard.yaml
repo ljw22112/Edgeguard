@@ -31,6 +31,10 @@ alert_subscribers: []
 #  - http://192.168.0.21/alert     # worker_01 tag
 #  - http://192.168.0.31/alert     # forklift_01 module
 
+# Copy risk/alerts to a cloud CSE (disabled for the local ACME demo; see config/site.yaml)
+cloud_sync:
+  enabled: false
+
 risk:
   r_safe: 1.5
   t_danger: 1.5

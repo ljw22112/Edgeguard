@@ -12,6 +12,7 @@ Tree:
 import argparse
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -28,20 +29,29 @@ def main():
     p = config.paths(cfg)
 
     if a.reset:
+        # delete bottom-up: some CSEs (Mobius 3) cascade asynchronously, and a child
+        # name can stay reserved for a moment after its AE is gone
+        for group in ("workers", "forklifts", "cameras"):
+            for dev, path in p[group].items():
+                c.delete(path)
+                c.delete(f"{p['ae']}/{dev}")
+        for leaf in ("risk", "alert"):
+            c.delete(f"{p['ae']}/{leaf}")
         c.delete(p["ae"])
+        time.sleep(0.5)
         print("deleted", p["ae"])
     c.create_ae(p["ae"])
     print("AE", p["ae"])
     for group in ("workers", "forklifts", "cameras"):
         for dev, path in p[group].items():
             parent, leaf = path.rsplit("/", 1)
-            c.create_container(p["ae"], dev)
-            c.create_container(parent, leaf)
-            c.create_subscription(path, "sub_mec", [cfg["mec"]["notify_url"]])
+            c.with_retry(c.create_container, p["ae"], dev)
+            c.with_retry(c.create_container, parent, leaf)
+            c.with_retry(c.create_subscription, path, "sub_mec", [cfg["mec"]["notify_url"]])
             print("  ", path, "-> MEC")
-    c.create_container(p["ae"], "risk")
-    c.create_container(p["ae"], "alert")
-    c.create_subscription(p["alert"], "sub_devices", [cfg["device_sim"]["notify_url"]])
+    c.with_retry(c.create_container, p["ae"], "risk")
+    c.with_retry(c.create_container, p["ae"], "alert")
+    c.with_retry(c.create_subscription, p["alert"], "sub_devices", [cfg["device_sim"]["notify_url"]])
     for i, url in enumerate(cfg.get("alert_subscribers") or []):
         c.create_subscription(p["alert"], f"sub_hw{i + 1}", [url])
         print("   alert ->", url)

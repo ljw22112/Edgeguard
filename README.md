@@ -12,7 +12,7 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
    └──── alert Notify ┴────── risk / alert CIN ◀─┘
 ```
 
-## 현재 상태 (v0.2)
+## 현재 상태 (v0.3)
 
 | 구성 | 상태 |
 |---|---|
@@ -26,7 +26,8 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 | 가상 디바이스 (실기 도착 전 대체) | ✅ |
 | ESP32 펌웨어 (작업자 태그, 지게차 모듈) | ⚠️ 골격만, 아직 컴파일·실기 검증 안 됨 |
 | MEC Docker 이미지 | ⚠️ Dockerfile만, 빌드 미검증 |
-| 엣지 MN-CSE ↔ Mobius IN-CSE 등록(Mcc) | ⏳ 아래 "구조 변경 필요" 참고 |
+| 배포 구조 결정 (4개 후보 측정) | ✅ 엣지 Mobius + 클라우드 동기화, 아래 "배포 구조" |
+| ACME MN-CSE ↔ Mobius IN-CSE 등록(Mcc) | ✅ 검증 (상호운용성 시험) |
 | MEC Location API / RNIS, YOLO | ⏳ 로드맵 W4~W6 |
 
 ## 위험도 판정: 가이던스 기하
@@ -104,23 +105,49 @@ ACME CSE(오픈소스 oneM2M)를 받아 실행하고, MEC 앱과 가상 디바�
 MEC 앱을 띄우고 브라우저에서 `http://<mec-host>:9090/` 를 엽니다.
 작업자·지게차 위치, 3초 예측 경로, 예측 최근접 지점(✕와 남은 시간), 안전 반경, 쌍별 위험도 지표, 경보 로그를 0.2초마다 갱신합니다.
 
-## Mobius로 전환 (검증 완료)
+## 배포 구조 (측정으로 결정)
 
-`config/mobius.yaml`이 준비되어 있습니다 (KETI Mobius 3.0.1, SQLite 백엔드로 end-to-end 확인).
+![구성도](docs/architecture.png)
+
+**결정: 엣지 Mobius(MEC 호스트) + 클라우드 Mobius, MEC 앱이 클라우드로 동기화** — `config/site.yaml`
+
+후보 4개를 한 대의 PC에서 띄우고, 현장↔클라우드 구간은 `tools/wan_proxy.py`로 단방향 25±5 ms(왕복 약 50 ms)를 걸어 측정했습니다.
+충돌 시나리오 6회씩, `python tools/topology_bench.py` → `results/topology_25ms.json`.
+
+| 구성 | 경보 지연 중앙값 / p95 | WAN 단절 시 현장 경보 | 클라우드 사본 | 엣지 CSE 처리량 |
+|---|---|---|---|---|
+| ① 클라우드 Mobius만 | 85 / 133 ms | ❌ 0건 (전부 중단) | 해당 없음 | — |
+| ② 엣지 Mobius만 | 23.5 / 29 ms | ✅ | ❌ 없음 | 250 writes/s 여유 |
+| **③ 엣지 Mobius + 클라우드 동기화** | **25 / 52 ms** | **✅ 26/26건 유지** | **✅** | **250 writes/s 여유** |
+| ④ 엣지 ACME MN ↔ 클라우드 Mobius (Mcc) | 33 / 43 ms | ✅ 26/26건 유지 | ✅ (MN 재지정) | ❌ 약 110 writes/s에서 포화 |
+
+엣지 CSE 부하 시험 (`tools/cse_load_bench.py`, 디바이스마다 10 Hz, 모든 컨테이너에 구독):
+
+| 디바이스 수 (요청/s) | Mobius 쓰기 p95 | Mobius 알림 p95 | ACME 처리량 | ACME 쓰기 p95 |
+|---|---|---|---|---|
+| 10 (100) | 10 ms | 12 ms | 100.7/s | 32 ms |
+| 25 (250) | 63 ms | 71 ms | **109/s (포화)** | 323 ms |
+| 50 (500) | 205 ms (355/s) | 237 ms | 112/s | 642 ms |
+
+판단 근거
+- **가용성이 결정적입니다.** ①은 클라우드 연결이 끊기면 경보가 하나도 나가지 않습니다. 안전 시스템으로 쓸 수 없습니다.
+  지연 차이(약 60 ms)는 예측 리드타임 2초에 비하면 작지만, 단절 시 동작 차이는 0과 100%입니다.
+- **규모에서 ④가 탈락했습니다.** 작업자 20명 + 지게차 5대(10 Hz)면 초당 250건인데, ACME는 약 110건에서 포화되어 지연이 수백 ms로 늘어납니다.
+  Mobius는 같은 조건에서 p95 63 ms입니다 (부하 생성기와 같은 2코어 PC에서 측정한 보수적인 값).
+- **③이 ②의 성능을 그대로 유지하면서 클라우드 사본을 얻습니다.** 동기화는 별도 큐에서 돌기 때문에 WAN이 느리거나 끊겨도 현장 경보에 영향이 없습니다 (단절 시 실패 74건은 `/health`에 집계).
+- 한계: Mobius 3은 IN-CSE 전용이라 엣지와 클라우드 Mobius 사이는 oneM2M Mcc 등록이 아니라 MEC 앱의 동기화입니다.
+  표준 Mcc 연동은 ④ 구성(ACME MN → Mobius IN)으로 별도 검증했으며, 저속 게이트웨이(카메라 노드 등)를 붙이는 용도로 남겨 둡니다.
+
+실행 (엣지 서버에 Mobius가 떠 있다고 가정):
 ```bash
-export EDGEGUARD_CONFIG=config/mobius.yaml   # base_url만 팀 서버 주소로 수정
+export EDGEGUARD_CONFIG=config/site.yaml      # cloud_sync.base_url만 클라우드 주소로 수정
 scripts/mec.sh start
-python devices/device_sim.py --config config/mobius.yaml --start-delay 4 &
-python tools/setup_resources.py --config config/mobius.yaml --reset
+python devices/device_sim.py --config config/site.yaml --start-delay 4 &
+python tools/setup_resources.py --config config/site.yaml --reset
 ```
-Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다. 실기 디바이스는 `alert_subscribers`에 `http://<esp32-ip>/alert`를 추가합니다.
+Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
-### 구조 변경 필요: 엣지 MN-CSE
-
-Mobius 3.0은 MN-CSE 모드를 없앴습니다 (IN-CSE 전용). 구성도의 "엣지 Mobius MN-CSE"는 그대로 만들 수 없으므로,
-**엣지는 ACME CSE를 MN-CSE로, 클라우드는 Mobius IN-CSE로** 두고 Mcc로 등록하는 구성을 제안합니다.
-서로 다른 구현체 간 연동이라 상호운용성 검증 항목으로도 쓸 수 있습니다.
-Mobius의 SQLite 백엔드는 remoteCSE를 지원하지 않으므로, 이 등록 시험에는 MySQL 백엔드가 필요합니다.
+상호운용성 시험에서 찾은 문제와 해결은 [docs/interop-notes.md](docs/interop-notes.md)에 정리했습니다.
 
 ## oneM2M 리소스 트리
 
@@ -145,7 +172,8 @@ mec_app/     MEC 앱 (FastAPI) + 대시보드(static/) + Dockerfile
 models/      학습된 LSTM 가중치와 검증 지표
 devices/     가상 디바이스
 sim/         시나리오 · 비교 실험 · LSTM 학습 · 그래프
-tools/       oneM2M 리소스 셋업
+tools/       oneM2M 리소스 셋업 · WAN 지연 프록시 · 구성 비교 · CSE 부하 시험
+docs/        구성도 · 상호운용성 노트
 firmware/    ESP32 스케치 (worker_tag, forklift_module)
 scripts/     로컬 데모, MEC 앱 실행
 tests/       단위 테스트 (python -m pytest)

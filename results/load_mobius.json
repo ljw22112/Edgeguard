@@ -1,0 +1,38 @@
+[
+  {
+    "target": "mobius",
+    "devices": 10,
+    "offered_writes_per_s": 100,
+    "achieved_writes_per_s": 100.6,
+    "write_errors": 0,
+    "write_ms_p50": 6.2,
+    "write_ms_p95": 10.1,
+    "notify_ms_p50": 7,
+    "notify_ms_p95": 12,
+    "notify_delivered_pct": 100.0
+  },
+  {
+    "target": "mobius",
+    "devices": 25,
+    "offered_writes_per_s": 250,
+    "achieved_writes_per_s": 251.3,
+    "write_errors": 0,
+    "write_ms_p50": 13.1,
+    "write_ms_p95": 62.5,
+    "notify_ms_p50": 15,
+    "notify_ms_p95": 71,
+    "notify_delivered_pct": 100.0
+  },
+  {
+    "target": "mobius",
+    "devices": 50,
+    "offered_writes_per_s": 500,
+    "achieved_writes_per_s": 354.9,
+    "write_errors": 0,
+    "write_ms_p50": 137.2,
+    "write_ms_p95": 204.8,
+    "notify_ms_p50": 162,
+    "notify_ms_p95": 237,
+    "notify_delivered_pct": 100.0
+  }
+]

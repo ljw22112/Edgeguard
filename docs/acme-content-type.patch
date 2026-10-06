@@ -1,0 +1,13 @@
+diff --git a/acmecse/plugins/bindings/HttpServer.py b/acmecse/plugins/bindings/HttpServer.py
+index 46ba811..4d6205d 100644
+--- a/acmecse/plugins/bindings/HttpServer.py
++++ b/acmecse/plugins/bindings/HttpServer.py
+@@ -551,7 +551,7 @@ class HttpServer(object):
+ 
+ 			# Construct CSERequest response object from the result
+ 			resp = CSERequest(requestType=RequestType.RESPONSE)
+-			resp.ct = ContentSerializationType.getType(r.headers.get('Content-Type', ct))
++			resp.ct = ContentSerializationType.getType(r.headers.get('Content-Type', ct).split(';')[0].strip())	# EG: ignore media-type parameters such as charset (Mobius sends 'application/json; charset=utf-8')
+ 			resp.rsc = ResponseStatusCode(int(r.headers.get(Constants.hfRSC, ResponseStatusCode.INTERNAL_SERVER_ERROR)))
+ 			resp.pc = deserializeData(r.content, resp.ct)
+ 			resp.originator = r.headers.get(Constants.hfOrigin)

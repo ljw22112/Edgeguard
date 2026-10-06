@@ -25,6 +25,7 @@ from edgeguard.onem2m import parse_notification, now_ms    # noqa: E402
 from sim import scenarios                                  # noqa: E402
 
 latencies = []
+QUIET = False
 
 
 class AlertHandler(BaseHTTPRequestHandler):
@@ -43,6 +44,8 @@ class AlertHandler(BaseHTTPRequestHandler):
         w, f = a["worker"], a["forklift"]
         acts = a["actions"]
         lat_s = f"{lat} ms" if lat is not None else "?"
+        if QUIET:
+            return
         if a["event"] == "clear":
             print(f"  [{w}] stop vibrating   [{f}] resume normal speed   (e2e {lat_s})")
         else:
@@ -62,8 +65,13 @@ def main():
     ap.add_argument("--start-delay", type=float, default=0.0)
     ap.add_argument("--speed", type=float, default=1.0, help="playback speed factor")
     ap.add_argument("--noise", type=float, default=0.15, help="UWB position noise (m)")
+    ap.add_argument("--runs", type=int, default=1, help="episodes to play (seeds seed..seed+runs-1)")
+    ap.add_argument("--json-out", help="write alert latencies and counts to this file")
+    ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
 
+    global QUIET
+    QUIET = a.quiet
     cfg = config.load(a.config)
     cse = config.client(cfg)
     paths = config.paths(cfg)
@@ -74,35 +82,45 @@ def main():
     print(f"alert listener on :{cfg['device_sim']['listen_port']}")
     time.sleep(a.start_delay)
 
-    rng = random.Random(a.seed)
-    gen = next(g for g in scenarios.GENERATORS if g.__name__[4:] == a.scenario)
-    name, times, wk, fk = gen(rng)
-    gt = scenarios.ground_truth(times, wk, fk)
-    print(f"scenario {name}: ground-truth conflict={gt['conflict']} "
-          f"contact={gt['t_contact']} min distance={gt['d_min']:.2f} m")
-
-    t0 = time.time()
-    for t, (wx, wy), (fx, fy, th, sp, yaw) in zip(times, wk, fk):
-        if gt["conflict"] and t > gt["t_contact"] + 1.0:
-            break
-        while time.time() - t0 < t / a.speed:
-            time.sleep(0.002)
-        ts = now_ms()
-        cse.create_cin(paths["workers"][w_id], {
-            "id": w_id, "kind": "worker", "ts": ts,
-            "x": round(wx + rng.gauss(0, a.noise), 3), "y": round(wy + rng.gauss(0, a.noise), 3)})
-        cse.create_cin(paths["forklifts"][f_id], {
-            "id": f_id, "kind": "forklift", "ts": ts,
-            "x": round(fx + rng.gauss(0, a.noise), 3), "y": round(fy + rng.gauss(0, a.noise), 3),
-            "speed": round(sp, 3), "heading": round(th, 4), "yaw_rate": round(yaw, 4)})
-        if gt["conflict"] and abs(t - gt["t_contact"]) < 0.05:
-            print(f"  -- t={t:.1f}s would-be contact point --")
-    time.sleep(1.0)
+    failures = 0
+    for run in range(a.runs):
+        rng = random.Random(a.seed + run)
+        gen = next(g for g in scenarios.GENERATORS if g.__name__[4:] == a.scenario)
+        name, times, wk, fk = gen(rng)
+        gt = scenarios.ground_truth(times, wk, fk)
+        print(f"scenario {name} (seed {a.seed + run}): ground-truth conflict={gt['conflict']} "
+              f"contact={gt['t_contact']} min distance={gt['d_min']:.2f} m")
+        t0 = time.time()
+        for t, (wx, wy), (fx, fy, th, sp, yaw) in zip(times, wk, fk):
+            if gt["conflict"] and t > gt["t_contact"] + 1.0:
+                break
+            while time.time() - t0 < t / a.speed:
+                time.sleep(0.002)
+            ts = now_ms()
+            try:
+                cse.create_cin(paths["workers"][w_id], {
+                    "id": w_id, "kind": "worker", "ts": ts,
+                    "x": round(wx + rng.gauss(0, a.noise), 3), "y": round(wy + rng.gauss(0, a.noise), 3)})
+                cse.create_cin(paths["forklifts"][f_id], {
+                    "id": f_id, "kind": "forklift", "ts": ts,
+                    "x": round(fx + rng.gauss(0, a.noise), 3), "y": round(fy + rng.gauss(0, a.noise), 3),
+                    "speed": round(sp, 3), "heading": round(th, 4), "yaw_rate": round(yaw, 4)})
+            except Exception as e:                      # CSE unreachable: keep the clock running
+                failures += 1
+                if failures in (1, 10, 100):
+                    print(f"  sample write failed ({failures}x): {type(e).__name__}")
+            if gt["conflict"] and abs(t - gt["t_contact"]) < 0.05 and not a.quiet:
+                print(f"  -- t={t:.1f}s would-be contact point --")
+        time.sleep(2.5 if run < a.runs - 1 else 1.0)    # let tracks go stale between episodes
     if latencies:
         print(f"alerts received: {len(latencies)}, end-to-end latency "
               f"median {statistics.median(latencies):.0f} ms, max {max(latencies)} ms")
     else:
         print("no alerts received")
+    if a.json_out:
+        with open(a.json_out, "w") as fh:
+            json.dump({"latencies_ms": latencies, "alerts": len(latencies),
+                       "write_failures": failures, "runs": a.runs, "scenario": a.scenario}, fh)
     srv.shutdown()
 
 

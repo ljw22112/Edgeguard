@@ -69,10 +69,25 @@ class OneM2MClient:
         return self.request("POST", parent, TY_CIN, {"m2m:cin": {"con": con}})
 
     def create_subscription(self, parent, rn, nu, net=(3,)):
-        """net 3 = 'create of a direct child resource' (a new contentInstance)."""
+        """net 3 = 'create of a direct child resource' (a new contentInstance).
+        If the subscription already exists its notification URIs are updated."""
         body = {"m2m:sub": {"rn": rn, "nu": list(nu), "nct": 1,
                             "enc": {"net": list(net)}}}
-        return self.request("POST", parent, TY_SUB, body, ok_conflict=True)
+        res = self.request("POST", parent, TY_SUB, body, ok_conflict=True)
+        if res is None:
+            res = self.request("PUT", f"{parent}/{rn}", None, {"m2m:sub": {"nu": list(nu)}})
+        return res
+
+    def with_retry(self, fn, *args, attempts=6, wait=0.3):
+        """Retry on 404: some CSEs (Mobius cluster mode) make a new parent visible
+        to other workers only after a short delay."""
+        for i in range(attempts):
+            try:
+                return fn(*args)
+            except OneM2MError as e:
+                if e.status != 404 or i == attempts - 1:
+                    raise
+                time.sleep(wait)
 
     def latest(self, container):
         res = self.request("GET", f"{container}/la")

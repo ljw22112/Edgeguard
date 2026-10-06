@@ -1,0 +1,119 @@
+{
+  "delay_ms_one_way": 25.0,
+  "jitter_ms": 5.0,
+  "results": [
+    {
+      "topology": "cloud",
+      "wan_up": true,
+      "runs": 6,
+      "alerts_received": 29,
+      "alert_latency_ms_median": 85,
+      "alert_latency_ms_p95": 133,
+      "sensor_to_mec_ms_median": 81,
+      "alerts_sent_by_mec": 34,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 0,
+        "failed": 0,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "edge_in",
+      "wan_up": true,
+      "runs": 6,
+      "alerts_received": 26,
+      "alert_latency_ms_median": 23.5,
+      "alert_latency_ms_p95": 29,
+      "sensor_to_mec_ms_median": 12,
+      "alerts_sent_by_mec": 31,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 0,
+        "failed": 0,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "edge_mn",
+      "wan_up": true,
+      "runs": 6,
+      "alerts_received": 26,
+      "alert_latency_ms_median": 33.0,
+      "alert_latency_ms_p95": 43,
+      "sensor_to_mec_ms_median": 19,
+      "alerts_sent_by_mec": 31,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 72,
+        "failed": 0,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "cloud",
+      "wan_up": false,
+      "runs": 6,
+      "alerts_received": 0,
+      "alert_latency_ms_median": null,
+      "alert_latency_ms_p95": null,
+      "sensor_to_mec_ms_median": null,
+      "alerts_sent_by_mec": 0,
+      "write_failures": 413,
+      "cloud_sync": {
+        "sent": 0,
+        "failed": 0,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "edge_mn",
+      "wan_up": false,
+      "runs": 6,
+      "alerts_received": 26,
+      "alert_latency_ms_median": 37.0,
+      "alert_latency_ms_p95": 47,
+      "sensor_to_mec_ms_median": 21,
+      "alerts_sent_by_mec": 31,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 0,
+        "failed": 73,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "edge_in_sync",
+      "wan_up": true,
+      "runs": 6,
+      "alerts_received": 25,
+      "alert_latency_ms_median": 25,
+      "alert_latency_ms_p95": 52,
+      "sensor_to_mec_ms_median": 12,
+      "alerts_sent_by_mec": 30,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 72,
+        "failed": 0,
+        "dropped": 0
+      }
+    },
+    {
+      "topology": "edge_in_sync",
+      "wan_up": false,
+      "runs": 6,
+      "alerts_received": 26,
+      "alert_latency_ms_median": 23.0,
+      "alert_latency_ms_p95": 28,
+      "sensor_to_mec_ms_median": 12,
+      "alerts_sent_by_mec": 31,
+      "write_failures": 0,
+      "cloud_sync": {
+        "sent": 0,
+        "failed": 74,
+        "dropped": 0
+      }
+    }
+  ],
+  "note": "Single 2-core test machine; WAN emulated by tools/wan_proxy.py. alerts_received counts raise/refresh events (clear events excluded)."
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "target": "acme",
+    "devices": 10,
+    "offered_writes_per_s": 100,
+    "achieved_writes_per_s": 100.7,
+    "write_errors": 0,
+    "write_ms_p50": 6.4,
+    "write_ms_p95": 32.3,
+    "notify_ms_p50": 8,
+    "notify_ms_p95": 33,
+    "notify_delivered_pct": 100.0
+  },
+  {
+    "target": "acme",
+    "devices": 25,
+    "offered_writes_per_s": 250,
+    "achieved_writes_per_s": 109.3,
+    "write_errors": 0,
+    "write_ms_p50": 225.3,
+    "write_ms_p95": 322.9,
+    "notify_ms_p50": 150,
+    "notify_ms_p95": 228,
+    "notify_delivered_pct": 100.0
+  },
+  {
+    "target": "acme",
+    "devices": 50,
+    "offered_writes_per_s": 500,
+    "achieved_writes_per_s": 111.9,
+    "write_errors": 0,
+    "write_ms_p50": 443.9,
+    "write_ms_p95": 641.8,
+    "notify_ms_p50": 294,
+    "notify_ms_p95": 452,
+    "notify_delivered_pct": 100.0
+  }
+]

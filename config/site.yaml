@@ -1,8 +1,10 @@
-# EdgeGuard configuration for KETI Mobius (3.x, tested with SQLite backend)
-# Use: EDGEGUARD_CONFIG=config/mobius.yaml
+# Recommended site deployment (see README "Deployment architecture")
+#   edge : Mobius IN-CSE on the MEC host  -> real-time loop never leaves the site
+#   cloud: second Mobius IN-CSE           -> risk summaries + alerts copied by the MEC app
+# Use: EDGEGUARD_CONFIG=config/site.yaml
 
 cse:
-  base_url: http://localhost:7579
+  base_url: http://localhost:7579   # Mobius on the MEC host
   cse_rn: Mobius
   origin: SEdgeGuard
   rvi: "2a"
@@ -30,6 +32,17 @@ device_sim:
 alert_subscribers: []
 #  - http://192.168.0.21/alert     # worker_01 tag
 #  - http://192.168.0.31/alert     # forklift_01 module
+
+# Copy of risk summaries / alerts to the cloud Mobius (separate queue: a slow or
+# broken WAN never delays local alerts; failures are counted in /health).
+cloud_sync:
+  enabled: true
+  base_url: http://cloud.example.com:7579    # cloud Mobius address
+  cse_rn: Mobius
+  origin: SEdgeGuard
+  rvi: "2a"
+  ae: EdgeGuard_site01                       # one AE per site
+  risk_hz: 1
 
 risk:
   r_safe: 1.5
