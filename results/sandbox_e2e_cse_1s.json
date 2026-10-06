@@ -1,0 +1,197 @@
+{
+ "source": "cse",
+ "gis_period_s": 1.0,
+ "duration_s": 120.0,
+ "contacts": 16,
+ "timely": 10,
+ "detected": 15,
+ "timely_rate": 0.625,
+ "median_lead_s": 1.26,
+ "raises": 32,
+ "false_alarm_raises": 4,
+ "fix_to_alert_ms_p50": 114,
+ "fix_to_alert_ms_p95": 302,
+ "by_pair": {
+  "worker_03-forklift_01": {
+   "contacts": 1,
+   "timely": 1
+  },
+  "worker_03-forklift_02": {
+   "contacts": 12,
+   "timely": 8
+  },
+  "worker_01-forklift_01": {
+   "contacts": 3,
+   "timely": 1
+  }
+ },
+ "contacts_detail": [
+  {
+   "pair": [
+    "worker_03",
+    "forklift_01"
+   ],
+   "t_contact": 7.5,
+   "first_alert": 6.24,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 15.2,
+   "first_alert": 14.28,
+   "timely": false
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 23.6,
+   "first_alert": 19.28,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 27.2,
+   "first_alert": 19.28,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 38.6,
+   "first_alert": 38.28,
+   "timely": false
+  },
+  {
+   "pair": [
+    "worker_01",
+    "forklift_01"
+   ],
+   "t_contact": 41.3,
+   "first_alert": null,
+   "timely": false
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 48.6,
+   "first_alert": 47.04,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 59.9,
+   "first_alert": 59.05,
+   "timely": false
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 69.5,
+   "first_alert": 64.06,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 75.5,
+   "first_alert": 68.07,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_01",
+    "forklift_01"
+   ],
+   "t_contact": 78.3,
+   "first_alert": 77.08,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 81.9,
+   "first_alert": 74.07,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 93.2,
+   "first_alert": 92.08,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 103.2,
+   "first_alert": 101.11,
+   "timely": true
+  },
+  {
+   "pair": [
+    "worker_03",
+    "forklift_02"
+   ],
+   "t_contact": 114.6,
+   "first_alert": 114.13,
+   "timely": false
+  },
+  {
+   "pair": [
+    "worker_01",
+    "forklift_01"
+   ],
+   "t_contact": 114.7,
+   "first_alert": 114.1,
+   "timely": false
+  }
+ ],
+ "mec_app": {
+  "samples": 702,
+  "alerts_sent": 101,
+  "mec": {
+   "location_fixes": 702,
+   "skipped_uwb_fresh": 0,
+   "unknown_ue": 0,
+   "ipe_subscriptions": 8,
+   "cell_loads": {
+    "500000101": 30,
+    "500000102": 70
+   }
+  },
+  "network": {
+   "cell_load": 70,
+   "congested": false
+  },
+  "ingest_ms_median": 94
+ },
+ "mock": {
+  "location_queries": 478,
+  "rnis_queries": 120
+ }
+}

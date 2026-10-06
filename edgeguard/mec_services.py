@@ -34,6 +34,39 @@ class SiteFrame:
         return (self.lat0 + y / self.k_lat, self.lon0 + x / self.k_lon)
 
 
+def _first(v):
+    return v[0] if isinstance(v, list) else v
+
+
+def parse_user_info(u, frame: SiteFrame):
+    """MEC 013 UserInfo (from the Location API or as content written by MEC-IPE into the CSE)
+    -> {"address", "x", "y", "accuracy", "zone", "ts"} or None.  Accepts latitude/longitude
+    as lists (v2/v3 data model) or plain numbers, nested in locationInfo or at the top level."""
+    if not isinstance(u, dict):
+        return None
+    li = u.get("locationInfo") or u
+    lat, lon = _first(li.get("latitude", li.get("lat"))), _first(li.get("longitude", li.get("lon")))
+    if lat is None or lon is None:
+        return None
+    x, y = frame.to_xy(float(lat), float(lon))
+    ts = u.get("timestamp") or u.get("timeStamp") or {}
+    t = ts.get("seconds", 0) + ts.get("nanoSeconds", 0) / 1e9 if isinstance(ts, dict) else float(ts or 0)
+    return {"address": u.get("address"), "x": x, "y": y, "accuracy": float(li.get("accuracy") or 5.0),
+            "zone": u.get("zoneId"), "poa": u.get("accessPointId"), "ts": t}
+
+
+def cell_load_of(c):
+    """PRB load (%) of one RNIS layer-2 cellInfo entry: GBR + non-GBR per direction, max of DL/UL."""
+    if not isinstance(c, dict):
+        return None
+    keys = ("dl_gbr_prb_usage_cell", "ul_gbr_prb_usage_cell", "dl_nongbr_prb_usage_cell", "ul_nongbr_prb_usage_cell")
+    if not any(isinstance(c.get(k), (int, float)) for k in keys):
+        return None
+    dl = (c.get("dl_gbr_prb_usage_cell") or 0) + (c.get("dl_nongbr_prb_usage_cell") or 0)
+    ul = (c.get("ul_gbr_prb_usage_cell") or 0) + (c.get("ul_nongbr_prb_usage_cell") or 0)
+    return max(dl, ul)
+
+
 class LocationClient:
     def __init__(self, base_url, api="location/v3", timeout=1.0, frame: SiteFrame | None = None):
         self.root = f"{base_url.rstrip('/')}/{api.strip('/')}"
@@ -47,17 +80,12 @@ class LocationClient:
         if r.status_code != 200:
             return None
         users = (r.json().get("userList") or {}).get("user") or []
-        if not users:
-            return None
-        u = users[0]
-        li = u.get("locationInfo") or {}
-        lat, lon = (li.get("latitude") or [None])[0], (li.get("longitude") or [None])[0]
-        if lat is None or lon is None:
-            return None
-        x, y = self.frame.to_xy(lat, lon)
-        ts = u.get("timestamp") or {}
-        return {"x": x, "y": y, "accuracy": float(li.get("accuracy", 5.0)),
-                "zone": u.get("zoneId"), "ts": ts.get("seconds", 0) + ts.get("nanoSeconds", 0) / 1e9}
+        return parse_user_info(users[0], self.frame) if users else None
+
+    def all_users(self):
+        """Raw MEC 013 UserInfo of every UE the network locates (no address filter)."""
+        r = self.s.get(f"{self.root}/queries/users", timeout=self.timeout)
+        return ((r.json().get("userList") or {}).get("user") or []) if r.status_code == 200 else []
 
 
 class RnisClient:
@@ -68,21 +96,10 @@ class RnisClient:
 
     def cell_load(self, cell_id=None):
         """Highest downlink+uplink PRB usage (%) among the site's cells, or None."""
+        loads = [x for x in map(cell_load_of, self.cells(cell_id)) if x is not None]
+        return max(loads) if loads else None
+
+    def cells(self, cell_id=None):
         params = {"cell_id": cell_id} if cell_id else None
         r = self.s.get(f"{self.root}/queries/layer2_meas", params=params, timeout=self.timeout)
-        if r.status_code != 200:
-            return None
-        cells = r.json().get("cellInfo") or []
-        best = None
-        for c in cells:
-            vals = [c.get(k) for k in ("dl_gbr_prb_usage_cell", "ul_gbr_prb_usage_cell",
-                                        "dl_nongbr_prb_usage_cell", "ul_nongbr_prb_usage_cell")]
-            vals = [v for v in vals if isinstance(v, (int, float))]
-            if not vals:
-                continue
-            # GBR + non-GBR share the cell: their sum per direction is the load
-            dl = (c.get("dl_gbr_prb_usage_cell") or 0) + (c.get("dl_nongbr_prb_usage_cell") or 0)
-            ul = (c.get("ul_gbr_prb_usage_cell") or 0) + (c.get("ul_nongbr_prb_usage_cell") or 0)
-            load = max(dl, ul)
-            best = load if best is None else max(best, load)
-        return best
+        return (r.json().get("cellInfo") or []) if r.status_code == 200 else []

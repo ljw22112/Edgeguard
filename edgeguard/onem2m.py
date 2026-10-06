@@ -41,12 +41,12 @@ class OneM2MClient:
         path = path.strip("/")
         return f"{self.base}/{self.cse_rn}" + (f"/{path}" if path else "")
 
-    def request(self, method, path, ty=None, body=None, ok_conflict=False):
+    def request(self, method, path, ty=None, body=None, ok_conflict=False, params=None):
         h = {"X-M2M-Origin": self.origin, "X-M2M-RI": f"eg{next(_ri)}",
              "X-M2M-RVI": self.rvi, "Accept": "application/json"}
         if body is not None:
             h["Content-Type"] = "application/json" + (f";ty={ty}" if ty else "")
-        r = self.s.request(method, self.url(path), headers=h,
+        r = self.s.request(method, self.url(path), headers=h, params=params,
                            data=None if body is None else json.dumps(body),
                            timeout=self.timeout)
         rsc = r.headers.get("X-M2M-RSC")
@@ -111,6 +111,19 @@ class OneM2MClient:
             except OneM2MError as e:
                 last = e
         raise last
+
+    def discover(self, parent, ty=TY_CNT):
+        """Paths (relative to the CSE root) of all resources of type `ty` below `parent`."""
+        res = self.request("GET", parent, params={"fu": 1, "ty": ty}) or {}
+        out = []
+        for u in res.get("m2m:uril") or []:
+            u = u.strip("/")
+            if u.startswith(self.cse_rn + "/"):
+                u = u[len(self.cse_rn) + 1:]
+            elif "/" + self.cse_rn + "/" in "/" + u:            # SP-relative form /cseId/cseRn/...
+                u = u.split(self.cse_rn + "/", 1)[1]
+            out.append(u)
+        return out
 
     def latest(self, container):
         res = self.request("GET", f"{container}/la")

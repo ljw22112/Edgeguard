@@ -8,20 +8,32 @@ from __future__ import annotations
 from .risk import LEVELS, waiting_at_lane
 
 
+NOMINAL_DT = 0.1      # s: the debounce count is tuned for 10 Hz tag data
+
+
 class AlertState:
-    """Edge-triggered alerts with debounce and hold, per worker/forklift pair."""
+    """Edge-triggered alerts with debounce and hold, per worker/forklift pair.
+
+    The debounce is a time window (debounce x 0.1 s at the nominal 10 Hz).  When samples
+    are sparser than that window - e.g. ~1 Hz network positions from the MEC Location API -
+    one evaluation already spans it, so it counts in full instead of costing an extra
+    sample period of warning time (measured on the MEC Sandbox path: 62 % -> see README)."""
 
     def __init__(self, debounce=2, refresh_s=1.0, hold_s=2.0):
         self.level, self.streak, self.last_sent, self.below_since = 0, 0, 0.0, None
         self.debounce, self.refresh_s, self.hold_s = debounce, refresh_s, hold_s
         self.sent_limit = None
+        self.last_eval = None
 
     def step(self, level, now):
         """Return 'raise', 'refresh', 'clear' or None."""
+        gap = None if self.last_eval is None else now - self.last_eval
+        self.last_eval = now
         if level >= 2:
             self.below_since = None
             self.streak += 1
-            fire = level == 3 or self.streak >= self.debounce
+            sparse = gap is not None and gap >= self.debounce * NOMINAL_DT - 1e-9
+            fire = level == 3 or self.streak >= self.debounce or sparse
             if fire and level > self.level:
                 self.level, self.last_sent = level, now
                 return "raise"

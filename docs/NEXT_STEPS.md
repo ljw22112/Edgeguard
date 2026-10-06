@@ -42,6 +42,8 @@ python -m pytest -q
 ```
 
 ## MEC Sandbox (organizer answers, 2026-10-06; TR-0086 draft, rollout expected the week of 10/6)
+**Applied 2026-10-06** (location_source: cse, tools/mec_ipe.py, scenarios/edgeguard-warehouse.yaml, tools/sandbox_e2e.py; see README). When the real sandbox opens: (1) match the MEC-IPE resource paths and content format to `mec_services.ipe`, (2) upload our scenario and check UE addresses against `ue_map`, (3) rerun `tools/sandbox_e2e.py` against the real environment.
+
 - When connected to a CSE, the CSE registers AEs with the MEC host (no separate MEC 011 registration).
 - UE positions are written into CSE resources by MEC-IPE → **the preferred path is reading location from oneM2M resources**.
   Devices injecting positions directly via primitives counts as a weaker approach "with exceptions" → argue UWB as the exception (sub-metre accuracy needed for collision avoidance indoors) and use MEC-IPE location as a secondary source (zone presence, fallback when the tag is missing).

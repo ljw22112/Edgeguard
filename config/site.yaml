@@ -47,14 +47,29 @@ cloud_sync:
 # ETSI MEC services (Location API MEC 013, RNIS MEC 012) on the MEC platform.
 # For local tests run the stand-in: uvicorn mec_mock.server:app --port 8085
 mec_services:
-  enabled: false
-  base_url: http://localhost:8085
+  enabled: false                             # true when a MEC platform / the MEC Sandbox is reachable
+  # cse: read MEC data as oneM2M resources written by MEC-IPE (Hackathon MEC Sandbox, preferred)
+  # direct: call the MEC APIs from the MEC app
+  location_source: cse
+  ipe:
+    root: MEC-IPE                            # where MEC-IPE writes location/<ue> and rnis/<cell>
+    origin: SMecIpe                          # tools/mec_ipe.py (stand-in) originator
+    discover_s: 5
+    poll_s: 0.25
+  base_url: http://localhost:8085            # MEC platform (direct mode and tools/mec_ipe.py)
   location_api: location/v3
   rnis_api: rni/v2
   origin: {lat: 37.5503, lon: 127.0731}      # site frame origin (x = east, y = north)
-  users: {worker_01: "acr:10.100.0.1"}       # worker id -> UE address known to the network
-  uwb_stale_s: 0.5                           # ask the Location API when UWB is silent this long
-  cell_id: cell01
+  # Location API address -> device (scenarios/edgeguard-warehouse.yaml uses these addresses)
+  ue_map:
+    "10.100.0.1":  {id: worker_01, kind: worker}
+    "10.100.0.2":  {id: worker_02, kind: worker}
+    "10.100.0.3":  {id: worker_03, kind: worker}
+    "10.100.0.4":  {id: worker_04, kind: worker}
+    "10.100.0.11": {id: forklift_01, kind: forklift}
+    "10.100.0.12": {id: forklift_02, kind: forklift}
+  uwb_stale_s: 0.5                           # a network fix is used when the UWB tag is silent this long
+  cell_id: null                              # null: the most loaded cell of the site counts
   congestion_prb_pct: 80                     # RNIS cell load that counts as congested
   congested_margin_s: 0.5                    # extra warning time while congested
   poll_s: 0.25

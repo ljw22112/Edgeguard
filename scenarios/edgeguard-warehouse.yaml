@@ -1,0 +1,636 @@
+version: 1.8.0
+name: edgeguard-warehouse
+id: null
+description: 'EdgeGuard warehouse: forklift / worker encounters on private 5G (oneM2M
+  Hackathon 2026)'
+config: null
+deployment:
+  netChar:
+    latency: 50
+    latencyVariation: 10
+    throughputDl: 1000
+    throughputUl: 1000
+    latencyDistribution: null
+    throughput: null
+    packetLoss: null
+  interDomainLatency: null
+  interDomainLatencyVariation: null
+  interDomainThroughput: null
+  interDomainPacketLoss: null
+  meta: null
+  userMeta: null
+  domains:
+  - id: PUBLIC
+    name: PUBLIC
+    type: PUBLIC
+    netChar:
+      latency: 6
+      latencyVariation: 2
+      throughputDl: 1000
+      throughputUl: 1000
+      latencyDistribution: null
+      throughput: null
+      packetLoss: null
+    interZoneLatency: null
+    interZoneLatencyVariation: null
+    interZoneThroughput: null
+    interZonePacketLoss: null
+    meta: null
+    userMeta: null
+    cellularDomainConfig: null
+    zones:
+    - id: 2e03af5b-116a-5aff-91d1-ddd804e81c4d
+      name: PUBLIC-COMMON
+      type: COMMON
+      netChar:
+        latency: 5
+        latencyVariation: 1
+        throughputDl: 1000
+        throughputUl: 1000
+        latencyDistribution: null
+        throughput: null
+        packetLoss: null
+      meta: null
+      userMeta: null
+      networkLocations:
+      - id: 4ff98592-c9cd-5430-afb7-1546cbaab3ed
+        name: PUBLIC-COMMON-DEFAULT
+        type: DEFAULT
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poa5GConfig: null
+        poaWifiConfig: null
+        geoData: null
+        physicalLocations: []
+      interFogLatency: null
+      interFogLatencyVariation: null
+      interFogThroughput: null
+      interFogPacketLoss: null
+      interEdgeLatency: null
+      interEdgeLatencyVariation: null
+      interEdgeThroughput: null
+      interEdgePacketLoss: null
+      edgeFogLatency: null
+      edgeFogLatencyVariation: null
+      edgeFogThroughput: null
+      edgeFogPacketLoss: null
+  - id: 251872a0-8ae9-5166-8099-5603ee599a89
+    name: factory-operator
+    type: OPERATOR-CELLULAR
+    netChar:
+      latency: 6
+      latencyVariation: 2
+      throughputDl: 1000
+      throughputUl: 1000
+      latencyDistribution: null
+      throughput: null
+      packetLoss: null
+    interZoneLatency: null
+    interZoneLatencyVariation: null
+    interZoneThroughput: null
+    interZonePacketLoss: null
+    meta: null
+    userMeta: null
+    cellularDomainConfig:
+      mnc: '001'
+      mcc: '001'
+      defaultCellId: FFFFFFF
+    zones:
+    - id: 08d78810-0dbf-5474-be5a-69f9d19b5653
+      name: factory-operator-COMMON
+      type: COMMON
+      netChar:
+        latency: 5
+        latencyVariation: 1
+        throughputDl: 1000
+        throughputUl: 1000
+        latencyDistribution: null
+        throughput: null
+        packetLoss: null
+      meta: null
+      userMeta: null
+      networkLocations:
+      - id: 8fdbe1ed-28f8-5364-b73f-4dd1c4152492
+        name: factory-operator-COMMON-DEFAULT
+        type: DEFAULT
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poa5GConfig: null
+        poaWifiConfig: null
+        geoData: null
+        physicalLocations: []
+      interFogLatency: null
+      interFogLatencyVariation: null
+      interFogThroughput: null
+      interFogPacketLoss: null
+      interEdgeLatency: null
+      interEdgeLatencyVariation: null
+      interEdgeThroughput: null
+      interEdgePacketLoss: null
+      edgeFogLatency: null
+      edgeFogLatencyVariation: null
+      edgeFogThroughput: null
+      edgeFogPacketLoss: null
+    - id: 861f7eec-1fbb-5e4c-b05b-eb50d17e54a0
+      name: warehouse-west
+      type: ZONE
+      netChar:
+        latency: 5
+        latencyVariation: 1
+        throughputDl: 1000
+        throughputUl: 1000
+        latencyDistribution: null
+        throughput: null
+        packetLoss: null
+      meta:
+        display.map.color: '#E49C0C'
+      userMeta: null
+      networkLocations:
+      - id: 6c29b5d5-33a7-5140-bcc7-47a290f758f6
+        name: warehouse-west-DEFAULT
+        type: DEFAULT
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poa5GConfig: null
+        poaWifiConfig: null
+        geoData: null
+        physicalLocations:
+        - id: 5e261a5e-0d98-5a26-a474-cbb8db6812e8
+          name: mec-edge
+          type: EDGE
+          geoData:
+            location:
+              type: Point
+              coordinates:
+              - 127.0731227
+              - 37.5504976
+            radius: null
+            path: null
+            eopMode: null
+            velocity: null
+          connected: true
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          processes: []
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          isExternal: null
+          networkLocationsInRange: null
+          wireless: null
+          wirelessType: null
+          meta: null
+          userMeta: null
+      - id: cb22ccd7-56cf-596f-a40c-693ac04e1e80
+        name: poa-5g-west
+        type: POA-5G
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        poa5GConfig:
+          cellId: '500000101'
+        geoData:
+          location:
+            type: Point
+            coordinates:
+            - 127.0732133
+            - 37.5504078
+          radius: 30
+          path: null
+          eopMode: null
+          velocity: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poaWifiConfig: null
+        physicalLocations:
+        - id: f9e30934-f131-5993-af5a-fb0f80302161
+          name: 10.100.0.11
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id001
+              - 127.0731227
+              - 37.5504078
+            path:
+              type: LineString
+              coordinates:
+              - *id001
+              - - 127.0735306
+                - 37.5504078
+              - - 127.0735306
+                - 37.550318
+              - - 127.0731227
+                - 37.550318
+              - - 127.0731227
+                - 37.5504078
+            eopMode: LOOP
+            velocity: 2.5
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: forklift_01
+            edgeguard.kind: forklift
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+        - id: 845426c1-3d43-5123-944e-c9fdcb612601
+          name: 10.100.0.1
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id002
+              - 127.0732586
+              - 37.5503269
+            path:
+              type: LineString
+              coordinates:
+              - *id002
+              - - 127.0732586
+                - 37.5504797
+            eopMode: REVERSE
+            velocity: 1.4
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: worker_01
+            edgeguard.kind: worker
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+      interFogLatency: null
+      interFogLatencyVariation: null
+      interFogThroughput: null
+      interFogPacketLoss: null
+      interEdgeLatency: null
+      interEdgeLatencyVariation: null
+      interEdgeThroughput: null
+      interEdgePacketLoss: null
+      edgeFogLatency: null
+      edgeFogLatencyVariation: null
+      edgeFogThroughput: null
+      edgeFogPacketLoss: null
+    - id: 51ca738a-1e25-50c2-b2c2-56487b046085
+      name: warehouse-east
+      type: ZONE
+      netChar:
+        latency: 5
+        latencyVariation: 1
+        throughputDl: 1000
+        throughputUl: 1000
+        latencyDistribution: null
+        throughput: null
+        packetLoss: null
+      meta:
+        display.map.color: '#00A0FF'
+      userMeta: null
+      networkLocations:
+      - id: 8d7176f9-a122-5c65-a09a-32f538983d7b
+        name: warehouse-east-DEFAULT
+        type: DEFAULT
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poa5GConfig: null
+        poaWifiConfig: null
+        geoData: null
+        physicalLocations: []
+      - id: 58036a4d-2c1d-5689-a9dd-c80ef03121fd
+        name: poa-5g-east
+        type: POA-5G
+        netChar:
+          latency: 1
+          latencyVariation: 1
+          throughputDl: 1000
+          throughputUl: 1000
+          latencyDistribution: null
+          throughput: null
+          packetLoss: null
+        poa5GConfig:
+          cellId: '500000102'
+        geoData:
+          location:
+            type: Point
+            coordinates:
+            - 127.0734399
+            - 37.5504078
+          radius: 30
+          path: null
+          eopMode: null
+          velocity: null
+        terminalLinkLatency: null
+        terminalLinkLatencyVariation: null
+        terminalLinkThroughput: null
+        terminalLinkPacketLoss: null
+        meta: null
+        userMeta: null
+        cellularPoaConfig: null
+        poa4GConfig: null
+        poaWifiConfig: null
+        physicalLocations:
+        - id: b6e6a4ee-4ae9-55de-ab39-e2f44baff3cd
+          name: 10.100.0.12
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id003
+              - 127.0733493
+              - 37.5503269
+            path:
+              type: LineString
+              coordinates:
+              - *id003
+              - - 127.0733493
+                - 37.5504886
+            eopMode: REVERSE
+            velocity: 2.0
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: forklift_02
+            edgeguard.kind: forklift
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+        - id: 98f8c1ca-1c0c-53ff-b53c-28708bb22b8f
+          name: 10.100.0.2
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id004
+              - 127.0733946
+              - 37.5504213
+            path:
+              type: LineString
+              coordinates:
+              - *id004
+              - - 127.0734852
+                - 37.5504213
+            eopMode: REVERSE
+            velocity: 0.6
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: worker_02
+            edgeguard.kind: worker
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+        - id: 7f963829-3760-5ed1-a8ea-21545c5aed0b
+          name: 10.100.0.3
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id005
+              - 127.0733493
+              - 37.5504797
+            path:
+              type: LineString
+              coordinates:
+              - *id005
+              - - 127.0733493
+                - 37.5503539
+            eopMode: REVERSE
+            velocity: 1.0
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: worker_03
+            edgeguard.kind: worker
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+        - id: b98aa6ea-77f9-5446-855f-6e14b98691c7
+          name: 10.100.0.4
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates: &id006
+              - 127.0735079
+              - 37.5504437
+            path:
+              type: LineString
+              coordinates:
+              - *id006
+              - - 127.0735079
+                - 37.5504976
+            eopMode: REVERSE
+            velocity: 1.0
+            radius: null
+          connected: true
+          wireless: true
+          wirelessType: 5g
+          dataNetwork:
+            dnn: null
+            ladn: null
+            ecsp: null
+          netChar:
+            latency: null
+            latencyVariation: null
+            throughputDl: 1000
+            throughputUl: 1000
+            latencyDistribution: null
+            throughput: null
+            packetLoss: null
+          macId: null
+          isExternal: null
+          networkLocationsInRange: null
+          meta:
+            edgeguard.device: worker_04
+            edgeguard.kind: worker
+          userMeta: null
+          processes: []
+          linkLatency: null
+          linkLatencyVariation: null
+          linkThroughput: null
+          linkPacketLoss: null
+      interFogLatency: null
+      interFogLatencyVariation: null
+      interFogThroughput: null
+      interFogPacketLoss: null
+      interEdgeLatency: null
+      interEdgeLatencyVariation: null
+      interEdgeThroughput: null
+      interEdgePacketLoss: null
+      edgeFogLatency: null
+      edgeFogLatencyVariation: null
+      edgeFogThroughput: null
+      edgeFogPacketLoss: null

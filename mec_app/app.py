@@ -13,6 +13,7 @@ import logging
 import math
 import os
 import itertools
+import json
 import queue
 import sys
 import threading
@@ -91,47 +92,143 @@ def to_cloud(kind, con):
         cloud_sync.put(kind, con)
 
 
-# --- ETSI MEC services: Location API fallback + RNIS-aware alert margin ---------------
+# --- ETSI MEC services: network location + RNIS-aware alert margin -----------------------
+# Two ways to get MEC data (mec_services.location_source):
+#   cse    (default) MEC-IPE writes Location API (MEC 013) and RNIS (MEC 012) data into the CSE;
+#          the MEC app discovers those containers, subscribes, and reads them as oneM2M
+#          notifications - the path the Hackathon's MEC Sandbox provides (tools/mec_ipe.py is
+#          our stand-in until the Sandbox's IPE is available).
+#   direct the MEC app calls the MEC APIs itself.
+# UWB tags stay the primary position source (sub-metre, 10 Hz); a network fix is used for a
+# device whose UWB is silent, or for UEs that have no tag at all.
 MS = CFG.get("mec_services") or {}
 BASE_T = (engine.cfg.t_danger, engine.cfg.t_warn)
+state["mec"] = {"location_fixes": 0, "skipped_uwb_fresh": 0, "unknown_ue": 0, "ipe_subscriptions": 0,
+                "cell_loads": {}}
+_FRAME = None
+
+
+def _frame():
+    global _FRAME
+    if _FRAME is None:
+        from edgeguard.mec_services import SiteFrame
+        _FRAME = SiteFrame(MS["origin"]["lat"], MS["origin"]["lon"])
+    return _FRAME
+
+
+def ue_map():
+    """Location API address -> {"id", "kind"}; `users` (worker id -> address) still works."""
+    m = {a: dict(v) for a, v in (MS.get("ue_map") or {}).items()}
+    for wid, addr in (MS.get("users") or {}).items():
+        m.setdefault(addr, {"id": wid, "kind": "worker"})
+    return m
+
+
+UE_MAP = ue_map() if MS.get("enabled") else {}
+
+
+def handle_mec_location(u: dict):
+    """One MEC 013 UserInfo (from the CSE via MEC-IPE, or from a direct API call)."""
+    from edgeguard.mec_services import parse_user_info
+    info = parse_user_info(u, _frame())
+    if info is None:
+        return
+    dev = UE_MAP.get(info["address"]) or UE_MAP.get(str(info["address"]).split(":")[-1])
+    if dev is None:
+        state["mec"]["unknown_ue"] += 1
+        return
+    tr = engine.tracks.get(dev["id"])
+    seen = getattr(tr, "uwb_seen", None) if tr else None
+    if seen is not None and time.monotonic() - seen < MS.get("uwb_stale_s", 0.5):
+        state["mec"]["skipped_uwb_fresh"] += 1          # the tag is better: ignore the coarse fix
+        return
+    state["mec"]["location_fixes"] += 1
+    state["location_fixes"] += 1
+    handle_sample({"id": dev["id"], "kind": dev.get("kind", "worker"),
+                   "ts": int(info["ts"] * 1000) if info["ts"] else now_ms(),
+                   "x": info["x"], "y": info["y"], "pos_sigma": max(0.3, info["accuracy"]),
+                   "source": "mec-location"})
+
+
+def apply_cell_load(load):
+    congested = load is not None and load >= MS.get("congestion_prb_pct", 80)
+    if congested != state["network"]["congested"]:
+        log.info("RNIS: cell load %s%% -> %s", load, "congested" if congested else "normal")
+    state["network"] = {"cell_load": load, "congested": congested}
+    margin = MS.get("congested_margin_s", 0.5) if congested else 0.0
+    engine.cfg.t_danger, engine.cfg.t_warn = BASE_T[0] + margin, BASE_T[1] + margin
+
+
+def handle_mec_cell(c: dict):
+    from edgeguard.mec_services import cell_load_of
+    cell = ((c.get("ecgi") or {}).get("cellId")) or c.get("cellId")
+    load = cell_load_of(c)
+    if cell is None or load is None:
+        return
+    loads = state["mec"]["cell_loads"]
+    loads[cell] = load
+    want = MS.get("cell_id")
+    apply_cell_load(loads.get(want) if want else max(loads.values()))
+
+
+def is_mec_location(p):
+    return isinstance(p, dict) and ("locationInfo" in p or ("address" in p and "latitude" in p))
+
+
+def is_mec_cell(p):
+    return isinstance(p, dict) and ("ecgi" in p or "dl_gbr_prb_usage_cell" in p)
+
+
+def ipe_watch():
+    """Find MEC-IPE containers in the CSE and subscribe the MEC app to each (new UEs and cells
+    appear over time, so discovery repeats)."""
+    root = (MS.get("ipe") or {}).get("root", "MEC-IPE")
+    cl = config.client(CFG)
+    done = set()
+    while True:
+        for group in ("location", "rnis"):
+            try:
+                paths = cl.discover(f"{root}/{group}")
+            except Exception as e:
+                log.debug("IPE discovery %s failed: %s", group, e)
+                continue
+            for pth in paths:
+                if pth in done or pth.rstrip("/").endswith(f"{root}/{group}"):
+                    continue
+                try:
+                    cl.create_subscription(pth, "sub_edgeguard", [MEC["notify_url"]])
+                    done.add(pth)
+                except Exception as e:
+                    log.warning("subscribe to %s failed: %s", pth, e)
+        state["mec"]["ipe_subscriptions"] = len(done)
+        time.sleep((MS.get("ipe") or {}).get("discover_s", 5.0))
 
 
 def mec_services_loop():
-    from edgeguard.mec_services import LocationClient, RnisClient, SiteFrame
-    frame = SiteFrame(MS["origin"]["lat"], MS["origin"]["lon"])
-    loc = LocationClient(MS["base_url"], MS.get("location_api", "location/v3"), frame=frame)
+    """location_source: direct - poll the MEC APIs."""
+    from edgeguard.mec_services import LocationClient, RnisClient
+    loc = LocationClient(MS["base_url"], MS.get("location_api", "location/v3"), frame=_frame())
     rnis = RnisClient(MS["base_url"], MS.get("rnis_api", "rni/v2"))
-    users = MS.get("users", {})                    # worker id -> UE address (e.g. acr:10.0.0.1)
-    stale_s = MS.get("uwb_stale_s", 0.5)
-    last_rnis = 0.0
+    last_rnis, last_fix = 0.0, {}
     while True:
         now = time.monotonic()
-        for wid, addr in users.items():
-            tr = engine.tracks.get(wid)
-            seen = getattr(tr, "uwb_seen", None) if tr else None
-            if seen is not None and now - seen < stale_s:
-                continue                           # UWB is fine, no need for a coarse fix
-            try:
-                u = loc.user(addr)
-            except Exception as e:
-                log.debug("location query failed: %s", e)
-                continue
-            if u:
-                state["location_fixes"] += 1
-                handle_sample({"id": wid, "kind": "worker", "ts": now_ms(), "x": u["x"], "y": u["y"],
-                               "pos_sigma": max(0.3, u["accuracy"]), "source": "mec-location"})
+        try:
+            for u in loc.all_users():
+                key = (u.get("address"), json.dumps(u.get("timestamp"), sort_keys=True),
+                       json.dumps(u.get("locationInfo"), sort_keys=True))
+                if last_fix.get(key[0]) == key:
+                    continue                       # same fix as last poll: not a new measurement
+                last_fix[key[0]] = key
+                handle_mec_location(u)
+        except Exception as e:
+            log.debug("location query failed: %s", e)
         if now - last_rnis >= MS.get("rnis_poll_s", 1.0):
             last_rnis = now
             try:
-                load = rnis.cell_load(MS.get("cell_id"))
-            except Exception:
-                load = None
-            congested = load is not None and load >= MS.get("congestion_prb_pct", 80)
-            if congested != state["network"]["congested"]:
-                log.info("RNIS: cell load %s%% -> %s", load, "congested" if congested else "normal")
-            state["network"] = {"cell_load": load, "congested": congested}
-            margin = MS.get("congested_margin_s", 0.5) if congested else 0.0
-            engine.cfg.t_danger, engine.cfg.t_warn = BASE_T[0] + margin, BASE_T[1] + margin
+                for c in rnis.cells(MS.get("cell_id")):
+                    handle_mec_cell(c)
+            except Exception as e:
+                log.debug("RNIS query failed: %s", e)
         time.sleep(MS.get("poll_s", 0.25))
 
 
@@ -281,7 +378,8 @@ app = FastAPI(title="EdgeGuard MEC App")
 @app.on_event("startup")
 def _start_mec_services():
     if MS.get("enabled"):
-        threading.Thread(target=mec_services_loop, daemon=True).start()
+        src = MS.get("location_source", "cse")
+        threading.Thread(target=ipe_watch if src == "cse" else mec_services_loop, daemon=True).start()
 
 
 @app.post("/notify")
@@ -289,7 +387,12 @@ async def notify(req: Request):
     body = await req.json()
     kind, payload = parse_notification(body)
     if kind == "cin" and isinstance(payload, dict):
-        handle_sample(payload)
+        if is_mec_location(payload):
+            handle_mec_location(payload)
+        elif is_mec_cell(payload):
+            handle_mec_cell(payload)
+        else:
+            handle_sample(payload)
     return Response(status_code=200, headers={"X-M2M-RSC": "2000"})
 
 
@@ -298,7 +401,7 @@ def health():
     ing = sorted(state["ingest_ms"])
     return {"ok": True, "method": engine.method, "samples": state["rx"],
             "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
-            "network": state["network"], "location_fixes": state["location_fixes"],
+            "network": state["network"], "location_fixes": state["location_fixes"], "mec": state["mec"],
             "camera": state["camera"], "rates": state["rates"],
             "ingest_ms_median": ing[len(ing) // 2] if ing else None}
 
