@@ -1,0 +1,3974 @@
+{
+ "results": [
+  {
+   "case": "baseline",
+   "params": {},
+   "episodes": 24,
+   "encounters": 24,
+   "conflicts": 10,
+   "excluded_spawned_in_conflict": 0,
+   "collisions_without_system": 10,
+   "collisions_with_system": 0,
+   "contacts_with_system": 1,
+   "timely_detection": 1.0,
+   "false_alarm_rate": 0.357,
+   "median_lead_s": 2.52,
+   "alert_latency_ms_p50": 69,
+   "alert_latency_ms_p95": 97,
+   "forklift_time_lost_s_per_episode": 2.63,
+   "worker_stops": 22,
+   "samples_delivered": 5760,
+   "samples_dropped": 0,
+   "combos": [
+    {
+     "round": 0,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.61,
+     "t_contact": null,
+     "actual_d_min": 3.61,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "turn_away",
+     "alerts": [
+      [
+       3.87,
+       "raise",
+       "WARNING",
+       1.14
+      ],
+      [
+       6.27,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 4.87,
+     "t_contact": null,
+     "actual_d_min": 4.87,
+     "first_alert_t": 3.867922782897949
+    },
+    {
+     "round": 0,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.88,
+     "t_contact": null,
+     "actual_d_min": 3.88,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.81,
+     "t_contact": null,
+     "actual_d_min": 2.81,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 2.45,
+     "t_contact": null,
+     "actual_d_min": 2.45,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       5.39,
+       "raise",
+       "WARNING",
+       1.1
+      ],
+      [
+       6.46,
+       "refresh",
+       "WARNING",
+       0.85
+      ],
+      [
+       7.46,
+       "refresh",
+       "WARNING",
+       0.71
+      ],
+      [
+       9.21,
+       "refresh",
+       "WARNING",
+       0.41
+      ],
+      [
+       10.27,
+       "refresh",
+       "WARNING",
+       0.38
+      ],
+      [
+       11.3,
+       "refresh",
+       "WARNING",
+       0.27
+      ]
+     ],
+     "nominal_d_min": 0.09,
+     "t_contact": 8.6,
+     "actual_d_min": 2.66,
+     "first_alert_t": 5.387221813201904
+    },
+    {
+     "round": 0,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "turn_away",
+     "alerts": [],
+     "nominal_d_min": 6.46,
+     "t_contact": null,
+     "actual_d_min": 6.46,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       4.25,
+       "raise",
+       "WARNING",
+       2.75
+      ],
+      [
+       5.26,
+       "refresh",
+       "WARNING",
+       2.7
+      ],
+      [
+       5.77,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       8.37,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.97,
+     "t_contact": null,
+     "actual_d_min": 2.97,
+     "first_alert_t": 4.253641605377197
+    },
+    {
+     "round": 1,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       3.19,
+       "raise",
+       "WARNING",
+       1.17
+      ],
+      [
+       4.09,
+       "refresh",
+       "WARNING",
+       0.86
+      ],
+      [
+       5.07,
+       "refresh",
+       "WARNING",
+       0.75
+      ],
+      [
+       6.15,
+       "refresh",
+       "WARNING",
+       0.56
+      ],
+      [
+       7.18,
+       "refresh",
+       "WARNING",
+       0.38
+      ],
+      [
+       8.26,
+       "refresh",
+       "WARNING",
+       0.45
+      ],
+      [
+       9.27,
+       "refresh",
+       "WARNING",
+       0.29
+      ],
+      [
+       10.28,
+       "refresh",
+       "WARNING",
+       0.23
+      ]
+     ],
+     "nominal_d_min": 0.06,
+     "t_contact": 6.9,
+     "actual_d_min": 2.23,
+     "first_alert_t": 3.1854617595672607
+    },
+    {
+     "round": 1,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       2.67,
+       "raise",
+       "WARNING",
+       2.21
+      ],
+      [
+       2.96,
+       "refresh",
+       "WARNING",
+       0.99
+      ],
+      [
+       3.46,
+       "refresh",
+       "WARNING",
+       0.66
+      ],
+      [
+       4.47,
+       "refresh",
+       "WARNING",
+       0.67
+      ],
+      [
+       5.48,
+       "refresh",
+       "WARNING",
+       0.7
+      ],
+      [
+       6.29,
+       "refresh",
+       "WARNING",
+       0.3
+      ],
+      [
+       7.39,
+       "refresh",
+       "WARNING",
+       0.34
+      ],
+      [
+       8.47,
+       "refresh",
+       "WARNING",
+       0.12
+      ]
+     ],
+     "nominal_d_min": 0.22,
+     "t_contact": 5.0,
+     "actual_d_min": 1.79,
+     "first_alert_t": 2.66501522064209
+    },
+    {
+     "round": 1,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       5.28,
+       "raise",
+       "WARNING",
+       1.02
+      ],
+      [
+       6.17,
+       "refresh",
+       "WARNING",
+       0.71
+      ],
+      [
+       7.17,
+       "refresh",
+       "WARNING",
+       0.74
+      ],
+      [
+       8.16,
+       "refresh",
+       "WARNING",
+       0.54
+      ],
+      [
+       9.07,
+       "refresh",
+       "WARNING",
+       0.2
+      ],
+      [
+       10.07,
+       "refresh",
+       "WARNING",
+       0.19
+      ],
+      [
+       10.27,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       11.27,
+       "refresh",
+       "WARNING",
+       0.04
+      ]
+     ],
+     "nominal_d_min": 0.48,
+     "t_contact": 7.800000000000001,
+     "actual_d_min": 1.75,
+     "first_alert_t": 5.2751336097717285
+    },
+    {
+     "round": 1,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       2.55,
+       "raise",
+       "WARNING",
+       1.59
+      ],
+      [
+       2.95,
+       "refresh",
+       "WARNING",
+       1.27
+      ],
+      [
+       3.96,
+       "refresh",
+       "WARNING",
+       0.97
+      ],
+      [
+       4.96,
+       "refresh",
+       "WARNING",
+       0.96
+      ],
+      [
+       5.97,
+       "refresh",
+       "WARNING",
+       0.63
+      ],
+      [
+       6.65,
+       "refresh",
+       "WARNING",
+       0.3
+      ],
+      [
+       7.66,
+       "refresh",
+       "WARNING",
+       0.2
+      ],
+      [
+       8.76,
+       "refresh",
+       "WARNING",
+       0.25
+      ]
+     ],
+     "nominal_d_min": 0.54,
+     "t_contact": 5.2,
+     "actual_d_min": 1.21,
+     "first_alert_t": 2.5532398223876953
+    },
+    {
+     "round": 1,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.58,
+     "t_contact": null,
+     "actual_d_min": 2.58,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [
+      [
+       2.16,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 5.32,
+     "t_contact": null,
+     "actual_d_min": 5.32,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       4.1,
+       "raise",
+       "WARNING",
+       1.29
+      ],
+      [
+       5.16,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.17,
+       "refresh",
+       "WARNING",
+       0.77
+      ],
+      [
+       7.16,
+       "refresh",
+       "WARNING",
+       0.6
+      ],
+      [
+       8.1,
+       "refresh",
+       "WARNING",
+       0.29
+      ],
+      [
+       9.17,
+       "refresh",
+       "WARNING",
+       0
+      ],
+      [
+       11.46,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       11.88,
+       "raise",
+       "WARNING",
+       0.19
+      ]
+     ],
+     "nominal_d_min": 0.08,
+     "t_contact": 6.6000000000000005,
+     "actual_d_min": 1.86,
+     "first_alert_t": 4.0967772006988525
+    },
+    {
+     "round": 1,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       4.47,
+       "raise",
+       "WARNING",
+       2.16
+      ],
+      [
+       5.28,
+       "refresh",
+       "WARNING",
+       0.87
+      ],
+      [
+       7.86,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.94,
+     "t_contact": null,
+     "actual_d_min": 2.94,
+     "first_alert_t": 4.471412181854248
+    },
+    {
+     "round": 2,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "roadside_picker",
+     "alerts": [
+      [
+       0.09,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       2.87,
+       "raise",
+       "WARNING",
+       2.72
+      ],
+      [
+       3.26,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       4.32,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.36,
+       "refresh",
+       "WARNING",
+       0.97
+      ],
+      [
+       6.45,
+       "refresh",
+       "WARNING",
+       0.99
+      ],
+      [
+       7.47,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       8.59,
+       "refresh",
+       "WARNING",
+       0.91
+      ]
+     ],
+     "nominal_d_min": 2.14,
+     "t_contact": null,
+     "actual_d_min": 2.16,
+     "first_alert_t": 2.8669559955596924
+    },
+    {
+     "round": 2,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "roadside_picker",
+     "alerts": [
+      [
+       0.09,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       5.98,
+       "raise",
+       "WARNING",
+       1.83
+      ],
+      [
+       5.99,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.97,
+       "refresh",
+       "WARNING",
+       0.98
+      ],
+      [
+       7.97,
+       "refresh",
+       "WARNING",
+       0.99
+      ],
+      [
+       9.08,
+       "refresh",
+       "WARNING",
+       0.96
+      ],
+      [
+       10.07,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       11.06,
+       "refresh",
+       "WARNING",
+       1
+      ]
+     ],
+     "nominal_d_min": 2.04,
+     "t_contact": null,
+     "actual_d_min": 2.03,
+     "first_alert_t": 5.983278751373291
+    },
+    {
+     "round": 2,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       0.08,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       5.59,
+       "raise",
+       "WARNING",
+       1.01
+      ],
+      [
+       6.66,
+       "refresh",
+       "WARNING",
+       0.74
+      ],
+      [
+       7.66,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       8.66,
+       "refresh",
+       "WARNING",
+       0.45
+      ],
+      [
+       9.67,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       10.67,
+       "refresh",
+       "WARNING",
+       0.3
+      ],
+      [
+       11.77,
+       "refresh",
+       "WARNING",
+       0.21
+      ]
+     ],
+     "nominal_d_min": 0.08,
+     "t_contact": 8.1,
+     "actual_d_min": 2.63,
+     "first_alert_t": 5.585252523422241
+    },
+    {
+     "round": 2,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [
+      [
+       0.07,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.62,
+     "t_contact": null,
+     "actual_d_min": 2.62,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       5.07,
+       "raise",
+       "WARNING",
+       2.34
+      ],
+      [
+       5.57,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       6.26,
+       "refresh",
+       "WARNING",
+       0.62
+      ],
+      [
+       7.28,
+       "refresh",
+       "WARNING",
+       0.65
+      ],
+      [
+       8.36,
+       "refresh",
+       "WARNING",
+       0.65
+      ],
+      [
+       8.87,
+       "refresh",
+       "WARNING",
+       0.3
+      ],
+      [
+       9.56,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       11.96,
+       "clear",
+       "CAUTION",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.16,
+     "t_contact": 7.5,
+     "actual_d_min": 2.22,
+     "first_alert_t": 5.07457423210144
+    },
+    {
+     "round": 2,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       3.66,
+       "raise",
+       "WARNING",
+       1.2
+      ],
+      [
+       4.67,
+       "refresh",
+       "WARNING",
+       0.98
+      ],
+      [
+       5.69,
+       "refresh",
+       "WARNING",
+       0.75
+      ],
+      [
+       6.77,
+       "refresh",
+       "WARNING",
+       0.6
+      ],
+      [
+       7.78,
+       "refresh",
+       "WARNING",
+       0.44
+      ],
+      [
+       8.86,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       9.87,
+       "refresh",
+       "WARNING",
+       0.29
+      ],
+      [
+       10.87,
+       "refresh",
+       "WARNING",
+       0.23
+      ]
+     ],
+     "nominal_d_min": 0.27,
+     "t_contact": 7.300000000000001,
+     "actual_d_min": 2.32,
+     "first_alert_t": 3.662661552429199
+    },
+    {
+     "round": 2,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "crossing_clear",
+     "alerts": [
+      [
+       2.18,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 3.08,
+     "t_contact": null,
+     "actual_d_min": 3.08,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       8.58,
+       "raise",
+       "WARNING",
+       0.87
+      ],
+      [
+       9.19,
+       "refresh",
+       "WARNING",
+       0.57
+      ],
+      [
+       10.18,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       11.26,
+       "refresh",
+       "WARNING",
+       0.44
+      ]
+     ],
+     "nominal_d_min": 0.15,
+     "t_contact": 10.700000000000001,
+     "actual_d_min": 3.15,
+     "first_alert_t": 8.581445693969727
+    }
+   ]
+  },
+  {
+   "case": "odd_behaviour",
+   "params": {
+    "mix": "extra"
+   },
+   "episodes": 24,
+   "encounters": 24,
+   "conflicts": 24,
+   "excluded_spawned_in_conflict": 0,
+   "collisions_without_system": 24,
+   "collisions_with_system": 6,
+   "contacts_with_system": 10,
+   "timely_detection": 0.875,
+   "false_alarm_rate": null,
+   "median_lead_s": 2.44,
+   "alert_latency_ms_p50": 69,
+   "alert_latency_ms_p95": 90,
+   "forklift_time_lost_s_per_episode": 5.25,
+   "worker_stops": 58,
+   "samples_delivered": 5760,
+   "samples_dropped": 0,
+   "combos": [
+    {
+     "round": 0,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       4.06,
+       "raise",
+       "WARNING",
+       2.93
+      ],
+      [
+       5.08,
+       "refresh",
+       "WARNING",
+       2.95
+      ],
+      [
+       5.17,
+       "refresh",
+       "WARNING",
+       0.87
+      ],
+      [
+       5.68,
+       "refresh",
+       "WARNING",
+       0.57
+      ],
+      [
+       8.17,
+       "refresh",
+       "WARNING",
+       0.57
+      ],
+      [
+       8.18,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       8.47,
+       "raise",
+       "DANGER",
+       0.06
+      ],
+      [
+       9.57,
+       "refresh",
+       "WARNING",
+       0.03
+      ]
+     ],
+     "nominal_d_min": 0.31,
+     "t_contact": 6.7,
+     "actual_d_min": 1.7,
+     "first_alert_t": 4.059848308563232
+    },
+    {
+     "round": 0,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "reversing_forklift",
+     "alerts": [
+      [
+       2.56,
+       "raise",
+       "WARNING",
+       1.68
+      ],
+      [
+       2.66,
+       "refresh",
+       "WARNING",
+       0.84
+      ],
+      [
+       3.69,
+       "refresh",
+       "WARNING",
+       0.86
+      ],
+      [
+       4.25,
+       "refresh",
+       "WARNING",
+       0.46
+      ],
+      [
+       5.27,
+       "refresh",
+       "WARNING",
+       0.45
+      ],
+      [
+       6.26,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       7.27,
+       "refresh",
+       "WARNING",
+       0.21
+      ],
+      [
+       8.35,
+       "refresh",
+       "WARNING",
+       0.2
+      ]
+     ],
+     "nominal_d_min": 0.1,
+     "t_contact": 4.800000000000001,
+     "actual_d_min": 1.46,
+     "first_alert_t": 2.561861276626587
+    },
+    {
+     "round": 0,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       2.18,
+       "raise",
+       "WARNING",
+       2.44
+      ],
+      [
+       3.97,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.86,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.75,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       7.87,
+       "refresh",
+       "WARNING",
+       0.07
+      ],
+      [
+       7.88,
+       "raise",
+       "DANGER",
+       0.02
+      ],
+      [
+       8.96,
+       "refresh",
+       "DANGER",
+       0.01
+      ],
+      [
+       9.97,
+       "refresh",
+       "DANGER",
+       0.05
+      ]
+     ],
+     "nominal_d_min": 0.3,
+     "t_contact": 5.800000000000001,
+     "actual_d_min": 1.2,
+     "first_alert_t": 2.177739143371582
+    },
+    {
+     "round": 0,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       3.67,
+       "raise",
+       "WARNING",
+       1.86
+      ],
+      [
+       3.69,
+       "refresh",
+       "WARNING",
+       0.65
+      ],
+      [
+       3.76,
+       "raise",
+       "DANGER",
+       0.28
+      ],
+      [
+       4.78,
+       "refresh",
+       "WARNING",
+       0.28
+      ],
+      [
+       5.78,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       6.77,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       7.87,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       8.86,
+       "refresh",
+       "WARNING",
+       0.21
+      ]
+     ],
+     "nominal_d_min": 0.06,
+     "t_contact": 5.6000000000000005,
+     "actual_d_min": 1.87,
+     "first_alert_t": 3.6660971641540527
+    },
+    {
+     "round": 0,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       3.27,
+       "raise",
+       "WARNING",
+       2.68
+      ],
+      [
+       4.96,
+       "refresh",
+       "WARNING",
+       2.64
+      ],
+      [
+       5.87,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.86,
+       "refresh",
+       "WARNING",
+       1.09
+      ],
+      [
+       7.47,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       10.38,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       11.37,
+       "raise",
+       "WARNING",
+       0.11
+      ],
+      [
+       11.46,
+       "raise",
+       "DANGER",
+       0
+      ]
+     ],
+     "nominal_d_min": 0.05,
+     "t_contact": 7.2,
+     "actual_d_min": 0.16,
+     "first_alert_t": 3.272831439971924
+    },
+    {
+     "round": 0,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       3.7,
+       "raise",
+       "WARNING",
+       1.69
+      ],
+      [
+       4.77,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.97,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       7.66,
+       "raise",
+       "WARNING",
+       1.45
+      ],
+      [
+       7.97,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       9.06,
+       "refresh",
+       "DANGER",
+       0.01
+      ],
+      [
+       10.07,
+       "refresh",
+       "DANGER",
+       0.01
+      ],
+      [
+       11.15,
+       "refresh",
+       "DANGER",
+       0.03
+      ]
+     ],
+     "nominal_d_min": 0.21,
+     "t_contact": 6.4,
+     "actual_d_min": 0.3,
+     "first_alert_t": 3.6998608112335205
+    },
+    {
+     "round": 0,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       4.16,
+       "raise",
+       "WARNING",
+       2.74
+      ],
+      [
+       5.07,
+       "refresh",
+       "WARNING",
+       1.07
+      ],
+      [
+       5.69,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       8.07,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       8.36,
+       "raise",
+       "WARNING",
+       0.73
+      ],
+      [
+       8.49,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       8.76,
+       "raise",
+       "DANGER",
+       0.15
+      ],
+      [
+       10.17,
+       "refresh",
+       "WARNING",
+       0.2
+      ]
+     ],
+     "nominal_d_min": 0.16,
+     "t_contact": 6.9,
+     "actual_d_min": 1.94,
+     "first_alert_t": 4.162623405456543
+    },
+    {
+     "round": 0,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       2.47,
+       "raise",
+       "WARNING",
+       2.21
+      ],
+      [
+       3.39,
+       "refresh",
+       "WARNING",
+       0.76
+      ],
+      [
+       3.76,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       6.37,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       6.56,
+       "raise",
+       "WARNING",
+       0.26
+      ],
+      [
+       6.85,
+       "raise",
+       "DANGER",
+       0.08
+      ],
+      [
+       9.05,
+       "refresh",
+       "WARNING",
+       0.04
+      ],
+      [
+       11.05,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.12,
+     "t_contact": 4.9,
+     "actual_d_min": 1.86,
+     "first_alert_t": 2.468966484069824
+    },
+    {
+     "round": 1,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       0.07,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       3.17,
+       "raise",
+       "WARNING",
+       2.85
+      ],
+      [
+       4.77,
+       "refresh",
+       "WARNING",
+       1.28
+      ],
+      [
+       6.17,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       7.28,
+       "refresh",
+       "WARNING",
+       0.93
+      ],
+      [
+       7.45,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       10.26,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       10.87,
+       "raise",
+       "WARNING",
+       0.22
+      ]
+     ],
+     "nominal_d_min": 0.1,
+     "t_contact": 6.7,
+     "actual_d_min": 1.01,
+     "first_alert_t": 3.1663565635681152
+    },
+    {
+     "round": 1,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "reversing_forklift",
+     "alerts": [
+      [
+       0.36,
+       "refresh",
+       "WARNING",
+       0.68
+      ],
+      [
+       2.48,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       4.46,
+       "raise",
+       "WARNING",
+       1.07
+      ],
+      [
+       5.48,
+       "refresh",
+       "WARNING",
+       0.1
+      ],
+      [
+       8.26,
+       "refresh",
+       "WARNING",
+       0.11
+      ],
+      [
+       8.7,
+       "raise",
+       "DANGER",
+       0.13
+      ],
+      [
+       9.75,
+       "refresh",
+       "DANGER",
+       0.19
+      ],
+      [
+       10.76,
+       "refresh",
+       "DANGER",
+       0
+      ]
+     ],
+     "nominal_d_min": 0.06,
+     "t_contact": 4.9,
+     "actual_d_min": 0.23,
+     "first_alert_t": 4.462860822677612
+    },
+    {
+     "round": 1,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       0.08,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       3.26,
+       "raise",
+       "WARNING",
+       2.96
+      ],
+      [
+       4.17,
+       "refresh",
+       "WARNING",
+       1.05
+      ],
+      [
+       4.68,
+       "refresh",
+       "WARNING",
+       0.68
+      ],
+      [
+       7.17,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       7.56,
+       "raise",
+       "WARNING",
+       0.34
+      ],
+      [
+       7.77,
+       "raise",
+       "DANGER",
+       0.15
+      ],
+      [
+       9.86,
+       "refresh",
+       "WARNING",
+       0.2
+      ]
+     ],
+     "nominal_d_min": 0.2,
+     "t_contact": 6.0,
+     "actual_d_min": 2.16,
+     "first_alert_t": 3.2582287788391113
+    },
+    {
+     "round": 1,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       0.1,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       5.17,
+       "raise",
+       "WARNING",
+       2.32
+      ],
+      [
+       5.47,
+       "refresh",
+       "WARNING",
+       0.58
+      ],
+      [
+       5.58,
+       "raise",
+       "DANGER",
+       2.4
+      ],
+      [
+       5.97,
+       "refresh",
+       "DANGER",
+       0.34
+      ],
+      [
+       6.96,
+       "refresh",
+       "WARNING",
+       0.46
+      ],
+      [
+       7.97,
+       "refresh",
+       "WARNING",
+       0.46
+      ],
+      [
+       9.06,
+       "refresh",
+       "WARNING",
+       0.44
+      ]
+     ],
+     "nominal_d_min": 0.44,
+     "t_contact": 7.4,
+     "actual_d_min": 0.77,
+     "first_alert_t": 5.170161485671997
+    },
+    {
+     "round": 1,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       2.16,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       4.15,
+       "raise",
+       "WARNING",
+       1.65
+      ],
+      [
+       5.16,
+       "refresh",
+       "WARNING",
+       1.62
+      ],
+      [
+       5.28,
+       "refresh",
+       "WARNING",
+       0.48
+      ],
+      [
+       6.27,
+       "refresh",
+       "WARNING",
+       0.53
+      ],
+      [
+       8.27,
+       "refresh",
+       "WARNING",
+       0.5
+      ],
+      [
+       8.37,
+       "refresh",
+       "WARNING",
+       0.05
+      ],
+      [
+       8.57,
+       "raise",
+       "DANGER",
+       0
+      ]
+     ],
+     "nominal_d_min": 0.1,
+     "t_contact": 6.6000000000000005,
+     "actual_d_min": 0.78,
+     "first_alert_t": 4.15220308303833
+    },
+    {
+     "round": 1,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       2.06,
+       "refresh",
+       "WARNING",
+       1.86
+      ],
+      [
+       3.17,
+       "refresh",
+       "WARNING",
+       1.83
+      ],
+      [
+       6.06,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.42,
+     "t_contact": 4.9,
+     "actual_d_min": 2.96,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "reversing_forklift",
+     "alerts": [
+      [
+       0.09,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       3.46,
+       "raise",
+       "WARNING",
+       1.68
+      ],
+      [
+       4.07,
+       "refresh",
+       "WARNING",
+       0.68
+      ],
+      [
+       4.35,
+       "refresh",
+       "WARNING",
+       0.37
+      ],
+      [
+       5.37,
+       "refresh",
+       "WARNING",
+       0.37
+      ],
+      [
+       6.46,
+       "refresh",
+       "WARNING",
+       0.36
+      ],
+      [
+       7.36,
+       "refresh",
+       "WARNING",
+       0
+      ],
+      [
+       8.76,
+       "refresh",
+       "WARNING",
+       0.04
+      ]
+     ],
+     "nominal_d_min": 0.13,
+     "t_contact": 5.7,
+     "actual_d_min": 1.81,
+     "first_alert_t": 3.4615843296051025
+    },
+    {
+     "round": 1,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       4.45,
+       "raise",
+       "WARNING",
+       2.5
+      ],
+      [
+       5.37,
+       "refresh",
+       "WARNING",
+       0.85
+      ],
+      [
+       6.26,
+       "refresh",
+       "WARNING",
+       0.51
+      ],
+      [
+       8.56,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       8.69,
+       "raise",
+       "WARNING",
+       0.24
+      ],
+      [
+       8.86,
+       "raise",
+       "DANGER",
+       0.12
+      ],
+      [
+       11.26,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       11.68,
+       "raise",
+       "WARNING",
+       0.1
+      ]
+     ],
+     "nominal_d_min": 0.15,
+     "t_contact": 7.0,
+     "actual_d_min": 1.73,
+     "first_alert_t": 4.453788995742798
+    },
+    {
+     "round": 2,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       1.56,
+       "refresh",
+       "WARNING",
+       2.23
+      ],
+      [
+       2.67,
+       "refresh",
+       "WARNING",
+       2.22
+      ],
+      [
+       4.78,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.39,
+     "t_contact": 5.0,
+     "actual_d_min": 2.64,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       2.18,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       2.78,
+       "raise",
+       "WARNING",
+       2.74
+      ],
+      [
+       2.85,
+       "refresh",
+       "WARNING",
+       1.5
+      ],
+      [
+       3.27,
+       "refresh",
+       "WARNING",
+       0.93
+      ],
+      [
+       4.39,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       5.46,
+       "refresh",
+       "WARNING",
+       0.92
+      ],
+      [
+       6.46,
+       "refresh",
+       "WARNING",
+       0.87
+      ],
+      [
+       7.46,
+       "refresh",
+       "WARNING",
+       0.85
+      ]
+     ],
+     "nominal_d_min": 0.14,
+     "t_contact": 5.6000000000000005,
+     "actual_d_min": 2.61,
+     "first_alert_t": 2.7751624584198
+    },
+    {
+     "round": 2,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "running_worker",
+     "alerts": [
+      [
+       0.08,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       2.79,
+       "raise",
+       "WARNING",
+       2.31
+      ],
+      [
+       3.78,
+       "refresh",
+       "WARNING",
+       2.31
+      ],
+      [
+       6.67,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.17,
+     "t_contact": 5.5,
+     "actual_d_min": 3.9,
+     "first_alert_t": 2.7865047454833984
+    },
+    {
+     "round": 2,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       2.07,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       3.97,
+       "raise",
+       "WARNING",
+       1.5
+      ],
+      [
+       4.5,
+       "refresh",
+       "WARNING",
+       1.03
+      ],
+      [
+       5.57,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.66,
+       "refresh",
+       "WARNING",
+       0.98
+      ],
+      [
+       7.67,
+       "refresh",
+       "WARNING",
+       0.92
+      ],
+      [
+       7.87,
+       "refresh",
+       "WARNING",
+       0.47
+      ],
+      [
+       8.28,
+       "refresh",
+       "WARNING",
+       0.11
+      ]
+     ],
+     "nominal_d_min": 0.21,
+     "t_contact": 6.4,
+     "actual_d_min": 2.51,
+     "first_alert_t": 3.970240592956543
+    },
+    {
+     "round": 2,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "reversing_forklift",
+     "alerts": [
+      [
+       2.19,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       4.28,
+       "raise",
+       "WARNING",
+       1.28
+      ],
+      [
+       5.08,
+       "refresh",
+       "WARNING",
+       0.39
+      ],
+      [
+       6.37,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       7.67,
+       "refresh",
+       "WARNING",
+       0.44
+      ],
+      [
+       8.16,
+       "refresh",
+       "WARNING",
+       0.12
+      ],
+      [
+       8.68,
+       "raise",
+       "DANGER",
+       0.17
+      ],
+      [
+       9.68,
+       "refresh",
+       "DANGER",
+       0.16
+      ]
+     ],
+     "nominal_d_min": 0.15,
+     "t_contact": 6.7,
+     "actual_d_min": 0.97,
+     "first_alert_t": 4.277870178222656
+    },
+    {
+     "round": 2,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       1.97,
+       "raise",
+       "WARNING",
+       0.92
+      ],
+      [
+       2.26,
+       "refresh",
+       "WARNING",
+       0.37
+      ],
+      [
+       3.28,
+       "refresh",
+       "WARNING",
+       0.35
+      ],
+      [
+       4.28,
+       "refresh",
+       "WARNING",
+       0.34
+      ],
+      [
+       5.36,
+       "refresh",
+       "WARNING",
+       0.35
+      ],
+      [
+       6.0,
+       "refresh",
+       "WARNING",
+       0
+      ],
+      [
+       6.38,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       8.69,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.22,
+     "t_contact": 4.1000000000000005,
+     "actual_d_min": 2.7,
+     "first_alert_t": 1.967576265335083
+    },
+    {
+     "round": 2,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "zigzag_worker",
+     "alerts": [
+      [
+       0.08,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       2.36,
+       "raise",
+       "WARNING",
+       1.81
+      ],
+      [
+       2.67,
+       "refresh",
+       "WARNING",
+       0.46
+      ],
+      [
+       2.78,
+       "raise",
+       "DANGER",
+       0.36
+      ],
+      [
+       3.77,
+       "refresh",
+       "WARNING",
+       0.32
+      ],
+      [
+       4.87,
+       "refresh",
+       "WARNING",
+       0.37
+      ],
+      [
+       5.99,
+       "refresh",
+       "WARNING",
+       0.35
+      ],
+      [
+       6.68,
+       "refresh",
+       "WARNING",
+       0
+      ]
+     ],
+     "nominal_d_min": 0.18,
+     "t_contact": 4.6000000000000005,
+     "actual_d_min": 2.08,
+     "first_alert_t": 2.3578548431396484
+    },
+    {
+     "round": 2,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "reversing_forklift",
+     "alerts": [
+      [
+       2.16,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       4.49,
+       "raise",
+       "WARNING",
+       1.18
+      ],
+      [
+       4.97,
+       "refresh",
+       "WARNING",
+       0.46
+      ],
+      [
+       5.99,
+       "refresh",
+       "WARNING",
+       0.18
+      ],
+      [
+       8.48,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       8.56,
+       "raise",
+       "WARNING",
+       0.19
+      ],
+      [
+       9.6,
+       "refresh",
+       "WARNING",
+       0.2
+      ],
+      [
+       9.77,
+       "raise",
+       "DANGER",
+       0.14
+      ]
+     ],
+     "nominal_d_min": 0.02,
+     "t_contact": 6.6000000000000005,
+     "actual_d_min": 1.14,
+     "first_alert_t": 4.48991322517395
+    }
+   ]
+  },
+  {
+   "case": "wifi_latency",
+   "params": {
+    "delay_ms": 60,
+    "jitter_ms": 30
+   },
+   "episodes": 24,
+   "encounters": 24,
+   "conflicts": 8,
+   "excluded_spawned_in_conflict": 0,
+   "collisions_without_system": 8,
+   "collisions_with_system": 0,
+   "contacts_with_system": 1,
+   "timely_detection": 1.0,
+   "false_alarm_rate": 0.25,
+   "median_lead_s": 2.54,
+   "alert_latency_ms_p50": 171,
+   "alert_latency_ms_p95": 253,
+   "forklift_time_lost_s_per_episode": 2.67,
+   "worker_stops": 18,
+   "samples_delivered": 5760,
+   "samples_dropped": 0,
+   "combos": [
+    {
+     "round": 0,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       5.12,
+       "raise",
+       "WARNING",
+       1.16
+      ],
+      [
+       6.05,
+       "refresh",
+       "WARNING",
+       0.83
+      ],
+      [
+       7.06,
+       "refresh",
+       "WARNING",
+       0.58
+      ],
+      [
+       8.16,
+       "refresh",
+       "WARNING",
+       0.53
+      ],
+      [
+       9.19,
+       "refresh",
+       "WARNING",
+       0.4
+      ],
+      [
+       10.19,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       11.25,
+       "refresh",
+       "WARNING",
+       0.2
+      ]
+     ],
+     "nominal_d_min": 0.28,
+     "t_contact": 7.6000000000000005,
+     "actual_d_min": 2.41,
+     "first_alert_t": 5.120962381362915
+    },
+    {
+     "round": 0,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "roadside_picker",
+     "alerts": [],
+     "nominal_d_min": 2.34,
+     "t_contact": null,
+     "actual_d_min": 2.34,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       2.96,
+       "raise",
+       "WARNING",
+       3
+      ],
+      [
+       3.3,
+       "refresh",
+       "WARNING",
+       1.33
+      ],
+      [
+       3.96,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       5.01,
+       "refresh",
+       "WARNING",
+       0.83
+      ],
+      [
+       5.99,
+       "refresh",
+       "WARNING",
+       0.77
+      ],
+      [
+       6.92,
+       "refresh",
+       "WARNING",
+       0.44
+      ],
+      [
+       7.98,
+       "refresh",
+       "WARNING",
+       0.43
+      ],
+      [
+       8.77,
+       "refresh",
+       "WARNING",
+       0.11
+      ]
+     ],
+     "nominal_d_min": 0.21,
+     "t_contact": 5.5,
+     "actual_d_min": 2.15,
+     "first_alert_t": 2.9559991359710693
+    },
+    {
+     "round": 0,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "roadside_picker",
+     "alerts": [],
+     "nominal_d_min": 2.72,
+     "t_contact": null,
+     "actual_d_min": 2.72,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       3.24,
+       "raise",
+       "WARNING",
+       2.22
+      ],
+      [
+       3.82,
+       "refresh",
+       "WARNING",
+       1.01
+      ],
+      [
+       4.9,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       6.1,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       7.09,
+       "refresh",
+       "WARNING",
+       0.95
+      ],
+      [
+       8.11,
+       "refresh",
+       "WARNING",
+       0.97
+      ],
+      [
+       9.11,
+       "refresh",
+       "WARNING",
+       0.98
+      ],
+      [
+       11.78,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.39,
+     "t_contact": null,
+     "actual_d_min": 2.38,
+     "first_alert_t": 3.2394535541534424
+    },
+    {
+     "round": 0,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.88,
+     "t_contact": null,
+     "actual_d_min": 2.88,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       2.56,
+       "raise",
+       "WARNING",
+       2.01
+      ],
+      [
+       3.35,
+       "refresh",
+       "WARNING",
+       0.9
+      ],
+      [
+       3.64,
+       "refresh",
+       "WARNING",
+       0.58
+      ],
+      [
+       5.1,
+       "refresh",
+       "WARNING",
+       0.56
+      ],
+      [
+       6.47,
+       "refresh",
+       "WARNING",
+       0.58
+      ],
+      [
+       7.46,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       9.78,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       11.84,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.62,
+     "t_contact": null,
+     "actual_d_min": 2.61,
+     "first_alert_t": 2.5621495246887207
+    },
+    {
+     "round": 0,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.53,
+     "t_contact": null,
+     "actual_d_min": 3.53,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "crossing_clear",
+     "alerts": [
+      [
+       2.25,
+       "clear",
+       "CAUTION",
+       null
+      ]
+     ],
+     "nominal_d_min": 3.23,
+     "t_contact": null,
+     "actual_d_min": 3.23,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       3.13,
+       "raise",
+       "WARNING",
+       1.17
+      ],
+      [
+       4.15,
+       "refresh",
+       "WARNING",
+       1.17
+      ],
+      [
+       4.24,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       5.58,
+       "refresh",
+       "WARNING",
+       0.64
+      ],
+      [
+       6.62,
+       "refresh",
+       "WARNING",
+       0.66
+      ],
+      [
+       7.06,
+       "refresh",
+       "WARNING",
+       0.17
+      ],
+      [
+       7.44,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       8.45,
+       "refresh",
+       "DANGER",
+       0.01
+      ]
+     ],
+     "nominal_d_min": 0.34,
+     "t_contact": 5.6000000000000005,
+     "actual_d_min": 1.32,
+     "first_alert_t": 3.134481906890869
+    },
+    {
+     "round": 1,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.68,
+     "t_contact": null,
+     "actual_d_min": 2.68,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       0.35,
+       "raise",
+       "WARNING",
+       1.91
+      ],
+      [
+       2.49,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       3.45,
+       "raise",
+       "WARNING",
+       1.22
+      ],
+      [
+       4.21,
+       "refresh",
+       "WARNING",
+       0.89
+      ],
+      [
+       5.18,
+       "refresh",
+       "WARNING",
+       0.7
+      ],
+      [
+       6.21,
+       "refresh",
+       "WARNING",
+       0.61
+      ],
+      [
+       7.47,
+       "refresh",
+       "WARNING",
+       0.62
+      ],
+      [
+       8.19,
+       "refresh",
+       "WARNING",
+       0.31
+      ]
+     ],
+     "nominal_d_min": 0.09,
+     "t_contact": 6.6000000000000005,
+     "actual_d_min": 2.09,
+     "first_alert_t": 0.35178685188293457
+    },
+    {
+     "round": 1,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.32,
+     "t_contact": null,
+     "actual_d_min": 2.32,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       3.79,
+       "raise",
+       "WARNING",
+       1.11
+      ],
+      [
+       4.55,
+       "refresh",
+       "WARNING",
+       0.77
+      ],
+      [
+       5.55,
+       "refresh",
+       "WARNING",
+       0.62
+      ],
+      [
+       7.02,
+       "refresh",
+       "WARNING",
+       0.41
+      ],
+      [
+       8.02,
+       "refresh",
+       "WARNING",
+       0.37
+      ],
+      [
+       9.26,
+       "refresh",
+       "WARNING",
+       0.25
+      ],
+      [
+       10.33,
+       "refresh",
+       "WARNING",
+       0.29
+      ],
+      [
+       11.29,
+       "refresh",
+       "WARNING",
+       0.19
+      ]
+     ],
+     "nominal_d_min": 0.35,
+     "t_contact": 7.2,
+     "actual_d_min": 2.11,
+     "first_alert_t": 3.7869715690612793
+    },
+    {
+     "round": 1,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [],
+     "nominal_d_min": 2.58,
+     "t_contact": null,
+     "actual_d_min": 2.58,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.57,
+     "t_contact": null,
+     "actual_d_min": 3.57,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       5.95,
+       "raise",
+       "WARNING",
+       1.17
+      ],
+      [
+       6.5,
+       "refresh",
+       "WARNING",
+       0.86
+      ],
+      [
+       7.48,
+       "refresh",
+       "WARNING",
+       0.53
+      ],
+      [
+       8.42,
+       "refresh",
+       "WARNING",
+       0.5
+      ],
+      [
+       9.49,
+       "refresh",
+       "WARNING",
+       0.45
+      ],
+      [
+       10.13,
+       "refresh",
+       "WARNING",
+       0.12
+      ],
+      [
+       11.1,
+       "refresh",
+       "WARNING",
+       0
+      ]
+     ],
+     "nominal_d_min": 0.45,
+     "t_contact": 8.4,
+     "actual_d_min": 2.21,
+     "first_alert_t": 5.950671911239624
+    },
+    {
+     "round": 2,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [
+      [
+       2.17,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.87,
+     "t_contact": null,
+     "actual_d_min": 2.87,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.14,
+     "t_contact": null,
+     "actual_d_min": 3.14,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "roadside_picker",
+     "alerts": [
+      [
+       0.13,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.76,
+     "t_contact": null,
+     "actual_d_min": 2.76,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       4.07,
+       "raise",
+       "WARNING",
+       2.87
+      ],
+      [
+       4.52,
+       "refresh",
+       "WARNING",
+       1.3
+      ],
+      [
+       4.98,
+       "refresh",
+       "WARNING",
+       0.96
+      ],
+      [
+       6.02,
+       "refresh",
+       "WARNING",
+       0.97
+      ],
+      [
+       7.19,
+       "refresh",
+       "WARNING",
+       0.96
+      ],
+      [
+       7.83,
+       "refresh",
+       "WARNING",
+       0.44
+      ],
+      [
+       8.94,
+       "refresh",
+       "WARNING",
+       0.41
+      ],
+      [
+       9.86,
+       "refresh",
+       "WARNING",
+       0.09
+      ]
+     ],
+     "nominal_d_min": 0.12,
+     "t_contact": 6.6000000000000005,
+     "actual_d_min": 1.73,
+     "first_alert_t": 4.07052206993103
+    },
+    {
+     "round": 2,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       2.13,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       3.32,
+       "raise",
+       "WARNING",
+       2.75
+      ],
+      [
+       3.36,
+       "refresh",
+       "WARNING",
+       1.24
+      ],
+      [
+       4.75,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.91,
+       "refresh",
+       "WARNING",
+       0.96
+      ],
+      [
+       7.27,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       8.43,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       9.46,
+       "refresh",
+       "WARNING",
+       0.95
+      ]
+     ],
+     "nominal_d_min": 2.43,
+     "t_contact": null,
+     "actual_d_min": 2.43,
+     "first_alert_t": 3.3197386264801025
+    },
+    {
+     "round": 2,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "turn_into_worker",
+     "alerts": [
+      [
+       3.75,
+       "raise",
+       "WARNING",
+       1.2
+      ],
+      [
+       4.36,
+       "refresh",
+       "WARNING",
+       0.88
+      ],
+      [
+       5.95,
+       "refresh",
+       "WARNING",
+       0.72
+      ],
+      [
+       6.94,
+       "refresh",
+       "WARNING",
+       0.52
+      ],
+      [
+       7.94,
+       "refresh",
+       "WARNING",
+       0.43
+      ],
+      [
+       9.03,
+       "refresh",
+       "WARNING",
+       0.26
+      ],
+      [
+       10.08,
+       "refresh",
+       "WARNING",
+       0.23
+      ],
+      [
+       11.43,
+       "refresh",
+       "WARNING",
+       0.17
+      ]
+     ],
+     "nominal_d_min": 0.36,
+     "t_contact": 6.9,
+     "actual_d_min": 2.25,
+     "first_alert_t": 3.7513082027435303
+    },
+    {
+     "round": 2,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       3.29,
+       "raise",
+       "WARNING",
+       2.86
+      ],
+      [
+       4.32,
+       "refresh",
+       "WARNING",
+       2.78
+      ],
+      [
+       4.49,
+       "refresh",
+       "WARNING",
+       0.97
+      ],
+      [
+       4.9,
+       "refresh",
+       "WARNING",
+       0.66
+      ],
+      [
+       7.22,
+       "refresh",
+       "WARNING",
+       0.61
+      ],
+      [
+       8.32,
+       "refresh",
+       "WARNING",
+       0.6
+      ],
+      [
+       9.22,
+       "refresh",
+       "WARNING",
+       0.59
+      ],
+      [
+       10.42,
+       "refresh",
+       "WARNING",
+       0.58
+      ]
+     ],
+     "nominal_d_min": 2.34,
+     "t_contact": null,
+     "actual_d_min": 2.34,
+     "first_alert_t": 3.2886507511138916
+    }
+   ]
+  },
+  {
+   "case": "worst_combined",
+   "params": {
+    "noise": 0.3,
+    "up_loss": 0.2,
+    "down_loss": 0.1,
+    "delay_ms": 60,
+    "jitter_ms": 30,
+    "skew_ms": 200,
+    "dropout": true
+   },
+   "episodes": 24,
+   "encounters": 24,
+   "conflicts": 6,
+   "excluded_spawned_in_conflict": 0,
+   "collisions_without_system": 6,
+   "collisions_with_system": 2,
+   "contacts_with_system": 4,
+   "timely_detection": 1.0,
+   "false_alarm_rate": 0.556,
+   "median_lead_s": 2.48,
+   "alert_latency_ms_p50": null,
+   "alert_latency_ms_p95": null,
+   "forklift_time_lost_s_per_episode": 2.89,
+   "worker_stops": 27,
+   "samples_delivered": 4009,
+   "samples_dropped": 1031,
+   "combos": [
+    {
+     "round": 0,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       6.29,
+       "raise",
+       "DANGER",
+       0.56
+      ],
+      [
+       8.6,
+       "refresh",
+       "WARNING",
+       0.54
+      ],
+      [
+       11.76,
+       "refresh",
+       "WARNING",
+       0.51
+      ]
+     ],
+     "nominal_d_min": 2.62,
+     "t_contact": null,
+     "actual_d_min": 2.78,
+     "first_alert_t": 6.2859947681427
+    },
+    {
+     "round": 0,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "turn_away",
+     "alerts": [
+      [
+       3.79,
+       "raise",
+       "WARNING",
+       1.15
+      ],
+      [
+       6.38,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 5.13,
+     "t_contact": null,
+     "actual_d_min": 5.14,
+     "first_alert_t": 3.792677164077759
+    },
+    {
+     "round": 0,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       6.44,
+       "raise",
+       "WARNING",
+       0.31
+      ]
+     ],
+     "nominal_d_min": 2.75,
+     "t_contact": null,
+     "actual_d_min": 2.75,
+     "first_alert_t": 6.444716691970825
+    },
+    {
+     "round": 0,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "roadside_picker",
+     "alerts": [],
+     "nominal_d_min": 2.72,
+     "t_contact": null,
+     "actual_d_min": 2.72,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "worker_yields",
+     "alerts": [],
+     "nominal_d_min": 2.58,
+     "t_contact": null,
+     "actual_d_min": 2.58,
+     "first_alert_t": null
+    },
+    {
+     "round": 0,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "crossing_clear",
+     "alerts": [
+      [
+       0.31,
+       "raise",
+       "WARNING",
+       2.04
+      ],
+      [
+       2.17,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       3.21,
+       "refresh",
+       "WARNING",
+       0.98
+      ],
+      [
+       5.34,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       8.23,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 3.9,
+     "t_contact": null,
+     "actual_d_min": 5.01,
+     "first_alert_t": 0.30681872367858887
+    },
+    {
+     "round": 0,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       0.98,
+       "raise",
+       "WARNING",
+       1.67
+      ],
+      [
+       7.23,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       9.62,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.15,
+     "t_contact": 5.2,
+     "actual_d_min": 1.43,
+     "first_alert_t": 0.9812700748443604
+    },
+    {
+     "round": 0,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       2.18,
+       "raise",
+       "WARNING",
+       2.8
+      ],
+      [
+       3.77,
+       "refresh",
+       "WARNING",
+       2.78
+      ],
+      [
+       6.4,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.68,
+     "t_contact": null,
+     "actual_d_min": 2.74,
+     "first_alert_t": 2.17571759223938
+    },
+    {
+     "round": 1,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       0.31,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       3.88,
+       "raise",
+       "WARNING",
+       1.26
+      ],
+      [
+       6.18,
+       "refresh",
+       "WARNING",
+       0.8
+      ],
+      [
+       7.37,
+       "refresh",
+       "WARNING",
+       0.6
+      ],
+      [
+       8.08,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       9.11,
+       "refresh",
+       "WARNING",
+       0.01
+      ],
+      [
+       10.88,
+       "refresh",
+       "WARNING",
+       0.03
+      ],
+      [
+       11.38,
+       "raise",
+       "DANGER",
+       0.03
+      ]
+     ],
+     "nominal_d_min": 0.49,
+     "t_contact": 6.7,
+     "actual_d_min": 0.49,
+     "first_alert_t": 3.878375768661499
+    },
+    {
+     "round": 1,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "turn_away",
+     "alerts": [],
+     "nominal_d_min": 6.18,
+     "t_contact": null,
+     "actual_d_min": 6.18,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "turn_away",
+     "alerts": [],
+     "nominal_d_min": 5.24,
+     "t_contact": null,
+     "actual_d_min": 5.24,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [
+      [
+       2.7,
+       "raise",
+       "WARNING",
+       2.97
+      ],
+      [
+       2.97,
+       "raise",
+       "DANGER",
+       0.15
+      ],
+      [
+       6.92,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.18,
+     "t_contact": null,
+     "actual_d_min": 2.19,
+     "first_alert_t": 2.69891619682312
+    },
+    {
+     "round": 1,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 3.93,
+     "t_contact": null,
+     "actual_d_min": 3.93,
+     "first_alert_t": null
+    },
+    {
+     "round": 1,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       4.44,
+       "raise",
+       "WARNING",
+       2.38
+      ],
+      [
+       7.19,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       9.21,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.48,
+     "t_contact": null,
+     "actual_d_min": 2.48,
+     "first_alert_t": 4.442845344543457
+    },
+    {
+     "round": 1,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "crossing_clear",
+     "alerts": [
+      [
+       2.97,
+       "raise",
+       "WARNING",
+       1.34
+      ],
+      [
+       3.23,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       4.37,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.27,
+       "refresh",
+       "WARNING",
+       0.67
+      ],
+      [
+       6.41,
+       "refresh",
+       "WARNING",
+       0.5
+      ],
+      [
+       8.99,
+       "refresh",
+       "WARNING",
+       0.5
+      ]
+     ],
+     "nominal_d_min": 2.23,
+     "t_contact": null,
+     "actual_d_min": 3.17,
+     "first_alert_t": 2.9712963104248047
+    },
+    {
+     "round": 1,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       7.76,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.94,
+     "t_contact": null,
+     "actual_d_min": 2.94,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w00",
+     "forklift": "f00",
+     "scenario": "adjacent_aisle_pass",
+     "alerts": [
+      [
+       1.49,
+       "refresh",
+       "WARNING",
+       2.32
+      ],
+      [
+       1.75,
+       "refresh",
+       "WARNING",
+       0.8
+      ],
+      [
+       2.87,
+       "refresh",
+       "WARNING",
+       0.91
+      ],
+      [
+       3.98,
+       "refresh",
+       "WARNING",
+       0.91
+      ],
+      [
+       5.47,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       8.29,
+       "clear",
+       "CAUTION",
+       null
+      ],
+      [
+       8.45,
+       "raise",
+       "WARNING",
+       0.01
+      ],
+      [
+       10.66,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.01,
+     "t_contact": null,
+     "actual_d_min": 2.01,
+     "first_alert_t": 5.466638088226318
+    },
+    {
+     "round": 2,
+     "worker": "w01",
+     "forklift": "f01",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       3.49,
+       "raise",
+       "WARNING",
+       1.36
+      ],
+      [
+       4.27,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.38,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       6.63,
+       "refresh",
+       "WARNING",
+       0.51
+      ],
+      [
+       6.95,
+       "raise",
+       "DANGER",
+       0.13
+      ],
+      [
+       7.91,
+       "refresh",
+       "WARNING",
+       0.1
+      ],
+      [
+       8.13,
+       "raise",
+       "DANGER",
+       0.09
+      ],
+      [
+       9.23,
+       "refresh",
+       "WARNING",
+       0.18
+      ]
+     ],
+     "nominal_d_min": 0.05,
+     "t_contact": 5.800000000000001,
+     "actual_d_min": 0.04,
+     "first_alert_t": 3.4880566596984863
+    },
+    {
+     "round": 2,
+     "worker": "w02",
+     "forklift": "f02",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       3.39,
+       "raise",
+       "WARNING",
+       2.92
+      ],
+      [
+       3.7,
+       "refresh",
+       "WARNING",
+       1.14
+      ],
+      [
+       4.83,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       4.92,
+       "refresh",
+       "WARNING",
+       0.69
+      ],
+      [
+       5.98,
+       "refresh",
+       "WARNING",
+       0.73
+      ],
+      [
+       6.54,
+       "refresh",
+       "WARNING",
+       0.42
+      ],
+      [
+       8.01,
+       "refresh",
+       "WARNING",
+       0.15
+      ],
+      [
+       9.22,
+       "refresh",
+       "WARNING",
+       0.16
+      ]
+     ],
+     "nominal_d_min": 0.13,
+     "t_contact": 5.6000000000000005,
+     "actual_d_min": 2.12,
+     "first_alert_t": 3.3924667835235596
+    },
+    {
+     "round": 2,
+     "worker": "w03",
+     "forklift": "f03",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 2.82,
+     "t_contact": null,
+     "actual_d_min": 2.82,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w04",
+     "forklift": "f04",
+     "scenario": "crossing_conflict",
+     "alerts": [
+      [
+       3.99,
+       "raise",
+       "WARNING",
+       2.85
+      ],
+      [
+       4.21,
+       "refresh",
+       "WARNING",
+       1.41
+      ],
+      [
+       4.99,
+       "refresh",
+       "WARNING",
+       0.94
+      ],
+      [
+       6.31,
+       "refresh",
+       "WARNING",
+       0.93
+      ],
+      [
+       6.54,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       9.46,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 0.09,
+     "t_contact": 6.1000000000000005,
+     "actual_d_min": 2.51,
+     "first_alert_t": 3.9859724044799805
+    },
+    {
+     "round": 2,
+     "worker": "w05",
+     "forklift": "f05",
+     "scenario": "worker_yields",
+     "alerts": [
+      [
+       2.39,
+       "raise",
+       "WARNING",
+       2.99
+      ],
+      [
+       3.07,
+       "refresh",
+       "WARNING",
+       1.05
+      ],
+      [
+       6.76,
+       "clear",
+       "SAFE",
+       null
+      ]
+     ],
+     "nominal_d_min": 2.48,
+     "t_contact": null,
+     "actual_d_min": 2.48,
+     "first_alert_t": 2.393676280975342
+    },
+    {
+     "round": 2,
+     "worker": "w06",
+     "forklift": "f06",
+     "scenario": "crossing_clear",
+     "alerts": [],
+     "nominal_d_min": 2.32,
+     "t_contact": null,
+     "actual_d_min": 2.32,
+     "first_alert_t": null
+    },
+    {
+     "round": 2,
+     "worker": "w07",
+     "forklift": "f07",
+     "scenario": "head_on_same_aisle",
+     "alerts": [
+      [
+       3.35,
+       "raise",
+       "WARNING",
+       1.27
+      ],
+      [
+       4.39,
+       "refresh",
+       "WARNING",
+       1
+      ],
+      [
+       5.44,
+       "refresh",
+       "WARNING",
+       0.92
+      ],
+      [
+       6.81,
+       "refresh",
+       "WARNING",
+       0.7
+      ],
+      [
+       6.82,
+       "raise",
+       "DANGER",
+       0
+      ],
+      [
+       9.61,
+       "clear",
+       "SAFE",
+       null
+      ],
+      [
+       10.84,
+       "raise",
+       "DANGER",
+       0.04
+      ],
+      [
+       11.86,
+       "refresh",
+       "DANGER",
+       0.04
+      ]
+     ],
+     "nominal_d_min": 0.16,
+     "t_contact": 6.0,
+     "actual_d_min": 1.23,
+     "first_alert_t": 3.3487088680267334
+    }
+   ]
+  }
+ ],
+ "lead_required_s": 1.0,
+ "r_contact_m": 1.5,
+ "r_collide_m": 1.0
+}

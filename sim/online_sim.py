@@ -238,9 +238,13 @@ def nominal_gt(wpts, fpts):
     return {"d_min": min(d), "t_contact": contact}
 
 
+POLICY = {}          # risk-parameter overrides (--policy)
+
+
 def write_cfg(case, cse):
     base = yaml.safe_load(open(os.path.join(ROOT, "config", "site.yaml")))
     c = copy.deepcopy(base)
+    c.setdefault("risk", {}).update(POLICY)
     c["cse"] = dict(cse)
     n = case["pairs"]
     c["devices"] = {"workers": [f"w{i:02d}" for i in range(n)],
@@ -417,10 +421,13 @@ def main():
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--cse", default="mobius", choices=["mobius", "acme"])
     ap.add_argument("--rounds", type=int, help="override rounds per case (quick checks)")
+    ap.add_argument("--policy", help="YAML with a `risk:` section to override (e.g. config/policy_trained.yaml)")
     a = ap.parse_args()
     cse = ({"base_url": "http://127.0.0.1:7579", "cse_rn": "Mobius", "origin": "SEdgeGuard", "rvi": "2a"}
            if a.cse == "mobius" else
            {"base_url": "http://127.0.0.1:8080", "cse_rn": "cse-in", "origin": "CEdgeGuard", "rvi": "3"})
+    if a.policy:
+        POLICY.update(yaml.safe_load(open(a.policy)).get("risk", {}))
     names = list(CASES) if a.cases == ["all"] else a.cases
     sink = AlertSink(9091)
     results = []

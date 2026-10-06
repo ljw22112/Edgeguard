@@ -25,7 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from edgeguard import config                          # noqa: E402
 from edgeguard.onem2m import parse_notification, now_ms  # noqa: E402
-from edgeguard.risk import RiskEngine, LEVELS, waiting_at_lane  # noqa: E402
+from edgeguard.risk import RiskEngine, LEVELS               # noqa: E402
+from edgeguard.alerting import AlertState, decide            # noqa: E402
 from edgeguard.tracking import Track                  # noqa: E402
 
 log = logging.getLogger("edgeguard.mec")
@@ -142,37 +143,6 @@ def mec_services_loop():
         time.sleep(MS.get("poll_s", 0.25))
 
 
-class AlertState:
-    """Edge-triggered alerts with debounce and hold, per worker/forklift pair."""
-
-    def __init__(self, debounce=2, refresh_s=1.0, hold_s=2.0):
-        self.level, self.streak, self.last_sent, self.below_since = 0, 0, 0.0, None
-        self.debounce, self.refresh_s, self.hold_s = debounce, refresh_s, hold_s
-
-    def step(self, level, now):
-        """Return 'raise', 'refresh', 'clear' or None."""
-        if level >= 2:
-            self.below_since = None
-            self.streak += 1
-            fire = level == 3 or self.streak >= self.debounce
-            if fire and level > self.level:
-                self.level, self.last_sent = level, now
-                return "raise"
-            if fire and now - self.last_sent >= self.refresh_s:
-                self.level, self.last_sent = level, now        # may step down DANGER -> WARNING
-                return "refresh"
-            return None
-        self.streak = 0
-        if self.level >= 2:
-            self.below_since = self.below_since or now
-            if now - self.below_since >= self.hold_s:
-                self.level, self.below_since = level, None
-                return "clear"
-        else:
-            self.level = level
-        return None
-
-
 def handle_sample(p: dict):
     rx = now_ms()
     kind = p.get("kind")
@@ -194,7 +164,6 @@ def handle_sample(p: dict):
 
 
 CAM = CFG.get("camera") or {}
-PASS_SPEED = 1.0          # m/s: forklift speed when passing a worker waiting at the lane edge
 state["untagged_seq"] = 0
 state["camera"] = {"frames": 0, "matched": 0, "untagged": 0}
 
@@ -243,45 +212,15 @@ def evaluate_and_alert(src_ts, rx, only=None):
     for r in risks:
         key = (r.worker, r.forklift)
         st = state["pairs"].setdefault(key, {"alert": AlertState()})
-        st["alert"].refresh_s = 0.5 if state["network"]["congested"] else 1.0
-        if r.level < 2 and st["alert"].level >= 2:
-            w_tr, f_tr = engine.tracks.get(r.worker), engine.tracks.get(r.forklift)
-            if w_tr is not None and f_tr is not None and f_tr.speed > 0.2 \
-                    and waiting_at_lane(w_tr, f_tr, engine.cfg):
-                # keep the alert: pass the waiting worker at walking pace
-                limit = round(min(PASS_SPEED, f_tr.speed), 2)
-                r.level, r.level_name = 2, LEVELS[2]
-                r.reason = "worker waiting at the lane edge: pass at walking pace"
-                r.speed_limit, r.speed_scale = limit, round(limit / max(f_tr.speed, 1e-6), 2)
-                r.hold = True
+        w_tr, f_tr = engine.tracks.get(r.worker), engine.tracks.get(r.forklift)
+        ev, actions = decide(st["alert"], r, w_tr, f_tr, engine.cfg, now, state["network"]["congested"])
         st["risk"] = r
-        ev = st["alert"].step(r.level, now)
-        # a tighter speed limit must reach the forklift now, not at the next periodic refresh
-        if ev is None and r.level >= 2 and st["alert"].level >= 2 and r.speed_limit is not None \
-                and st.get("sent_limit") is not None and r.speed_limit < st["sent_limit"] - 0.3:
-            ev = "refresh"
-            st["alert"].last_sent = now
-        if ev:
-            st["sent_limit"] = None if ev == "clear" else r.speed_limit
         if ev:
             untagged = r.worker.startswith("untagged_")
-            # vibrate on a new or escalated alert and while DANGER; not on every refresh
-            # or hold, so a worker who has stopped is not buzzed every second
-            # (the speed limit assumes the worker stops when buzzed, so keep buzzing a
-            # worker who is still walking into the conflict)
-            w_tr = engine.tracks.get(r.worker)
-            walking_in = w_tr is not None and w_tr.speed > 0.3 and r.closing_speed > 0.2
-            buzz = ev == "raise" or (ev == "refresh" and not getattr(r, "hold", False)
-                                     and (r.level >= 3 or walking_in))
             alert = {
                 "event": ev, "level": LEVELS[r.level],
                 "worker": r.worker, "forklift": r.forklift,
-                "actions": {r.worker: {"vibrate": buzz and not untagged},
-                            r.forklift: {"beacon": ev != "clear" and r.level >= 2,
-                                         "speed_scale": 1.0 if ev == "clear" else r.speed_scale,
-                                         # absolute limit: a ratio of an already reduced speed
-                                         # would let the truck speed up again
-                                         "speed_limit": None if ev == "clear" else r.speed_limit}},
+                "actions": actions,
                 "reason": r.reason + (" (person seen by camera, no tag)" if untagged else ""),
                 "metrics": r.to_dict(),
                 "pos": {k: [round(v, 2) for v in engine.tracks[k].pos] for k in (r.worker, r.forklift)

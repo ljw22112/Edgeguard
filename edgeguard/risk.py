@@ -35,7 +35,16 @@ class RiskConfig:
     distance_threshold: float = 3.0
     ttc_warn: float = 3.0
     ttc_danger: float = 1.5
-
+    # --- policy parameters (tuned by sim/train_policy.py) ---------------------------
+    lane_lookahead: float = 6.0    # m: a standing worker this far ahead in the lane holds the alert
+    stand_speed: float = 0.5       # m/s: below this a worker counts as standing
+    worker_react: float = 0.8      # s: assumed reaction time of a buzzed worker (speed planning)
+    brake_decel: float = 2.0       # m/s^2: deceleration assumed when capping the speed
+    brake_margin: float = 0.5      # m: stopping-distance margin before the conflict point
+    pass_speed: float = 1.0        # m/s: passing speed while a worker waits at the lane edge
+    wait_lateral: float = 2.5      # m: "waiting at the lane edge" distance from the lane
+    clear_hold: float = 2.0        # s: risk must stay low this long before an alert clears
+    debounce: int = 2              # evaluations at WARNING before the first alert
 
 @dataclass
 class PairRisk:
@@ -73,9 +82,6 @@ def _heading(track):
     return track.heading
 
 
-LANE_LOOKAHEAD = 6.0      # m: a worker standing in the lane this close ahead holds the alert
-
-
 def _lane_block(worker, forklift, cfg):
     """Distance along the forklift's lane to a worker standing in it, or None.
 
@@ -83,19 +89,21 @@ def _lane_block(worker, forklift, cfg):
     time-based prediction says "no conflict within 5 s" and would release the
     alert, the forklift speeds up again, and the conflict comes back too late."""
     geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
-    steps = [i * 0.2 for i in range(int(LANE_LOOKAHEAD / 0.2) + 1)]
+    steps = [i * 0.2 for i in range(int(cfg.lane_lookahead / 0.2) + 1)]
     for d, (x, y) in zip(steps, geo.positions(steps)):
         if math.hypot(worker.pos[0] - x, worker.pos[1] - y) < cfg.r_safe:
             return d
     return None
 
 
-def waiting_at_lane(worker, forklift, cfg, lateral=2.5, lookahead=LANE_LOOKAHEAD):
+def waiting_at_lane(worker, forklift, cfg, lateral=None, lookahead=None):
     """True if the worker stands next to the forklift's lane ahead (within `lateral`).
 
     Used only to *hold* an alert that is already active: a worker who stopped at
     the aisle edge because the tag vibrated will usually walk on, so the forklift
     should pass at walking pace instead of resuming full speed."""
+    lateral = cfg.wait_lateral if lateral is None else lateral
+    lookahead = cfg.lane_lookahead if lookahead is None else lookahead
     geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
     steps = [i * 0.2 for i in range(1, int(lookahead / 0.2) + 1)]
     return any(math.hypot(worker.pos[0] - x, worker.pos[1] - y) < lateral
@@ -145,7 +153,7 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
         # only a (nearly) standing worker: someone walking across is covered by the
         # prediction and will usually be gone before the forklift arrives
         lane = (_lane_block(worker, forklift, cfg)
-                if moving and method != "guidance" and worker.speed < 0.5 else None)
+                if moving and method != "guidance" and worker.speed < cfg.stand_speed else None)
         if lane is not None and level < 2:
             level = 2
         if level >= 2 and moving:
@@ -154,10 +162,11 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
                 # worker who walks on for the reaction time and then stops - possibly
                 # right in the lane.  Take the stricter of: velocity obstacle against
                 # that motion, and the stopping distance to where the paths meet.
-                stopping = StopAfterPredictor(worker.pos, worker.vel)
+                stopping = StopAfterPredictor(worker.pos, worker.vel, t_react=cfg.worker_react)
+                bk = dict(a_dec=cfg.brake_decel, margin=cfg.brake_margin)
                 scale = min(speed_scale_on_path(stopping, pf, cfg.r_safe, horizon=cfg.horizon),
-                            braking_scale(stopping, pf, forklift.speed, cfg.r_safe, cfg.horizon),
-                            braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon))
+                            braking_scale(stopping, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk),
+                            braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk))
             else:
                 scale = vo_speed_scale(worker.pos, worker.vel, forklift.pos, forklift.vel,
                                        cfg.r_safe, horizon=cfg.t_warn)

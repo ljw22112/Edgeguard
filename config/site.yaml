@@ -77,9 +77,17 @@ security:
 
 risk:
   r_safe: 1.5
-  t_danger: 1.5
-  t_warn: 3.0
   t_caution: 5.0
-  m_warn: 0.3
   m_caution: 1.0
   horizon: 5.0
+  # trained policy (sim/train_policy.py, C=50) - see README "정책 학습"
+  t_warn: 4.108
+  t_danger: 1.669
+  m_warn: 0.246
+  worker_react: 0.894
+  brake_decel: 2.317
+  brake_margin: 0.944
+  lane_lookahead: 4.961
+  pass_speed: 1.681
+  clear_hold: 2.464
+  stand_speed: 0.577

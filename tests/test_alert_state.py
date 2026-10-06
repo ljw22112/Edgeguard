@@ -4,8 +4,8 @@ import sys
 
 
 def _alert_state():
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return importlib.import_module("mec_app.app").AlertState
+    from edgeguard.alerting import AlertState
+    return AlertState
 
 
 def test_debounce_raise_refresh_clear():
