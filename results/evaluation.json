@@ -1,0 +1,338 @@
+{
+  "summary": {
+    "Proximity 3 m": {
+      "timely_detection": 0.0,
+      "false_alarm_rate": 0.6773675762439807,
+      "median_lead_s": 0.40000000000000036,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    },
+    "Proximity 5 m": {
+      "timely_detection": 0.7625994694960212,
+      "false_alarm_rate": 0.8475120385232745,
+      "median_lead_s": 1.2000000000000002,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    },
+    "TTC < 3 s": {
+      "timely_detection": 1.0,
+      "false_alarm_rate": 0.7271268057784912,
+      "median_lead_s": 2.1000000000000005,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    },
+    "Guidance (CPA/LOS)": {
+      "timely_detection": 1.0,
+      "false_alarm_rate": 0.31701444622792935,
+      "median_lead_s": 2.1000000000000005,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    },
+    "Guidance + CTRV": {
+      "timely_detection": 1.0,
+      "false_alarm_rate": 0.28731942215088285,
+      "median_lead_s": 2.2,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    }
+  },
+  "per_scenario": {
+    "crossing_conflict": {
+      "Proximity 3 m": {
+        "alarm": 250,
+        "ok": 0,
+        "n": 250,
+        "median_lead_s": 0.4
+      },
+      "Proximity 5 m": {
+        "alarm": 250,
+        "ok": 203,
+        "n": 250,
+        "median_lead_s": 1.2
+      },
+      "TTC < 3 s": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.2
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.2
+      },
+      "Guidance + CTRV": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.2
+      }
+    },
+    "crossing_clear": {
+      "Proximity 3 m": {
+        "alarm": 145,
+        "ok": 105,
+        "n": 250,
+        "median_lead_s": 0.7
+      },
+      "Proximity 5 m": {
+        "alarm": 248,
+        "ok": 6,
+        "n": 250,
+        "median_lead_s": 1.55
+      },
+      "TTC < 3 s": {
+        "alarm": 201,
+        "ok": 53,
+        "n": 250,
+        "median_lead_s": 2.45
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 43,
+        "ok": 211,
+        "n": 250,
+        "median_lead_s": 2.5
+      },
+      "Guidance + CTRV": {
+        "alarm": 41,
+        "ok": 213,
+        "n": 250,
+        "median_lead_s": 2.5
+      }
+    },
+    "head_on_same_aisle": {
+      "Proximity 3 m": {
+        "alarm": 250,
+        "ok": 0,
+        "n": 250,
+        "median_lead_s": 0.3
+      },
+      "Proximity 5 m": {
+        "alarm": 250,
+        "ok": 118,
+        "n": 250,
+        "median_lead_s": 0.9
+      },
+      "TTC < 3 s": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.3
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.3
+      },
+      "Guidance + CTRV": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.4
+      }
+    },
+    "adjacent_aisle_pass": {
+      "Proximity 3 m": {
+        "alarm": 207,
+        "ok": 43,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Proximity 5 m": {
+        "alarm": 227,
+        "ok": 23,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "TTC < 3 s": {
+        "alarm": 180,
+        "ok": 70,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 26,
+        "ok": 224,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance + CTRV": {
+        "alarm": 24,
+        "ok": 226,
+        "n": 250,
+        "median_lead_s": null
+      }
+    },
+    "roadside_picker": {
+      "Proximity 3 m": {
+        "alarm": 247,
+        "ok": 3,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Proximity 5 m": {
+        "alarm": 250,
+        "ok": 0,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "TTC < 3 s": {
+        "alarm": 227,
+        "ok": 23,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 51,
+        "ok": 199,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance + CTRV": {
+        "alarm": 48,
+        "ok": 202,
+        "n": 250,
+        "median_lead_s": null
+      }
+    },
+    "turn_into_worker": {
+      "Proximity 3 m": {
+        "alarm": 250,
+        "ok": 0,
+        "n": 250,
+        "median_lead_s": 0.5
+      },
+      "Proximity 5 m": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 1.6
+      },
+      "TTC < 3 s": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 1.8
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 1.8
+      },
+      "Guidance + CTRV": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 1.9
+      }
+    },
+    "turn_away": {
+      "Proximity 3 m": {
+        "alarm": 0,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Proximity 5 m": {
+        "alarm": 85,
+        "ok": 165,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "TTC < 3 s": {
+        "alarm": 58,
+        "ok": 192,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 47,
+        "ok": 203,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance + CTRV": {
+        "alarm": 15,
+        "ok": 235,
+        "n": 250,
+        "median_lead_s": null
+      }
+    },
+    "worker_yields": {
+      "Proximity 3 m": {
+        "alarm": 249,
+        "ok": 1,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Proximity 5 m": {
+        "alarm": 250,
+        "ok": 0,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "TTC < 3 s": {
+        "alarm": 244,
+        "ok": 6,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance (CPA/LOS)": {
+        "alarm": 232,
+        "ok": 18,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance + CTRV": {
+        "alarm": 234,
+        "ok": 16,
+        "n": 250,
+        "median_lead_s": null
+      }
+    }
+  },
+  "labels": {
+    "crossing_conflict": {
+      "conflict": 250,
+      "non_conflict": 0
+    },
+    "crossing_clear": {
+      "conflict": 4,
+      "non_conflict": 246
+    },
+    "head_on_same_aisle": {
+      "conflict": 250,
+      "non_conflict": 0
+    },
+    "adjacent_aisle_pass": {
+      "conflict": 0,
+      "non_conflict": 250
+    },
+    "roadside_picker": {
+      "conflict": 0,
+      "non_conflict": 250
+    },
+    "turn_into_worker": {
+      "conflict": 250,
+      "non_conflict": 0
+    },
+    "turn_away": {
+      "conflict": 0,
+      "non_conflict": 250
+    },
+    "worker_yields": {
+      "conflict": 0,
+      "non_conflict": 250
+    }
+  },
+  "settings": {
+    "n_per_scenario": 250,
+    "seed": 7,
+    "lead_required_s": 1.0,
+    "pos_noise_m": 0.15,
+    "r_safe_m": 1.5
+  }
+}
