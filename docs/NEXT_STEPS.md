@@ -40,3 +40,12 @@ MOBIUS_DIR=$PWD/../Mobius scripts/setup_mobius.sh          # MariaDB + Mobius on
 git clone --depth 1 https://github.com/bblanchon/ArduinoJson.git /tmp/claude-0/arduinojson
 python -m pytest -q
 ```
+
+## MEC Sandbox (organizer answers, 2026-10-06; TR-0086 draft, rollout expected the week of 10/6)
+- When connected to a CSE, the CSE registers AEs with the MEC host (no separate MEC 011 registration).
+- UE positions are written into CSE resources by MEC-IPE → **the preferred path is reading location from oneM2M resources**.
+  Devices injecting positions directly via primitives counts as a weaker approach "with exceptions" → argue UWB as the exception (sub-metre accuracy needed for collision avoidance indoors) and use MEC-IPE location as a secondary source (zone presence, fallback when the tag is missing).
+- UEs only exist in scenarios. **Building our own scenario with our own map and tracks is strongly encouraged** → export the warehouse map plus worker/forklift tracks from sim/scenarios.py in the sandbox scenario format.
+- Calling MEC APIs directly is allowed for exploration, but going through oneM2M resources is preferred → switch mec_services to read via CSE resources (keep the direct call as an option).
+- Host requirements: see the sandbox repo README. A shared host will be provided (no sudo).
+- Still unanswered: API authentication.
