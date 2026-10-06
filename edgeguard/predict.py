@@ -36,6 +36,31 @@ def _remaining_turn(heading, yaw_rate, grid=MAX_TURN, min_turn=math.radians(10))
     return min(rem, grid)
 
 
+class StopAfterPredictor:
+    """A worker who has just been told to stop (tag vibrates): keeps walking for the
+    reaction time, then decelerates to a standstill.  Used to plan the forklift's
+    speed consistently with the instruction we are giving the worker."""
+
+    def __init__(self, pos, vel, t_react=0.8, decel=2.0):
+        self.pos, self.vel, self.tr, self.a = pos, vel, t_react, decel
+
+    def positions(self, times):
+        x, y = self.pos
+        vx, vy = self.vel
+        v = math.hypot(vx, vy)
+        ux, uy = (vx / v, vy / v) if v > 1e-6 else (0.0, 0.0)
+        t_stop = v / self.a
+        out = []
+        for t in times:
+            if t <= self.tr:
+                d = v * t
+            else:
+                tt = min(t - self.tr, t_stop)
+                d = v * self.tr + v * tt - 0.5 * self.a * tt * tt
+            out.append((x + ux * d, y + uy * d))
+        return out
+
+
 class CTRVPredictor:
     def __init__(self, pos, speed, heading, yaw_rate, grid_snap=True):
         self.pos, self.v, self.th, self.w = pos, speed, heading, yaw_rate
@@ -91,3 +116,26 @@ def speed_scale_on_path(pred_worker, pred_forklift, r_safe, horizon=3.0, dt=0.1,
             return round(max(k, 0.0), 2)
         k -= step
     return 0.0
+
+
+def braking_scale(pred_worker, pred_forklift, speed, r_safe, horizon=5.0, dt=0.1,
+                  a_dec=2.0, t_react=0.4, margin=0.5):
+    """Stopping-distance cap for the speed command.
+
+    The velocity-obstacle scale only guarantees separation for a few seconds; if
+    the worker stops *in* the forklift's lane, any k > 0 just postpones the hit.
+    Find the first point on the forklift's predicted path that comes within
+    r_safe of the worker's predicted path, and allow at most the speed from
+    which the forklift can still stop before it:  v*t_react + v^2/(2a) <= D.
+    """
+    if speed < 0.05:
+        return 1.0
+    n = int(round(horizon / dt))
+    times = [i * dt for i in range(n + 1)]
+    pw, pf = pred_worker.positions(times), pred_forklift.positions(times)
+    for t, a, b in zip(times, pw, pf):
+        if math.hypot(a[0] - b[0], a[1] - b[1]) < r_safe:
+            d = max(0.0, speed * t - margin)               # distance left along the path
+            v_ok = -a_dec * t_react + math.sqrt((a_dec * t_react) ** 2 + 2 * a_dec * d)
+            return round(max(0.0, min(1.0, v_ok / speed)), 2)
+    return 1.0

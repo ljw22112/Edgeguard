@@ -117,4 +117,4 @@ def test_speed_command_follows_turn():
     # a slow enough forklift lets the worker stay clear
     pw = CVPredictor((2.5, 4.5), (0, 0))
     pf = CTRVPredictor((0, 0), 2.0, 0.0, 0.8)
-    assert speed_scale_on_path(pw, pf, 1.5, horizon=3.0) == r.speed_scale
+    assert r.speed_scale <= speed_scale_on_path(pw, pf, 1.5, horizon=3.0)   # never looser than VO

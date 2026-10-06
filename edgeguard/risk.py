@@ -16,7 +16,8 @@ import math
 from dataclasses import dataclass, asdict, field
 
 from .geometry import encounter, vo_speed_scale, INF
-from .predict import CVPredictor, CTRVPredictor, min_separation, speed_scale_on_path
+from .predict import (CVPredictor, CTRVPredictor, StopAfterPredictor, min_separation,
+                      speed_scale_on_path, braking_scale)
 
 LEVELS = ["SAFE", "CAUTION", "WARNING", "DANGER"]
 
@@ -53,6 +54,7 @@ class PairRisk:
     d_min: float
     speed_scale: float
     reason: str
+    speed_limit: float = None   # m/s for the forklift (speed_scale x current speed)
 
     def to_dict(self):
         d = asdict(self)
@@ -63,10 +65,41 @@ class PairRisk:
 
 
 def _heading(track):
-    if track.heading is not None:
-        return track.heading
+    """Direction of travel.  While moving use the velocity (a reversing forklift
+    travels opposite to where it faces); when slow, fall back to the IMU heading."""
     vx, vy = track.vel
-    return math.atan2(vy, vx)
+    if math.hypot(vx, vy) > 0.3 or track.heading is None:
+        return math.atan2(vy, vx)
+    return track.heading
+
+
+LANE_LOOKAHEAD = 6.0      # m: a worker standing in the lane this close ahead holds the alert
+
+
+def _lane_block(worker, forklift, cfg):
+    """Distance along the forklift's lane to a worker standing in it, or None.
+
+    Time-independent on purpose: once the forklift has slowed down, the
+    time-based prediction says "no conflict within 5 s" and would release the
+    alert, the forklift speeds up again, and the conflict comes back too late."""
+    geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
+    steps = [i * 0.2 for i in range(int(LANE_LOOKAHEAD / 0.2) + 1)]
+    for d, (x, y) in zip(steps, geo.positions(steps)):
+        if math.hypot(worker.pos[0] - x, worker.pos[1] - y) < cfg.r_safe:
+            return d
+    return None
+
+
+def waiting_at_lane(worker, forklift, cfg, lateral=2.5, lookahead=LANE_LOOKAHEAD):
+    """True if the worker stands next to the forklift's lane ahead (within `lateral`).
+
+    Used only to *hold* an alert that is already active: a worker who stopped at
+    the aisle edge because the tag vibrated will usually walk on, so the forklift
+    should pass at walking pace instead of resuming full speed."""
+    geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
+    steps = [i * 0.2 for i in range(1, int(lookahead / 0.2) + 1)]
+    return any(math.hypot(worker.pos[0] - x, worker.pos[1] - y) < lateral
+               for x, y in geo.positions(steps))
 
 
 def _level_from_geometry(cfg: RiskConfig, t_min, d_min, R, forklift_moving):
@@ -91,9 +124,11 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
     if method == "distance":
         level = 2 if enc.range < cfg.distance_threshold else 0
         reason = f"distance {enc.range:.1f} m vs threshold {cfg.distance_threshold:.1f} m"
+        scale = 0.3 if level else 1.0          # zone systems drop the truck to creep speed
     elif method == "ttc":
         level = 3 if enc.ttc < cfg.ttc_danger else 2 if enc.ttc < cfg.ttc_warn else 0
         reason = f"TTC {enc.ttc:.1f} s"
+        scale = 0.3 if level else 1.0
     else:
         if method in ("guidance_ctrv", "guidance_lstm"):
             pw = None
@@ -107,14 +142,29 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
         elif t_min > cfg.horizon:
             t_min = INF
         level = _level_from_geometry(cfg, t_min, d_min, enc.range, moving)
+        # only a (nearly) standing worker: someone walking across is covered by the
+        # prediction and will usually be gone before the forklift arrives
+        lane = (_lane_block(worker, forklift, cfg)
+                if moving and method != "guidance" and worker.speed < 0.5 else None)
+        if lane is not None and level < 2:
+            level = 2
         if level >= 2 and moving:
             if method in ("guidance_ctrv", "guidance_lstm"):
-                scale = speed_scale_on_path(pw, pf, cfg.r_safe, horizon=cfg.t_warn)
+                # The alert also tells the worker to stop, so plan the forklift for a
+                # worker who walks on for the reaction time and then stops - possibly
+                # right in the lane.  Take the stricter of: velocity obstacle against
+                # that motion, and the stopping distance to where the paths meet.
+                stopping = StopAfterPredictor(worker.pos, worker.vel)
+                scale = min(speed_scale_on_path(stopping, pf, cfg.r_safe, horizon=cfg.horizon),
+                            braking_scale(stopping, pf, forklift.speed, cfg.r_safe, cfg.horizon),
+                            braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon))
             else:
                 scale = vo_speed_scale(worker.pos, worker.vel, forklift.pos, forklift.vel,
                                        cfg.r_safe, horizon=cfg.t_warn)
         if level == 0:
             reason = "clear"
+        elif lane is not None and d_min >= cfg.r_safe:
+            reason = f"worker in the forklift lane {lane:.1f} m ahead"
         elif d_min < cfg.r_safe:
             reason = (f"collision course: LOS rate {enc.los_rate:+.2f} rad/s, "
                       f"closing {enc.closing_speed:.1f} m/s, miss {d_min:.1f} m in {t_min:.1f} s")
@@ -123,7 +173,7 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
 
     return PairRisk(worker.id, forklift.id, level, LEVELS[level], method, enc.range,
                     enc.closing_speed, enc.los_rate, enc.tcpa, enc.dcpa, enc.ttc,
-                    t_min, d_min, scale, reason)
+                    t_min, d_min, scale, reason, round(scale * forklift.speed, 2))
 
 
 class RiskEngine:
@@ -141,8 +191,14 @@ class RiskEngine:
         tr.update(t, **meas)
         return tr
 
-    def evaluate(self, method=None, stale_s=2.0):
-        """Assess every worker x forklift pair; tracks silent for `stale_s` are skipped."""
+    def evaluate(self, method=None, stale_s=2.0, only=None, gate_m=None):
+        """Assess worker x forklift pairs; tracks silent for `stale_s` are skipped.
+
+        only   : evaluate just the pairs that involve this object id (the one that
+                 sent the new sample) - keeps the cost per sample O(N) instead of O(N^2)
+        gate_m : pairs farther apart than this (and not closing fast enough to get
+                 near within the horizon) get a cheap SAFE result without prediction
+        """
         import time
         method = method or self.method
         now = time.monotonic()
@@ -150,4 +206,23 @@ class RiskEngine:
                 if t.x is not None and now - getattr(t, "last_seen", now) <= stale_s]
         workers = [t for t in live if t.kind == "worker"]
         lifts = [t for t in live if t.kind == "forklift"]
-        return [assess(w, f, self.cfg, method) for w in workers for f in lifts]
+        if gate_m is None:
+            gate_m = self.cfg.r_safe + self.cfg.m_caution + 1.0
+        out = []
+        for w in workers:
+            for f in lifts:
+                if only is not None and only not in (w.id, f.id):
+                    continue
+                dx, dy = w.pos[0] - f.pos[0], w.pos[1] - f.pos[1]
+                reach = (w.speed + f.speed) * self.cfg.horizon + gate_m
+                if dx * dx + dy * dy > reach * reach:
+                    out.append(_far(w, f, method, math.hypot(dx, dy)))
+                else:
+                    out.append(assess(w, f, self.cfg, method))
+        return out
+
+
+def _far(w, f, method, rng):
+    """Pair that cannot meet within the horizon even head-on at current speeds."""
+    return PairRisk(w.id, f.id, 0, LEVELS[0], method, rng, 0.0, 0.0, INF, rng, INF,
+                    INF, rng, 1.0, "clear (out of reach)")

@@ -27,6 +27,8 @@ const int   MOTOR_PWM_PIN = 27;
 const uint32_t PUBLISH_MS = 100;
 const uint8_t MPU = 0x68;
 const float GYRO_LSB = 131.0f;          // +-250 deg/s range
+const float MAX_SPEED = 1.0f;           // m/s at full drive PWM (calibrate on the RC car)
+uint32_t lastAlertMs = 0;
 
 WebServer server(80);
 float heading = 0.0f;                   // rad, 0 = +x of the site frame
@@ -94,7 +96,14 @@ void handleAlert() {
   if (alert.isNull() || String((const char*)alert["forklift"]) != DEVICE_ID) return;
   JsonObject act = alert["actions"][DEVICE_ID];
   beacon = act["beacon"] | false;
-  speedScale = constrain((float)(act["speed_scale"] | 1.0f), 0.0f, 1.0f);
+  // Prefer the absolute limit (m/s): a ratio of an already reduced speed would let the truck
+  // speed up again. Hold it until a "clear" alert (or the 5 s failsafe in loop()).
+  if (!act["speed_limit"].isNull()) {
+    speedScale = constrain((float)act["speed_limit"] / MAX_SPEED, 0.0f, 1.0f);
+  } else {
+    speedScale = constrain((float)(act["speed_scale"] | 1.0f), 0.0f, 1.0f);
+  }
+  lastAlertMs = millis();
   Serial.printf("alert %s beacon=%d speed x%.2f\n", (const char*)(alert["level"] | "?"), beacon, speedScale);
 }
 
@@ -123,6 +132,7 @@ void loop() {
   lastImu = now;
   float yawRate = readYawRate();
   heading += yawRate * dt;                          // integrate gyro (UWB track corrects drift)
+  if (speedScale < 1.0f && millis() - lastAlertMs > 5000) speedScale = 1.0f;   // failsafe
   ledcWrite(MOTOR_PWM_PIN, (int)(baseDuty * speedScale));
   digitalWrite(BEACON_PIN, beacon && (millis() / 250) % 2);   // blink
   if (millis() - lastPublish >= PUBLISH_MS) {

@@ -30,15 +30,15 @@
     },
     "Guidance + CTRV": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.2857142857142857,
-      "median_lead_s": 2.2,
+      "false_alarm_rate": 0.3378812199036918,
+      "median_lead_s": 2.4000000000000004,
       "conflicts": 754,
       "non_conflicts": 1246
     },
     "Guidance + CTRV + LSTM": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.24879614767255218,
-      "median_lead_s": 2.2,
+      "false_alarm_rate": 0.3001605136436597,
+      "median_lead_s": 2.3999999999999995,
       "conflicts": 754,
       "non_conflicts": 1246
     }
@@ -108,14 +108,14 @@
         "median_lead_s": 2.5
       },
       "Guidance + CTRV": {
-        "alarm": 41,
-        "ok": 213,
+        "alarm": 43,
+        "ok": 211,
         "n": 250,
         "median_lead_s": 2.5
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 41,
-        "ok": 213,
+        "alarm": 39,
+        "ok": 215,
         "n": 250,
         "median_lead_s": 2.55
       }
@@ -190,8 +190,8 @@
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 19,
-        "ok": 231,
+        "alarm": 22,
+        "ok": 228,
         "n": 250,
         "median_lead_s": null
       }
@@ -222,14 +222,14 @@
         "median_lead_s": null
       },
       "Guidance + CTRV": {
-        "alarm": 48,
-        "ok": 202,
+        "alarm": 52,
+        "ok": 198,
         "n": 250,
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 10,
-        "ok": 240,
+        "alarm": 15,
+        "ok": 235,
         "n": 250,
         "median_lead_s": null
       }
@@ -263,13 +263,13 @@
         "alarm": 250,
         "ok": 250,
         "n": 250,
-        "median_lead_s": 1.9
+        "median_lead_s": 2.8
       },
       "Guidance + CTRV + LSTM": {
         "alarm": 250,
         "ok": 250,
         "n": 250,
-        "median_lead_s": 1.9
+        "median_lead_s": 2.8
       }
     },
     "turn_away": {
@@ -298,14 +298,14 @@
         "median_lead_s": null
       },
       "Guidance + CTRV": {
-        "alarm": 15,
-        "ok": 235,
+        "alarm": 73,
+        "ok": 177,
         "n": 250,
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 15,
-        "ok": 235,
+        "alarm": 71,
+        "ok": 179,
         "n": 250,
         "median_lead_s": null
       }
@@ -336,14 +336,14 @@
         "median_lead_s": null
       },
       "Guidance + CTRV": {
-        "alarm": 232,
-        "ok": 18,
+        "alarm": 233,
+        "ok": 17,
         "n": 250,
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 229,
-        "ok": 21,
+        "alarm": 231,
+        "ok": 19,
         "n": 250,
         "median_lead_s": null
       }

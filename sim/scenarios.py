@@ -157,6 +157,42 @@ GENERATORS = [gen_crossing_conflict, gen_crossing_clear, gen_head_on, gen_adjace
               gen_roadside_picker, gen_turn_into_worker, gen_turn_away, gen_worker_yields]
 
 
+# --- extra behaviours used by the online (closed-loop) simulation ---------------------
+
+def gen_running_worker(rng):
+    """Worker running (2.0-2.8 m/s) across the forklift's path."""
+    times = _times()
+    vf, vw = rng.uniform(1.5, 3.0), rng.uniform(2.0, 2.8)
+    t_meet = rng.uniform(5.0, 8.0)
+    off = rng.uniform(-0.3, 0.3)
+    f = _straight_forklift(-vf * t_meet, 0.0, 0.0, vf, times)
+    w = _walk(0.0, -vw * (t_meet + off), 0.0, vw, times)
+    return "running_worker", times, w, f
+
+
+def gen_zigzag_worker(rng):
+    """Worker weaving (+-0.8 m, 0.4 Hz) while crossing - hard for straight-line prediction."""
+    name, times, w, f = gen_crossing_conflict(rng)
+    amp, freq = rng.uniform(0.5, 0.9), rng.uniform(0.3, 0.5)
+    ph = rng.uniform(0, 2 * math.pi)
+    w = [(x + amp * math.sin(2 * math.pi * freq * t + ph), y) for t, (x, y) in zip(times, w)]
+    return "zigzag_worker", times, w, f
+
+
+def gen_reversing_forklift(rng):
+    """Forklift reversing out of a bay across a walkway (moves -x while facing +x)."""
+    times = _times()
+    vf, vw = rng.uniform(1.0, 1.8), rng.uniform(0.8, 1.4)
+    t_meet = rng.uniform(5.0, 8.0)
+    x0 = vf * t_meet
+    f = [(x0 - vf * t, 0.0, 0.0, -vf, 0.0) for t in times]      # heading +x, speed negative
+    w = _walk(0.0, -vw * (t_meet + rng.uniform(-0.3, 0.3)), 0.0, vw, times)
+    return "reversing_forklift", times, w, f
+
+
+EXTRA_GENERATORS = [gen_running_worker, gen_zigzag_worker, gen_reversing_forklift]
+
+
 def ground_truth(times, w, f, r_safe=R_SAFE):
     d = [math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(w, f)]
     contact = next((t for t, x in zip(times, d) if x < r_safe), None)
