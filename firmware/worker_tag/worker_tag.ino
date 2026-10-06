@@ -5,15 +5,19 @@
 //   (add that URL to `alert_subscribers` in config/edgeguard.yaml, then run
 //    tools/setup_resources.py)
 //
-// Libraries: ArduinoJson 7.x.  UWB ranging/trilateration is stubbed in
-// readPosition() - replace it with the DW1000 anchor code in W3.
+// Libraries: ArduinoJson 7.x, arduino-dw1000 (DW1000Ranging, thotro).
+// Ranging: the tag does two-way ranging with 3-4 anchors; positions are solved with
+// firmware/common/uwb_position.h (least squares + NLOS anchor rejection).
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
+#include <SPI.h>
+#include <DW1000Ranging.h>
 #include <time.h>
+#include "uwb_position.h"   // copy of firmware/common/uwb_position.h (kept identical by tests)
 
 // ---------- settings ----------
 const char* WIFI_SSID = "YOUR_WIFI";
@@ -36,10 +40,36 @@ int64_t epochMs() {
   return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
-// TODO(W3): replace with DW1000 two-way ranging to 3-4 anchors + trilateration.
+// ---------- UWB ----------
+// Anchor positions in site metres (measure once with a tape / laser meter).
+const uint16_t ANCHOR_ADDR[4] = {0x1781, 0x1782, 0x1783, 0x1784};
+const uwb::Anchor ANCHORS[4] = {{0, 0, 3.0f}, {20, 0, 3.0f}, {20, 12, 3.0f}, {0, 12, 3.0f}};
+const float TAG_HEIGHT = 1.2f;          // tag worn on the shoulder strap
+const uint32_t RANGE_MAX_AGE_MS = 300;  // ranges older than this are not used
+float rangeM[4] = {0, 0, 0, 0};
+uint32_t rangeAt[4] = {0, 0, 0, 0};
+const int PIN_RST = 27, PIN_IRQ = 34, PIN_SS = 4;
+
+void onNewRange() {
+  DW1000Device* dev = DW1000Ranging.getDistantDevice();
+  uint16_t addr = dev->getShortAddress();
+  for (int i = 0; i < 4; i++) {
+    if (addr == ANCHOR_ADDR[i]) { rangeM[i] = dev->getRange(); rangeAt[i] = millis(); }
+  }
+}
+
 bool readPosition(float& x, float& y) {
-  x = 0.0f;
-  y = 0.0f;
+  uwb::Anchor a[4];
+  float d[4];
+  int n = 0;
+  for (int i = 0; i < 4; i++) {
+    if (rangeAt[i] && millis() - rangeAt[i] < RANGE_MAX_AGE_MS) { a[n] = ANCHORS[i]; d[n] = rangeM[i]; n++; }
+  }
+  if (n < 3) return false;              // not enough anchors: stay silent, MEC falls back
+  uwb::Fix f = uwb::locate(a, d, n, TAG_HEIGHT);
+  if (!f.ok || f.rms > 0.5f) return false;
+  x = f.x;
+  y = f.y;
   return true;
 }
 
@@ -94,9 +124,13 @@ void setup() {
   configTime(9 * 3600, 0, "pool.ntp.org");                        // timestamps for latency
   server.on("/alert", HTTP_POST, handleAlert);
   server.begin();
+  DW1000Ranging.initCommunication(PIN_RST, PIN_SS, PIN_IRQ);
+  DW1000Ranging.attachNewRange(onNewRange);
+  DW1000Ranging.startAsTag("7D:00:22:EA:82:60:3B:9C", DW1000.MODE_LONGDATA_RANGE_ACCURACY);
 }
 
 void loop() {
+  DW1000Ranging.loop();
   server.handleClient();
   bool on = millis() < vibrateUntil;
   digitalWrite(MOTOR_PIN, on);

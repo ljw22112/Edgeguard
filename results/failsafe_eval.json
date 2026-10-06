@@ -1,0 +1,224 @@
+{
+ "episodes": 330,
+ "results": {
+  "normal": {
+   "legacy": {
+    "reward": -5.692472177194256,
+    "precision": 0.6617647058823529,
+    "recall": 1.0,
+    "f_beta": 0.907258064516129,
+    "beta": 2.0,
+    "throughput": 0.7800948697041072,
+    "collisions": 19,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 92,
+    "lost_s_mean": 2.674290359012436
+   },
+   "failsafe": {
+    "reward": -5.692472177194256,
+    "precision": 0.6617647058823529,
+    "recall": 1.0,
+    "f_beta": 0.907258064516129,
+    "beta": 2.0,
+    "throughput": 0.7800948697041072,
+    "collisions": 19,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 92,
+    "lost_s_mean": 2.674290359012436
+   },
+   "failsafe_creep": {
+    "reward": -5.898246092327616,
+    "precision": 0.6617647058823529,
+    "recall": 1.0,
+    "f_beta": 0.907258064516129,
+    "beta": 2.0,
+    "throughput": 0.7768147932914872,
+    "collisions": 20,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 92,
+    "lost_s_mean": 2.7285491226306426
+   },
+   "failsafe_stop": {
+    "reward": -5.909702346295905,
+    "precision": 0.6617647058823529,
+    "recall": 1.0,
+    "f_beta": 0.907258064516129,
+    "beta": 2.0,
+    "throughput": 0.7759604576932623,
+    "collisions": 20,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 92,
+    "lost_s_mean": 2.740005376598933
+   }
+  },
+  "mec_restart": {
+   "legacy": {
+    "reward": -7.405357882986331,
+    "precision": 0.664179104477612,
+    "recall": 0.9888888888888889,
+    "f_beta": 0.9008097165991904,
+    "beta": 2.0,
+    "throughput": 0.7739252931486595,
+    "collisions": 30,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 90,
+    "lost_s_mean": 2.7235397011681597
+   },
+   "failsafe": {
+    "reward": -7.405918543278696,
+    "precision": 0.664179104477612,
+    "recall": 0.9888888888888889,
+    "f_beta": 0.9008097165991904,
+    "beta": 2.0,
+    "throughput": 0.7738816153423247,
+    "collisions": 30,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 90,
+    "lost_s_mean": 2.7241003614605233
+   },
+   "failsafe_creep": {
+    "reward": -9.81006633757234,
+    "precision": 0.664179104477612,
+    "recall": 0.9888888888888889,
+    "f_beta": 0.9008097165991904,
+    "beta": 2.0,
+    "throughput": 0.7278353176532906,
+    "collisions": 42,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 90,
+    "lost_s_mean": 3.310066337572347
+   },
+   "failsafe_stop": {
+    "reward": -8.680264846301709,
+    "precision": 0.664179104477612,
+    "recall": 0.9888888888888889,
+    "f_beta": 0.9008097165991904,
+    "beta": 2.0,
+    "throughput": 0.7221931460679449,
+    "collisions": 34,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 90,
+    "lost_s_mean": 3.3923860584229244
+   }
+  },
+  "restart_loss20": {
+   "legacy": {
+    "reward": -9.36587696741454,
+    "precision": 0.6705882352941176,
+    "recall": 0.95,
+    "f_beta": 0.8769230769230768,
+    "beta": 2.0,
+    "throughput": 0.7728432200608985,
+    "collisions": 43,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 84,
+    "lost_s_mean": 2.7234527249903024
+   },
+   "failsafe": {
+    "reward": -9.595067534131125,
+    "precision": 0.6705882352941176,
+    "recall": 0.95,
+    "f_beta": 0.8769230769230768,
+    "beta": 2.0,
+    "throughput": 0.7667791496034038,
+    "collisions": 44,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 84,
+    "lost_s_mean": 2.8011281401917363
+   },
+   "failsafe_creep": {
+    "reward": -12.732320801875016,
+    "precision": 0.6705882352941176,
+    "recall": 0.95,
+    "f_beta": 0.8769230769230768,
+    "beta": 2.0,
+    "throughput": 0.7088737670218453,
+    "collisions": 60,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 84,
+    "lost_s_mean": 3.514138983693205
+   },
+   "failsafe_stop": {
+    "reward": -11.709550424425279,
+    "precision": 0.6705882352941176,
+    "recall": 0.95,
+    "f_beta": 0.8769230769230768,
+    "beta": 2.0,
+    "throughput": 0.6949029539994724,
+    "collisions": 52,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 84,
+    "lost_s_mean": 3.703489818364676
+   }
+  },
+  "mec_dead_8s": {
+   "legacy": {
+    "reward": -15.277097598535816,
+    "precision": 0.6666666666666666,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7855626326963906,
+    "beta": 2.0,
+    "throughput": 0.9104827773396628,
+    "collisions": 93,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 74,
+    "lost_s_mean": 1.074067295505534
+   },
+   "failsafe": {
+    "reward": -16.93371754582456,
+    "precision": 0.6666666666666666,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7855626326963906,
+    "beta": 2.0,
+    "throughput": 0.7198825974309636,
+    "collisions": 89,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 74,
+    "lost_s_mean": 3.336747848854873
+   },
+   "failsafe_creep": {
+    "reward": -17.60129606937183,
+    "precision": 0.6666666666666666,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7855626326963906,
+    "beta": 2.0,
+    "throughput": 0.7243918943952936,
+    "collisions": 94,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 74,
+    "lost_s_mean": 3.246750614826395
+   },
+   "failsafe_stop": {
+    "reward": -13.315277183332185,
+    "precision": 0.6666666666666666,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7855626326963906,
+    "beta": 2.0,
+    "throughput": 0.6561465458667579,
+    "collisions": 60,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 74,
+    "lost_s_mean": 4.112246880301895
+   }
+  }
+ },
+ "rejected": {
+  "early_lift_2.2s": "normal 24 / restart 32 / restart+loss 52 collisions of 180 (legacy 19 / 30 / 43) - evaluated before ALERT_STALE_S went back to 5 s"
+ }
+}

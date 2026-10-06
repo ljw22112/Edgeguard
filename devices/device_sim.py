@@ -39,6 +39,8 @@ class AlertHandler(BaseHTTPRequestHandler):
         kind, a = parse_notification(body)
         if kind != "cin" or not isinstance(a, dict):
             return
+        if "rates" in a:              # adaptive-rate command: the playback always runs at 10 Hz
+            return
         lat = now_ms() - a["src_ts"] if a.get("src_ts") else None
         if a["event"] == "raise" and EP["t0"] and EP["contact"] is not None and not EP.get("seen"):
             EP["seen"] = True

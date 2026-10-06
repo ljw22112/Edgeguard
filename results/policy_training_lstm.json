@@ -1,0 +1,254 @@
+{
+ "validation": [
+  {
+   "policy": "default",
+   "params": {
+    "t_warn": 3.0,
+    "t_danger": 1.5,
+    "m_warn": 0.3,
+    "worker_react": 0.8,
+    "brake_decel": 2.0,
+    "brake_margin": 0.5,
+    "lane_lookahead": 6.0,
+    "pass_speed": 1.0,
+    "clear_hold": 2.0,
+    "stand_speed": 0.5
+   },
+   "precision": 0.7307692307692307,
+   "recall": 0.95,
+   "f_beta": 0.8962264150943396,
+   "throughput": 0.7023976389965546,
+   "collisions": 30,
+   "conflicts": 180,
+   "episodes": 330,
+   "false_alarms": 63,
+   "lost_s_mean": 3.6298076337994463,
+   "f1": 0.8260869565217392,
+   "f3": 0.9223300970873786,
+   "eligible": false,
+   "score": null
+  },
+  {
+   "policy": "C=50",
+   "params": {
+    "t_warn": 3.854,
+    "t_danger": 1.897,
+    "m_warn": 0.315,
+    "worker_react": 0.845,
+    "brake_decel": 1.898,
+    "brake_margin": 1.026,
+    "lane_lookahead": 6.007,
+    "pass_speed": 1.21,
+    "clear_hold": 2.037,
+    "stand_speed": 0.479
+   },
+   "precision": 0.6862745098039216,
+   "recall": 0.9722222222222222,
+   "f_beta": 0.8974358974358974,
+   "throughput": 0.765875019269219,
+   "collisions": 22,
+   "conflicts": 180,
+   "episodes": 330,
+   "false_alarms": 80,
+   "lost_s_mean": 2.8813231250618814,
+   "f1": 0.8045977011494253,
+   "f3": 0.9333333333333332,
+   "eligible": true,
+   "score": 0.9785
+  },
+  {
+   "policy": "ctrv_C50",
+   "params": {
+    "t_warn": 4.108,
+    "t_danger": 1.669,
+    "m_warn": 0.246,
+    "worker_react": 0.894,
+    "brake_decel": 2.317,
+    "brake_margin": 0.944,
+    "lane_lookahead": 4.961,
+    "pass_speed": 1.681,
+    "clear_hold": 2.464,
+    "stand_speed": 0.577
+   },
+   "precision": 0.6812749003984063,
+   "recall": 0.95,
+   "f_beta": 0.8805355303810505,
+   "throughput": 0.7916999187808427,
+   "collisions": 23,
+   "conflicts": 180,
+   "episodes": 330,
+   "false_alarms": 80,
+   "lost_s_mean": 2.572779384925801,
+   "f1": 0.7935034802784221,
+   "f3": 0.9139497594869053,
+   "eligible": true,
+   "score": 0.9925
+  }
+ ],
+ "chosen": "ctrv_C50",
+ "training_log": [
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 0,
+   "reward_mean_policy": -8.944543426725955,
+   "reward_best": -7.211149447825514,
+   "collisions_mean_policy": 9,
+   "throughput_mean_policy": 0.6917776571201208,
+   "f_beta_mean_policy": 0.8928571428571429
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 1,
+   "reward_mean_policy": -8.752252612375344,
+   "reward_best": -6.020165526893781,
+   "collisions_mean_policy": 9,
+   "throughput_mean_policy": 0.7134811716245409,
+   "f_beta_mean_policy": 0.930232558139535
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 2,
+   "reward_mean_policy": -6.800888524783844,
+   "reward_best": -5.517796240678969,
+   "collisions_mean_policy": 6,
+   "throughput_mean_policy": 0.7268068350156954,
+   "f_beta_mean_policy": 0.8928571428571429
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 3,
+   "reward_mean_policy": -6.614711320943062,
+   "reward_best": -3.6994109111630924,
+   "collisions_mean_policy": 6,
+   "throughput_mean_policy": 0.7481695914109606,
+   "f_beta_mean_policy": 0.900383141762452
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 4,
+   "reward_mean_policy": -9.493309331402449,
+   "reward_best": -5.943913627524429,
+   "collisions_mean_policy": 11,
+   "throughput_mean_policy": 0.7526584952777732,
+   "f_beta_mean_policy": 0.8867924528301886
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 5,
+   "reward_mean_policy": -5.398227030707786,
+   "reward_best": -4.477244437961788,
+   "collisions_mean_policy": 5,
+   "throughput_mean_policy": 0.8008767630243565,
+   "f_beta_mean_policy": 0.87890625
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 6,
+   "reward_mean_policy": -9.164383647858648,
+   "reward_best": -6.848158984235153,
+   "collisions_mean_policy": 11,
+   "throughput_mean_policy": 0.7651000754723812,
+   "f_beta_mean_policy": 0.8823529411764707
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 7,
+   "reward_mean_policy": -7.416577318660288,
+   "reward_best": -4.228723125762148,
+   "collisions_mean_policy": 8,
+   "throughput_mean_policy": 0.7812544735854999,
+   "f_beta_mean_policy": 0.8867924528301886
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 8,
+   "reward_mean_policy": -5.2523842641149585,
+   "reward_best": -4.063457665466886,
+   "collisions_mean_policy": 4,
+   "throughput_mean_policy": 0.7626879882910287,
+   "f_beta_mean_policy": 0.9038461538461539
+  },
+  {
+   "penalty": 50.0,
+   "w_fp": 0.5,
+   "iter": 9,
+   "reward_mean_policy": -5.71920861402784,
+   "reward_best": -4.520429331427452,
+   "collisions_mean_policy": 5,
+   "throughput_mean_policy": 0.7731866002782576,
+   "f_beta_mean_policy": 0.8880308880308879
+  }
+ ],
+ "settings": {
+  "penalties": [
+   50.0
+  ],
+  "w_fp": [
+   0.5
+  ],
+  "extra_policy": [
+   "ctrv_C50=config/policy_trained.yaml"
+  ],
+  "iters": 10,
+  "pop": 14,
+  "per_gen": 8,
+  "val_per_gen": 30,
+  "beta": 2.0,
+  "out": "results/policy_training_lstm.json",
+  "seed": 11,
+  "method": "guidance_lstm",
+  "no_write": true,
+  "minutes": 13.3,
+  "bounds": {
+   "t_warn": [
+    2.0,
+    4.5
+   ],
+   "t_danger": [
+    0.8,
+    2.5
+   ],
+   "m_warn": [
+    0.0,
+    1.0
+   ],
+   "worker_react": [
+    0.3,
+    1.5
+   ],
+   "brake_decel": [
+    1.0,
+    3.0
+   ],
+   "brake_margin": [
+    0.2,
+    2.0
+   ],
+   "lane_lookahead": [
+    2.0,
+    10.0
+   ],
+   "pass_speed": [
+    0.3,
+    2.5
+   ],
+   "clear_hold": [
+    0.5,
+    3.5
+   ],
+   "stand_speed": [
+    0.2,
+    0.9
+   ]
+  }
+ }
+}

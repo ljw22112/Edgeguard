@@ -35,7 +35,7 @@ def main():
             for dev, path in p[group].items():
                 c.delete(path)
                 c.delete(f"{p['ae']}/{dev}")
-        for leaf in ("risk", "alert"):
+        for leaf in ("risk", "alert", "control"):
             c.delete(f"{p['ae']}/{leaf}")
         c.delete(p["ae"])
         time.sleep(0.5)
@@ -52,18 +52,22 @@ def main():
     c.with_retry(c.create_container, p["ae"], "risk")
     c.with_retry(c.create_container, p["ae"], "alert")
     c.with_retry(c.create_subscription, p["alert"], "sub_devices", [cfg["device_sim"]["notify_url"]])
+    # adaptive reporting rate commands (MEC -> devices), see edgeguard/rate_control.py
+    c.with_retry(c.create_container, p["ae"], "control")
+    c.with_retry(c.create_subscription, p["control"], "sub_devices", [cfg["device_sim"]["notify_url"]])
     sec = cfg.get("security") or {}
     if sec.get("enabled"):
         apply_acps(c, cfg, p, sec)
     for i, url in enumerate(cfg.get("alert_subscribers") or []):
         c.create_subscription(p["alert"], f"sub_hw{i + 1}", [url])
+        c.create_subscription(p["control"], f"sub_hw{i + 1}", [url])
         print("   alert ->", url)
     print("  ", p["risk"], ";", p["alert"], "-> devices")
 
 
 def apply_acps(c, cfg, p, sec):
     """One ACP per device container: only that device (and the MEC app) may write it.
-    risk / alert: the MEC app writes, devices may only read."""
+    risk / alert / control: the MEC app writes, devices may only read."""
     from edgeguard.onem2m import CREATE, RETRIEVE, DISCOVERY, ALL_OPS
     mec = cfg["cse"]["origin"]
     orig = sec.get("originators", {})
@@ -77,7 +81,7 @@ def apply_acps(c, cfg, p, sec):
             c.set_acpi(path, f"{p['ae']}/acp_{dev}", acp.get("ri"))
             print(f"   ACP {path}: write = {o}, {mec}")
     readers = [o for o in orig.values()]
-    for leaf in ("risk", "alert"):
+    for leaf in ("risk", "alert", "control"):
         acp = c.with_retry(c.create_acp, p["ae"], f"acp_{leaf}",
                            [([mec], ALL_OPS)] + ([(readers, RETRIEVE | DISCOVERY)] if readers else []), [mec])
         c.set_acpi(p[leaf], f"{p['ae']}/acp_{leaf}", acp.get("ri"))

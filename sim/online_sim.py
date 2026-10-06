@@ -36,6 +36,7 @@ import yaml
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from edgeguard.device_policy import ForkliftLimit, ReportRate      # noqa: E402
 from edgeguard.onem2m import OneM2MClient, parse_notification       # noqa: E402
 from sim import scenarios                                            # noqa: E402
 
@@ -47,7 +48,8 @@ LEAD_REQ = 1.0
 
 BASE_CASE = dict(pairs=8, rounds=3, layout="spaced", mix="standard", noise=0.15, rate_hz=10,
                  up_loss=0.0, down_loss=0.0, delay_ms=0.0, jitter_ms=0.0, skew_ms=0.0,
-                 dropout=False, method="guidance_ctrv", react=True)
+                 dropout=False, method="guidance_ctrv", react=True,
+                 restart_at=None, background=0, adaptive=False)
 CASES = {
     "baseline":        {},
     "noise_high":      dict(noise=0.35),
@@ -63,6 +65,14 @@ CASES = {
     "worst_combined":  dict(noise=0.3, up_loss=0.2, down_loss=0.1, delay_ms=60, jitter_ms=30,
                             skew_ms=200, dropout=True),
     "proximity_5m":    dict(method="distance"),
+    "baseline_adaptive": dict(adaptive=True),                    # regression check at normal load
+    "scale_12":        dict(pairs=12, rounds=2),                 # 24 devices, 240 samples/s (design load)
+    "scale_20":        dict(pairs=20, rounds=2),                 # 40 devices, 400 samples/s
+    # 40 devices, 10 pairs meet and 10 pairs work apart (as on a real site), without / with
+    # adaptive reporting (far devices at 2 Hz, edgeguard/rate_control.py)
+    "scale_20_sparse":   dict(pairs=20, background=10, rounds=3),
+    "scale_20_adaptive": dict(pairs=20, background=10, rounds=3, adaptive=True),
+    "mec_restart":     dict(restart_at=4.0, adaptive=True, background=3),   # MEC app killed + restarted mid-round
 }
 
 
@@ -104,7 +114,7 @@ class Mover:
     def __init__(self, oid, kind, path):
         self.id, self.kind, self.path = oid, kind, path
         self.s, self.v = 0.0, path.v_nom(0.0)
-        self.limit, self.limit_t = None, -1e9        # forklift speed limit (m/s) and when it was set
+        self.fl = ForkliftLimit()                    # forklift speed limit with silence fail-safe
         self.pending = []                            # (apply_at, scale)
         self.stop_from = self.stop_until = -1.0      # worker reaction window
         self.lost_s = 0.0                            # forklift seconds lost to slow-downs
@@ -112,7 +122,7 @@ class Mover:
 
     def on_alert(self, t, event, limit=None, vibrate=False):
         if self.kind == "forklift":                       # limit: absolute m/s, None = no limit
-            self.pending.append((t + 0.2, None if event == "clear" else limit))  # actuator delay
+            self.pending.append((t + 0.2, event, limit))                         # actuator delay
         elif vibrate and t > self.stop_until:
             self.stop_from, self.stop_until = t + 0.8, t + 2.8                   # reaction 0.8 s, stop 2 s
             self.stops += 1
@@ -120,12 +130,16 @@ class Mover:
     def step(self, t, dt):
         vn = self.path.v_nom(self.s)
         if self.kind == "forklift":
-            while self.pending and self.pending[0][0] <= t:
-                _, lim = self.pending.pop(0)
-                self.limit, self.limit_t = lim, t
-            if t - self.limit_t > 5.0:
-                self.limit = None              # failsafe: no word from the MEC app for 5 s
-            target = vn if self.limit is None else min(vn, self.limit)
+            ready = sorted((x for x in self.pending if x[0] <= t), key=lambda x: x[0])
+            if ready:
+                self.pending = [x for x in self.pending if x[0] > t]
+            for _, ev, lim in ready:
+                if ev == "hb":
+                    self.fl.on_heartbeat(t)
+                else:
+                    self.fl.on_alert(t, ev, lim)
+            lim = self.fl.effective(t)
+            target = vn if lim is None else min(vn, lim)
             dec, acc = 2.5, 1.0
             if vn > 0.1:
                 self.lost_s += (1 - min(1.0, self.v / vn)) * dt
@@ -149,14 +163,18 @@ class Mover:
 
 # ---------------------------------------------------------------------------------------
 class Publisher(threading.Thread):
-    """Per-device uplink with loss, latency and jitter (order preserved)."""
+    """Per-device uplink with loss, latency and jitter (order preserved).
+
+    Like the firmware (which publishes the *current* position every tick), a sample that is
+    already superseded by a newer due sample when the uplink becomes free is skipped instead
+    of queueing behind a slow CSE."""
 
     def __init__(self, client, path, case, rng):
         super().__init__(daemon=True)
         self.c, self.path, self.case, self.rng = client, path, case, rng
         self.q: queue.Queue = queue.Queue()
         self.last_due = 0.0
-        self.sent = self.dropped = self.failed = 0
+        self.sent = self.dropped = self.failed = self.skipped = 0
 
     def push(self, payload):
         if self.rng.random() < self.case["up_loss"]:
@@ -175,6 +193,10 @@ class Publisher(threading.Thread):
             w = due - time.time()
             if w > 0:
                 time.sleep(w)
+            nxt = self.q.queue[0] if self.q.qsize() else None
+            if nxt is not None and nxt[1] is not None and nxt[0] <= time.time():
+                self.skipped += 1                       # newer sample ready: send that one
+                continue
             try:
                 self.c.create_cin(self.path, payload)
                 self.sent += 1
@@ -222,8 +244,9 @@ def build_round(case, rng):
             if rng.random() < 0.5:                            # rotate some encounters 90 degrees
                 w = [(-y, x) for x, y in w]
                 f = [(-y, x, th + math.pi / 2, sp, yw) for x, y, th, sp, yw in f]
+        fx_off = 35.0 if i >= case["pairs"] - case["background"] else 0.0   # works elsewhere
         w = [(x + ox, y + oy) for x, y in w]
-        f = [(x + ox, y + oy, th, sp, yw) for x, y, th, sp, yw in f]
+        f = [(x + ox + fx_off, y + oy, th, sp, yw) for x, y, th, sp, yw in f]
         drop = None
         if case["dropout"]:
             st = rng.uniform(2.0, 5.0)
@@ -255,14 +278,16 @@ def write_cfg(case, cse):
     c["cloud_sync"]["enabled"] = False
     c["mec_services"]["enabled"] = False
     c["security"]["enabled"] = False
+    c["rate_control"] = {"enabled": bool(case["adaptive"])}
     fd, path = tempfile.mkstemp(suffix=".yaml", prefix="eg_online_")
     with os.fdopen(fd, "w") as fh:
         yaml.safe_dump(c, fh)
     return path, c
 
 
-def run_case(name, case, cse, sink, seed):
+def run_case(name, case, cse, sink, seed, scen_seed=None):
     rng = random.Random(seed)
+    scen_rng = random.Random((seed if scen_seed is None else scen_seed) * 7919)       # encounters only: identical across cases with the same seed
     cfg_path, cfg = write_cfg(case, cse)
     env = dict(os.environ, EDGEGUARD_CONFIG=cfg_path, MEC_LOG=f"/tmp/eg_online_{name}.log")
     subprocess.run(["bash", "scripts/mec.sh", "restart"], cwd=ROOT, env=env,
@@ -272,9 +297,10 @@ def run_case(name, case, cse, sink, seed):
     ae = cfg["ae"]
     combos, latencies, pubs_all = [], [], []
     forklift_lost, worker_stops, episodes = [], 0, 0
+    restarts = []
 
     for rnd in range(case["rounds"]):
-        pairs = build_round(case, rng)
+        pairs = build_round(case, scen_rng)
         movers, pubs, skew = {}, {}, {}
         for i, pr in enumerate(pairs):
             wid, fid = f"w{i:02d}", f"f{i:02d}"
@@ -286,6 +312,7 @@ def run_case(name, case, cse, sink, seed):
                 pubs[oid] = Publisher(cl, f"{ae}/{oid}/{leaf}", case, random.Random(rng.random()))
                 pubs[oid].start()
                 skew[oid] = rng.uniform(-case["skew_ms"], case["skew_ms"])
+        dev_rate = {oid: ReportRate() for oid in movers}      # commanded rate with fail-safe
         # nominal ground truth for every worker x forklift combination that actually meets
         gt = {}
         for i, pi in enumerate(pairs):
@@ -306,14 +333,26 @@ def run_case(name, case, cse, sink, seed):
 
             def apply():
                 t = time.time() - t0
+                if "rates" in a or a.get("hb"):                   # control: rate command / heartbeat
+                    with lock:
+                        for oid, hz in (a.get("rates") or {}).items():
+                            if oid in dev_rate:
+                                dev_rate[oid].on_command(t, hz)
+                        for m in movers.values():
+                            if m.kind == "forklift":
+                                m.pending.append((t, "hb", None))
+                    return
                 w, f = a.get("worker"), a.get("forklift")
                 acts = a.get("actions", {})
                 with lock:
-                    if a.get("event") == "raise" and (w, f) not in first_alert:
+                    if a.get("event") in ("raise", "refresh") and (w, f) not in first_alert:
                         first_alert[(w, f)] = t
                     alert_log.setdefault((w, f), []).append(
                         (round(t, 2), a.get("event"), a.get("level"), acts.get(f, {}).get("speed_limit")))
                     if case["react"]:
+                        for m in movers.values():               # any MEC message = heartbeat
+                            if m.kind == "forklift" and m.id != f:
+                                m.pending.append((t, "hb", None))
                         if f in movers:
                             fa = acts.get(f, {})
                             lim = fa.get("speed_limit")
@@ -329,33 +368,46 @@ def run_case(name, case, cse, sink, seed):
 
         every = max(1, int(round(10 / case["rate_hz"])))
         k = 0
+        restarted = False
+
+        def do_restart(t_kill):
+            r0 = time.time()
+            subprocess.run(["bash", "scripts/mec.sh", "restart"], cwd=ROOT, env=env,
+                           stdout=subprocess.DEVNULL)
+            restarts.append({"round": rnd, "t_kill": round(t_kill, 2),
+                             "down_s": round(time.time() - r0, 2), "t_up": round(time.time() - t0, 2)})
         while True:
             t = time.time() - t0
             if t > T_ROUND:
                 break
+            if case["restart_at"] is not None and not restarted and t >= case["restart_at"]:
+                restarted = True
+                threading.Thread(target=do_restart, args=(t,), daemon=True).start()
             with lock:
                 for m in movers.values():
                     m.step(t, DT)
                 for (w, f) in gt:
                     (xw, yw), (xf, yf) = movers[w].path.pos(movers[w].s), movers[f].path.pos(movers[f].s)
                     actual_min[(w, f)] = min(actual_min[(w, f)], math.hypot(xw - xf, yw - yf))
-                if k % every == 0:
-                    now_ms = int(time.time() * 1000)
-                    for i, pr in enumerate(pairs):
-                        for oid in (f"w{i:02d}", f"f{i:02d}"):
-                            m = movers[oid]
-                            smp = m.sample()
-                            if oid.startswith("w") and pr["drop"] and pr["drop"][0] <= t < pr["drop"][1]:
-                                continue                                    # tag shadowed
-                            sx = smp["x"] + rng.gauss(0, case["noise"])
-                            sy = smp["y"] + rng.gauss(0, case["noise"])
-                            payload = {"id": oid, "kind": "worker" if oid[0] == "w" else "forklift",
-                                       "ts": now_ms + int(skew[oid]), "x": round(sx, 3), "y": round(sy, 3)}
-                            if oid[0] == "f":
-                                payload.update(speed=round(smp["speed"] + rng.gauss(0, 0.05), 3),
-                                               heading=round(smp["heading"] + rng.gauss(0, 0.035), 4),
-                                               yaw_rate=round(smp["yaw_rate"] + rng.gauss(0, 0.03), 4))
-                            pubs[oid].push(payload)
+                now_ms = int(time.time() * 1000)
+                for i, pr in enumerate(pairs):
+                    for oid in (f"w{i:02d}", f"f{i:02d}"):
+                        ev = max(every, int(round(10 / dev_rate[oid].current(t))))
+                        if (k % every if ev == every else (k + i) % ev) != 0:
+                            continue
+                        m = movers[oid]
+                        smp = m.sample()
+                        if oid.startswith("w") and pr["drop"] and pr["drop"][0] <= t < pr["drop"][1]:
+                            continue                                    # tag shadowed
+                        sx = smp["x"] + rng.gauss(0, case["noise"])
+                        sy = smp["y"] + rng.gauss(0, case["noise"])
+                        payload = {"id": oid, "kind": "worker" if oid[0] == "w" else "forklift",
+                                   "ts": now_ms + int(skew[oid]), "x": round(sx, 3), "y": round(sy, 3)}
+                        if oid[0] == "f":
+                            payload.update(speed=round(smp["speed"] + rng.gauss(0, 0.05), 3),
+                                           heading=round(smp["heading"] + rng.gauss(0, 0.035), 4),
+                                           yaw_rate=round(smp["yaw_rate"] + rng.gauss(0, 0.03), 4))
+                        pubs[oid].push(payload)
             k += 1
             time.sleep(max(0.0, t0 + k * DT - time.time()))
         sink.handler = None
@@ -375,7 +427,12 @@ def run_case(name, case, cse, sink, seed):
         episodes += len(pairs)
         time.sleep(2.6)                                              # tracks go stale between rounds
     os.unlink(cfg_path)
-    return summarize(name, case, combos, latencies, forklift_lost, worker_stops, episodes, pubs_all)
+    r = summarize(name, case, combos, latencies, forklift_lost, worker_stops, episodes, pubs_all)
+    if restarts:
+        r["restarts"] = restarts
+        r["alerts_after_restart"] = sum(1 for c in r["combos"] for a in c["alerts"]
+                                        if a[0] > restarts[c["round"]]["t_up"])
+    return r
 
 
 SPAWN_S = 2.5   # encounters that would collide this soon after a round starts are excluded:
@@ -410,6 +467,7 @@ def summarize(name, case, combos, latencies, lost, stops, episodes, pubs):
         "forklift_time_lost_s_per_episode": round(sum(lost) / max(1, len(lost)), 2),
         "worker_stops": stops,
         "samples_delivered": sent, "samples_dropped": sum(p.dropped for p in pubs),
+        "samples_superseded": sum(p.skipped for p in pubs),
         "combos": combos,
     }
 
@@ -437,7 +495,7 @@ def main():
         case = dict(BASE_CASE, **CASES[n])
         if a.rounds:
             case["rounds"] = a.rounds
-        r = run_case(n, case, cse, sink, a.seed + i)
+        r = run_case(n, case, cse, sink, a.seed + i, scen_seed=a.seed)
         results.append(r)
         print(json.dumps({k: v for k, v in r.items() if k != "combos"}), flush=True)
         json.dump({"results": results, "lead_required_s": LEAD_REQ, "r_contact_m": R_CONTACT,

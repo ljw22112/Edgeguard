@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import math
 import os
+import itertools
 import queue
 import sys
 import threading
@@ -37,7 +38,17 @@ PATHS = config.paths(CFG)
 MEC = CFG["mec"]
 engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_ctrv"))
 cse = config.client(CFG)
-outbox: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=1000)
+# priority outbox: alerts (0) are written before control (1) and risk summaries (2)
+outbox: "queue.PriorityQueue[tuple[int, int, str, dict]]" = queue.PriorityQueue(maxsize=1000)
+_seq = itertools.count()
+PRIO = {"alert": 0, "control": 1, "risk": 2}
+
+
+def post(kind, con):
+    try:
+        outbox.put_nowait((PRIO[kind], next(_seq), PATHS[kind], con))
+    except queue.Full:
+        log.warning("outbox full, dropping %s", kind)
 state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0,
          "network": {"cell_load": None, "congested": False}, "location_fixes": 0,
          "alert_log": deque(maxlen=60), "ingest_ms": deque(maxlen=200)}
@@ -48,7 +59,7 @@ lock = threading.Lock()
 def publisher():
     """Write contentInstances to the CSE off the request path."""
     while True:
-        path, con = outbox.get()
+        _, _, path, con = outbox.get()
         delay = MEC.get("emulated_extra_delay_ms", 0)
         if delay:
             time.sleep(delay / 1000)
@@ -60,43 +71,24 @@ def publisher():
 
 threading.Thread(target=publisher, daemon=True).start()
 
-# Optional cloud sync: risk summaries and alerts copied to the cloud IN-CSE.
-# Runs on its own queue so a slow or broken WAN never delays local alerts.
+# Optional cloud sync: risk summaries and alerts copied to the cloud IN-CSE
+# (store-and-forward, see edgeguard/cloud_sync.py).
 CLOUD = CFG.get("cloud_sync") or {}
-cloud_box: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=500)
-state["cloud"] = {"sent": 0, "failed": 0, "dropped": 0}
+cloud_sync = None
+state["cloud"] = {"sent": 0, "failed_attempts": 0, "dropped": 0, "backlog": 0}
 if CLOUD.get("enabled"):
+    from edgeguard.cloud_sync import CloudSync
     from edgeguard.onem2m import OneM2MClient
-    cloud = OneM2MClient(CLOUD["base_url"], CLOUD["cse_rn"], CLOUD.get("origin", CFG["cse"]["origin"]),
-                         str(CLOUD.get("rvi", "2a")), timeout=2.0)
-    CLOUD_AE = CLOUD.get("ae", "EdgeGuard")
-
-    def cloud_worker():
-        ready = False
-        while True:
-            path, con = cloud_box.get()
-            try:
-                if not ready:
-                    cloud.create_ae(CLOUD_AE)
-                    for c in ("risk", "alert"):
-                        cloud.create_container(CLOUD_AE, c)
-                    ready = True
-                cloud.create_cin(f"{CLOUD_AE}/{path}", con)
-                state["cloud"]["sent"] += 1
-            except Exception as e:
-                state["cloud"]["failed"] += 1
-                log.warning("cloud sync failed (%s): %s", path, e)
-
-    threading.Thread(target=cloud_worker, daemon=True).start()
+    cloud_sync = CloudSync(OneM2MClient(CLOUD["base_url"], CLOUD["cse_rn"],
+                                        CLOUD.get("origin", CFG["cse"]["origin"]),
+                                        str(CLOUD.get("rvi", "2a")), timeout=2.0),
+                           CLOUD.get("ae", "EdgeGuard"), capacity=CLOUD.get("backlog", 5000))
+    state["cloud"] = cloud_sync.stats
 
 
 def to_cloud(kind, con):
-    if not CLOUD.get("enabled"):
-        return
-    try:
-        cloud_box.put_nowait((kind, con))
-    except queue.Full:
-        state["cloud"]["dropped"] += 1
+    if cloud_sync is not None:
+        cloud_sync.put(kind, con)
 
 
 # --- ETSI MEC services: Location API fallback + RNIS-aware alert margin ---------------
@@ -161,6 +153,44 @@ def handle_sample(p: dict):
             state["ingest_ms"].append(rx - p["ts"])
         engine.update(Track, p["id"], kind, t, **meas)
         evaluate_and_alert(p.get("ts"), rx, only=p["id"])
+        if rate_ctl is not None:
+            control_rates()
+
+
+# Adaptive reporting rate (edgeguard/rate_control.py): far devices report at 2 Hz.
+RC = CFG.get("rate_control") or {}
+rate_ctl = None
+state["rates"] = {"fast": 0, "slow": 0, "commands": 0}
+if RC.get("enabled"):
+    from edgeguard.rate_control import RateController
+    rate_ctl = RateController(**{k: v for k, v in RC.items() if k not in ("enabled", "period_s", "heartbeat_s", "refresh_s")})
+
+
+def control_rates():
+    """Caller holds `lock`. Rate changes go out at once; the full map rides on the heartbeat."""
+    now = time.monotonic()
+    if now - state.get("rc_last", 0) < RC.get("period_s", 0.3):
+        return
+    state["rc_last"] = now
+    changes = rate_ctl.update(engine.tracks.values(), now)
+    if changes:
+        post("control", {"ts": now_ms(), "rates": changes})
+        state["rates"] = {**rate_ctl.counts(), "commands": state["rates"]["commands"] + 1}
+
+
+def heartbeat():
+    """<ae>/control heartbeat every heartbeat_s (1 s) (edgeguard/device_policy.py): devices use it to
+    tell 'MEC alive, alert over' from 'MEC silent' (forklifts then crawl), and it re-sends
+    the full rate map so a lost rate command heals itself.  Written at lower priority than
+    alerts, so a heartbeat that arrives also means no alert is waiting behind it."""
+    while True:
+        time.sleep(RC.get("heartbeat_s", 1.0))
+        with lock:
+            rates = dict(rate_ctl.rate) if rate_ctl is not None else {}
+        post("control", {"ts": now_ms(), "hb": True, "rates": rates})
+
+
+threading.Thread(target=heartbeat, daemon=True).start()
 
 
 CAM = CFG.get("camera") or {}
@@ -227,7 +257,7 @@ def evaluate_and_alert(src_ts, rx, only=None):
                         if k in engine.tracks and engine.tracks[k].x is not None},
                 "src_ts": src_ts, "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
             }
-            outbox.put_nowait((PATHS["alert"], alert))
+            post("alert", alert)
             to_cloud("alert", alert)
             state["alerts_sent"] += 1
             state["alert_log"].appendleft({k: alert[k] for k in
@@ -239,7 +269,7 @@ def evaluate_and_alert(src_ts, rx, only=None):
         state["last_risk_pub"] = now
         summary = {"ts": now_ms(), "pairs": [s_["risk"].to_dict() for s_ in state["pairs"].values()
                                              if "risk" in s_ and s_["risk"].level > 0]}
-        outbox.put_nowait((PATHS["risk"], summary))
+        post("risk", summary)
         if now - state.get("last_cloud_risk", 0) >= 1.0 / CLOUD.get("risk_hz", 1):
             state["last_cloud_risk"] = now
             to_cloud("risk", summary)
@@ -269,7 +299,7 @@ def health():
     return {"ok": True, "method": engine.method, "samples": state["rx"],
             "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
             "network": state["network"], "location_fixes": state["location_fixes"],
-            "camera": state["camera"],
+            "camera": state["camera"], "rates": state["rates"],
             "ingest_ms_median": ing[len(ing) // 2] if ing else None}
 
 

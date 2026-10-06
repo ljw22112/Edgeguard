@@ -27,6 +27,8 @@ class Net:
     jitter_ms: float = 20.0
     up_loss: float = 0.0
     down_loss: float = 0.0
+    mec_down: tuple | None = None   # (t_start, t_end): MEC app dead, restarts with empty state
+    heartbeat_s: float = 1.0        # <ae>/control heartbeat (edgeguard/device_policy.py)
 
 
 @dataclass
@@ -65,6 +67,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
     d_nom = [math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(w, f)]
     t_contact = next((k * DT for k, d in enumerate(d_nom) if d < R_CONTACT), None)
     first_alert, alerts, actual_min = None, 0, 1e9
+    last_hb, restarted = -1e9, True
     for k, t in enumerate(times):
         # deliver alerts that have arrived
         keep = []
@@ -72,7 +75,10 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             if due > t:
                 keep.append((due, ev, acts, lvl))
                 continue
-            if ev == "raise" and first_alert is None:
+            if ev == "hb":
+                forklift.pending.append((t, "hb", None))
+                continue
+            if ev in ("raise", "refresh") and first_alert is None:
                 first_alert = due
             if react:
                 fa = acts.get("f", {})
@@ -93,6 +99,17 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                           yaw_rate=smp["yaw_rate"] + rng.gauss(0, 0.03))
         if t < 0.5:
             continue
+        down = net.mec_down is not None and net.mec_down[0] <= t < net.mec_down[1]
+        if down:
+            restarted = False
+            continue
+        if net.mec_down is not None and t >= net.mec_down[1] and not restarted:
+            restarted = True                                   # fresh process: no tracks, no alert state
+            engine, st = RiskEngine(cfg, method), AlertState()
+        if t - last_hb >= net.heartbeat_s - 1e-9:
+            last_hb = t
+            if rng.random() >= net.down_loss:
+                pending.append((t + max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000, "hb", {}, 0))
         for r in engine.evaluate():
             ev, acts = decide(st, r, engine.tracks.get("w"), engine.tracks.get("f"), cfg, t)
             if ev:

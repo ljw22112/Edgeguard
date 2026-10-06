@@ -82,10 +82,14 @@ def episodes_for(seed, per_gen, randomize=True):
     return out
 
 
+METHOD = "guidance_ctrv"                        # predictor used inside the loop (--method)
+
+
 def _evaluate(args):
-    z, eps = args
+    z, eps, method = args
     cfg, _ = to_cfg(z)
-    return [run_episode(GENS[gi], random.Random(s), cfg, net=net, noise=noise) for gi, s, noise, net in eps]
+    return [run_episode(GENS[gi], random.Random(s), cfg, method=method, net=net, noise=noise)
+            for gi, s, noise, net in eps]
 
 
 def evaluate(pool, zs, eps, chunks=2):
@@ -93,7 +97,7 @@ def evaluate(pool, zs, eps, chunks=2):
     jobs = []
     for z in zs:
         for c in range(chunks):
-            jobs.append((z, eps[c::chunks]))
+            jobs.append((z, eps[c::chunks], METHOD))
     out = pool.map(_evaluate, jobs)
     res = []
     for i in range(len(zs)):
@@ -104,7 +108,7 @@ def evaluate(pool, zs, eps, chunks=2):
     return res
 
 
-def cem(pool, penalty, iters, pop, per_gen, seed, log):
+def cem(pool, penalty, iters, pop, per_gen, seed, log, w_fp=0.5):
     rng = np.random.default_rng(seed)
     mu, sd = from_cfg(RiskConfig()), np.full(len(NAMES), 0.22)
     best = (-1e9, mu.copy())
@@ -112,7 +116,7 @@ def cem(pool, penalty, iters, pop, per_gen, seed, log):
         eps = episodes_for(seed * 1000 + it, per_gen)
         zs = [mu.copy()] + [np.clip(mu + sd * rng.standard_normal(len(NAMES)), 0, 1) for _ in range(pop - 1)]
         batch = evaluate(pool, zs, eps)
-        scores = [score(b, collision_penalty=penalty) for b in batch]
+        scores = [score(b, collision_penalty=penalty, w_fp=w_fp) for b in batch]
         rewards = np.array([s["reward"] for s in scores])
         elite = np.argsort(rewards)[-max(2, pop // 4):]
         mu = 0.3 * mu + 0.7 * np.mean([zs[i] for i in elite], axis=0)
@@ -121,7 +125,7 @@ def cem(pool, penalty, iters, pop, per_gen, seed, log):
         if rewards[i_best] > best[0]:
             best = (float(rewards[i_best]), zs[i_best].copy())
         s0 = scores[0]
-        log.append({"penalty": penalty, "iter": it, "reward_mean_policy": s0["reward"],
+        log.append({"penalty": penalty, "w_fp": w_fp, "iter": it, "reward_mean_policy": s0["reward"],
                     "reward_best": float(rewards[i_best]), "collisions_mean_policy": s0["collisions"],
                     "throughput_mean_policy": s0["throughput"], "f_beta_mean_policy": s0["f_beta"]})
         print(f"  C={penalty:5.0f} it {it:2d}  reward {s0['reward']:7.2f} (best {rewards[i_best]:7.2f})  "
@@ -152,6 +156,10 @@ def write_policy(chosen, root):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--penalties", type=float, nargs="+", default=[5, 20, 50, 100])
+    ap.add_argument("--w-fp", type=float, nargs="+", default=[0.5],
+                    help="false-alarm penalties to train with (one run per C x w_fp)")
+    ap.add_argument("--extra-policy", nargs="*", default=[],
+                    help="name=path.yaml policies to include in validation (e.g. a previous run)")
     ap.add_argument("--iters", type=int, default=10)
     ap.add_argument("--pop", type=int, default=14)
     ap.add_argument("--per-gen", type=int, default=8, help="training encounters per scenario type")
@@ -159,7 +167,11 @@ def main():
     ap.add_argument("--beta", type=float, default=2.0)
     ap.add_argument("--out", default="results/policy_training.json")
     ap.add_argument("--seed", type=int, default=11)
+    ap.add_argument("--method", default="guidance_ctrv", help="guidance_ctrv | guidance_lstm")
+    ap.add_argument("--no-write", action="store_true", help="do not overwrite config/policy_trained.yaml")
     a = ap.parse_args()
+    global METHOD
+    METHOD = a.method
 
     t0 = time.time()
     log, cands = [], {}
@@ -167,9 +179,16 @@ def main():
     with Pool(max(1, os.cpu_count() or 1)) as pool:
         default_z = from_cfg(RiskConfig())
         for C in a.penalties:
-            print(f"training with collision penalty C = {C}", flush=True)
-            mu, best = cem(pool, C, a.iters, a.pop, a.per_gen, a.seed, log)
-            cands[f"C={C:g}"] = mu
+            for wfp in a.w_fp:
+                tag = f"C={C:g}" + ("" if wfp == 0.5 else f",fp={wfp:g}")
+                print(f"training {tag}", flush=True)
+                mu, best = cem(pool, C, a.iters, a.pop, a.per_gen, a.seed, log, w_fp=wfp)
+                cands[tag] = mu
+        import yaml
+        for spec in a.extra_policy:
+            name, path = spec.split("=", 1)
+            cands[name] = from_cfg(RiskConfig(**{k: v for k, v in yaml.safe_load(open(path))["risk"].items()
+                                                if k in NAMES}))
         names = ["default"] + list(cands)
         zs = [default_z] + [cands[n] for n in names[1:]]
         val = evaluate(pool, zs, val_eps)
@@ -195,7 +214,8 @@ def main():
     json.dump({"validation": rows, "chosen": chosen["policy"], "training_log": log,
                "settings": {**vars(a), "minutes": round((time.time() - t0) / 60, 1),
                             "bounds": BOUNDS}}, open(a.out, "w"), indent=1)
-    write_policy(chosen, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if not a.no_write:
+        write_policy(chosen, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 if __name__ == "__main__":

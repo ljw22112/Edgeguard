@@ -34,4 +34,5 @@ def paths(cfg):
         "cameras": {c: f"{ae}/{c}/detect" for c in d.get("cameras", [])},
         "risk": f"{ae}/risk",
         "alert": f"{ae}/alert",
+        "control": f"{ae}/control",
     }

@@ -24,13 +24,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from edgeguard.learned import HIST, FUT, POS_SCALE, build_model, features, DEFAULT_WEIGHTS  # noqa: E402
 from edgeguard.tracking import Track                                                       # noqa: E402
 from sim.evaluate import POS_NOISE, SPEED_NOISE, HEADING_NOISE, YAW_NOISE                 # noqa: E402
-from sim.scenarios import GENERATORS                                                       # noqa: E402
+from sim.scenarios import GENERATORS, EXTRA_GENERATORS                                     # noqa: E402
 
 
 def make_dataset(n_per_gen, seed, stride=2):
     rng = random.Random(seed)
     X, Y, CV = [], [], []
-    for gen in GENERATORS:
+    for gen in GENERATORS + EXTRA_GENERATORS:      # incl. running, zigzag, reversing
         for _ in range(n_per_gen):
             _, times, w, f = gen(rng)
             tw, tf = Track("w", "worker"), Track("f", "forklift")

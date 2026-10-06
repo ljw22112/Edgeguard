@@ -1,0 +1,30 @@
+{
+  "guidance_ctrv": {
+    "reward": -5.073612646505794,
+    "precision": 0.6526717557251909,
+    "recall": 0.95,
+    "f_beta": 0.870672097759674,
+    "beta": 2.0,
+    "throughput": 0.7842135942132443,
+    "collisions": 15,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 91,
+    "lost_s_mean": 2.6630065858997365,
+    "wall_s": 11.5
+  },
+  "guidance_lstm": {
+    "reward": -6.178839990986408,
+    "precision": 0.6812749003984063,
+    "recall": 0.95,
+    "f_beta": 0.8805355303810505,
+    "beta": 2.0,
+    "throughput": 0.7916999187808427,
+    "collisions": 23,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 80,
+    "lost_s_mean": 2.572779384925804,
+    "wall_s": 19.1
+  }
+}

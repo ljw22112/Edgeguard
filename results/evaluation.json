@@ -37,7 +37,7 @@
     },
     "Guidance + CTRV + LSTM": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.3001605136436597,
+      "false_alarm_rate": 0.29775280898876405,
       "median_lead_s": 2.3999999999999995,
       "conflicts": 754,
       "non_conflicts": 1246
@@ -114,10 +114,10 @@
         "median_lead_s": 2.5
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 39,
-        "ok": 215,
+        "alarm": 38,
+        "ok": 216,
         "n": 250,
-        "median_lead_s": 2.55
+        "median_lead_s": 2.5
       }
     },
     "head_on_same_aisle": {
@@ -190,8 +190,8 @@
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 22,
-        "ok": 228,
+        "alarm": 24,
+        "ok": 226,
         "n": 250,
         "median_lead_s": null
       }
@@ -228,8 +228,8 @@
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 15,
-        "ok": 235,
+        "alarm": 13,
+        "ok": 237,
         "n": 250,
         "median_lead_s": null
       }
@@ -342,8 +342,8 @@
         "median_lead_s": null
       },
       "Guidance + CTRV + LSTM": {
-        "alarm": 231,
-        "ok": 19,
+        "alarm": 229,
+        "ok": 21,
         "n": 250,
         "median_lead_s": null
       }
