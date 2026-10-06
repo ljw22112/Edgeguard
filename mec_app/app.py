@@ -15,8 +15,10 @@ import queue
 import sys
 import threading
 import time
+from collections import deque
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -34,7 +36,9 @@ MEC = CFG["mec"]
 engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_ctrv"))
 cse = config.client(CFG)
 outbox: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=1000)
-state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0}
+state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0,
+         "alert_log": deque(maxlen=60), "ingest_ms": deque(maxlen=200)}
+STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 lock = threading.Lock()
 
 
@@ -96,6 +100,8 @@ def handle_sample(p: dict):
         meas.update(speed=p.get("speed"), heading=p.get("heading"), yaw_rate=p.get("yaw_rate"))
     with lock:
         state["rx"] += 1
+        if p.get("ts"):
+            state["ingest_ms"].append(rx - p["ts"])
         engine.update(Track, p["id"], kind, t, **meas)
         risks = engine.evaluate()
         now = time.time()
@@ -116,6 +122,9 @@ def handle_sample(p: dict):
                 }
                 outbox.put_nowait((PATHS["alert"], alert))
                 state["alerts_sent"] += 1
+                state["alert_log"].appendleft({k: alert[k] for k in
+                                               ("event", "level", "worker", "forklift", "reason",
+                                                "mec_tx_ts")} | {"speed_scale": r.speed_scale})
                 log.info("ALERT %s %s %s-%s: %s", ev, alert["level"], r.worker, r.forklift, r.reason)
         hz = MEC.get("risk_publish_hz", 2)
         if risks and now - state["last_risk_pub"] >= 1.0 / hz:
@@ -141,9 +150,46 @@ def health():
             "alerts_sent": state["alerts_sent"]}
 
 
+def _paths(w, f):
+    """Predicted paths for the dashboard (same predictors as the risk engine)."""
+    from edgeguard.predict import CVPredictor, CTRVPredictor
+    from edgeguard.risk import _heading
+    times = [i * 0.25 for i in range(13)]                  # 0 .. 3 s
+    pw = None
+    if engine.method == "guidance_lstm":
+        from edgeguard.learned import predictor_or_none
+        pw = predictor_or_none(w, f)
+    pw = pw or CVPredictor(w.pos, w.vel)
+    pf = CTRVPredictor(f.pos, f.speed, _heading(f), f.yaw_rate)
+    rnd = lambda pts: [[round(x, 2), round(y, 2)] for x, y in pts]   # noqa: E731
+    return rnd(pw.positions(times)), rnd(pf.positions(times))
+
+
 @app.get("/state")
 def snapshot():
     with lock:
-        tracks = {k: {"kind": t.kind, "pos": t.pos, "vel": t.vel} for k, t in engine.tracks.items()}
-        pairs = [s["risk"].to_dict() for s in state["pairs"].values() if "risk" in s]
-    return {"tracks": tracks, "pairs": pairs}
+        now = time.monotonic()
+        tracks = {k: {"kind": t.kind, "pos": [round(v, 2) for v in t.pos],
+                      "vel": [round(v, 2) for v in t.vel],
+                      "stale": now - getattr(t, "last_seen", now) > 2.0}
+                  for k, t in engine.tracks.items() if t.x is not None}
+        pairs = []
+        for (wid, fid), s_ in state["pairs"].items():
+            if "risk" not in s_:
+                continue
+            d = s_["risk"].to_dict()
+            w, f = engine.tracks.get(wid), engine.tracks.get(fid)
+            if w is not None and f is not None and w.x is not None and f.x is not None:
+                d["worker_path"], d["forklift_path"] = _paths(w, f)
+            pairs.append(d)
+        ing = sorted(state["ingest_ms"])
+        stats = {"samples": state["rx"], "alerts_sent": state["alerts_sent"],
+                 "ingest_ms_median": ing[len(ing) // 2] if ing else None,
+                 "method": engine.method, "r_safe": engine.cfg.r_safe}
+        return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]),
+                "stats": stats, "server_ms": now_ms()}
+
+
+@app.get("/")
+def dashboard():
+    return FileResponse(os.path.join(STATIC, "dashboard.html"))

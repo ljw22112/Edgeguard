@@ -1,0 +1,41 @@
+# EdgeGuard configuration for KETI Mobius (3.x, tested with SQLite backend)
+# Use: EDGEGUARD_CONFIG=config/mobius.yaml
+
+cse:
+  base_url: http://localhost:7579
+  cse_rn: Mobius
+  origin: SEdgeGuard
+  rvi: "2a"
+
+ae: EdgeGuard
+
+devices:
+  workers: [worker_01]
+  forklifts: [forklift_01]
+  cameras: [camera_01]
+
+mec:
+  listen_host: 0.0.0.0
+  listen_port: 9090
+  notify_url: http://localhost:9090/notify   # URL the CSE can reach
+  method: guidance_ctrv                       # guidance | guidance_ctrv | distance | ttc
+  risk_publish_hz: 2                          # risk summary rate written to the CSE
+  emulated_extra_delay_ms: 0                  # >0 emulates a cloud round-trip for comparisons
+
+device_sim:
+  listen_port: 9091
+  notify_url: http://localhost:9091/alert
+
+# Real devices that should receive alerts (ESP32 worker tags / forklift modules)
+alert_subscribers: []
+#  - http://192.168.0.21/alert     # worker_01 tag
+#  - http://192.168.0.31/alert     # forklift_01 module
+
+risk:
+  r_safe: 1.5
+  t_danger: 1.5
+  t_warn: 3.0
+  t_caution: 5.0
+  m_warn: 0.3
+  m_caution: 1.0
+  horizon: 5.0

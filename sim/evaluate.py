@@ -38,6 +38,12 @@ METHODS = {
     "Guidance (CPA/LOS)": ("guidance", RiskConfig(r_safe=R_SAFE)),
     "Guidance + CTRV": ("guidance_ctrv", RiskConfig(r_safe=R_SAFE)),
 }
+try:
+    from edgeguard.learned import available as _lstm_ok
+    if _lstm_ok():
+        METHODS["Guidance + CTRV + LSTM"] = ("guidance_lstm", RiskConfig(r_safe=R_SAFE))
+except Exception:                                   # torch not installed: skip the learned method
+    pass
 
 
 def run_episode(rng, name, times, w, f):

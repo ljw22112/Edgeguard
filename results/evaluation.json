@@ -2,7 +2,7 @@
   "summary": {
     "Proximity 3 m": {
       "timely_detection": 0.0,
-      "false_alarm_rate": 0.6773675762439807,
+      "false_alarm_rate": 0.6669341894060995,
       "median_lead_s": 0.40000000000000036,
       "conflicts": 754,
       "non_conflicts": 1246
@@ -16,21 +16,28 @@
     },
     "TTC < 3 s": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.7271268057784912,
+      "false_alarm_rate": 0.7255216693418941,
       "median_lead_s": 2.1000000000000005,
       "conflicts": 754,
       "non_conflicts": 1246
     },
     "Guidance (CPA/LOS)": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.31701444622792935,
+      "false_alarm_rate": 0.3162118780096308,
       "median_lead_s": 2.1000000000000005,
       "conflicts": 754,
       "non_conflicts": 1246
     },
     "Guidance + CTRV": {
       "timely_detection": 1.0,
-      "false_alarm_rate": 0.28731942215088285,
+      "false_alarm_rate": 0.2857142857142857,
+      "median_lead_s": 2.2,
+      "conflicts": 754,
+      "non_conflicts": 1246
+    },
+    "Guidance + CTRV + LSTM": {
+      "timely_detection": 1.0,
+      "false_alarm_rate": 0.24879614767255218,
       "median_lead_s": 2.2,
       "conflicts": 754,
       "non_conflicts": 1246
@@ -67,6 +74,12 @@
         "ok": 250,
         "n": 250,
         "median_lead_s": 2.2
+      },
+      "Guidance + CTRV + LSTM": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.2
       }
     },
     "crossing_clear": {
@@ -99,6 +112,12 @@
         "ok": 213,
         "n": 250,
         "median_lead_s": 2.5
+      },
+      "Guidance + CTRV + LSTM": {
+        "alarm": 41,
+        "ok": 213,
+        "n": 250,
+        "median_lead_s": 2.55
       }
     },
     "head_on_same_aisle": {
@@ -127,6 +146,12 @@
         "median_lead_s": 2.3
       },
       "Guidance + CTRV": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 2.4
+      },
+      "Guidance + CTRV + LSTM": {
         "alarm": 250,
         "ok": 250,
         "n": 250,
@@ -163,6 +188,12 @@
         "ok": 226,
         "n": 250,
         "median_lead_s": null
+      },
+      "Guidance + CTRV + LSTM": {
+        "alarm": 19,
+        "ok": 231,
+        "n": 250,
+        "median_lead_s": null
       }
     },
     "roadside_picker": {
@@ -195,6 +226,12 @@
         "ok": 202,
         "n": 250,
         "median_lead_s": null
+      },
+      "Guidance + CTRV + LSTM": {
+        "alarm": 10,
+        "ok": 240,
+        "n": 250,
+        "median_lead_s": null
       }
     },
     "turn_into_worker": {
@@ -223,6 +260,12 @@
         "median_lead_s": 1.8
       },
       "Guidance + CTRV": {
+        "alarm": 250,
+        "ok": 250,
+        "n": 250,
+        "median_lead_s": 1.9
+      },
+      "Guidance + CTRV + LSTM": {
         "alarm": 250,
         "ok": 250,
         "n": 250,
@@ -259,12 +302,18 @@
         "ok": 235,
         "n": 250,
         "median_lead_s": null
+      },
+      "Guidance + CTRV + LSTM": {
+        "alarm": 15,
+        "ok": 235,
+        "n": 250,
+        "median_lead_s": null
       }
     },
     "worker_yields": {
       "Proximity 3 m": {
-        "alarm": 249,
-        "ok": 1,
+        "alarm": 236,
+        "ok": 14,
         "n": 250,
         "median_lead_s": null
       },
@@ -275,20 +324,26 @@
         "median_lead_s": null
       },
       "TTC < 3 s": {
-        "alarm": 244,
-        "ok": 6,
+        "alarm": 242,
+        "ok": 8,
         "n": 250,
         "median_lead_s": null
       },
       "Guidance (CPA/LOS)": {
+        "alarm": 231,
+        "ok": 19,
+        "n": 250,
+        "median_lead_s": null
+      },
+      "Guidance + CTRV": {
         "alarm": 232,
         "ok": 18,
         "n": 250,
         "median_lead_s": null
       },
-      "Guidance + CTRV": {
-        "alarm": 234,
-        "ok": 16,
+      "Guidance + CTRV + LSTM": {
+        "alarm": 229,
+        "ok": 21,
         "n": 250,
         "median_lead_s": null
       }

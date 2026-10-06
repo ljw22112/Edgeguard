@@ -128,15 +128,28 @@ def gen_turn_away(rng):
 
 
 def gen_worker_yields(rng):
-    """Worker on a crossing collision path who stops 2-3 m before the aisle."""
+    """Worker on a crossing collision path who slows down and stops 2-3 m before
+    the forklift's path (people decelerate over ~0.6-1.0 s, they do not freeze)."""
     name, times, w, f = gen_crossing_conflict(rng)
-    # stop the worker when 2-3 m from the forklift's path (y = 0)
-    stop_dist = rng.uniform(2.2, 3.0)
-    out, stopped = [], None
-    for (x, y) in w:
-        if stopped is None and y > -stop_dist:
-            stopped = (x, y)
-        out.append(stopped if stopped is not None else (x, y))
+    (x0, y0), (x1, y1) = w[0], w[1]
+    vx, vy = (x1 - x0) / DT, (y1 - y0) / DT
+    v = math.hypot(vx, vy)
+    ux, uy = vx / v, vy / v
+    stop_dist = rng.uniform(2.2, 3.0)          # distance from the aisle centre line y = 0
+    s_stop = (-stop_dist - y0) / uy             # path length until that line
+    td = rng.uniform(0.6, 1.0)                  # deceleration time
+    s_dec = s_stop - v * td / 2
+    t_dec = s_dec / v
+    out = []
+    for t in times:
+        if t <= t_dec:
+            s_ = v * t
+        elif t <= t_dec + td:
+            dt = t - t_dec
+            s_ = s_dec + v * dt - 0.5 * (v / td) * dt * dt
+        else:
+            s_ = s_stop
+        out.append((x0 + ux * s_, y0 + uy * s_))
     return "worker_yields", times, out, f
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 import time
+from collections import deque
 
 import numpy as np
 
@@ -28,6 +29,7 @@ class Track:
         self.r_vel = vel_sigma ** 2
         self.q = accel_sigma ** 2
         self.src_ts = None                    # device timestamp of last sample (ms)
+        self.history = deque(maxlen=20)       # raw (t, x, y) samples for learned predictors
 
     def _predict(self, dt):
         F = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]], float)
@@ -42,6 +44,8 @@ class Track:
         self.last_seen = time.monotonic()
         if self.t is not None and (t < self.t or t - self.t > 2.0):
             self.x = None                     # device restarted or long gap: re-initialise
+            self.history.clear()
+        self.history.append((t, x, y))
         vel = None
         if speed is not None and heading is not None:
             vel = (speed * math.cos(heading), speed * math.sin(heading))

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdgeGuard Control</title>
+<style>
+/* Layout: control-room screen — status bar, live site map (left), risk + alert log (right) */
+:root{
+  --bg:#0f1318; --panel:#161c23; --line:#26303b; --ink:#e6ebf0; --muted:#8b97a5;
+  --worker:#4ea1ff; --forklift:#f2b705; --grid:#1c242d; --grid-major:#253040;
+  --safe:#2fb36d; --caution:#d9b23a; --warning:#f08a32; --danger:#ef4b4b;
+  --f-ui: system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif;
+  --f-num: ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light){:root{
+  --bg:#eef1f4; --panel:#ffffff; --line:#d5dbe2; --ink:#16202b; --muted:#5b6774;
+  --worker:#1f6fd1; --forklift:#c48f00; --grid:#e6eaee; --grid-major:#d2d9e0;
+  color-scheme: light}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-ui);display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-weight:700;font-size:17px;letter-spacing:.2px;display:flex;gap:10px;align-items:center}
+.live{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.live.on{background:var(--safe);box-shadow:0 0 0 4px color-mix(in srgb,var(--safe) 25%,transparent)}
+.stats{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+.stat{display:flex;flex-direction:column}
+.stat b{font:600 15px var(--f-num);font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:14px;padding:14px;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0;display:flex;flex-direction:column}
+.panel h2{margin:0;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+#mapwrap{position:relative;flex:1;min-height:360px}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.side{display:flex;flex-direction:column;gap:14px;min-height:0}
+#pairs{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.pair{display:flex;flex-direction:column;gap:10px}
+.pair-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pair-ids{font:600 13px var(--f-num)}
+.lvl{font:700 12px var(--f-num);letter-spacing:1px;padding:4px 10px;border-radius:5px;color:#0b0f14}
+.lvl.SAFE{background:var(--safe)} .lvl.CAUTION{background:var(--caution)}
+.lvl.WARNING{background:var(--warning)} .lvl.DANGER{background:var(--danger);color:#fff}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.m{background:var(--bg);border-radius:7px;padding:7px 9px}
+.m span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.m b{font:600 15px var(--f-num);font-variant-numeric:tabular-nums}
+.reason{font-size:13px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+#log{list-style:none;margin:0;padding:6px 8px;overflow:auto;flex:1;min-height:160px}
+#log li{display:grid;grid-template-columns:64px 78px minmax(0,1fr);gap:8px;align-items:baseline;padding:7px 6px;border-bottom:1px solid var(--line);font-size:12.5px}
+#log time{font-family:var(--f-num);color:var(--muted)}
+#log .lv{font:700 11px var(--f-num)}
+#log .txt{min-width:0;overflow-wrap:anywhere}
+.lv.SAFE,.lv.CAUTION{color:var(--muted)} .lv.WARNING{color:var(--warning)} .lv.DANGER{color:var(--danger)}
+#offline{display:none;position:absolute;top:12px;left:12px;background:var(--danger);color:#fff;padding:6px 10px;border-radius:6px;font-size:12.5px}
+@media (max-width:860px){main{grid-template-columns:1fr}#mapwrap{min-height:320px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="live" id="live"></span>EdgeGuard <span style="color:var(--muted);font-weight:400">MEC control</span></div>
+  <div class="stats">
+    <div class="stat"><b id="sMethod">–</b><span>Risk method</span></div>
+    <div class="stat"><b id="sIngest">–</b><span>Sensor → MEC</span></div>
+    <div class="stat"><b id="sSamples">–</b><span>Samples</span></div>
+    <div class="stat"><b id="sAlerts">–</b><span>Alerts sent</span></div>
+  </div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Site map <span class="legend"><span><i class="sw" style="background:var(--worker)"></i>Worker</span><span><i class="sw" style="background:var(--forklift)"></i>Forklift</span><span>··· predicted 3 s</span></span></h2>
+    <div id="mapwrap"><canvas id="map"></canvas><div id="offline">MEC app unreachable, retrying…</div></div>
+  </section>
+  <div class="side">
+    <section class="panel"><h2>Collision risk</h2><div id="pairs"><div class="empty">Waiting for worker and forklift data…</div></div></section>
+    <section class="panel" style="flex:1;min-height:0"><h2>Alert log</h2><ul id="log"><li class="empty" style="display:block">No alerts yet.</li></ul></section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const LV = {SAFE:"--safe",CAUTION:"--caution",WARNING:"--warning",DANGER:"--danger"};
+const fmt = (v, d=1, u="") => v === null || v === undefined ? "–" : (+v).toFixed(d) + u;
+let S = null, view = {cx:0, cy:0, scale:20};
+
+function fitView(){
+  if(!S) return;
+  const pts = [];
+  Object.values(S.tracks).forEach(t => pts.push(t.pos));
+  S.pairs.forEach(p => (p.worker_path||[]).concat(p.forklift_path||[]).forEach(q => pts.push(q)));
+  if(!pts.length) return;
+  const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]);
+  const pad = 4, minSpan = 16;
+  let x0=Math.min(...xs)-pad, x1=Math.max(...xs)+pad, y0=Math.min(...ys)-pad, y1=Math.max(...ys)+pad;
+  const c = $("map"), W=c.clientWidth, H=c.clientHeight;
+  const span = Math.max(x1-x0, y1-y0, minSpan);
+  const target = {cx:(x0+x1)/2, cy:(y0+y1)/2, scale:Math.min(W, H)/span};
+  const k = 0.12;                              // ease the camera so it never jumps
+  view.cx += (target.cx-view.cx)*k; view.cy += (target.cy-view.cy)*k; view.scale += (target.scale-view.scale)*k;
+}
+
+function draw(){
+  const c = $("map"), dpr = devicePixelRatio||1, W=c.clientWidth, H=c.clientHeight;
+  if(c.width !== W*dpr || c.height !== H*dpr){ c.width=W*dpr; c.height=H*dpr; }
+  const g = c.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const X = x => W/2 + (x-view.cx)*view.scale, Y = y => H/2 - (y-view.cy)*view.scale;
+  // grid: 1 m minor, 5 m major
+  const minX = view.cx - W/2/view.scale, maxX = view.cx + W/2/view.scale;
+  const minY = view.cy - H/2/view.scale, maxY = view.cy + H/2/view.scale;
+  for(let gx=Math.floor(minX); gx<=maxX; gx++){ g.strokeStyle = gx%5===0?css("--grid-major"):css("--grid"); g.lineWidth=1; g.beginPath(); g.moveTo(X(gx),0); g.lineTo(X(gx),H); g.stroke(); }
+  for(let gy=Math.floor(minY); gy<=maxY; gy++){ g.strokeStyle = gy%5===0?css("--grid-major"):css("--grid"); g.beginPath(); g.moveTo(0,Y(gy)); g.lineTo(W,Y(gy)); g.stroke(); }
+  g.fillStyle = css("--muted"); g.font = "11px " + css("--f-num");
+  g.fillText("5 m grid", 10, H-10);
+  if(!S) return;
+  const levelOf = {};
+  S.pairs.forEach(p => { levelOf[p.forklift] = Math.max(levelOf[p.forklift]||0, p.level); levelOf[p.worker] = Math.max(levelOf[p.worker]||0, p.level); });
+  // predicted paths + closest approach
+  S.pairs.forEach(p => {
+    [[p.worker_path,"--worker"],[p.forklift_path,"--forklift"]].forEach(([path,col]) => {
+      if(!path) return;
+      g.strokeStyle = css(col); g.lineWidth = 2; g.setLineDash([3,5]); g.beginPath();
+      path.forEach((q,i) => i ? g.lineTo(X(q[0]),Y(q[1])) : g.moveTo(X(q[0]),Y(q[1]))); g.stroke(); g.setLineDash([]);
+      g.fillStyle = css(col); path.forEach((q,i) => { if(i && i%2===0){ g.beginPath(); g.arc(X(q[0]),Y(q[1]),2.5,0,7); g.fill(); }});
+    });
+    if(p.level >= 2 && p.worker_path && p.forklift_path){
+      let best = 0, bd = 1e9;
+      p.worker_path.forEach((a,i) => { const b = p.forklift_path[i]; const d = Math.hypot(a[0]-b[0], a[1]-b[1]); if(d<bd){bd=d;best=i;} });
+      const a = p.worker_path[best], b = p.forklift_path[best], mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      g.strokeStyle = css(LV[p.level_name]); g.lineWidth = 2.5;
+      const s = 7; g.beginPath(); g.moveTo(X(mx)-s,Y(my)-s); g.lineTo(X(mx)+s,Y(my)+s); g.moveTo(X(mx)+s,Y(my)-s); g.lineTo(X(mx)-s,Y(my)+s); g.stroke();
+      g.fillStyle = css(LV[p.level_name]); g.font = "600 12px " + css("--f-num");
+      g.fillText(`${fmt(p.t_min)} s`, X(mx)+10, Y(my)-8);
+    }
+  });
+  // objects
+  Object.entries(S.tracks).forEach(([id,t]) => {
+    const x = X(t.pos[0]), y = Y(t.pos[1]); g.globalAlpha = t.stale ? .35 : 1;
+    if(t.kind === "forklift"){
+      const lvl = levelOf[id]||0, ring = css(LV[["SAFE","CAUTION","WARNING","DANGER"][lvl]]);
+      g.strokeStyle = ring; g.lineWidth = lvl>=2?2.5:1.2; g.setLineDash(lvl>=2?[]:[4,4]);
+      g.beginPath(); g.arc(x,y,S.stats.r_safe*view.scale,0,7); g.stroke(); g.setLineDash([]);
+      const ang = Math.atan2(t.vel[1], t.vel[0]);
+      g.save(); g.translate(x,y); g.rotate(-ang);
+      const L = 2.4*view.scale, Wd = 1.2*view.scale;
+      g.fillStyle = css("--forklift"); g.beginPath(); g.roundRect(-L/2,-Wd/2,L,Wd,4); g.fill();
+      g.fillStyle = css("--bg"); g.fillRect(L/2-4,-Wd/2+3,3,Wd-6);   // forks side
+      g.restore();
+    } else {
+      g.fillStyle = css("--worker"); g.beginPath(); g.arc(x,y,Math.max(6,0.3*view.scale),0,7); g.fill();
+      g.strokeStyle = css("--panel"); g.lineWidth = 2; g.stroke();
+    }
+    g.fillStyle = css("--ink"); g.font = "600 12px " + css("--f-num");
+    const off = t.kind === "forklift" ? S.stats.r_safe*view.scale + 6 : 12;
+    g.fillText(id, x + (t.kind === "forklift" ? -24 : 12), y - off); g.globalAlpha = 1;
+  });
+}
+
+function renderSide(){
+  $("sMethod").textContent = S.stats.method;
+  $("sIngest").textContent = S.stats.ingest_ms_median === null ? "–" : S.stats.ingest_ms_median + " ms";
+  $("sSamples").textContent = S.stats.samples.toLocaleString();
+  $("sAlerts").textContent = S.stats.alerts_sent;
+  const box = $("pairs");
+  if(!S.pairs.length){ box.innerHTML = '<div class="empty">Waiting for worker and forklift data…</div>'; }
+  else box.innerHTML = S.pairs.map(p => `
+    <div class="pair">
+      <div class="pair-top"><span class="pair-ids">${p.worker} ↔ ${p.forklift}</span><span class="lvl ${p.level_name}">${p.level_name}</span></div>
+      <div class="metrics">
+        <div class="m"><span>Range</span><b>${fmt(p.range)} m</b></div>
+        <div class="m"><span>Closing</span><b>${fmt(p.closing_speed)} m/s</b></div>
+        <div class="m"><span>LOS rate</span><b>${fmt(p.los_rate,2)}</b></div>
+        <div class="m"><span>Miss dist.</span><b>${fmt(p.d_min)} m</b></div>
+        <div class="m"><span>In</span><b>${p.t_min===null?"–":fmt(p.t_min)+" s"}</b></div>
+        <div class="m"><span>Speed cmd</span><b>×${fmt(p.speed_scale,2)}</b></div>
+      </div>
+      <div class="reason">${p.reason}</div>
+    </div>`).join("");
+  const log = $("log");
+  if(S.alerts.length){
+    log.innerHTML = S.alerts.map(a => {
+      const t = new Date(a.mec_tx_ts).toLocaleTimeString([], {hour12:false});
+      const what = a.event === "clear" ? "cleared" : `${a.worker} vibrate · ${a.forklift} ×${(+a.speed_scale).toFixed(2)}`;
+      return `<li><time>${t}</time><span class="lv ${a.level}">${a.event==="clear"?"CLEAR":a.level}</span><span class="txt">${what}<br><span style="color:var(--muted)">${a.reason}</span></span></li>`;
+    }).join("");
+  }
+}
+
+async function poll(){
+  try{
+    const r = await fetch("/state", {cache:"no-store"});
+    S = await r.json(); renderSide();
+    $("live").classList.add("on"); $("offline").style.display = "none";
+  }catch(e){
+    $("live").classList.remove("on"); $("offline").style.display = "block";
+  }
+  setTimeout(poll, 200);
+}
+function frame(){ fitView(); draw(); requestAnimationFrame(frame); }
+poll(); frame();
+</script>
+</body>
+</html>

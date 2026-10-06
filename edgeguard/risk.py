@@ -6,6 +6,7 @@ Methods
 -------
 guidance       CV prediction, analytic CPA / LOS-rate geometry
 guidance_ctrv  worker CV + forklift CTRV (IMU yaw rate), sampled closest approach
+guidance_lstm  worker LSTM (learned) + forklift CTRV; falls back to CV until 2 s of history
 distance       baseline proximity alarm (WARNING if R < threshold)
 ttc            baseline time-to-collision R / Vc
 """
@@ -94,8 +95,12 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
         level = 3 if enc.ttc < cfg.ttc_danger else 2 if enc.ttc < cfg.ttc_warn else 0
         reason = f"TTC {enc.ttc:.1f} s"
     else:
-        if method == "guidance_ctrv":
-            pw = CVPredictor(worker.pos, worker.vel)
+        if method in ("guidance_ctrv", "guidance_lstm"):
+            pw = None
+            if method == "guidance_lstm":
+                from .learned import predictor_or_none
+                pw = predictor_or_none(worker, forklift)
+            pw = pw or CVPredictor(worker.pos, worker.vel)
             pf = CTRVPredictor(forklift.pos, forklift.speed, _heading(forklift),
                                forklift.yaw_rate)
             t_min, d_min = min_separation(pw, pf, cfg.horizon)

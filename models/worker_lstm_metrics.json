@@ -1,0 +1,14 @@
+{
+  "val_samples": 11520,
+  "lstm": {
+    "ade_m": 0.17630235850811005,
+    "fde_m": 0.29558104276657104
+  },
+  "cv_kalman": {
+    "ade_m": 0.31156009435653687,
+    "fde_m": 0.5464161038398743
+  },
+  "horizon_s": 3.0,
+  "train_seed": 1000,
+  "episodes_per_scenario": 400
+}
