@@ -58,3 +58,13 @@ EdgeGuard는 같은 코드로 두 oneM2M 구현체(ACME CSE, KETI Mobius)에 붙
 
 - Mobius 3 CSEBase는 `srv: ["1","2","2a"]`, ACME는 `2a, 3, 4, 5`를 지원합니다.
   공통 분모인 `2a`로 맞추면 양쪽 모두 동작합니다 (`config/site.yaml`의 `rvi: "2a"`).
+
+### 6. Mobius는 originator 하나에 AE 하나
+
+- 같은 `X-M2M-Origin`으로 이름이 다른 AE를 또 만들면 409(충돌)가 나고, 그 경로는 404로 보입니다.
+  AE-ID가 originator에서 정해지기 때문입니다. 시험용 AE를 따로 만들 때는 originator도 따로 써야 합니다.
+
+### 7. Mobius ACP의 acpi 참조 형식
+
+- `acpi`에 구조적 경로(`Mobius/EdgeGuard/acp_worker_01`)를 넣으면 동작하고, Mobius는 `/Mobius/...` 형태로 돌려줍니다.
+  `edgeguard/onem2m.py`의 `set_acpi`는 구조적 경로를 먼저 쓰고, 실패하면 리소스 ID로 다시 시도합니다.

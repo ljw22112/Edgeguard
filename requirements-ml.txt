@@ -1,1 +1,3 @@
 torch>=2.2
+ultralytics>=8.3   # camera node (YOLOv8n); weights: yolov8n.pt
+opencv-python-headless>=4.8

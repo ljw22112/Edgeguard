@@ -72,3 +72,22 @@ def min_separation(pred_a, pred_b, horizon=5.0, dt=0.1):
         if d < best_d:
             best_t, best_d = t, d
     return best_t, best_d
+
+
+def speed_scale_on_path(pred_worker, pred_forklift, r_safe, horizon=3.0, dt=0.1, step=0.05):
+    """Velocity-obstacle speed command along the forklift's *predicted* path.
+
+    Slowing the forklift to k x speed keeps it on the same path but reaches each
+    point later: position(k, t) = path(k * t).  Returns the largest k in [0, 1]
+    that keeps the pair at least r_safe apart for `horizon` seconds.
+    """
+    n = int(round(horizon / dt))
+    times = [i * dt for i in range(n + 1)]
+    pw = pred_worker.positions(times)
+    k = 1.0
+    while k >= -1e-9:
+        pf = pred_forklift.positions([max(k, 0.0) * t for t in times])
+        if all(math.hypot(a[0] - b[0], a[1] - b[1]) >= r_safe for a, b in zip(pw, pf)):
+            return round(max(k, 0.0), 2)
+        k -= step
+    return 0.0

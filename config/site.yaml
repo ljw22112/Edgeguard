@@ -44,6 +44,37 @@ cloud_sync:
   ae: EdgeGuard_site01                       # one AE per site
   risk_hz: 1
 
+# ETSI MEC services (Location API MEC 013, RNIS MEC 012) on the MEC platform.
+# For local tests run the stand-in: uvicorn mec_mock.server:app --port 8085
+mec_services:
+  enabled: false
+  base_url: http://localhost:8085
+  location_api: location/v3
+  rnis_api: rni/v2
+  origin: {lat: 37.5503, lon: 127.0731}      # site frame origin (x = east, y = north)
+  users: {worker_01: "acr:10.100.0.1"}       # worker id -> UE address known to the network
+  uwb_stale_s: 0.5                           # ask the Location API when UWB is silent this long
+  cell_id: cell01
+  congestion_prb_pct: 80                     # RNIS cell load that counts as congested
+  congested_margin_s: 0.5                    # extra warning time while congested
+  poll_s: 0.25
+  rnis_poll_s: 1.0
+
+# Camera node (devices/camera_node.py): pixel -> floor-metre calibration, >= 4 points [u, v, x, y]
+camera:
+  conf: 0.4
+  calib_points:                      # example for the 810x1080 sample image; re-measure on site
+    - [0, 1080, 0.0, 0.0]
+    - [810, 1080, 6.0, 0.0]
+    - [810, 400, 6.0, 12.0]
+    - [0, 400, 0.0, 12.0]
+  fuse_gate_m: 1.5                   # detection within this distance of a tag track = same person
+
+# Access control: each device may write only its own container; risk/alert are MEC-only.
+security:
+  enabled: true
+  originators: {worker_01: SWorker01, forklift_01: SForklift01, camera_01: SCamera01}
+
 risk:
   r_safe: 1.5
   t_danger: 1.5

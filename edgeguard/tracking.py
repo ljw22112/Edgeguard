@@ -38,14 +38,20 @@ class Track:
         self.x = F @ self.x
         self.P = F @ self.P @ F.T + Q
 
-    def update(self, t, x, y, speed=None, heading=None, yaw_rate=None, src_ts=None):
-        """t in seconds. heading in radians (0 = +x axis, CCW positive)."""
+    def update(self, t, x, y, speed=None, heading=None, yaw_rate=None, src_ts=None,
+               pos_sigma=None, source="uwb"):
+        """t in seconds. heading in radians (0 = +x axis, CCW positive).
+        pos_sigma overrides the position noise for this sample (e.g. a coarse
+        network-based fix from the MEC Location API)."""
+        self.source = source
         self.src_ts = src_ts
         self.last_seen = time.monotonic()
         if self.t is not None and (t < self.t or t - self.t > 2.0):
             self.x = None                     # device restarted or long gap: re-initialise
             self.history.clear()
-        self.history.append((t, x, y))
+        if source == "uwb":
+            self.uwb_seen = self.last_seen
+            self.history.append((t, x, y))      # learned predictor expects 10 Hz UWB samples
         vel = None
         if speed is not None and heading is not None:
             vel = (speed * math.cos(heading), speed * math.sin(heading))
@@ -65,11 +71,12 @@ class Track:
         if vel is None:
             H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], float)
             z = np.array([x, y])
-            R = np.eye(2) * self.r_pos
+            R = np.eye(2) * (self.r_pos if pos_sigma is None else pos_sigma ** 2)
         else:
             H = np.eye(4)
             z = np.array([x, y, vel[0], vel[1]])
-            R = np.diag([self.r_pos, self.r_pos, self.r_vel, self.r_vel])
+            rp = self.r_pos if pos_sigma is None else pos_sigma ** 2
+            R = np.diag([rp, rp, self.r_vel, self.r_vel])
         y_res = z - H @ self.x
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)

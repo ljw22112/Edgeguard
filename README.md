@@ -12,7 +12,7 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
    └──── alert Notify ┴────── risk / alert CIN ◀─┘
 ```
 
-## 현재 상태 (v0.3)
+## 현재 상태 (v0.4)
 
 | 구성 | 상태 |
 |---|---|
@@ -24,11 +24,15 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 | 작업자 궤적 LSTM (3 s 예측) | ✅ 학습 완료, 위험도 엔진에 연결 (`guidance_lstm`) |
 | 관제 대시보드 (실시간 맵, 예측 경로, 위험도, 경보 로그) | ✅ MEC 앱 `/`에서 서빙 |
 | 가상 디바이스 (실기 도착 전 대체) | ✅ |
+| ETSI MEC Location API(013) · RNIS(012) 연동 | ✅ 시험용 MEC 서버로 검증 (ETSI 샌드박스 미접속) |
+| 카메라 사람 탐지 (YOLOv8n) + 태그 없는 작업자 융합 | ✅ |
+| 디바이스별 접근제어 (ACP) | ✅ Mobius에서 위조 쓰기 차단 확인 |
+| 아차사고 히트맵 · 안전 리포트 | ✅ `tools/safety_report.py` |
+| 데모 영상 | ✅ `results/edgeguard_demo.mp4` (4개 장면, 약 1분) |
 | ESP32 펌웨어 (작업자 태그, 지게차 모듈) | ⚠️ 골격만, 아직 컴파일·실기 검증 안 됨 |
-| MEC Docker 이미지 | ⚠️ Dockerfile만, 빌드 미검증 |
+| MEC Docker 이미지 | ⚠️ Dockerfile만. 이 환경에서 Docker Hub 접근이 막혀 베이스 이미지를 받지 못함 |
 | 배포 구조 결정 (4개 후보 측정) | ✅ 엣지 Mobius + 클라우드 동기화, 아래 "배포 구조" |
 | ACME MN-CSE ↔ Mobius IN-CSE 등록(Mcc) | ✅ 검증 (상호운용성 시험) |
-| MEC Location API / RNIS, YOLO | ⏳ 로드맵 W4~W6 |
 
 ## 위험도 판정: 가이던스 기하
 
@@ -149,6 +153,56 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
 상호운용성 시험에서 찾은 문제와 해결은 [docs/interop-notes.md](docs/interop-notes.md)에 정리했습니다.
 
+## ETSI MEC 서비스 연동
+
+`edgeguard/mec_services.py` (클라이언트), `mec_mock/server.py` (시험용 MEC 플랫폼, ETSI 데이터 모델 부분집합).
+`config/site.yaml`의 `mec_services`로 켭니다.
+
+- **Location API (MEC 013)**: 작업자 UWB 태그가 0.5초 이상 끊기면(선반 뒤 음영) 네트워크 기반 위치를 받아
+  정확도만큼 큰 잡음으로 추적기에 넣습니다. 대시보드에는 점선 원과 "MEC Location API"로 표시됩니다.
+- **RNIS (MEC 012)**: 현장 셀의 PRB 사용률이 80% 이상이면 경보 판정 시간을 0.5초 늘리고 경보 갱신을 2배로 자주 보냅니다.
+
+충돌 시나리오 4회, 첫 경보의 접촉 전 리드타임 (`results/mec_services.json`):
+
+| 조건 | 리드타임 (s) |
+|---|---|
+| UWB 정상 | 2.48, 2.37, 2.37, 2.27 |
+| UWB 3.0~6.5 s 끊김, 폴백 없음 | 2.07, 2.37, **0.87**, 2.27 |
+| UWB 끊김 + Location API 폴백 | 2.38, 2.37, 2.28, 2.28 |
+| 셀 혼잡 (RNIS 90%) | 2.86, 2.77, 2.97, 3.17 |
+
+폴백이 없으면 한 번은 1초 기준을 못 맞췄고, 폴백을 켜면 정상 때와 같은 수준으로 돌아왔습니다.
+ETSI MEC 샌드박스는 이 환경에서 접속이 막혀 있어, 최종 제출 전 샌드박스 응답으로 필드 이름을 다시 확인해야 합니다.
+
+## 카메라 노드 (태그 없는 작업자)
+
+`devices/camera_node.py`: YOLOv8n으로 사람을 찾고, 발 위치(박스 아래 중앙)를 호모그래피로 바닥 좌표(m)로 바꿔
+`camera_01/detect`에 씁니다. MEC 앱은 태그 트랙 1.5 m 이내의 탐지는 같은 사람으로 보고, 나머지는 `untagged_N` 트랙으로 만들어
+지게차 감속·경광등 경보를 냅니다 (진동은 보낼 태그가 없으므로 생략).
+
+- 추론 시간 (2코어 CPU, YOLOv8n): 640px 113 ms, 320px 39 ms → 5 Hz 가능. Jetson에서는 더 빠릅니다.
+- 태그 없이 카메라로만 보이는 작업자 시나리오에서 첫 경보 리드타임 2.27 s, 1.67 s.
+- 실행: `EDGEGUARD_YOLO=yolov8n.pt python devices/camera_node.py --source 0` (보정점은 `camera.calib_points`).
+
+## 접근제어 (디바이스별 ACP)
+
+`security.enabled: true`이면 `tools/setup_resources.py`가 디바이스마다 ACP를 만들어, 각 디바이스는 자기 컨테이너에만 쓸 수 있고
+`risk`·`alert`는 MEC 앱만 쓰고 디바이스는 읽기만 합니다. Mobius에서 확인한 결과:
+
+| 시도 | 결과 |
+|---|---|
+| SWorker01 → 자기 `worker_01/location` 쓰기 | 허용 |
+| SWorker01 → `forklift_01/motion` 쓰기 (위조) | 403 / 4103 거부 |
+| SWorker01 → `alert` 쓰기 (가짜 경보) | 403 / 4103 거부 |
+| 등록 안 된 SIntruder → `worker_01/location` 쓰기 | 403 / 4103 거부 |
+
+## 안전 리포트 · 데모 영상
+
+- `python tools/safety_report.py --config config/site.yaml` → `results/safety_report.html`:
+  CSE에 쌓인 경보 기록으로 1 m 단위 위험 구역 히트맵, 경보가 많은 구역·쌍, 개선 제안을 만듭니다.
+- `python tools/record_demo.py --config config/site.yaml` → `results/edgeguard_demo.mp4`:
+  대시보드를 띄워 놓고 4개 장면(교차 충돌, 회전 지게차, 태그 없는 작업자, UWB 음영 + Location API)을 재생하며 녹화합니다.
+
 ## oneM2M 리소스 트리
 
 ```
@@ -170,7 +224,8 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 edgeguard/   geometry.py (가이던스 기하) · tracking.py (칼만) · predict.py (CV/CTRV) · learned.py (LSTM) · risk.py · onem2m.py · config.py
 mec_app/     MEC 앱 (FastAPI) + 대시보드(static/) + Dockerfile
 models/      학습된 LSTM 가중치와 검증 지표
-devices/     가상 디바이스
+devices/     가상 디바이스 · 카메라 노드 (YOLO)
+mec_mock/    시험용 MEC 플랫폼 (Location API · RNIS)
 sim/         시나리오 · 비교 실험 · LSTM 학습 · 그래프
 tools/       oneM2M 리소스 셋업 · WAN 지연 프록시 · 구성 비교 · CSE 부하 시험
 docs/        구성도 · 상호운용성 노트
@@ -181,7 +236,5 @@ tests/       단위 테스트 (python -m pytest)
 
 ## 알려진 한계
 
-- VO 감속량은 직선 운동을 가정합니다. 회전 중에는 감속 명령이 약하게 나올 수 있습니다.
-- 모든 디바이스가 같은 originator를 씁니다. 운영 환경에서는 디바이스별 AE와 ACP가 필요합니다.
 - LSTM은 10 Hz로 고르게 들어오는 샘플을 가정합니다. 샘플 간격이 크게 흔들리면 성능이 떨어질 수 있습니다.
 - `emulated_extra_delay_ms`는 클라우드 경로를 흉내 내는 옵션일 뿐이며, W6에서 실제 클라우드 대비 측정을 해야 합니다.

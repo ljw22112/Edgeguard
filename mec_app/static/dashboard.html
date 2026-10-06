@@ -68,6 +68,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
     <div class="stat"><b id="sIngest">–</b><span>Sensor → MEC</span></div>
     <div class="stat"><b id="sSamples">–</b><span>Samples</span></div>
     <div class="stat"><b id="sAlerts">–</b><span>Alerts sent</span></div>
+    <div class="stat"><b id="sNet">–</b><span>Cell load (RNIS)</span></div>
   </div>
 </header>
 <main>
@@ -150,8 +151,19 @@ function draw(){
       g.fillStyle = css("--bg"); g.fillRect(L/2-4,-Wd/2+3,3,Wd-6);   // forks side
       g.restore();
     } else {
-      g.fillStyle = css("--worker"); g.beginPath(); g.arc(x,y,Math.max(6,0.3*view.scale),0,7); g.fill();
-      g.strokeStyle = css("--panel"); g.lineWidth = 2; g.stroke();
+      if(t.source === "camera"){              // seen by the camera only: no tag to vibrate
+        g.fillStyle = css("--worker"); g.globalAlpha *= .55; g.beginPath(); g.arc(x,y,Math.max(6,0.3*view.scale),0,7); g.fill();
+        g.globalAlpha = t.stale ? .35 : 1; g.strokeStyle = css("--worker"); g.lineWidth = 2; g.setLineDash([2,3]);
+        g.beginPath(); g.arc(x,y,Math.max(10,0.55*view.scale),0,7); g.stroke(); g.setLineDash([]);
+        g.fillStyle = css("--muted"); g.font = "11px " + css("--f-num"); g.fillText("camera · no tag", x+12, y+16);
+      } else if(t.source === "mec-location"){        // coarse network fix while the UWB tag is shadowed
+        g.strokeStyle = css("--worker"); g.lineWidth = 2; g.setLineDash([3,3]);
+        g.beginPath(); g.arc(x,y,Math.max(9,0.6*view.scale),0,7); g.stroke(); g.setLineDash([]);
+        g.fillStyle = css("--muted"); g.font = "11px " + css("--f-num"); g.fillText("MEC Location API", x+12, y+16);
+      } else {
+        g.fillStyle = css("--worker"); g.beginPath(); g.arc(x,y,Math.max(6,0.3*view.scale),0,7); g.fill();
+        g.strokeStyle = css("--panel"); g.lineWidth = 2; g.stroke();
+      }
     }
     g.fillStyle = css("--ink"); g.font = "600 12px " + css("--f-num");
     const off = t.kind === "forklift" ? S.stats.r_safe*view.scale + 6 : 12;
@@ -164,6 +176,10 @@ function renderSide(){
   $("sIngest").textContent = S.stats.ingest_ms_median === null ? "–" : S.stats.ingest_ms_median + " ms";
   $("sSamples").textContent = S.stats.samples.toLocaleString();
   $("sAlerts").textContent = S.stats.alerts_sent;
+  const net = S.stats.network || {};
+  $("sNet").textContent = net.cell_load === null || net.cell_load === undefined ? "–"
+      : `${Math.round(net.cell_load)}%${net.congested ? " · congested" : ""}`;
+  $("sNet").style.color = net.congested ? css("--warning") : "";
   const box = $("pairs");
   if(!S.pairs.length){ box.innerHTML = '<div class="empty">Waiting for worker and forklift data…</div>'; }
   else box.innerHTML = S.pairs.map(p => `
@@ -183,7 +199,8 @@ function renderSide(){
   if(S.alerts.length){
     log.innerHTML = S.alerts.map(a => {
       const t = new Date(a.mec_tx_ts).toLocaleTimeString([], {hour12:false});
-      const what = a.event === "clear" ? "cleared" : `${a.worker} vibrate · ${a.forklift} ×${(+a.speed_scale).toFixed(2)}`;
+      const who = a.worker.startsWith("untagged_") ? `${a.worker} (no tag)` : `${a.worker} vibrate`;
+      const what = a.event === "clear" ? "cleared" : `${who} · ${a.forklift} ×${(+a.speed_scale).toFixed(2)}`;
       return `<li><time>${t}</time><span class="lv ${a.level}">${a.event==="clear"?"CLEAR":a.level}</span><span class="txt">${what}<br><span style="color:var(--muted)">${a.reason}</span></span></li>`;
     }).join("");
   }

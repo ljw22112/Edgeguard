@@ -105,3 +105,16 @@ def test_ctrv_mid_turn_stops_at_aisle_axis():
     x1, _ = p.positions([5.0])[0]
     x2, _ = p.positions([9.0])[0]
     assert x1 == pytest.approx(x2, abs=1e-6)      # moving straight north afterwards
+
+
+def test_speed_command_follows_turn():
+    from edgeguard.predict import speed_scale_on_path
+    cfg = RiskConfig()
+    f = _track("forklift", (0, 0), (2.0, 0), yaw=0.8)     # turning left toward the worker
+    w = _track("worker", (2.5, 4.5), (0, 0))
+    r = assess(w, f, cfg, "guidance_ctrv")
+    assert r.level >= 2 and r.speed_scale < 1.0          # straight-line VO would say 1.0
+    # a slow enough forklift lets the worker stay clear
+    pw = CVPredictor((2.5, 4.5), (0, 0))
+    pf = CTRVPredictor((0, 0), 2.0, 0.0, 0.8)
+    assert speed_scale_on_path(pw, pf, 1.5, horizon=3.0) == r.speed_scale

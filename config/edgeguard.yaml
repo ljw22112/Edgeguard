@@ -35,6 +35,16 @@ alert_subscribers: []
 cloud_sync:
   enabled: false
 
+# Camera node (devices/camera_node.py): pixel -> floor-metre calibration, >= 4 points [u, v, x, y]
+camera:
+  conf: 0.4
+  calib_points:                      # example for the 810x1080 sample image; re-measure on site
+    - [0, 1080, 0.0, 0.0]
+    - [810, 1080, 6.0, 0.0]
+    - [810, 400, 6.0, 12.0]
+    - [0, 400, 0.0, 12.0]
+  fuse_gate_m: 1.5                   # detection within this distance of a tag track = same person
+
 risk:
   r_safe: 1.5
   t_danger: 1.5

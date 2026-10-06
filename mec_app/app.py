@@ -10,6 +10,7 @@ where the worker tag and forklift module are subscribed.
 from __future__ import annotations
 
 import logging
+import math
 import os
 import queue
 import sys
@@ -37,6 +38,7 @@ engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_
 cse = config.client(CFG)
 outbox: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=1000)
 state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0,
+         "network": {"cell_load": None, "congested": False}, "location_fixes": 0,
          "alert_log": deque(maxlen=60), "ingest_ms": deque(maxlen=200)}
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 lock = threading.Lock()
@@ -96,6 +98,50 @@ def to_cloud(kind, con):
         state["cloud"]["dropped"] += 1
 
 
+# --- ETSI MEC services: Location API fallback + RNIS-aware alert margin ---------------
+MS = CFG.get("mec_services") or {}
+BASE_T = (engine.cfg.t_danger, engine.cfg.t_warn)
+
+
+def mec_services_loop():
+    from edgeguard.mec_services import LocationClient, RnisClient, SiteFrame
+    frame = SiteFrame(MS["origin"]["lat"], MS["origin"]["lon"])
+    loc = LocationClient(MS["base_url"], MS.get("location_api", "location/v3"), frame=frame)
+    rnis = RnisClient(MS["base_url"], MS.get("rnis_api", "rni/v2"))
+    users = MS.get("users", {})                    # worker id -> UE address (e.g. acr:10.0.0.1)
+    stale_s = MS.get("uwb_stale_s", 0.5)
+    last_rnis = 0.0
+    while True:
+        now = time.monotonic()
+        for wid, addr in users.items():
+            tr = engine.tracks.get(wid)
+            seen = getattr(tr, "uwb_seen", None) if tr else None
+            if seen is not None and now - seen < stale_s:
+                continue                           # UWB is fine, no need for a coarse fix
+            try:
+                u = loc.user(addr)
+            except Exception as e:
+                log.debug("location query failed: %s", e)
+                continue
+            if u:
+                state["location_fixes"] += 1
+                handle_sample({"id": wid, "kind": "worker", "ts": now_ms(), "x": u["x"], "y": u["y"],
+                               "pos_sigma": max(0.3, u["accuracy"]), "source": "mec-location"})
+        if now - last_rnis >= MS.get("rnis_poll_s", 1.0):
+            last_rnis = now
+            try:
+                load = rnis.cell_load(MS.get("cell_id"))
+            except Exception:
+                load = None
+            congested = load is not None and load >= MS.get("congestion_prb_pct", 80)
+            if congested != state["network"]["congested"]:
+                log.info("RNIS: cell load %s%% -> %s", load, "congested" if congested else "normal")
+            state["network"] = {"cell_load": load, "congested": congested}
+            margin = MS.get("congested_margin_s", 0.5) if congested else 0.0
+            engine.cfg.t_danger, engine.cfg.t_warn = BASE_T[0] + margin, BASE_T[1] + margin
+        time.sleep(MS.get("poll_s", 0.25))
+
+
 class AlertState:
     """Edge-triggered alerts with debounce and hold, per worker/forklift pair."""
 
@@ -130,10 +176,13 @@ class AlertState:
 def handle_sample(p: dict):
     rx = now_ms()
     kind = p.get("kind")
+    if kind == "camera":
+        return handle_camera(p, rx)
     if kind not in ("worker", "forklift"):
         return
     t = p.get("ts", rx) / 1000.0
-    meas = {"x": p["x"], "y": p["y"], "src_ts": p.get("ts")}
+    meas = {"x": p["x"], "y": p["y"], "src_ts": p.get("ts"),
+            "pos_sigma": p.get("pos_sigma"), "source": p.get("source", "uwb")}
     if kind == "forklift":
         meas.update(speed=p.get("speed"), heading=p.get("heading"), yaw_rate=p.get("yaw_rate"))
     with lock:
@@ -141,41 +190,99 @@ def handle_sample(p: dict):
         if p.get("ts"):
             state["ingest_ms"].append(rx - p["ts"])
         engine.update(Track, p["id"], kind, t, **meas)
-        risks = engine.evaluate()
-        now = time.time()
-        for r in risks:
-            key = (r.worker, r.forklift)
-            st = state["pairs"].setdefault(key, {"alert": AlertState()})
-            st["risk"] = r
-            ev = st["alert"].step(r.level, now)
-            if ev:
-                alert = {
-                    "event": ev, "level": LEVELS[r.level],
-                    "worker": r.worker, "forklift": r.forklift,
-                    "actions": {r.worker: {"vibrate": ev != "clear" and r.level >= 2},
-                                r.forklift: {"beacon": ev != "clear" and r.level >= 2,
-                                             "speed_scale": 1.0 if ev == "clear" else r.speed_scale}},
-                    "reason": r.reason, "metrics": r.to_dict(),
-                    "src_ts": p.get("ts"), "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
-                }
-                outbox.put_nowait((PATHS["alert"], alert))
-                to_cloud("alert", alert)
-                state["alerts_sent"] += 1
-                state["alert_log"].appendleft({k: alert[k] for k in
-                                               ("event", "level", "worker", "forklift", "reason",
-                                                "mec_tx_ts")} | {"speed_scale": r.speed_scale})
-                log.info("ALERT %s %s %s-%s: %s", ev, alert["level"], r.worker, r.forklift, r.reason)
-        hz = MEC.get("risk_publish_hz", 2)
-        if risks and now - state["last_risk_pub"] >= 1.0 / hz:
-            state["last_risk_pub"] = now
-            summary = {"ts": now_ms(), "pairs": [r.to_dict() for r in risks]}
-            outbox.put_nowait((PATHS["risk"], summary))
-            if now - state.get("last_cloud_risk", 0) >= 1.0 / CLOUD.get("risk_hz", 1):
-                state["last_cloud_risk"] = now
-                to_cloud("risk", summary)
+        evaluate_and_alert(p.get("ts"), rx)
+
+
+CAM = CFG.get("camera") or {}
+state["untagged_seq"] = 0
+state["camera"] = {"frames": 0, "matched": 0, "untagged": 0}
+
+
+def handle_camera(p: dict, rx: int):
+    """Fuse camera person detections with the tag tracks.
+
+    A detection near a tagged worker is the same person (the tag already covers
+    them).  Anyone else is a worker without a working tag: they get an
+    `untagged_N` track so forklift alerts still fire (they cannot be vibrated)."""
+    gate = CAM.get("fuse_gate_m", 1.5)
+    t = p.get("ts", rx) / 1000.0
+    now = time.monotonic()
+    with lock:
+        state["rx"] += 1
+        state["camera"]["frames"] += 1
+        tagged = [tr for tr in engine.tracks.values()
+                  if tr.kind == "worker" and tr.x is not None and not tr.id.startswith("untagged_")
+                  and now - getattr(tr, "uwb_seen", 0) < 1.0]
+        untagged = [tr for tr in engine.tracks.values()
+                    if tr.id.startswith("untagged_") and tr.x is not None and now - tr.last_seen < 2.0]
+        used = set()
+        for d in p.get("persons", []):
+            x, y = d["x"], d["y"]
+            if any(math.hypot(tr.pos[0] - x, tr.pos[1] - y) < gate for tr in tagged):
+                state["camera"]["matched"] += 1
+                continue
+            best = min((tr for tr in untagged if tr.id not in used),
+                       key=lambda tr: math.hypot(tr.pos[0] - x, tr.pos[1] - y), default=None)
+            if best is not None and math.hypot(best.pos[0] - x, best.pos[1] - y) < 2.0:
+                tid = best.id
+            else:
+                state["untagged_seq"] += 1
+                tid = f"untagged_{state['untagged_seq']}"
+                state["camera"]["untagged"] += 1
+            used.add(tid)
+            engine.update(Track, tid, "worker", t, x=x, y=y, src_ts=p.get("ts"),
+                          pos_sigma=CAM.get("pos_sigma", 0.4), source="camera")
+        evaluate_and_alert(p.get("ts"), rx)
+
+
+def evaluate_and_alert(src_ts, rx):
+    """Assess every pair and emit alerts; caller holds `lock`."""
+    risks = engine.evaluate()
+    now = time.time()
+    for r in risks:
+        key = (r.worker, r.forklift)
+        st = state["pairs"].setdefault(key, {"alert": AlertState()})
+        st["alert"].refresh_s = 0.5 if state["network"]["congested"] else 1.0
+        st["risk"] = r
+        ev = st["alert"].step(r.level, now)
+        if ev:
+            untagged = r.worker.startswith("untagged_")
+            alert = {
+                "event": ev, "level": LEVELS[r.level],
+                "worker": r.worker, "forklift": r.forklift,
+                "actions": {r.worker: {"vibrate": ev != "clear" and r.level >= 2 and not untagged},
+                            r.forklift: {"beacon": ev != "clear" and r.level >= 2,
+                                         "speed_scale": 1.0 if ev == "clear" else r.speed_scale}},
+                "reason": r.reason + (" (person seen by camera, no tag)" if untagged else ""),
+                "metrics": r.to_dict(),
+                "pos": {k: [round(v, 2) for v in engine.tracks[k].pos] for k in (r.worker, r.forklift)
+                        if k in engine.tracks and engine.tracks[k].x is not None},
+                "src_ts": src_ts, "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
+            }
+            outbox.put_nowait((PATHS["alert"], alert))
+            to_cloud("alert", alert)
+            state["alerts_sent"] += 1
+            state["alert_log"].appendleft({k: alert[k] for k in
+                                           ("event", "level", "worker", "forklift", "reason",
+                                            "mec_tx_ts")} | {"speed_scale": r.speed_scale})
+            log.info("ALERT %s %s %s-%s: %s", ev, alert["level"], r.worker, r.forklift, alert["reason"])
+    hz = MEC.get("risk_publish_hz", 2)
+    if risks and now - state["last_risk_pub"] >= 1.0 / hz:
+        state["last_risk_pub"] = now
+        summary = {"ts": now_ms(), "pairs": [r.to_dict() for r in risks]}
+        outbox.put_nowait((PATHS["risk"], summary))
+        if now - state.get("last_cloud_risk", 0) >= 1.0 / CLOUD.get("risk_hz", 1):
+            state["last_cloud_risk"] = now
+            to_cloud("risk", summary)
 
 
 app = FastAPI(title="EdgeGuard MEC App")
+
+
+@app.on_event("startup")
+def _start_mec_services():
+    if MS.get("enabled"):
+        threading.Thread(target=mec_services_loop, daemon=True).start()
 
 
 @app.post("/notify")
@@ -192,6 +299,8 @@ def health():
     ing = sorted(state["ingest_ms"])
     return {"ok": True, "method": engine.method, "samples": state["rx"],
             "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
+            "network": state["network"], "location_fixes": state["location_fixes"],
+            "camera": state["camera"],
             "ingest_ms_median": ing[len(ing) // 2] if ing else None}
 
 
@@ -215,6 +324,7 @@ def snapshot():
     with lock:
         now = time.monotonic()
         tracks = {k: {"kind": t.kind, "pos": [round(v, 2) for v in t.pos],
+                      "source": getattr(t, "source", "uwb"),
                       "vel": [round(v, 2) for v in t.vel],
                       "stale": now - getattr(t, "last_seen", now) > 2.0}
                   for k, t in engine.tracks.items() if t.x is not None}
@@ -224,13 +334,16 @@ def snapshot():
                 continue
             d = s_["risk"].to_dict()
             w, f = engine.tracks.get(wid), engine.tracks.get(fid)
-            if w is not None and f is not None and w.x is not None and f.x is not None:
+            if any(t_ is None or t_.x is None or now - getattr(t_, "last_seen", now) > 2.0 for t_ in (w, f)):
+                continue                             # one side went silent: drop the pair card
+            if True:
                 d["worker_path"], d["forklift_path"] = _paths(w, f)
             pairs.append(d)
         ing = sorted(state["ingest_ms"])
         stats = {"samples": state["rx"], "alerts_sent": state["alerts_sent"],
                  "ingest_ms_median": ing[len(ing) // 2] if ing else None,
-                 "method": engine.method, "r_safe": engine.cfg.r_safe}
+                 "method": engine.method, "r_safe": engine.cfg.r_safe,
+                 "network": state["network"], "location_fixes": state["location_fixes"]}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]),
                 "stats": stats, "server_ms": now_ms()}
 

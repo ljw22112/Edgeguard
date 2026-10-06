@@ -12,7 +12,9 @@ import time
 
 import requests
 
-TY_AE, TY_CNT, TY_CIN, TY_SUB = 2, 3, 4, 23
+TY_ACP, TY_AE, TY_CNT, TY_CIN, TY_SUB = 1, 2, 3, 4, 23
+CREATE, RETRIEVE, UPDATE, DELETE, NOTIFY, DISCOVERY = 1, 2, 4, 8, 16, 32
+ALL_OPS = 63
 _ri = itertools.count(1)
 
 
@@ -88,6 +90,27 @@ class OneM2MClient:
                 if e.status != 404 or i == attempts - 1:
                     raise
                 time.sleep(wait)
+
+    def create_acp(self, parent, rn, rules, owners):
+        """rules: [(originators, ops)]; owners may change the ACP itself."""
+        body = {"m2m:acp": {"rn": rn,
+                            "pv": {"acr": [{"acor": list(o), "acop": op} for o, op in rules]},
+                            "pvs": {"acr": [{"acor": list(owners), "acop": ALL_OPS}]}}}
+        res = self.request("POST", parent, TY_ACP, body, ok_conflict=True)
+        if res is None:                                  # exists: refresh its rules
+            res = self.request("PUT", f"{parent}/{rn}", None,
+                               {"m2m:acp": {"pv": body["m2m:acp"]["pv"]}})
+        return res["m2m:acp"]
+
+    def set_acpi(self, path, acp_path, acp_ri=None):
+        """Attach an ACP; structured path works on Mobius, resource id is the fallback."""
+        last = None
+        for ref in [f"{self.cse_rn}/{acp_path}"] + ([acp_ri] if acp_ri else []):
+            try:
+                return self.request("PUT", path, None, {"m2m:cnt": {"acpi": [ref]}})
+            except OneM2MError as e:
+                last = e
+        raise last
 
     def latest(self, container):
         res = self.request("GET", f"{container}/la")

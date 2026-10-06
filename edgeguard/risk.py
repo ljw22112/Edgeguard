@@ -16,7 +16,7 @@ import math
 from dataclasses import dataclass, asdict, field
 
 from .geometry import encounter, vo_speed_scale, INF
-from .predict import CVPredictor, CTRVPredictor, min_separation
+from .predict import CVPredictor, CTRVPredictor, min_separation, speed_scale_on_path
 
 LEVELS = ["SAFE", "CAUTION", "WARNING", "DANGER"]
 
@@ -108,8 +108,11 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
             t_min = INF
         level = _level_from_geometry(cfg, t_min, d_min, enc.range, moving)
         if level >= 2 and moving:
-            scale = vo_speed_scale(worker.pos, worker.vel, forklift.pos, forklift.vel,
-                                   cfg.r_safe, horizon=cfg.t_warn)
+            if method in ("guidance_ctrv", "guidance_lstm"):
+                scale = speed_scale_on_path(pw, pf, cfg.r_safe, horizon=cfg.t_warn)
+            else:
+                scale = vo_speed_scale(worker.pos, worker.vel, forklift.pos, forklift.vel,
+                                       cfg.r_safe, horizon=cfg.t_warn)
         if level == 0:
             reason = "clear"
         elif d_min < cfg.r_safe:
