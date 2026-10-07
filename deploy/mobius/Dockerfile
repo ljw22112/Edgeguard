@@ -13,6 +13,9 @@ FROM ${NODE_IMAGE}
 
 WORKDIR /opt/mobius
 COPY --from=mobius-src . /opt/mobius
+# Upstream does not ship a lockfile; this one was resolved against the pinned commit, so every
+# build installs the same dependency versions (npm ci).
+COPY package-lock.json /opt/mobius/package-lock.json
 RUN rm -rf node_modules conf.json conf.seal.json log/* .git \
  && npm ci --omit=dev --no-audit --no-fund \
  && npm cache clean --force
