@@ -13,13 +13,15 @@ Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커�
 - MEC restart (1.4-2.2 s) and 40-device scale cases; MEC Sandbox alignment (MEC-IPE path, own scenario)
 - `scripts/setup_mobius.sh`, GitHub Actions CI
 
-## Next up
-1. When TR-0086 / the shared MEC Sandbox host is released: match MEC-IPE resource paths and content to
-   `mec_services.ipe`, upload `scenarios/edgeguard-warehouse.yaml`, check UE addresses against `ue_map`,
-   rerun `tools/sandbox_e2e.py` there; ask about API authentication.
-2. Hardware (when parts arrive): flash both sketches, calibrate UWB anchors (w3b), check the fail-safe on the RC car.
-3. MEC Docker image on the team PC (Docker Hub is blocked here) (w4a).
-4. Optional: online sim case against the real Sandbox once it is reachable.
+## Scope (decided 2026-10-07)
+No hardware validation and no live MEC Sandbox integration. Everything is validated with the
+online / fast closed-loop simulations, real Mobius / ACME CSEs, the MEC stand-ins (mec_mock,
+tools/mec_ipe.py) and our own Sandbox scenario. Firmware stays a reference implementation
+(host type-check + cross-test against edgeguard/device_policy.py and edgeguard/uwb.py).
+
+## Remaining
+- MEC Docker image on the team PC (Docker Hub is blocked here) (w4a) - optional
+- Final report / demo video / slides (W7) - not started on purpose
 
 ## Environment recovery (new session)
 ```bash
@@ -31,7 +33,7 @@ python -m pytest -q
 ```
 
 ## MEC Sandbox (organizer answers, 2026-10-06; TR-0086 draft, rollout expected the week of 10/6)
-**Applied 2026-10-06** (location_source: cse, tools/mec_ipe.py, scenarios/edgeguard-warehouse.yaml, tools/sandbox_e2e.py; see README). When the real sandbox opens: (1) match the MEC-IPE resource paths and content format to `mec_services.ipe`, (2) upload our scenario and check UE addresses against `ue_map`, (3) rerun `tools/sandbox_e2e.py` against the real environment.
+**Applied 2026-10-06** (location_source: cse, tools/mec_ipe.py, scenarios/edgeguard-warehouse.yaml, tools/sandbox_e2e.py; see README). Live Sandbox integration is out of scope (2026-10-07); kept for reference.
 
 - When connected to a CSE, the CSE registers AEs with the MEC host (no separate MEC 011 registration).
 - UE positions are written into CSE resources by MEC-IPE → **the preferred path is reading location from oneM2M resources**.
