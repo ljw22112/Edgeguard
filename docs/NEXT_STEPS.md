@@ -55,4 +55,7 @@ python -m pytest -q
 - UEs only exist in scenarios. **Building our own scenario with our own map and tracks is strongly encouraged** → export the warehouse map plus worker/forklift tracks from sim/scenarios.py in the sandbox scenario format.
 - Calling MEC APIs directly is allowed for exploration, but going through oneM2M resources is preferred → switch mec_services to read via CSE resources (keep the direct call as an option).
 - Host requirements: see the sandbox repo README. A shared host will be provided (no sudo).
-- Still unanswered: API authentication.
+- API access (answered 2026-10-07): logging in to the Sandbox allocates a k8s namespace (the sbx... id in the URL);
+  services under that namespace are reachable once a network scenario is deployed - no extra token. Matches our live run.
+- Self-hosted Sandbox (organizer's setup): VM with 4 cores, 9 GB RAM, 80 GB disk, Ubuntu 24.04 (22.04 also works).
+  Needed to load our own warehouse scenario (scenarios/edgeguard-warehouse.yaml) - the public Sandbox offers preset scenarios.
