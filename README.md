@@ -14,8 +14,9 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 
 ## 현재 상태 (v0.7)
 
-**검증 범위**: 하드웨어 실기 시험과 실제 MEC Sandbox 연동은 하지 않습니다. 모든 기능은 온라인 · 고속 폐루프 시뮬레이션,
-실제 Mobius/ACME CSE, MEC 서비스 대역(`mec_mock`, `tools/mec_ipe.py`)과 자체 Sandbox 시나리오로 검증합니다.
+**검증 범위**: 하드웨어 실기 시험은 하지 않습니다. 기능 검증은 온라인 · 고속 폐루프 시뮬레이션, 실제 Mobius/ACME CSE,
+MEC 서비스 대역(`mec_mock`, `tools/mec_ipe.py`)과 자체 Sandbox 시나리오로 하고, **공개 ETSI MEC Sandbox(try-mec.etsi.org)와의
+실제 연동**은 팀 PC에서 확인했습니다 (아래 "실제 ETSI MEC Sandbox 연동").
 펌웨어는 PC 타입 검사와 Python 기준 구현과의 교차 테스트까지 마친 참조 구현입니다.
 
 | 구성 | 상태 |
@@ -28,7 +29,7 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 | 작업자 궤적 LSTM (3 s 예측) | ✅ v2: 이상 행동까지 학습, 위험도 엔진에 연결 (`guidance_lstm`, 기본값은 CTRV — 아래) |
 | 관제 대시보드 (실시간 맵, 예측 경로, 위험도, 경보 로그) | ✅ MEC 앱 `/`에서 서빙 |
 | 가상 디바이스 (실기 도착 전 대체) | ✅ |
-| ETSI MEC Location API(013) · RNIS(012) 연동 | ✅ 해커톤 Sandbox 방식(MEC-IPE → CSE 리소스)으로 정렬, 자체 시나리오 작성 · MEC-IPE 대역으로 종단 검증 |
+| ETSI MEC Location API(013) · RNIS(012) 연동 | ✅ 해커톤 Sandbox 방식(MEC-IPE → CSE 리소스)으로 정렬, 자체 시나리오 종단 검증, **공개 ETSI MEC Sandbox 실연동 확인** (`results/etsi_sandbox_live.json`) |
 | 카메라 사람 탐지 (YOLOv8n) + 태그 없는 작업자 융합 | ✅ |
 | 디바이스별 접근제어 (ACP) | ✅ Mobius에서 위조 쓰기 차단 확인 |
 | 아차사고 히트맵 · 안전 리포트 | ✅ `tools/safety_report.py` |
@@ -379,6 +380,33 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
 폴백이 없으면 한 번은 1초 기준을 못 맞췄고, 폴백을 켜면 정상 때와 같은 수준으로 돌아왔습니다.
 
+### 실제 ETSI MEC Sandbox 연동 (try-mec.etsi.org)
+
+팀 PC(Windows 11, Docker Desktop)에서 공개 ETSI MEC Sandbox에 네트워크 시나리오를 배포하고 EdgeGuard 스택을 연결했습니다.
+경로: **Sandbox Location API → MEC-IPE → Mobius 리소스 → 구독 알림 → MEC 앱** (MEC API를 앱이 직접 부르지 않음).
+
+```
+cd deploy
+docker compose up -d --build
+docker compose run --rm sandbox-setup https://try-mec.etsi.org/<sbx-id>/mep1/location/v3   # API·UE 탐지 → sandbox/overrides.yaml
+docker compose --profile sandbox up -d --force-recreate                                   # MEC-IPE 기동, MEC 앱 Sandbox 모드
+docker compose run --rm sandbox-check                                                     # sandbox/report.json, CONNECTED 판정
+```
+
+| 항목 | 결과 (2026-10-07) |
+|---|---|
+| 판정 | **CONNECTED** |
+| MEC-IPE가 만든 UE / 셀 컨테이너 | 3 / 10 |
+| MEC 앱의 IPE 구독 | 13 |
+| 위치 수신 | 32회, 2.0 회/s, 미등록 UE 0 |
+| 추적 중인 UE | 2 |
+
+- 대시보드에는 Location API가 v2로 나오지만 실제로는 `location/v3`만 응답합니다. `sandbox_probe`가 두 버전을 모두 시도합니다.
+- Sandbox UE는 도시 규모(수백 m 간격)로 움직여 작업자-지게차 쌍이 평가 범위에 들어오지 않았고, 그래서 경보는 0건입니다.
+  충돌 위험 판단 성능은 아래 자체 창고 시나리오로 평가합니다.
+- 이 시나리오는 셀 부하(layer2_meas)를 주지 않아 혼잡 여유 보정은 꺼진 상태로 동작했습니다.
+- Sandbox 모드 해제: `deploy/sandbox/overrides.yaml` 삭제 후 `docker compose up -d --force-recreate mec`.
+
 ### 해커톤 MEC Sandbox 정렬 (oneM2M 리소스 경유, MEC-IPE)
 
 운영측 안내(2026-10-06): CSE에 연결된 AE는 MEC 호스트 등록을 CSE가 대신하고, UE 위치는 **MEC-IPE가 CSE 리소스로**
@@ -481,5 +509,5 @@ tests/       단위 테스트 (python -m pytest)
 - LSTM은 10 Hz로 고르게 들어오는 샘플을 가정합니다. 샘플 간격이 크게 흔들리면 성능이 떨어질 수 있습니다.
 - `emulated_extra_delay_ms`는 클라우드 경로를 흉내 내는 옵션일 뿐이며, W6에서 실제 클라우드 대비 측정을 해야 합니다.
 - 규모 시험은 2코어 PC 한 대에서 부하 생성기까지 함께 돌린 값이라, 같은 시험도 PC 성능에 따라 지연이 크게 달라집니다 (위 표의 두 결과).
-- 실기(ESP32 + DW1000 + RC카)와 실제 MEC Sandbox는 검증 범위 밖입니다. 펌웨어 타이밍 · UWB 실측 오차 · 실제 MEC-IPE 리소스 구조는
-  시뮬레이션과 대역으로 대신했고, 위치 정확도에 따른 성능 변화는 오차를 주입해 측정했습니다 (위 Sandbox 종단 시험 표).
+- 실기(ESP32 + DW1000 + RC카)는 검증 범위 밖입니다. 펌웨어 타이밍 · UWB 실측 오차는 시뮬레이션으로 대신했고,
+  공식 MEC-IPE(TR-0086)는 아직 공개 전이라 `tools/mec_ipe.py`가 같은 역할을 합니다. 실제 Sandbox 연동은 연결 확인까지이며, 위치 정확도에 따른 성능 변화는 오차를 주입해 측정했습니다 (위 Sandbox 종단 시험 표).

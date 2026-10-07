@@ -20,7 +20,8 @@ online / fast closed-loop simulations, real Mobius / ACME CSEs, the MEC stand-in
 tools/mec_ipe.py) and our own Sandbox scenario. Firmware stays a reference implementation
 (host type-check + cross-test against edgeguard/device_policy.py and edgeguard/uwb.py).
 
-## Live ETSI MEC Sandbox (try-mec.etsi.org) - sandbox mode built, live run pending on the team PC
+## Live ETSI MEC Sandbox (try-mec.etsi.org) - DONE 2026-10-07: CONNECTED (results/etsi_sandbox_live.json)
+Note: the dashboard shows location/v2 but only location/v3 answers.
 Validated locally against mec_mock posing as the Sandbox (CONNECTED: 6 UE containers, 8 subscriptions,
 6 fixes/s, 16 alerts). On the PC, after deploying a scenario and starting UE movement in the dashboard:
 ```

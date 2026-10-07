@@ -1,0 +1,38 @@
+{
+  "what": "EdgeGuard connected to the public ETSI MEC Sandbox (try-mec.etsi.org) from the team PC (Windows 11, Docker Desktop)",
+  "date": "2026-10-07",
+  "sandbox": {
+    "url": "https://try-mec.etsi.org/sbx500ak17/mep1",
+    "network": "Sandbox network scenario (stationary / low-velocity / high-velocity UEs), mep1",
+    "location_api": "location/v3 (the dashboard lists v2; v2 paths answer 404, v3 answers 200)",
+    "rnis_api": "rni/v2 (queries/rab_info answers 200; no layer2_meas cell load in this scenario)"
+  },
+  "path": "ETSI MEC Location API -> MEC-IPE (tools/mec_ipe.py) -> Mobius IN-CSE resources -> subscription -> EdgeGuard MEC app",
+  "commands": [
+    "docker compose up -d --build",
+    "docker compose run --rm sandbox-setup https://try-mec.etsi.org/sbx500ak17/mep1/location/v3",
+    "docker compose --profile sandbox up -d --force-recreate",
+    "docker compose run --rm sandbox-check"
+  ],
+  "report": {
+    "time": "2026-10-07T10:48:11+0000",
+    "location_source": "cse",
+    "ipe_ue_containers": 3,
+    "ipe_cell_containers": 10,
+    "ipe_location_cins_kept": 25,
+    "mec_ipe_subscriptions": 13,
+    "mec_location_fixes": 32,
+    "fixes_per_s": 2.0,
+    "unknown_ue": 0,
+    "cell_loads": {},
+    "live_tracks": 2,
+    "pairs_assessed": 0,
+    "alerts_sent": 0,
+    "connected": true
+  },
+  "notes": [
+    "Connection verified: live Sandbox UE positions reach the MEC app only through oneM2M resources written by MEC-IPE.",
+    "No alerts is expected: the Sandbox UEs are city-scale (hundreds of metres apart) and no worker/forklift pair came within assessment range; collision-risk behaviour is evaluated with our own warehouse scenario (scenarios/edgeguard-warehouse.yaml).",
+    "RNIS cells were discovered (10 containers) but the scenario publishes no cell load, so the congestion margin stays off."
+  ]
+}
