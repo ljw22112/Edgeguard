@@ -9,6 +9,7 @@ from .risk import LEVELS, waiting_at_lane
 
 
 NOMINAL_DT = 0.1      # s: the debounce count is tuned for 10 Hz tag data
+STALE_RESET_S = 2.0   # s without an evaluation (tracks went stale): the encounter is over
 
 
 class AlertState:
@@ -25,8 +26,16 @@ class AlertState:
         self.sent_limit = None
         self.last_eval = None
 
+    def reset(self):
+        self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
+
     def step(self, level, now):
         """Return 'raise', 'refresh', 'clear' or None."""
+        if self.last_eval is not None and now - self.last_eval > STALE_RESET_S:
+            # The pair was not evaluated for a while (one of them left or went silent), so the
+            # previous encounter is over.  Without this, an alert state left at WARNING turned the
+            # next encounter's first alert into a "refresh", which may not vibrate the tag.
+            self.reset()
         gap = None if self.last_eval is None else now - self.last_eval
         self.last_eval = now
         if level >= 2:

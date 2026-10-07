@@ -23,3 +23,12 @@ def test_debounce_raise_refresh_clear():
 def test_danger_fires_immediately():
     a = _alert_state()()
     assert a.step(3, 0.0) == "raise"
+
+
+def test_new_encounter_after_stale_gap_raises_again():
+    from edgeguard.alerting import AlertState
+    st = AlertState(debounce=2)
+    assert st.step(2, 0.0) is None and st.step(2, 0.1) == "raise"
+    # tracks go stale: no evaluations for 3 s, no clear was ever sent
+    assert st.step(2, 3.1) is None            # fresh encounter: debounce again, no instant fire
+    assert st.step(2, 3.2) == "raise"         # a real raise (vibrates), not a refresh

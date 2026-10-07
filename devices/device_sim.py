@@ -42,7 +42,7 @@ class AlertHandler(BaseHTTPRequestHandler):
         if "rates" in a:              # adaptive-rate command: the playback always runs at 10 Hz
             return
         lat = now_ms() - a["src_ts"] if a.get("src_ts") else None
-        if a["event"] == "raise" and EP["t0"] and EP["contact"] is not None and not EP.get("seen"):
+        if a["event"] in ("raise", "refresh") and EP["t0"] and EP["contact"] is not None and not EP.get("seen"):
             EP["seen"] = True
             EP["first_alert_lead"].append(round(EP["contact"] - (time.time() - EP["t0"]), 2))
         if lat is not None and a["event"] in ("raise", "refresh"):

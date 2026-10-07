@@ -5,3 +5,4 @@ __pycache__/
 .acme.pid
 .mec.pid
 mec.log
+deploy/out/
