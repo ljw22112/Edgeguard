@@ -7,6 +7,7 @@
 # PYTHON_IMAGE can be swapped for a local base when no registry is reachable.
 ARG PYTHON_IMAGE=python:3.11-slim
 FROM ${PYTHON_IMAGE}
+LABEL org.opencontainers.image.source="https://github.com/ljw22112/Edgeguard"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

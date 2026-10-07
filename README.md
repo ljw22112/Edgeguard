@@ -34,7 +34,7 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 | 아차사고 히트맵 · 안전 리포트 | ✅ `tools/safety_report.py` |
 | 데모 영상 | ✅ `results/edgeguard_demo.mp4` (4개 장면, 약 1분) |
 | ESP32 펌웨어 (작업자 태그, 지게차 모듈) | ✅ UWB 측위(최소제곱 + NLOS 배제), 적응형 주기, 지게차 페일세이프. PC에서 타입 검사 · 로직은 Python과 교차 검증 (참조 구현) |
-| MEC Docker 이미지 | ⚠️ Dockerfile만. 이 환경에서 Docker Hub 접근이 막혀 베이스 이미지를 받지 못함 |
+| MEC 호스트 배포 (Docker) | ✅ MEC 앱 · Mobius 이미지 + Compose 스택. CI에서 빌드 · 종단 시험 · 재시작 시험 후 GHCR에 게시 |
 | 배포 구조 결정 (4개 후보 측정) | ✅ 엣지 Mobius + 클라우드 동기화, 아래 "배포 구조" |
 | ACME MN-CSE ↔ Mobius IN-CSE 등록(Mcc) | ✅ 검증 (상호운용성 시험) |
 | 클라우드 사본 저장 후 전송 (WAN 단절 대비) | ✅ 25 s 단절 중 경보 56건 전부 복구, 중복 0 |
@@ -261,6 +261,40 @@ MEC가 조용할 때 지게차가 할 일은 측정으로 정했습니다 (`sim/
 - `scripts/setup_mobius.sh` — Mobius 3 + MariaDB 설치 · 시작 (`install | start | stop | status`). 스키마의 MySQL 8 정렬 규칙을 MariaDB용으로 바꾸고, 대화형 비밀값 설정도 자동으로 처리합니다.
 - `.github/workflows/ci.yml` — 푸시마다 Python 3.11에서 전체 테스트 (LSTM 포함, CPU torch) + 펌웨어 타입 검사.
 
+## MEC 호스트 배포 (Docker Compose)
+
+MariaDB + Mobius(oneM2M IN-CSE) + MEC 앱을 한 번에 띄웁니다. 경보 정책 · 적응형 주기 · 접근제어는 `config/site.yaml` 그대로이고,
+주소만 `deploy/compose-overrides.yaml`로 덮습니다 (`EDGEGUARD_OVERRIDES`, 깊은 병합).
+
+```bash
+cd deploy
+docker compose up -d                    # MEC 호스트 스택 (빌드 포함)
+docker compose --profile demo up        # + oneM2M 리소스 셋업 + 가상 디바이스 (조우 4회)
+python3 check_demo.py out/devices.json http://localhost:9090/health
+# 대시보드 http://localhost:9090/ · 실기 디바이스는 http://<호스트>:7579/Mobius 로 접속
+```
+
+미리 빌드된 이미지 (저장소가 비공개라 토큰으로 로그인 필요: `read:packages` 권한의 PAT):
+```bash
+echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub 아이디> --password-stdin
+EDGEGUARD_IMAGE_TAG=latest docker compose pull && EDGEGUARD_IMAGE_TAG=latest docker compose up -d
+```
+
+| 구성 요소 | 이미지 | 비고 |
+|---|---|---|
+| MariaDB | `mariadb:11.4` | 데이터는 `db-data` 볼륨 |
+| Mobius | `ghcr.io/ljw22112/edgeguard-mobius` | 커밋 고정 + 의존성 잠금. 시작 시 `conf.json` 작성 · 봉인 · 스키마 1회 가져오기 |
+| MEC 앱 | `ghcr.io/ljw22112/edgeguard-mec` | 비루트 실행, `/health` 상태 검사. 같은 이미지로 셋업 · 가상 디바이스 실행 |
+
+- Mobius는 DB를 `localhost:3306`으로 고정해 접속하므로 MariaDB 컨테이너의 네트워크를 공유하고, 다른 서비스는 별칭 `mobius`로 찾습니다.
+- `.github/workflows/docker.yml`: 푸시마다 공식 베이스 이미지로 빌드 → 스택 기동 → 데모 조우 4회 경보 확인
+  (`deploy/check_demo.py`: 4회 모두 1 s 이상 전에 경보, 쓰기 실패 0) → DB를 유지한 채 재시작해 다시 확인 → main이면 GHCR 게시
+  (`latest`, `sha-<커밋>`).
+- 시험 결과 (이 환경, 4회 × 반복 3번): 리드타임 3.6~3.9 s, 경보 지연 중앙값 25~31 ms, 쓰기 실패 0.
+- 배포 시험에서 버그 하나를 찾아 고쳤습니다: 조우 사이에 추적이 끊기면 짝의 경보 상태가 WARNING으로 남아,
+  다음 조우의 첫 경보가 진동이 안 날 수 있는 "refresh"로 나갔습니다. 이제 2 s 이상 평가되지 않은 짝은 새 조우로 시작합니다
+  (반복 실행 리드타임 1.1 / 0.8 / 3.7 / 1.3 s → 3.9 / 3.6 / 3.7 / 3.6 s).
+
 ## 로컬 데모 (하드웨어 없이)
 
 ```bash
@@ -426,6 +460,7 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 edgeguard/   geometry.py (가이던스 기하) · tracking.py (칼만) · predict.py (CV/CTRV) · learned.py (LSTM) · risk.py · alerting.py (경보 정책)
              rate_control.py (적응형 주기) · device_policy.py (기기 규칙) · cloud_sync.py (저장 후 전송) · uwb.py · mec_services.py · onem2m.py · config.py
 mec_app/     MEC 앱 (FastAPI) + 대시보드(static/) + Dockerfile
+deploy/      Docker Compose 스택 (MariaDB + Mobius + MEC 앱), Mobius 이미지, 배포용 설정 덮어쓰기
 models/      학습된 LSTM 가중치와 검증 지표
 devices/     가상 디바이스 · 카메라 노드 (YOLO)
 mec_mock/    시험용 MEC 플랫폼 (Location API · RNIS, 샌드박스 시나리오 재생)

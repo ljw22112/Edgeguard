@@ -10,6 +10,7 @@
 # container runs in the database container's network namespace (see docker-compose.yml).
 ARG NODE_IMAGE=node:20-bookworm-slim
 FROM ${NODE_IMAGE}
+LABEL org.opencontainers.image.source="https://github.com/ljw22112/Edgeguard"
 
 WORKDIR /opt/mobius
 COPY --from=mobius-src . /opt/mobius
