@@ -1,0 +1,11 @@
+# Deployment overrides for deploy/docker-compose.yml, deep-merged over config/site.yaml
+# (EDGEGUARD_OVERRIDES).  Only addresses change here; the tuned alert policy, adaptive rate
+# and access control come from site.yaml unchanged.
+cse:
+  base_url: http://mobius:7579          # Mobius container (shares the MariaDB network namespace)
+mec:
+  notify_url: http://mec:9090/notify    # where Mobius delivers device samples
+device_sim:
+  notify_url: http://devices:9091/alert # virtual devices (demo profile)
+cloud_sync:
+  enabled: false                        # set true and base_url to a cloud Mobius to keep a cloud copy

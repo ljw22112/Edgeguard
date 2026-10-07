@@ -1,0 +1,16 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.pytest_cache
+results
+models
+firmware
+docs
+tests
+scenarios
+mec_mock
+scripts
+*.log
+.mec.pid
+.acme*

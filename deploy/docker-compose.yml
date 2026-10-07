@@ -1,0 +1,99 @@
+# EdgeGuard MEC host: MariaDB + Mobius (oneM2M IN-CSE) + MEC app.
+#
+#   cd deploy && docker compose up -d                       # the MEC host stack
+#   docker compose --profile demo up                        # + resource setup + virtual devices
+#   open http://localhost:9090/                             # dashboard
+#
+# Images: built from this repository, or pulled from GHCR when EDGEGUARD_IMAGE_TAG is set
+# (CI publishes ghcr.io/ljw22112/edgeguard-mec and edgeguard-mobius on every push to main).
+# Real devices: add their alert URLs to `alert_subscribers` (config) and point them at
+# http://<host>:7579/Mobius.
+
+name: edgeguard
+
+x-mec-image: &mec-image
+  image: ${EDGEGUARD_REGISTRY:-ghcr.io/ljw22112}/edgeguard-mec:${EDGEGUARD_IMAGE_TAG:-local}
+  build:
+    context: ..
+    dockerfile: mec_app/Dockerfile
+    args:
+      PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11-slim}
+
+x-mec-env: &mec-env
+  EDGEGUARD_CONFIG: /app/config/site.yaml
+  EDGEGUARD_OVERRIDES: /app/deploy/compose-overrides.yaml
+
+services:
+  mariadb:
+    image: ${DB_IMAGE:-mariadb:11.4}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MOBIUS_DB_PASS:-edgeguard-db}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      default:
+        aliases: [mobius]            # Mobius shares this container's network namespace
+    ports:
+      - "${MOBIUS_PUBLISH:-7579}:7579"   # Mobius, for real devices on the site network
+    healthcheck:
+      # a real authenticated query (mariadb-admin ping succeeds even when the password is wrong)
+      test: ["CMD-SHELL", "mariadb -h 127.0.0.1 -uroot -p\"$$MARIADB_ROOT_PASSWORD\" -e 'SELECT 1' > /dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  mobius:
+    image: ${EDGEGUARD_REGISTRY:-ghcr.io/ljw22112}/edgeguard-mobius:${EDGEGUARD_IMAGE_TAG:-local}
+    build:
+      context: mobius
+      additional_contexts:
+        mobius-src: ${MOBIUS_SRC:-https://github.com/IoTKETI/Mobius.git#3ddd305857c0bfadffa5ac88af47841365f722cb}
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:20-bookworm-slim}
+    network_mode: "service:mariadb"  # Mobius connects to MySQL at localhost:3306 (fixed in Mobius)
+    environment:
+      MOBIUS_DB_PASS: ${MOBIUS_DB_PASS:-edgeguard-db}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mec:
+    <<: *mec-image
+    environment: *mec-env
+    ports:
+      - "${MEC_PUBLISH:-9090}:9090"  # dashboard + /health
+    depends_on:
+      mobius:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- demo profile: virtual devices and the oneM2M resource tree ----
+  devices:
+    <<: *mec-image
+    profiles: [demo]
+    user: "0:0"                      # writes the result file into ./out on the host
+    healthcheck: {disable: true}
+    environment: *mec-env
+    command: ["python3", "devices/device_sim.py", "--scenario", "${DEMO_SCENARIO:-crossing_conflict}",
+              "--runs", "${DEMO_RUNS:-4}", "--start-delay", "12", "--quiet", "--json-out", "/out/devices.json"]
+    volumes:
+      - ./out:/out
+    depends_on:
+      mec:
+        condition: service_healthy
+
+  setup:
+    <<: *mec-image
+    profiles: [demo]
+    environment: *mec-env
+    command: ["python3", "tools/setup_resources.py", "--reset"]
+    healthcheck: {disable: true}
+    depends_on:
+      devices:
+        condition: service_started   # subscriptions are verified against the devices' listener
+    restart: "no"
+
+volumes:
+  db-data:

@@ -20,7 +20,13 @@ tools/mec_ipe.py) and our own Sandbox scenario. Firmware stays a reference imple
 (host type-check + cross-test against edgeguard/device_policy.py and edgeguard/uwb.py).
 
 ## Remaining
-- MEC Docker image on the team PC (Docker Hub is blocked here) (w4a) - optional
+- **Docker deployment (w4a) - in progress, paused 2026-10-07.** Done: `mec_app/Dockerfile`, `deploy/mobius/` (image +
+  entrypoint: conf, seal, schema), `deploy/docker-compose.yml` (mariadb + mobius + mec, demo profile), config overrides
+  (`EDGEGUARD_OVERRIDES`, `deploy/compose-overrides.yaml`, tests/test_config.py). Verified locally with local base images
+  (registries are blocked here): 4/4 encounters warned, median lead 3.66 s, alert latency 32 ms, 0 write failures.
+  Next: (1) restart test with the DB volume kept, (2) disable the inherited healthcheck for the demo `devices`/`setup`
+  services, (3) `.github/workflows/docker.yml`: build with official bases, compose e2e, push to GHCR,
+  (4) README deployment section, roadmap w4a done.
 - Final report / demo video / slides (W7) - not started on purpose
 
 ## Environment recovery (new session)

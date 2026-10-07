@@ -1,0 +1,1 @@
+{"latencies_ms": [48, 44, 34, 33, 35, 42, 39, 25, 46, 31, 28, 33, 57, 29, 39, 46, 32, 82, 46, 34, 36, 26, 47, 37, 24, 26, 25, 33, 37, 72], "alerts": 30, "write_failures": 0, "runs": 4, "scenario": "crossing_conflict", "first_alert_lead_s": [3.85, 0.77, 3.65, 1.27]}

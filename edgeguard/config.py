@@ -9,9 +9,24 @@ DEFAULT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
                        "config", "edgeguard.yaml")
 
 
+def merge(base, over):
+    """Deep-merge `over` into a copy of `base` (dicts merge, everything else replaces)."""
+    out = dict(base)
+    for k, v in (over or {}).items():
+        out[k] = merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
 def load(path=None):
+    """Load the config; EDGEGUARD_OVERRIDES (a YAML file) is deep-merged on top, so a deployment
+    (e.g. deploy/compose-overrides.yaml) changes only addresses and keeps the tuned site config."""
     with open(path or os.environ.get("EDGEGUARD_CONFIG", DEFAULT)) as fh:
-        return yaml.safe_load(fh)
+        cfg = yaml.safe_load(fh)
+    over = os.environ.get("EDGEGUARD_OVERRIDES")
+    if over:
+        with open(over) as fh:
+            cfg = merge(cfg, yaml.safe_load(fh) or {})
+    return cfg
 
 
 def client(cfg):
