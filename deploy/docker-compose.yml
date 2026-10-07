@@ -58,9 +58,19 @@ services:
     network_mode: "service:mariadb"  # Mobius connects to MySQL at localhost:3306 (fixed in Mobius)
     environment:
       MOBIUS_DB_PASS: ${MOBIUS_DB_PASS:-edgeguard-db}
+      MOBIUS_MQTT_BROKER: mqtt
     depends_on:
       mariadb:
         condition: service_healthy
+      mqtt:
+        condition: service_started
+    restart: unless-stopped
+
+  mqtt:
+    # Mobius always opens an MQTT client for MQTT-bound notifications; without a broker it
+    # retries forever in the log.  Anonymous access on the internal network only (not published).
+    image: ${MQTT_IMAGE:-eclipse-mosquitto:2}
+    command: ["mosquitto", "-c", "/mosquitto-no-auth.conf"]
     restart: unless-stopped
 
   mec:

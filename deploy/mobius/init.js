@@ -23,6 +23,10 @@ const conf = {
   superUser: env.MOBIUS_SUPERUSER,
   csebaseport: String(env.MOBIUS_PORT),
   dbpass: env.MOBIUS_DB_PASS,
+  // MQTT broker for MQTT-bound notifications (Mobius always connects one; the compose stack
+  // runs Mosquitto as service `mqtt`)
+  mqttBroker: env.MOBIUS_MQTT_BROKER || 'localhost',
+  mqttPort: String(env.MOBIUS_MQTT_PORT || 1883),
 };
 fs.writeFileSync(confFile, JSON.stringify(conf, null, 4) + '\n');
 require(path.join(ROOT, 'mobius', 'conf_seal')).seal(confFile, conf);
