@@ -14,10 +14,23 @@ Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커�
 - `scripts/setup_mobius.sh`, GitHub Actions CI
 
 ## Scope (decided 2026-10-07)
-No hardware validation and no live MEC Sandbox integration. Everything is validated with the
+No hardware validation. (Live ETSI MEC Sandbox: re-opened 2026-10-07 at the team's request, run from
+the team PC because this workspace cannot reach try-mec.etsi.org - see "Live ETSI MEC Sandbox" below.) Everything is validated with the
 online / fast closed-loop simulations, real Mobius / ACME CSEs, the MEC stand-ins (mec_mock,
 tools/mec_ipe.py) and our own Sandbox scenario. Firmware stays a reference implementation
 (host type-check + cross-test against edgeguard/device_policy.py and edgeguard/uwb.py).
+
+## Live ETSI MEC Sandbox (try-mec.etsi.org) - sandbox mode built, live run pending on the team PC
+Validated locally against mec_mock posing as the Sandbox (CONNECTED: 6 UE containers, 8 subscriptions,
+6 fixes/s, 16 alerts). On the PC, after deploying a scenario and starting UE movement in the dashboard:
+```
+cd ~\Edgeguard\deploy; git pull; docker compose up -d --build
+docker compose run --rm sandbox-setup <base URL>      # add --vehicle-mps 1.5 if vehicles are slow
+docker compose --profile sandbox up -d --force-recreate
+docker compose run --rm sandbox-check                 # -> deploy/sandbox/report.json
+```
+Then record report.json as results/etsi_sandbox_live.json, README + roadmap (w1d).
+Leave Sandbox mode: delete deploy/sandbox/overrides.yaml and `docker compose up -d --force-recreate mec`.
 
 ## Remaining
 - Docker deployment (w4a): done - images + compose stack, CI builds/tests/publishes to GHCR (README "MEC 호스트 배포").

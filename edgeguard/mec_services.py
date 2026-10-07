@@ -83,9 +83,22 @@ class LocationClient:
         return parse_user_info(users[0], self.frame) if users else None
 
     def all_users(self):
-        """Raw MEC 013 UserInfo of every UE the network locates (no address filter)."""
+        """Raw MEC 013 UserInfo of every UE the network locates.  Some deployments (ETSI MEC
+        Sandbox versions) answer the unfiltered query with an empty list; then zone by zone."""
         r = self.s.get(f"{self.root}/queries/users", timeout=self.timeout)
-        return ((r.json().get("userList") or {}).get("user") or []) if r.status_code == 200 else []
+        users = ((r.json().get("userList") or {}).get("user") or []) if r.status_code == 200 else []
+        if users:
+            return users
+        r = self.s.get(f"{self.root}/queries/zones", timeout=self.timeout)
+        zones = ((r.json().get("zoneList") or {}).get("zone") or []) if r.status_code == 200 else []
+        out = {}
+        for z in zones:
+            if not z.get("zoneId"):
+                continue
+            rz = self.s.get(f"{self.root}/queries/users", params={"zoneId": z["zoneId"]}, timeout=self.timeout)
+            for u in ((rz.json().get("userList") or {}).get("user") or []) if rz.status_code == 200 else []:
+                out[u.get("address")] = u
+        return list(out.values())
 
 
 class RnisClient:

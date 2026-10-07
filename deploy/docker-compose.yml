@@ -24,7 +24,8 @@ x-mec-image: &mec-image
 
 x-mec-env: &mec-env
   EDGEGUARD_CONFIG: /app/config/site.yaml
-  EDGEGUARD_OVERRIDES: /app/deploy/compose-overrides.yaml
+  # second layer exists only while connected to an ETSI MEC Sandbox (tools/sandbox_probe.py)
+  EDGEGUARD_OVERRIDES: /app/deploy/compose-overrides.yaml,/app/deploy/sandbox/overrides.yaml
 
 services:
   mariadb:
@@ -76,6 +77,8 @@ services:
   mec:
     <<: *mec-image
     environment: *mec-env
+    volumes:
+      - ./sandbox:/app/deploy/sandbox:ro
     ports:
       - "${MEC_PUBLISH:-9090}:9090"  # dashboard + /health
     depends_on:
@@ -107,6 +110,45 @@ services:
     depends_on:
       devices:
         condition: service_started   # subscriptions are verified against the devices' listener
+    restart: "no"
+
+  # ---- ETSI MEC Sandbox (https://try-mec.etsi.org) ----
+  #   docker compose run --rm sandbox-setup <base URL from the Sandbox dashboard>
+  #   docker compose --profile sandbox up -d --force-recreate
+  #   docker compose run --rm sandbox-check
+  sandbox-setup:                     # finds the APIs and UEs, writes ./sandbox/overrides.yaml
+    <<: *mec-image
+    profiles: [sandbox-setup]
+    user: "0:0"
+    healthcheck: {disable: true}
+    environment: *mec-env
+    entrypoint: ["python3", "tools/sandbox_probe.py", "--out", "/app/deploy/sandbox/overrides.yaml"]
+    volumes:
+      - ./sandbox:/app/deploy/sandbox
+    restart: "no"
+
+  mec-ipe:                           # MEC 013 / 012 data from the Sandbox -> oneM2M resources
+    <<: *mec-image
+    profiles: [sandbox]
+    healthcheck: {disable: true}
+    environment: *mec-env
+    command: ["python3", "tools/mec_ipe.py"]
+    volumes:
+      - ./sandbox:/app/deploy/sandbox:ro
+    depends_on:
+      mec:
+        condition: service_healthy
+    restart: unless-stopped
+
+  sandbox-check:                     # what flowed, written to ./sandbox/report.json
+    <<: *mec-image
+    profiles: [sandbox-check]
+    user: "0:0"
+    healthcheck: {disable: true}
+    environment: *mec-env
+    command: ["python3", "tools/sandbox_check.py"]
+    volumes:
+      - ./sandbox:/app/deploy/sandbox
     restart: "no"
 
 volumes:

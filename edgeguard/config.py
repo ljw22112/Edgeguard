@@ -22,10 +22,12 @@ def load(path=None):
     (e.g. deploy/compose-overrides.yaml) changes only addresses and keeps the tuned site config."""
     with open(path or os.environ.get("EDGEGUARD_CONFIG", DEFAULT)) as fh:
         cfg = yaml.safe_load(fh)
-    over = os.environ.get("EDGEGUARD_OVERRIDES")
-    if over:
-        with open(over) as fh:
-            cfg = merge(cfg, yaml.safe_load(fh) or {})
+    # comma-separated, applied in order; files that do not exist are skipped (optional layers,
+    # e.g. deploy/sandbox/overrides.yaml only exists while connected to an ETSI MEC Sandbox)
+    for over in filter(None, (os.environ.get("EDGEGUARD_OVERRIDES") or "").split(",")):
+        if os.path.exists(over.strip()):
+            with open(over.strip()) as fh:
+                cfg = merge(cfg, yaml.safe_load(fh) or {})
     return cfg
 
 
