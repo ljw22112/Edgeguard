@@ -293,7 +293,7 @@ docker compose up -d
   (`deploy/check_demo.py`: 4회 모두 1 s 이상 전에 경보, 쓰기 실패 0) → DB를 유지한 채 재시작해 다시 확인 → main이면 GHCR 게시
   (`latest`, `sha-<커밋>`).
 - 시험 결과 (이 환경, 4회 × 반복 3번): 리드타임 3.6~3.9 s, 경보 지연 중앙값 25~31 ms, 쓰기 실패 0.
-- 팀 PC 실측 (Windows 11 + Docker Desktop/WSL2, `results/deploy_windows_pc.json`): 조우 4회 모두 경보, 리드타임 3.83 / 3.54 / 3.62 / 3.51 s,
+- 팀 노트북 실측 (갤럭시 북2 프로 · RAM 8GB, Windows 11 + Docker Desktop/WSL2, `results/deploy_windows_pc.json`): 조우 4회 모두 경보, 리드타임 3.83 / 3.54 / 3.62 / 3.51 s,
   경보 지연 중앙값 58 ms (p95 82 ms), 경보 30건, 쓰기 실패 0.
 - 배포 시험에서 버그 하나를 찾아 고쳤습니다: 조우 사이에 추적이 끊기면 짝의 경보 상태가 WARNING으로 남아,
   다음 조우의 첫 경보가 진동이 안 날 수 있는 "refresh"로 나갔습니다. 이제 2 s 이상 평가되지 않은 짝은 새 조우로 시작합니다
