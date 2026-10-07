@@ -40,25 +40,36 @@ def get(session, url, **params):
     return r.status_code, (r.json() if r.headers.get("content-type", "").startswith("application/json") else None)
 
 
-def find_api(session, base, apis, probe):
-    """(base_url, api) such that base_url/api/probe answers 200."""
-    base = base.rstrip("/")
+KNOWN_SUFFIXES = ("location/v3", "location/v2", "rni/v2", "rni/v1")
+
+
+def strip_api(url):
+    """https://.../mep1/location/v2[/...] -> https://.../mep1"""
+    url = url.rstrip("/")
+    for suf in KNOWN_SUFFIXES:
+        i = url.find("/" + suf)
+        if i >= 0:
+            return url[:i]
+    return url
+
+
+def find_api(session, base, apis, probes):
+    """(base_url, api, body) such that base_url/api/<one of probes> answers 200."""
+    given = [api for api in apis if "/" + api in base]          # the version in the URL goes first
+    base = strip_api(base)
     tried = []
-    for api in apis:
-        for b in (base, base.rsplit("/" + api, 1)[0] if base.endswith(api) else None):
-            if not b:
-                continue
-            url = f"{b}/{api}/{probe}"
-            tried.append(url)
+    for api in given + [api for api in apis if api not in given]:
+        for probe in probes:
+            url = f"{base}/{api}/{probe}"
             try:
-                code, body = get(session, url)
-            except requests.RequestException:
-                continue
-            if code == 200:
-                return b, api, body
+                r = session.get(url, timeout=15)
+                tried.append(f"{url} -> HTTP {r.status_code} {r.text[:160]!r}")
+                if r.status_code == 200:
+                    return base, api, (r.json() if "json" in r.headers.get("content-type", "") else None)
+            except requests.RequestException as e:
+                tried.append(f"{url} -> {type(e).__name__}: {str(e)[:160]}")
     raise SystemExit("No MEC API answered. Tried:\n  " + "\n  ".join(tried) +
-                     "\nCopy the base URL from the Sandbox dashboard (API console) and check that a "
-                     "network scenario is deployed.")
+                     "\nCheck that the network scenario is still deployed in the Sandbox dashboard.")
 
 
 def all_users(session, root):
@@ -115,7 +126,7 @@ def main():
     a = ap.parse_args()
 
     s = requests.Session()
-    base, loc_api, _ = find_api(s, a.url, LOCATION_APIS, "queries/users")
+    base, loc_api, _ = find_api(s, a.url, LOCATION_APIS, ("queries/users", "queries/zones"))
     root = f"{base}/{loc_api}"
     print(f"Location API: {root}")
     snap1 = {u.get("address"): u for u in all_users(s, root) if u.get("address")}
@@ -127,7 +138,7 @@ def main():
     kinds, (lat0, lon0) = classify(snap1, snap2, a.wait, a.vehicle_mps)
     rnis_api = None
     try:
-        b2, rnis_api, body = find_api(s, base, RNIS_APIS, "queries/layer2_meas")
+        b2, rnis_api, body = find_api(s, base, RNIS_APIS, ("queries/layer2_meas",))
         cells = [c for c in (body or {}).get("cellInfo") or [] if cell_load_of(c) is not None]
         print(f"RNIS: {b2}/{rnis_api} ({len(cells)} cells with load data)")
     except SystemExit:
