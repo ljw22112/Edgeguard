@@ -277,7 +277,8 @@ python3 check_demo.py out/devices.json http://localhost:9090/health
 미리 빌드된 이미지 (저장소가 비공개라 토큰으로 로그인 필요: `read:packages` 권한의 PAT):
 ```bash
 echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub 아이디> --password-stdin
-EDGEGUARD_IMAGE_TAG=latest docker compose pull && EDGEGUARD_IMAGE_TAG=latest docker compose up -d
+export EDGEGUARD_IMAGE_TAG=latest EDGEGUARD_PULL_POLICY=always   # Windows cmd: set 로 각각 지정
+docker compose up -d
 ```
 
 | 구성 요소 | 이미지 | 비고 |

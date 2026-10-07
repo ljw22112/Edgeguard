@@ -13,6 +13,9 @@ name: edgeguard
 
 x-mec-image: &mec-image
   image: ${EDGEGUARD_REGISTRY:-ghcr.io/ljw22112}/edgeguard-mec:${EDGEGUARD_IMAGE_TAG:-local}
+  # build locally by default (no registry login needed); set EDGEGUARD_PULL_POLICY=always together
+  # with EDGEGUARD_IMAGE_TAG=latest to use the images CI publishes to GHCR
+  pull_policy: ${EDGEGUARD_PULL_POLICY:-build}
   build:
     context: ..
     dockerfile: mec_app/Dockerfile
@@ -45,6 +48,7 @@ services:
 
   mobius:
     image: ${EDGEGUARD_REGISTRY:-ghcr.io/ljw22112}/edgeguard-mobius:${EDGEGUARD_IMAGE_TAG:-local}
+    pull_policy: ${EDGEGUARD_PULL_POLICY:-build}
     build:
       context: mobius
       additional_contexts:
