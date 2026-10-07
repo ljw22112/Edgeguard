@@ -1,5 +1,5 @@
 {
-  "what": "EdgeGuard connected to the public ETSI MEC Sandbox (try-mec.etsi.org) from the team PC (Windows 11, Docker Desktop)",
+  "what": "EdgeGuard connected to the public ETSI MEC Sandbox (try-mec.etsi.org) from the team laptop (Samsung Galaxy Book2 Pro, 8 GB RAM, Windows 11, Docker Desktop)",
   "date": "2026-10-07",
   "sandbox": {
     "url": "https://try-mec.etsi.org/sbx500ak17/mep1",

@@ -15,7 +15,7 @@ Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커�
 
 ## Scope (decided 2026-10-07)
 No hardware validation. (Live ETSI MEC Sandbox: re-opened 2026-10-07 at the team's request, run from
-the team PC because this workspace cannot reach try-mec.etsi.org - see "Live ETSI MEC Sandbox" below.) Everything is validated with the
+the team laptop because this workspace cannot reach try-mec.etsi.org - see "Live ETSI MEC Sandbox" below.) Everything is validated with the
 online / fast closed-loop simulations, real Mobius / ACME CSEs, the MEC stand-ins (mec_mock,
 tools/mec_ipe.py) and our own Sandbox scenario. Firmware stays a reference implementation
 (host type-check + cross-test against edgeguard/device_policy.py and edgeguard/uwb.py).

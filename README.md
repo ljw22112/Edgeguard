@@ -16,7 +16,7 @@ MEC 기반 산업현장 작업자–지게차 충돌 예측 AIoT 안전 서비�
 
 **검증 범위**: 하드웨어 실기 시험은 하지 않습니다. 기능 검증은 온라인 · 고속 폐루프 시뮬레이션, 실제 Mobius/ACME CSE,
 MEC 서비스 대역(`mec_mock`, `tools/mec_ipe.py`)과 자체 Sandbox 시나리오로 하고, **공개 ETSI MEC Sandbox(try-mec.etsi.org)와의
-실제 연동**은 팀 PC에서 확인했습니다 (아래 "실제 ETSI MEC Sandbox 연동").
+실제 연동**은 팀 노트북에서 확인했습니다 (아래 "실제 ETSI MEC Sandbox 연동").
 펌웨어는 PC 타입 검사와 Python 기준 구현과의 교차 테스트까지 마친 참조 구현입니다.
 
 | 구성 | 상태 |
@@ -382,7 +382,7 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
 ### 실제 ETSI MEC Sandbox 연동 (try-mec.etsi.org)
 
-팀 PC(Windows 11, Docker Desktop)에서 공개 ETSI MEC Sandbox에 네트워크 시나리오를 배포하고 EdgeGuard 스택을 연결했습니다.
+팀 노트북(갤럭시 북2 프로, RAM 8GB, Windows 11, Docker Desktop)에서 공개 ETSI MEC Sandbox에 네트워크 시나리오를 배포하고 EdgeGuard 스택을 연결했습니다.
 경로: **Sandbox Location API → MEC-IPE → Mobius 리소스 → 구독 알림 → MEC 앱** (MEC API를 앱이 직접 부르지 않음).
 
 ```

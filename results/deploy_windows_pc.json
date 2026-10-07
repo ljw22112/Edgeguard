@@ -1,5 +1,5 @@
 {
- "environment": "team PC: Windows 11 (build 26200), Docker Desktop 4.94 / Engine 29.8.2 on WSL2, 16 CPUs, 3.6 GiB for Docker",
+ "environment": "team laptop (Samsung Galaxy Book2 Pro, 8 GB RAM): Windows 11 (build 26200), Docker Desktop 4.94 / Engine 29.8.2 on WSL2, 16 CPUs, 3.6 GiB for Docker",
  "date": "2026-10-07",
  "command": "docker compose up -d && docker compose --profile demo up",
  "images": "built locally from commit 41eb4b2 (official bases)",
