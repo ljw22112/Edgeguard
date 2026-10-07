@@ -1,0 +1,11 @@
+# Files that run inside Linux containers must keep LF even on a Windows checkout
+# (Git for Windows converts to CRLF by default, and /bin/sh cannot run a CRLF script).
+*.sh          text eol=lf
+*.py          text eol=lf
+*.js          text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.json        text eol=lf
+Dockerfile    text eol=lf
+*.ino         text eol=lf
+*.h           text eol=lf
