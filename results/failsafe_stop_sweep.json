@@ -1,0 +1,92 @@
+{
+ "1.3": {
+  "normal": {
+   "collisions": 20,
+   "throughput": 0.776
+  },
+  "mec_restart": {
+   "collisions": 34,
+   "throughput": 0.722
+  },
+  "restart_loss20": {
+   "collisions": 52,
+   "throughput": 0.695
+  },
+  "mec_dead_8s": {
+   "collisions": 60,
+   "throughput": 0.656
+  }
+ },
+ "1.6": {
+  "normal": {
+   "collisions": 20,
+   "throughput": 0.778
+  },
+  "mec_restart": {
+   "collisions": 32,
+   "throughput": 0.739
+  },
+  "restart_loss20": {
+   "collisions": 50,
+   "throughput": 0.714
+  },
+  "mec_dead_8s": {
+   "collisions": 67,
+   "throughput": 0.667
+  }
+ },
+ "2.0": {
+  "normal": {
+   "collisions": 19,
+   "throughput": 0.78
+  },
+  "mec_restart": {
+   "collisions": 27,
+   "throughput": 0.764
+  },
+  "restart_loss20": {
+   "collisions": 42,
+   "throughput": 0.748
+  },
+  "mec_dead_8s": {
+   "collisions": 78,
+   "throughput": 0.683
+  }
+ },
+ "2.5": {
+  "normal": {
+   "collisions": 19,
+   "throughput": 0.78
+  },
+  "mec_restart": {
+   "collisions": 31,
+   "throughput": 0.773
+  },
+  "restart_loss20": {
+   "collisions": 41,
+   "throughput": 0.76
+  },
+  "mec_dead_8s": {
+   "collisions": 85,
+   "throughput": 0.701
+  }
+ },
+ "3.0": {
+  "normal": {
+   "collisions": 19,
+   "throughput": 0.78
+  },
+  "mec_restart": {
+   "collisions": 30,
+   "throughput": 0.774
+  },
+  "restart_loss20": {
+   "collisions": 44,
+   "throughput": 0.767
+  },
+  "mec_dead_8s": {
+   "collisions": 89,
+   "throughput": 0.72
+  }
+ }
+}

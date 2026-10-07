@@ -16,7 +16,9 @@ Chosen by sim/failsafe_eval.py (results/failsafe_eval.json): during a short outa
 or stopping caused *more* collisions than holding the plan (the plan deliberately lets a
 truck clear a crossing or stop short of it; a crawling truck stays in the conflict zone),
 and lifting a stale limit after 2.2 s instead of 5 s did too.  When the MEC app stays down,
-stopping is clearly better (8 s outage: 60 vs 93 collisions of 180).  v0.6 ("legacy")
+stopping is clearly better (8 s outage: 60 vs 93 collisions of 180).  Stopping after 2.0 s of
+silence is never worse than v0.6 and better in every outage (of 180 conflicts: restart 27 vs
+30, restart + 20 % loss 42 vs 43, 8 s outage 78 vs 93; normal 19 = 19).  v0.6 ("legacy")
 lifted the limit after 5 s even when the MEC app was dead.
 
 Reporting rate: follow the commanded rate; without any command for RATE_FAILSAFE_S fall
@@ -28,7 +30,7 @@ from __future__ import annotations
 
 ALERT_STALE_S = 5.0      # same timing as v0.6 (the trained policy assumes it)
 SILENCE_S = 1.3          # heartbeat (1 s) and alert refresh (1 s) both missing
-STOP_AFTER_S = 3.0       # longer than a MEC app restart (measured 1.4-2.2 s)
+STOP_AFTER_S = 2.0       # swept 1.3-3.0 s (results/failsafe_stop_sweep.json): best overall
 CREEP_MPS = 0.5          # crawl speed (evaluated variant "failsafe_creep", not used)
 RATE_FAILSAFE_S = 6.0
 FULL_HZ = 10.0

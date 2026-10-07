@@ -3,7 +3,9 @@
 // - Publishes the worker's position to oneM2M:  <CSE>/EdgeGuard/worker_01/location
 // - Receives alert notifications from the CSE on  http://<tag-ip>/alert
 //   (add that URL to `alert_subscribers` in config/edgeguard.yaml, then run
-//    tools/setup_resources.py)
+//    tools/setup_resources.py - it subscribes the URL to <ae>/alert and <ae>/control)
+// - Follows adaptive-rate commands from <ae>/control ({"rates": {id: hz}}, 10 Hz near
+//   forklifts, 2 Hz otherwise); without a command for 6 s it reports at 10 Hz again
 //
 // Libraries: ArduinoJson 7.x, arduino-dw1000 (DW1000Ranging, thotro).
 // Ranging: the tag does two-way ranging with 3-4 anchors; positions are solved with
@@ -18,6 +20,7 @@
 #include <DW1000Ranging.h>
 #include <time.h>
 #include "uwb_position.h"   // copy of firmware/common/uwb_position.h (kept identical by tests)
+#include "device_policy.h"  // copy of firmware/common/device_policy.h (rate commands)
 
 // ---------- settings ----------
 const char* WIFI_SSID = "YOUR_WIFI";
@@ -27,7 +30,7 @@ const char* ORIGIN    = "CEdgeGuard";
 const char* DEVICE_ID = "worker_01";
 const int   MOTOR_PIN = 25;
 const int   LED_PIN   = 2;
-const uint32_t PUBLISH_MS = 100;                                // 10 Hz
+policy::ReportRate reportRate;                                  // 10 Hz until told otherwise
 
 WebServer server(80);
 uint32_t vibrateUntil = 0;
@@ -106,6 +109,11 @@ void handleAlert() {
   JsonObject sgn = doc["m2m:sgn"];
   if (sgn["vrq"] | false) return;                                 // subscription verification
   JsonObject alert = sgn["nev"]["rep"]["m2m:cin"]["con"];
+  if (!alert["rates"].isNull()) {                                 // <ae>/control: rate command / heartbeat
+    float hz = alert["rates"][DEVICE_ID] | 0.0f;
+    if (hz > 0) reportRate.onCommand(millis() / 1000.0f, hz);
+    return;
+  }
   if (alert.isNull() || String((const char*)alert["worker"]) != DEVICE_ID) return;
   bool vibrate = alert["actions"][DEVICE_ID]["vibrate"] | false;
   const char* level = alert["level"] | "SAFE";
@@ -135,7 +143,7 @@ void loop() {
   bool on = millis() < vibrateUntil;
   digitalWrite(MOTOR_PIN, on);
   digitalWrite(LED_PIN, on);
-  if (millis() - lastPublish >= PUBLISH_MS) {
+  if (millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
     lastPublish = millis();
     float x, y;
     if (readPosition(x, y)) publishLocation(x, y);

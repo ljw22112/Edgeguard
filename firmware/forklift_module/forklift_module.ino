@@ -3,7 +3,11 @@
 // - Publishes motion to oneM2M:  <CSE>/EdgeGuard/forklift_01/motion
 //   {id, kind, ts, x, y, speed, heading, yaw_rate}
 // - Receives alerts on http://<module-ip>/alert:
-//   beacon on/off and speed_scale (0..1) applied to the drive PWM
+//   beacon on/off and the absolute speed limit applied to the drive PWM
+// - Also receives <ae>/control on the same URL: adaptive-rate commands and the MEC app's
+//   1 s heartbeat.  Speed-limit rules (device_policy.h, same as edgeguard/device_policy.py):
+//   hold the limit between refreshes, lift it if the MEC app is alive but stopped refreshing
+//   for 5 s (lost "clear"), hold through a short MEC silence, stop if silent > 2 s.
 //
 // MPU6050 is read over I2C with raw registers (no extra library).
 // Position comes from a UWB tag on the forklift (stub: readPosition()).
@@ -16,6 +20,7 @@
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <time.h>
+#include "device_policy.h"   // copy of firmware/common/device_policy.h (kept identical by tests)
 
 const char* WIFI_SSID = "YOUR_WIFI";
 const char* WIFI_PASS = "YOUR_PASS";
@@ -24,11 +29,11 @@ const char* ORIGIN    = "CEdgeGuard";
 const char* DEVICE_ID = "forklift_01";
 const int   BEACON_PIN = 26;
 const int   MOTOR_PWM_PIN = 27;
-const uint32_t PUBLISH_MS = 100;
 const uint8_t MPU = 0x68;
 const float GYRO_LSB = 131.0f;          // +-250 deg/s range
 const float MAX_SPEED = 1.0f;           // m/s at full drive PWM (calibrate on the RC car)
-uint32_t lastAlertMs = 0;
+policy::ForkliftLimit speedLimit;       // m/s, fail-safe on MEC silence
+policy::ReportRate reportRate;          // 10 Hz until told otherwise
 
 WebServer server(80);
 float heading = 0.0f;                   // rad, 0 = +x of the site frame
@@ -58,7 +63,8 @@ float readYawRate() {                   // rad/s, CCW positive
 }
 
 bool readPosition(float& x, float& y) { x = 0; y = 0; return true; }   // TODO: UWB tag
-float readSpeed() { return 1.0f * speedScale; }                        // TODO: encoder (m/s)
+float readSpeed() { return MAX_SPEED * speedScale; }                   // TODO: encoder (m/s)
+float nowS() { return millis() / 1000.0f; }
 
 void publishMotion(float x, float y, float v, float yawRate) {
   JsonDocument doc;
@@ -93,18 +99,24 @@ void handleAlert() {
   JsonObject sgn = doc["m2m:sgn"];
   if (sgn["vrq"] | false) return;
   JsonObject alert = sgn["nev"]["rep"]["m2m:cin"]["con"];
-  if (alert.isNull() || String((const char*)alert["forklift"]) != DEVICE_ID) return;
-  JsonObject act = alert["actions"][DEVICE_ID];
-  beacon = act["beacon"] | false;
-  // Prefer the absolute limit (m/s): a ratio of an already reduced speed would let the truck
-  // speed up again. Hold it until a "clear" alert (or the 5 s failsafe in loop()).
-  if (!act["speed_limit"].isNull()) {
-    speedScale = constrain((float)act["speed_limit"] / MAX_SPEED, 0.0f, 1.0f);
-  } else {
-    speedScale = constrain((float)(act["speed_scale"] | 1.0f), 0.0f, 1.0f);
+  if (alert.isNull()) return;
+  float t = nowS();
+  speedLimit.onHeartbeat(t);                       // any MEC message: the MEC app is alive
+  if (!alert["rates"].isNull()) {                  // <ae>/control: rate command / heartbeat
+    float hz = alert["rates"][DEVICE_ID] | 0.0f;
+    if (hz > 0) reportRate.onCommand(t, hz);
+    return;
   }
-  lastAlertMs = millis();
-  Serial.printf("alert %s beacon=%d speed x%.2f\n", (const char*)(alert["level"] | "?"), beacon, speedScale);
+  if (String((const char*)alert["forklift"]) != DEVICE_ID) return;
+  JsonObject act = alert["actions"][DEVICE_ID];
+  bool clear = String((const char*)(alert["event"] | "")) == "clear";
+  beacon = !clear && (act["beacon"] | false);
+  // Prefer the absolute limit (m/s): a ratio of an already reduced speed would let the truck
+  // speed up again.
+  float lim = act["speed_limit"].isNull() ? (float)(act["speed_scale"] | 1.0f) * MAX_SPEED
+                                          : (float)act["speed_limit"];
+  speedLimit.onAlert(t, clear, lim < 0 ? 0.0f : lim);
+  Serial.printf("alert %s beacon=%d limit %.2f m/s\n", (const char*)(alert["level"] | "?"), beacon, lim);
 }
 
 void setup() {
@@ -132,10 +144,12 @@ void loop() {
   lastImu = now;
   float yawRate = readYawRate();
   heading += yawRate * dt;                          // integrate gyro (UWB track corrects drift)
-  if (speedScale < 1.0f && millis() - lastAlertMs > 5000) speedScale = 1.0f;   // failsafe
+  float lim = speedLimit.effective(nowS());          // fail-safe rules in device_policy.h
+  speedScale = lim < 0 ? 1.0f : constrain(lim / MAX_SPEED, 0.0f, 1.0f);
+  if (lim < 0) beacon = false;
   ledcWrite(MOTOR_PWM_PIN, (int)(baseDuty * speedScale));
   digitalWrite(BEACON_PIN, beacon && (millis() / 250) % 2);   // blink
-  if (millis() - lastPublish >= PUBLISH_MS) {
+  if (millis() - lastPublish >= reportRate.periodMs(nowS())) {
     lastPublish = millis();
     float x, y;
     if (readPosition(x, y)) publishMotion(x, y, readSpeed(), yawRate);

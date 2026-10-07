@@ -4,7 +4,7 @@
 
 legacy   : v0.6 - hold the last speed limit, lift it after 5 s without alerts
 failsafe : edgeguard/device_policy.py - 1 s heartbeat; MEC silent -> hold the plan,
-           silent > 3 s -> stop; MEC alive but no refresh 5 s -> lift (lost "clear")
+           silent > 2 s -> stop; MEC alive but no refresh 5 s -> lift (lost "clear")
 failsafe_creep / failsafe_stop : rejected variants (crawl / stop as soon as silent)
 
 Conditions (same held-out encounters and network draws for both modes):

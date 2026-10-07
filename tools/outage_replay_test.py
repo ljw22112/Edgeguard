@@ -24,7 +24,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from topology_bench import PY, cfg_for, start, wait_http, write_cfg      # noqa: E402
 
-H = {"X-M2M-Origin": "SEdgeGuard", "X-M2M-RVI": "2a", "Accept": "application/json"}
+H = {"X-M2M-Origin": "SEdgeGuardCloud", "X-M2M-RVI": "2a", "Accept": "application/json"}
 CLOUD_AE = "http://127.0.0.1:7579/Mobius/EdgeGuard_site01"
 
 
@@ -32,7 +32,9 @@ def cloud_cins(cnt):
     r = requests.get(f"{CLOUD_AE}/{cnt}?rcn=4", headers={**H, "X-M2M-RI": "chk"}, timeout=5)
     if not r.ok:
         return []
-    cins = r.json().get("m2m:cnt", {}).get("m2m:cin", [])
+    body = r.json()
+    holder = body.get("m2m:cnt") or body.get("m2m:rsp") or {}      # Mobius answers rcn=4 as m2m:rsp
+    cins = holder.get("m2m:cin", [])
     return sorted(cins, key=lambda c: c.get("ct", ""))
 
 

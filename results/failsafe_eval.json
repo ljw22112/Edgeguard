@@ -16,17 +16,17 @@
     "lost_s_mean": 2.674290359012436
    },
    "failsafe": {
-    "reward": -5.692472177194256,
+    "reward": -5.693354070924029,
     "precision": 0.6617647058823529,
     "recall": 1.0,
     "f_beta": 0.907258064516129,
     "beta": 2.0,
-    "throughput": 0.7800948697041072,
+    "throughput": 0.7800104477217594,
     "collisions": 19,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 92,
-    "lost_s_mean": 2.674290359012436
+    "lost_s_mean": 2.6751722527422075
    },
    "failsafe_creep": {
     "reward": -5.898246092327616,
@@ -70,17 +70,17 @@
     "lost_s_mean": 2.7235397011681597
    },
    "failsafe": {
-    "reward": -7.405918543278696,
+    "reward": -7.086165244015401,
     "precision": 0.664179104477612,
     "recall": 0.9888888888888889,
     "f_beta": 0.9008097165991904,
     "beta": 2.0,
-    "throughput": 0.7738816153423247,
-    "collisions": 30,
+    "throughput": 0.7642509348780009,
+    "collisions": 27,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 90,
-    "lost_s_mean": 2.7241003614605233
+    "lost_s_mean": 2.858892516742678
    },
    "failsafe_creep": {
     "reward": -9.81006633757234,
@@ -124,17 +124,17 @@
     "lost_s_mean": 2.7234527249903024
    },
    "failsafe": {
-    "reward": -9.595067534131125,
+    "reward": -9.533729484958826,
     "precision": 0.6705882352941176,
     "recall": 0.95,
     "f_beta": 0.8769230769230768,
     "beta": 2.0,
-    "throughput": 0.7667791496034038,
-    "collisions": 44,
+    "throughput": 0.7479572997275982,
+    "collisions": 42,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 84,
-    "lost_s_mean": 2.8011281401917363
+    "lost_s_mean": 3.042820394049741
    },
    "failsafe_creep": {
     "reward": -12.732320801875016,
@@ -178,17 +178,17 @@
     "lost_s_mean": 1.074067295505534
    },
    "failsafe": {
-    "reward": -16.93371754582456,
+    "reward": -15.718977366553581,
     "precision": 0.6666666666666666,
     "recall": 0.8222222222222222,
     "f_beta": 0.7855626326963906,
     "beta": 2.0,
-    "throughput": 0.7198825974309636,
-    "collisions": 89,
+    "throughput": 0.682739181406879,
+    "collisions": 78,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 74,
-    "lost_s_mean": 3.336747848854873
+    "lost_s_mean": 3.788674336250563
    },
    "failsafe_creep": {
     "reward": -17.60129606937183,

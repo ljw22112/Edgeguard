@@ -48,8 +48,10 @@ def cfg_for(topo):
         # Mobius on the MEC host + application-level copy to a second (cloud) Mobius over the WAN.
         # Two IN-CSEs cannot register to each other, so this bridge is outside oneM2M Mcc.
         c["cse"] = {"base_url": "http://127.0.0.1:7579", "cse_rn": "Mobius", "origin": "SEdgeGuard", "rvi": "2a"}
+        # own originator: on this one-PC bench the "cloud" is the same Mobius behind the WAN proxy,
+        # and Mobius allows one AE per originator (SEdgeGuard already owns the site AE)
         c["cloud_sync"] = {"enabled": True, "base_url": "http://127.0.0.1:17579", "cse_rn": "Mobius",
-                           "origin": "SEdgeGuard", "rvi": "2a", "ae": "EdgeGuard_site01", "risk_hz": 1}
+                           "origin": "SEdgeGuardCloud", "rvi": "2a", "ae": "EdgeGuard_site01", "risk_hz": 1}
         return c, None
     if topo == "edge_mn":
         c["cse"] = {"base_url": "http://127.0.0.1:8081", "cse_rn": "cse-mn", "origin": "CEdgeGuard", "rvi": "3"}
