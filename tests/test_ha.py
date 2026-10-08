@@ -60,3 +60,12 @@ def test_cse_outage_does_not_make_two_leaders():
         a.step(k * 0.3)
         b.step(k * 0.3 + 0.1)
     assert a.leader != b.leader
+
+
+def test_with_retry_passes_keywords():
+    """setup_resources creates containers with mni=... through with_retry."""
+    from edgeguard.onem2m import OneM2MClient
+    c = OneM2MClient.__new__(OneM2MClient)
+    got = {}
+    assert c.with_retry(lambda parent, rn, mni=200: got.update(mni=mni) or "ok", "ae", "x", mni=20) == "ok"
+    assert got["mni"] == 20

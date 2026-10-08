@@ -33,6 +33,7 @@ def main(path, health_url):
                       "write_failures": d.get("write_failures"), "mec_alerts_sent": health.get("alerts_sent")}))
     if problems:
         print("FAIL: " + "; ".join(problems))
+        print("::error title=check_demo::" + "; ".join(problems))   # readable via the CI annotations API
         sys.exit(1)
     print("OK")
 

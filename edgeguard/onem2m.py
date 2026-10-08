@@ -80,12 +80,12 @@ class OneM2MClient:
             res = self.request("PUT", f"{parent}/{rn}", None, {"m2m:sub": {"nu": list(nu)}})
         return res
 
-    def with_retry(self, fn, *args, attempts=6, wait=0.3):
+    def with_retry(self, fn, *args, attempts=6, wait=0.3, **kw):
         """Retry on 404: some CSEs (Mobius cluster mode) make a new parent visible
         to other workers only after a short delay."""
         for i in range(attempts):
             try:
-                return fn(*args)
+                return fn(*args, **kw)
             except OneM2MError as e:
                 if e.status != 404 or i == attempts - 1:
                     raise

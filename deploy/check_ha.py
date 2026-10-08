@@ -45,6 +45,11 @@ def heartbeat_ts():
         return None
 
 
+def fail(msg):
+    print("::error title=check_ha::" + msg)                 # readable via the CI annotations API
+    sys.exit(msg)
+
+
 def main():
     deadline = time.time() + 120
     while time.time() < deadline:                      # both up, exactly one leader
@@ -53,7 +58,7 @@ def main():
             break
         time.sleep(0.5)
     else:
-        sys.exit(f"no single leader within 120 s (mec={leader_of('mec')}, mec2={leader_of('mec2')})")
+        fail(f"no single leader within 120 s (mec={leader_of('mec')}, mec2={leader_of('mec2')})")
     leader, standby = ("mec", "mec2") if leader_of("mec") else ("mec2", "mec")
     print(f"leader {leader}, standby {standby}")
 
@@ -86,9 +91,9 @@ def main():
            "heartbeats": len(seen), "limit_s": GAP_LIMIT_S}
     print(json.dumps(out))
     if t_lead is None:
-        sys.exit("standby never took over")
+        fail("standby never took over")
     if worst is None or worst >= GAP_LIMIT_S:
-        sys.exit(f"heartbeat gap {worst} s >= {GAP_LIMIT_S} s")
+        fail(f"heartbeat gap {worst} s >= {GAP_LIMIT_S} s")
     print("PASS")
 
 
