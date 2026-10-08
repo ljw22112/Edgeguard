@@ -32,6 +32,8 @@ class Net:
     uwb_peer_range_m: float = 30.0  # direct forklift <-> tag ranging (local fallback modes)
     uwb_peer_sigma: float = 0.10
     uwb_peer_drop: float = 0.10     # missed ranging rounds (NLOS, collisions)
+    uwb_peer_hz: float = 10.0       # ranging rounds per second (arduino-dw1000 ~80 ms cycle)
+    uwb_peer_bias: float = 0.0      # NLOS adds path length: ranges read long by this (m)
 
 
 @dataclass
@@ -94,8 +96,10 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
         actual_min = min(actual_min, math.hypot(xw - xf, yw - yf))
         # direct UWB ranging forklift <-> worker tag (used only by the local-fallback modes)
         d_true = math.hypot(xw - xf, yw - yf)
-        if d_true <= net.uwb_peer_range_m and rng.random() >= net.uwb_peer_drop:
-            forklift.fl.on_range(t, "w", max(0.0, d_true + rng.gauss(0, net.uwb_peer_sigma)))
+        every = max(1, round(1.0 / (net.uwb_peer_hz * DT)))
+        if k % every == 0 and d_true <= net.uwb_peer_range_m and rng.random() >= net.uwb_peer_drop:
+            forklift.fl.on_range(t, "w", max(0.0, d_true + net.uwb_peer_bias
+                                             + rng.gauss(0, net.uwb_peer_sigma)))
         if react and forklift.fl.mode.endswith("_tag") and forklift.fl.vibrate_local(t):
             worker.on_alert(t, "raise", vibrate=True)    # the tag sees the same two-way range
         # sensors

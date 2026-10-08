@@ -28,6 +28,32 @@
     "false_alarms": 88,
     "lost_s_mean": 2.6848012714441194
    },
+   "failsafe_creep": {
+    "reward": -6.503533322348795,
+    "precision": 0.6716417910447762,
+    "recall": 1.0,
+    "f_beta": 0.9109311740890688,
+    "beta": 2.0,
+    "throughput": 0.7776226556293694,
+    "collisions": 24,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 88,
+    "lost_s_mean": 2.7338363526518266
+   },
+   "failsafe_stop": {
+    "reward": -6.363970197066626,
+    "precision": 0.6716417910447762,
+    "recall": 1.0,
+    "f_beta": 0.9109311740890688,
+    "beta": 2.0,
+    "throughput": 0.7767191684055335,
+    "collisions": 23,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 88,
+    "lost_s_mean": 2.7457883788848076
+   },
    "failsafe_local_zone": {
     "reward": -6.004346246736085,
     "precision": 0.6716417910447762,
@@ -42,30 +68,30 @@
     "lost_s_mean": 2.6891947315845695
    },
    "failsafe_local_ttc": {
-    "reward": -6.222097132733825,
+    "reward": -6.223607813242123,
     "precision": 0.6691449814126395,
     "recall": 1.0,
     "f_beta": 0.910010111223458,
     "beta": 2.0,
-    "throughput": 0.7756445382909035,
+    "throughput": 0.7755100803246093,
     "collisions": 22,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 89,
-    "lost_s_mean": 2.7539153145520054
+    "lost_s_mean": 2.7554259950603064
    },
    "failsafe_local_ttc_tag": {
-    "reward": -6.371626401680369,
+    "reward": -6.373137082188668,
     "precision": 0.6691449814126395,
     "recall": 1.0,
     "f_beta": 0.910010111223458,
     "beta": 2.0,
-    "throughput": 0.7757895830712342,
+    "throughput": 0.77565512510494,
     "collisions": 23,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 89,
-    "lost_s_mean": 2.751929431983399
+    "lost_s_mean": 2.7534401124917003
    },
    "halt_on_silence": {
     "reward": -5.61514542997327,
@@ -108,6 +134,32 @@
     "false_alarms": 83,
     "lost_s_mean": 3.025862483043605
    },
+   "failsafe_creep": {
+    "reward": -9.938261955596634,
+    "precision": 0.6782945736434108,
+    "recall": 0.9722222222222222,
+    "f_beta": 0.894683026584867,
+    "beta": 2.0,
+    "throughput": 0.7161905178273149,
+    "collisions": 42,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 83,
+    "lost_s_mean": 3.4488680162026992
+   },
+   "failsafe_stop": {
+    "reward": -8.355078174208794,
+    "precision": 0.6782945736434108,
+    "recall": 0.9722222222222222,
+    "f_beta": 0.894683026584867,
+    "beta": 2.0,
+    "throughput": 0.7102309883114587,
+    "collisions": 31,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 83,
+    "lost_s_mean": 3.532350901481516
+   },
    "failsafe_local_zone": {
     "reward": -8.489027962126778,
     "precision": 0.6782945736434108,
@@ -122,30 +174,30 @@
     "lost_s_mean": 3.0602400833389045
    },
    "failsafe_local_ttc": {
-    "reward": -8.118506602377453,
+    "reward": -8.132071243348516,
     "precision": 0.6730769230769231,
     "recall": 0.9722222222222222,
     "f_beta": 0.8928571428571429,
     "beta": 2.0,
-    "throughput": 0.7434231180566592,
+    "throughput": 0.7422587749828363,
     "collisions": 32,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 85,
-    "lost_s_mean": 3.1412338751047284
+    "lost_s_mean": 3.1547985160757883
    },
    "failsafe_local_ttc_tag": {
-    "reward": -8.140852321666502,
+    "reward": -8.140949138540856,
     "precision": 0.6704980842911877,
     "recall": 0.9722222222222222,
     "f_beta": 0.891946992864424,
     "beta": 2.0,
-    "throughput": 0.7417182129043308,
+    "throughput": 0.7417012594829747,
     "collisions": 32,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 86,
-    "lost_s_mean": 3.162064442878628
+    "lost_s_mean": 3.162161259752979
    },
    "halt_on_silence": {
     "reward": -8.471821756896041,
@@ -188,6 +240,32 @@
     "false_alarms": 77,
     "lost_s_mean": 3.0536307415345325
    },
+   "failsafe_creep": {
+    "reward": -10.51387805229101,
+    "precision": 0.6882591093117408,
+    "recall": 0.9444444444444444,
+    "f_beta": 0.8790072388831438,
+    "beta": 2.0,
+    "throughput": 0.7190679437980261,
+    "collisions": 46,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 77,
+    "lost_s_mean": 3.427514415927383
+   },
+   "failsafe_stop": {
+    "reward": -10.092323471142075,
+    "precision": 0.6882591093117408,
+    "recall": 0.9444444444444444,
+    "f_beta": 0.8790072388831438,
+    "beta": 2.0,
+    "throughput": 0.70453918601076,
+    "collisions": 42,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 77,
+    "lost_s_mean": 3.612020440839055
+   },
    "failsafe_local_zone": {
     "reward": -8.909568423598529,
     "precision": 0.678714859437751,
@@ -202,30 +280,30 @@
     "lost_s_mean": 3.1822956963258053
    },
    "failsafe_local_ttc": {
-    "reward": -8.568003045101955,
-    "precision": 0.6772908366533864,
-    "recall": 0.9444444444444444,
-    "f_beta": 0.8753861997940268,
+    "reward": -8.886762550406042,
+    "precision": 0.676,
+    "recall": 0.9388888888888889,
+    "f_beta": 0.8711340206185568,
     "beta": 2.0,
-    "throughput": 0.73171631178628,
-    "collisions": 34,
+    "throughput": 0.7306349840560119,
+    "collisions": 36,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 81,
-    "lost_s_mean": 3.2937606208595334
+    "lost_s_mean": 3.3094898231333176
    },
    "failsafe_local_ttc_tag": {
-    "reward": -8.076642007974302,
-    "precision": 0.6746031746031746,
-    "recall": 0.9444444444444444,
-    "f_beta": 0.874485596707819,
+    "reward": -8.391938483526003,
+    "precision": 0.6733067729083665,
+    "recall": 0.9388888888888889,
+    "f_beta": 0.870236869207003,
     "beta": 2.0,
-    "throughput": 0.7346361951534498,
-    "collisions": 31,
+    "throughput": 0.7337865476190573,
+    "collisions": 33,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 82,
-    "lost_s_mean": 3.2554298867621796
+    "lost_s_mean": 3.2676960592835824
    },
    "halt_on_silence": {
     "reward": -8.238551037146385,
@@ -268,6 +346,32 @@
     "false_alarms": 67,
     "lost_s_mean": 3.70244424395666
    },
+   "failsafe_creep": {
+    "reward": -17.200136483430143,
+    "precision": 0.6883720930232559,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7914438502673796,
+    "beta": 2.0,
+    "throughput": 0.7330593816296825,
+    "collisions": 92,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 67,
+    "lost_s_mean": 3.1592273925210477
+   },
+   "failsafe_stop": {
+    "reward": -13.200349619178418,
+    "precision": 0.6883720930232559,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.7914438502673796,
+    "beta": 2.0,
+    "throughput": 0.6657450691027083,
+    "collisions": 60,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 67,
+    "lost_s_mean": 4.007925376754187
+   },
    "failsafe_local_zone": {
     "reward": -13.492045351578682,
     "precision": 0.6666666666666666,
@@ -282,30 +386,30 @@
     "lost_s_mean": 4.743560503093847
    },
    "failsafe_local_ttc": {
-    "reward": -12.67202266580225,
+    "reward": -12.529731718432497,
     "precision": 0.669683257918552,
     "recall": 0.8222222222222222,
     "f_beta": 0.7863974495217853,
     "beta": 2.0,
-    "throughput": 0.5984945581622163,
-    "collisions": 51,
+    "throughput": 0.5976634666871236,
+    "collisions": 50,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 73,
-    "lost_s_mean": 4.834143877923462
+    "lost_s_mean": 4.843368082068863
    },
    "failsafe_local_ttc_tag": {
-    "reward": -9.579659139396448,
+    "reward": -9.735894367611897,
     "precision": 0.6462882096069869,
     "recall": 0.8222222222222222,
     "f_beta": 0.779768177028451,
     "beta": 2.0,
-    "throughput": 0.5926511674916973,
-    "collisions": 30,
+    "throughput": 0.5922343539392807,
+    "collisions": 31,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 81,
-    "lost_s_mean": 4.911477321214635
+    "lost_s_mean": 4.916197397914933
    },
    "halt_on_silence": {
     "reward": -10.380942939950058,
@@ -348,6 +452,32 @@
     "false_alarms": 0,
     "lost_s_mean": 4.4207129539500144e-14
    },
+   "failsafe_creep": {
+    "reward": -27.272727272727277,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f_beta": 0.0,
+    "beta": 2.0,
+    "throughput": 1.0,
+    "collisions": 180,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 0,
+    "lost_s_mean": 4.4207129539500144e-14
+   },
+   "failsafe_stop": {
+    "reward": -27.272727272727277,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f_beta": 0.0,
+    "beta": 2.0,
+    "throughput": 1.0,
+    "collisions": 180,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 0,
+    "lost_s_mean": 4.4207129539500144e-14
+   },
    "failsafe_local_zone": {
     "reward": -10.149530508678785,
     "precision": 1.0,
@@ -362,30 +492,30 @@
     "lost_s_mean": 4.543469902618179
    },
    "failsafe_local_ttc": {
-    "reward": -9.134535025676529,
+    "reward": -9.316853843046694,
     "precision": 1.0,
     "recall": 0.0,
     "f_beta": 0.0,
     "beta": 2.0,
-    "throughput": 0.6010857145213904,
-    "collisions": 29,
+    "throughput": 0.5985117324359059,
+    "collisions": 30,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 0,
-    "lost_s_mean": 4.74059563173713
+    "lost_s_mean": 4.771399297592147
    },
    "failsafe_local_ttc_tag": {
-    "reward": -5.6862690283884945,
+    "reward": -5.995439180848272,
     "precision": 1.0,
     "recall": 0.0,
     "f_beta": 0.0,
     "beta": 2.0,
-    "throughput": 0.5424716373708683,
-    "collisions": 1,
+    "throughput": 0.542174457155253,
+    "collisions": 3,
     "conflicts": 180,
     "episodes": 330,
     "false_alarms": 0,
-    "lost_s_mean": 5.534753876873342
+    "lost_s_mean": 5.5408937263028175
    },
    "halt_on_silence": {
     "reward": -10.182374080481049,
@@ -429,5 +559,6 @@
    2
   ],
   "chosen": "2.0s (= STOP_AFTER_S)"
- }
+ },
+ "note": "final constants: LOCAL_AFTER_S 2.0, LOCAL_RANGE_STALE_S 1.2, LOCAL_RATE_WINDOW_S 1.5 (v0.8)"
 }

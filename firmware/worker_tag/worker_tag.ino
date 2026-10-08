@@ -10,6 +10,12 @@
 // Libraries: ArduinoJson 7.x, arduino-dw1000 (DW1000Ranging, thotro).
 // Ranging: the tag does two-way ranging with 3-4 anchors; positions are solved with
 // firmware/common/uwb_position.h (least squares + NLOS anchor rejection).
+// Local fallback (v0.8): every forklift module runs its DW1000 as a *mobile anchor* with a short
+// address 0x20NN, so the same ranging rounds also give this tag its distance to each nearby
+// forklift - no extra protocol.  Those ranges are not used for positioning; they feed the local
+// rule in device_policy.h, which vibrates the tag while the MEC app is silent and a forklift is
+// close or closing (vibrateLocal).  arduino-dw1000 ranges at most MAX_DEVICES (default 4) devices:
+// set it to 8 in DW1000Ranging.h for 4 anchors + up to 4 forklifts.
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
 #include <WiFi.h>
@@ -31,6 +37,8 @@ const char* DEVICE_ID = "worker_01";
 const int   MOTOR_PIN = 25;
 const int   LED_PIN   = 2;
 policy::ReportRate reportRate;                                  // 10 Hz until told otherwise
+policy::ForkliftLimit peerGuard;                                // local rule on forklift ranges
+const uint16_t FORKLIFT_ADDR_BASE = 0x2000;                     // forklift mobile anchors 0x20NN
 
 WebServer server(80);
 uint32_t vibrateUntil = 0;
@@ -59,6 +67,8 @@ void onNewRange() {
   for (int i = 0; i < 4; i++) {
     if (addr == ANCHOR_ADDR[i]) { rangeM[i] = dev->getRange(); rangeAt[i] = millis(); }
   }
+  if ((addr & 0xFF00) == FORKLIFT_ADDR_BASE)                    // a forklift's mobile anchor
+    peerGuard.onRange(millis() / 1000.0, addr, dev->getRange());
 }
 
 bool readPosition(float& x, float& y) {
@@ -109,6 +119,7 @@ void handleAlert() {
   JsonObject sgn = doc["m2m:sgn"];
   if (sgn["vrq"] | false) return;                                 // subscription verification
   JsonObject alert = sgn["nev"]["rep"]["m2m:cin"]["con"];
+  if (!alert.isNull()) peerGuard.onHeartbeat(millis() / 1000.0f); // any MEC message: MEC alive
   if (!alert["rates"].isNull()) {                                 // <ae>/control: rate command / heartbeat
     float hz = alert["rates"][DEVICE_ID] | 0.0f;
     if (hz > 0) reportRate.onCommand(millis() / 1000.0f, hz);
@@ -140,6 +151,7 @@ void setup() {
 void loop() {
   DW1000Ranging.loop();
   server.handleClient();
+  if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
   bool on = millis() < vibrateUntil;
   digitalWrite(MOTOR_PIN, on);
   digitalWrite(LED_PIN, on);

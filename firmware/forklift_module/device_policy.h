@@ -27,8 +27,8 @@ const float FULL_HZ = 10.0f;
 const float NO_LIMIT = -1.0f;            // "no limit" (a limit is always >= 0)
 const double LOCAL_SLOW_M = 6.0, LOCAL_STOP_M = 3.0, LOCAL_SLOW_MPS = 1.0;
 const double LOCAL_TTC_SLOW_S = 4.0, LOCAL_TTC_STOP_S = 2.0;
-const double LOCAL_AFTER_S = STOP_AFTER_S, LOCAL_RANGE_STALE_S = 0.5, LOCAL_RATE_WINDOW_S = 0.6;
-const int LOCAL_TAGS = 8, LOCAL_HIST = 16;
+const double LOCAL_AFTER_S = STOP_AFTER_S, LOCAL_RANGE_STALE_S = 1.2, LOCAL_RATE_WINDOW_S = 1.5;
+const int LOCAL_TAGS = 8, LOCAL_HIST = 24;   // 1.5 s at 10 Hz + margin
 
 // Recent direct ranges per worker tag, and the speed cap they imply (mirrors local_limit()).
 struct LocalGuard {

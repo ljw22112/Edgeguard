@@ -53,8 +53,8 @@ LOCAL_SLOW_MPS = 1.0
 LOCAL_TTC_SLOW_S = 4.0
 LOCAL_TTC_STOP_S = 2.0
 LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
-LOCAL_RANGE_STALE_S = 0.5   # no range for this long -> the tag is out of reach, rule idle
-LOCAL_RATE_WINDOW_S = 0.6   # range-rate from a least-squares fit over this window
+LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
+LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0
 
 

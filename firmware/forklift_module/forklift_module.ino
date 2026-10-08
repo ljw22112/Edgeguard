@@ -10,7 +10,12 @@
 //   for 5 s (lost "clear"), hold through a short MEC silence, stop if silent > 2 s.
 //
 // MPU6050 is read over I2C with raw registers (no extra library).
-// Position comes from a UWB tag on the forklift (stub: readPosition()).
+// Local fallback (v0.8): the module's DW1000 runs as a *mobile anchor* (short address 0x20NN).
+// Worker tags range it in their normal anchor rounds, so both ends get the distance; the
+// module feeds it to speedLimit.onRange() and device_policy.h applies distance + closing-speed
+// (time-to-collision) zones while the MEC app is silent for 2 s.
+// Position comes from a separate UWB tag board on the forklift (worker_tag firmware with
+// kind "forklift"; one DW1000 cannot be anchor and tag at once) - stub: readPosition().
 // Speed comes from the drive command / wheel encoder (stub: readSpeed()).
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
@@ -20,6 +25,8 @@
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <time.h>
+#include <SPI.h>
+#include <DW1000Ranging.h>
 #include "device_policy.h"   // copy of firmware/common/device_policy.h (kept identical by tests)
 
 const char* WIFI_SSID = "YOUR_WIFI";
@@ -34,6 +41,8 @@ const float GYRO_LSB = 131.0f;          // +-250 deg/s range
 const float MAX_SPEED = 1.0f;           // m/s at full drive PWM (calibrate on the RC car)
 policy::ForkliftLimit speedLimit;       // m/s, fail-safe on MEC silence
 policy::ReportRate reportRate;          // 10 Hz until told otherwise
+const char* PEER_ANCHOR_EUI = "01:20:5B:D5:A9:9A:E2:9C";   // short address 0x2001 (forklift_01)
+const int PIN_RST = 17, PIN_IRQ = 34, PIN_SS = 5;
 
 WebServer server(80);
 float heading = 0.0f;                   // rad, 0 = +x of the site frame
@@ -65,6 +74,11 @@ float readYawRate() {                   // rad/s, CCW positive
 bool readPosition(float& x, float& y) { x = 0; y = 0; return true; }   // TODO: UWB tag
 float readSpeed() { return MAX_SPEED * speedScale; }                   // TODO: encoder (m/s)
 float nowS() { return millis() / 1000.0f; }
+
+void onPeerRange() {                    // a worker tag ranged this forklift's mobile anchor
+  DW1000Device* dev = DW1000Ranging.getDistantDevice();
+  speedLimit.onRange(millis() / 1000.0, dev->getShortAddress(), dev->getRange());
+}
 
 void publishMotion(float x, float y, float v, float yawRate) {
   JsonDocument doc;
@@ -134,10 +148,14 @@ void setup() {
   configTime(9 * 3600, 0, "pool.ntp.org");
   server.on("/alert", HTTP_POST, handleAlert);
   server.begin();
+  DW1000Ranging.initCommunication(PIN_RST, PIN_SS, PIN_IRQ);
+  DW1000Ranging.attachNewRange(onPeerRange);
+  DW1000Ranging.startAsAnchor(PEER_ANCHOR_EUI, DW1000.MODE_LONGDATA_RANGE_ACCURACY, false);
   lastImu = micros();
 }
 
 void loop() {
+  DW1000Ranging.loop();
   server.handleClient();
   uint32_t now = micros();
   float dt = (now - lastImu) * 1e-6f;

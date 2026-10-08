@@ -1,0 +1,124 @@
+{
+ "episodes": 330,
+ "mode": "failsafe_local_ttc_tag",
+ "cases": {
+  "assumed (10 Hz, 10 % miss, 0.1 m, 30 m)": {
+   "mec_dead_8s": {
+    "collisions": 31,
+    "conflicts": 180,
+    "throughput": 0.5922343539392807,
+    "lost_s_mean": 4.916197397914933
+   },
+   "network_down_30s": {
+    "collisions": 3,
+    "conflicts": 180,
+    "throughput": 0.542174457155253,
+    "lost_s_mean": 5.5408937263028175
+   }
+  },
+  "5 Hz (crowded channel)": {
+   "mec_dead_8s": {
+    "collisions": 31,
+    "conflicts": 180,
+    "throughput": 0.5897020232793723,
+    "lost_s_mean": 4.9516114253914
+   },
+   "network_down_30s": {
+    "collisions": 4,
+    "conflicts": 180,
+    "throughput": 0.5438911769150746,
+    "lost_s_mean": 5.515271179323507
+   }
+  },
+  "2 Hz (very crowded)": {
+   "mec_dead_8s": {
+    "collisions": 41,
+    "conflicts": 180,
+    "throughput": 0.5901076227954423,
+    "lost_s_mean": 4.944496145013773
+   },
+   "network_down_30s": {
+    "collisions": 7,
+    "conflicts": 180,
+    "throughput": 0.55414768010485,
+    "lost_s_mean": 5.388358373228177
+   }
+  },
+  "40 % missed rounds (NLOS)": {
+   "mec_dead_8s": {
+    "collisions": 31,
+    "conflicts": 180,
+    "throughput": 0.5949965430615533,
+    "lost_s_mean": 4.853436343663197
+   },
+   "network_down_30s": {
+    "collisions": 2,
+    "conflicts": 180,
+    "throughput": 0.5421317189638996,
+    "lost_s_mean": 5.534307199202822
+   }
+  },
+  "noise 0.3 m": {
+   "mec_dead_8s": {
+    "collisions": 28,
+    "conflicts": 180,
+    "throughput": 0.5908191889716667,
+    "lost_s_mean": 4.927390346156487
+   },
+   "network_down_30s": {
+    "collisions": 3,
+    "conflicts": 180,
+    "throughput": 0.5358184486319628,
+    "lost_s_mean": 5.604273324751564
+   }
+  },
+  "NLOS bias +0.5 m": {
+   "mec_dead_8s": {
+    "collisions": 34,
+    "conflicts": 180,
+    "throughput": 0.6021073369812674,
+    "lost_s_mean": 4.788443882423106
+   },
+   "network_down_30s": {
+    "collisions": 5,
+    "conflicts": 180,
+    "throughput": 0.5916211584266176,
+    "lost_s_mean": 4.9580657236092405
+   }
+  },
+  "max range 12 m": {
+   "mec_dead_8s": {
+    "collisions": 28,
+    "conflicts": 180,
+    "throughput": 0.5863068972130905,
+    "lost_s_mean": 4.962199862918342
+   },
+   "network_down_30s": {
+    "collisions": 3,
+    "conflicts": 180,
+    "throughput": 0.5404130949551803,
+    "lost_s_mean": 5.560749289756165
+   }
+  },
+  "all bad (5 Hz, 40 %, 0.3 m, +0.5 m, 12 m)": {
+   "mec_dead_8s": {
+    "collisions": 47,
+    "conflicts": 180,
+    "throughput": 0.6082495367745986,
+    "lost_s_mean": 4.722429748761062
+   },
+   "network_down_30s": {
+    "collisions": 23,
+    "conflicts": 180,
+    "throughput": 0.5948015454311791,
+    "lost_s_mean": 4.902070701524342
+   }
+  }
+ },
+ "reference_collisions": {
+  "v0.7 failsafe (no local fallback)": {
+   "mec_dead_8s": 75,
+   "network_down_30s": 180
+  }
+ }
+}
