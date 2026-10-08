@@ -20,6 +20,13 @@
   "interDomainPacketLoss": null,
   "meta": null,
   "userMeta": null,
+  "connectivity": {
+   "model": "OPEN"
+  },
+  "d2d": {
+   "d2dMaxDistance": 100,
+   "disableD2dViaNetwork": false
+  },
   "domains": [
    {
     "id": "PUBLIC",

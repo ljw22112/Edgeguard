@@ -147,6 +147,9 @@ def build(frame, name="edgeguard-warehouse"):
             "deployment": {"netChar": _net(50, 10), "interDomainLatency": None,
                            "interDomainLatencyVariation": None, "interDomainThroughput": None,
                            "interDomainPacketLoss": None, "meta": None, "userMeta": None,
+                           # required by the AdvantEDGE / MEC Sandbox validator (v1.9: "connectivity == nil")
+                           "connectivity": {"model": "OPEN"},
+                           "d2d": {"d2dMaxDistance": 100, "disableD2dViaNetwork": False},
                            "domains": [public, operator]}}
 
 
