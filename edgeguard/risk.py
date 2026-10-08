@@ -45,6 +45,10 @@ class RiskConfig:
     wait_lateral: float = 2.5      # m: "waiting at the lane edge" distance from the lane
     clear_hold: float = 2.0        # s: risk must stay low this long before an alert clears
     debounce: int = 2              # evaluations at WARNING before the first alert
+    # --- site map (edgeguard/sitemap.py) ------------------------------------------------
+    occl_t_margin: float = 0.0     # s added to t_warn / t_danger (evaluated: +1 s made blind corners worse)
+    occl_r_margin: float = 0.5     # m added to r_safe when racks block the line of sight (sim/occlusion_eval.py)
+    occl_debounce: int = 1         # occluded pairs alert on the first WARNING evaluation
 
 @dataclass
 class PairRisk:
@@ -64,6 +68,7 @@ class PairRisk:
     speed_scale: float
     reason: str
     speed_limit: float = None   # m/s for the forklift (speed_scale x current speed)
+    occluded: bool = False      # no line of sight between them (site map)
 
     def to_dict(self):
         d = asdict(self)
@@ -123,7 +128,20 @@ def _level_from_geometry(cfg: RiskConfig, t_min, d_min, R, forklift_moving):
     return 0
 
 
-def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRisk:
+def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv", occluded=False) -> PairRisk:
+    if occluded and (cfg.occl_t_margin or cfg.occl_r_margin or cfg.occl_debounce):
+        import dataclasses
+        cfg = dataclasses.replace(cfg, t_danger=cfg.t_danger + cfg.occl_t_margin,
+                                  t_warn=cfg.t_warn + cfg.occl_t_margin, r_safe=cfg.r_safe + cfg.occl_r_margin)
+        r = _assess(worker, forklift, cfg, method)
+        r.occluded = True
+        if r.level > 0:
+            r.reason += " (blind corner: no line of sight)"
+        return r
+    return _assess(worker, forklift, cfg, method)
+
+
+def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRisk:
     enc = encounter(worker.pos, worker.vel, forklift.pos, forklift.vel, cfg.r_safe)
     moving = forklift.speed > cfg.moving_speed
     t_min, d_min = enc.tcpa, enc.dcpa
@@ -188,10 +206,11 @@ def assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRis
 class RiskEngine:
     """Keeps tracks and evaluates every worker x forklift pair."""
 
-    def __init__(self, cfg: RiskConfig | None = None, method="guidance_ctrv"):
+    def __init__(self, cfg: RiskConfig | None = None, method="guidance_ctrv", sitemap=None):
         self.cfg = cfg or RiskConfig()
         self.method = method
         self.tracks = {}
+        self.sitemap = sitemap                 # edgeguard.sitemap.SiteMap or None
 
     def update(self, track_factory, obj_id, kind, t, **meas):
         tr = self.tracks.get(obj_id)
@@ -228,7 +247,8 @@ class RiskEngine:
                 if dx * dx + dy * dy > reach * reach:
                     out.append(_far(w, f, method, math.hypot(dx, dy)))
                 else:
-                    out.append(assess(w, f, self.cfg, method))
+                    occl = bool(self.sitemap) and self.sitemap.blocked(w.pos, f.pos)
+                    out.append(assess(w, f, self.cfg, method, occluded=occl))
         return out
 
 

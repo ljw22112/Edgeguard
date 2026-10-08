@@ -193,6 +193,42 @@ def gen_reversing_forklift(rng):
 EXTRA_GENERATORS = [gen_running_worker, gen_zigzag_worker, gen_reversing_forklift]
 
 
+# --- blind corner (site map, edgeguard/sitemap.py) ----------------------------------------
+# Forklift along +x on y = 0, worker along +y on x = 0, a rack filling the corner between their
+# approaches: neither sees the other until they are ~3 m from the crossing.
+BLIND_RACK = [-40.0, -40.0, -1.6, -1.6]
+SCENARIO_MAPS = {"blind_corner": [BLIND_RACK], "blind_corner_clear": [BLIND_RACK]}
+
+
+def _corner(rng, offset):
+    times = _times()
+    vf, vw = rng.uniform(1.5, 3.0), rng.uniform(0.8, 1.5)
+    t_meet = rng.uniform(5.0, 8.0)
+    f = _straight_forklift(-vf * t_meet, 0.0, 0.0, vf, times)
+    tw = t_meet + offset
+    w = _walk(0.0, -vw * tw, 0.0, vw, times)
+    return times, w, f
+
+
+def gen_blind_corner(rng):
+    return ("blind_corner", *_corner(rng, rng.uniform(-0.4, 0.4)))
+
+
+def gen_blind_corner_clear(rng):
+    return ("blind_corner_clear", *_corner(rng, rng.choice([-1, 1]) * rng.uniform(1.6, 4.0)))
+
+
+def gen_open_corner(rng):          # same geometry, no rack (control)
+    return ("open_corner", *_corner(rng, rng.uniform(-0.4, 0.4)))
+
+
+def gen_open_corner_clear(rng):
+    return ("open_corner_clear", *_corner(rng, rng.choice([-1, 1]) * rng.uniform(1.6, 4.0)))
+
+
+CORNER_GENERATORS = [gen_blind_corner, gen_blind_corner_clear, gen_open_corner, gen_open_corner_clear]
+
+
 def ground_truth(times, w, f, r_safe=R_SAFE):
     d = [math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(w, f)]
     contact = next((t for t, x in zip(times, d) if x < r_safe), None)

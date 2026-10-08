@@ -90,6 +90,11 @@ security:
   enabled: true
   originators: {worker_01: SWorker01, forklift_01: SForklift01, camera_01: SCamera01}
 
+sitemap:
+  # racks / walls that block the line of sight, [x0, y0, x1, y1] in site metres.  Pairs that cannot
+  # see each other get +risk.occl_r_margin and alert on the first WARNING (edgeguard/sitemap.py).
+  obstacles: []
+
 risk:
   r_safe: 1.5
   t_caution: 5.0

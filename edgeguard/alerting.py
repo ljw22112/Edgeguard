@@ -67,6 +67,8 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
     Returns (event or None, actions dict).  May modify `r` (hold logic)."""
     st.refresh_s = 0.5 if congested else 1.0
     st.debounce, st.hold_s = cfg.debounce, cfg.clear_hold
+    if getattr(r, "occluded", False) and getattr(cfg, "occl_debounce", 0):
+        st.debounce = cfg.occl_debounce          # blind corner: no time to confirm twice
     r.hold = False
     if r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
             and f_tr.speed > 0.2 and waiting_at_lane(w_tr, f_tr, cfg):

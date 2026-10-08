@@ -67,13 +67,31 @@ class EpisodeResult:
             and self.t_contact - self.first_alert >= LEAD_REQ
 
 
+def _in_lane(worker, forklift, half_width=1.5):
+    """Worker already within the forklift's lane (stopping there would not help)."""
+    (xw, yw), (xf, yf) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
+    hd, _, _ = forklift.path.meta_at(forklift.s)
+    return abs(-(xw - xf) * math.sin(hd) + (yw - yf) * math.cos(hd)) < half_width
+
+
+VISION_M = 12.0          # people notice each other within this range when nothing blocks the view
+P_WORKER_SEES, P_DRIVER_SEES = 0.6, 0.7
+
+
 def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv", net: Net = Net(),
-                noise=0.15, react=True):
+                noise=0.15, react=True, map_aware=False, human_vision=False):
+    """map_aware   : the risk engine knows the site map (edgeguard/sitemap.py) of the scenario
+    human_vision: people yield on their own once they can see each other (line of sight clear,
+                  within VISION_M, closing) - which is exactly what a blind corner takes away."""
     name, times, w, f = gen(rng)
+    from edgeguard.sitemap import SiteMap
+    from sim.scenarios import SCENARIO_MAPS
+    world = SiteMap(SCENARIO_MAPS.get(name, []))
+    seen, last_d = False, None
     worker = Mover("w", "worker", Path(w))
     forklift = Mover("f", "forklift", Path([(x, y) for x, y, *_ in f],
                                             [(th, 1 if sp >= 0 else -1, yw) for _, _, th, sp, yw in f]))
-    engine = RiskEngine(cfg, method)
+    engine = RiskEngine(cfg, method, sitemap=world if map_aware else None)
     st = AlertState()
     pending = []                                   # (deliver_at, event, actions, level, to)
     coop = forklift.fl.mode.startswith("coop")      # D2D state broadcast
@@ -126,6 +144,16 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
         forklift.step(t, DT)
         (xw, yw), (xf, yf) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
         actual_min = min(actual_min, math.hypot(xw - xf, yw - yf))
+        if human_vision and not seen:
+            d_now = math.hypot(xw - xf, yw - yf)
+            closing = last_d is not None and d_now < last_d - 1e-3
+            last_d = d_now
+            if closing and d_now < VISION_M and not world.blocked((xw, yw), (xf, yf)):
+                seen = True
+                if rng.random() < P_WORKER_SEES and not _in_lane(worker, forklift):
+                    worker.on_alert(t, "raise", vibrate=True)            # stops after 0.8 s, for 2 s
+                if rng.random() < P_DRIVER_SEES:
+                    forklift.human_cap = (t + 0.8, t + 3.8, 1.0)      # slows to 1 m/s for 3 s
         # direct UWB ranging forklift <-> worker tag (used only by the local-fallback modes)
         d_true = math.hypot(xw - xf, yw - yf)
         every = max(1, round(1.0 / (net.uwb_peer_hz * DT)))
@@ -169,7 +197,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             continue
         if net.mec_down is not None and t >= net.mec_down[1] and not restarted:
             restarted = True                                   # fresh process: no tracks, no alert state
-            engine, st = RiskEngine(cfg, method), AlertState()
+            engine, st = RiskEngine(cfg, method, sitemap=world if map_aware else None), AlertState()
         if t - last_hb >= net.heartbeat_s - 1e-9:
             last_hb = t
             for to in ("f", "w"):

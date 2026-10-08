@@ -73,3 +73,18 @@ def test_metrics_and_health(app_mod):
     assert "edgeguard_publish_dropped_stale_total" in m and "edgeguard_tracks" in m
     h = c.get("/health").json()
     assert "degraded" in h and "publisher" in h and "input" in h
+
+
+def test_sitemap_line_of_sight_and_occluded_margin():
+    from edgeguard.sitemap import SiteMap
+    from edgeguard.risk import RiskConfig, assess
+    from edgeguard.tracking import Track
+    m = SiteMap([[-40, -40, -1.6, -1.6]])
+    assert m.blocked((-8, 0), (0, -8)) and not m.blocked((-2, 0), (0, -2)) and not m.blocked((-8, 0), (8, 0))
+    w, f = Track("w", "worker"), Track("f", "forklift")
+    for k in range(5):                                   # worker passes 1.85 m from the forklift's path
+        w.update(0.1 * k, 1.85, -6 + 0.1 * k)
+        f.update(0.1 * k, -6 + 0.2 * k, 0.0, speed=2.0, heading=0.0, yaw_rate=0.0)
+    cfg = RiskConfig()
+    plain, occl = assess(w, f, cfg), assess(w, f, cfg, occluded=True)
+    assert occl.occluded and occl.level >= plain.level

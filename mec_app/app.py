@@ -38,7 +38,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 CFG = config.load()
 PATHS = config.paths(CFG)
 MEC = CFG["mec"]
-engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_ctrv"))
+from edgeguard.sitemap import from_config as sitemap_from_config   # noqa: E402
+SITEMAP = sitemap_from_config(CFG)
+engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_ctrv"), sitemap=SITEMAP or None)
 cse = config.client(CFG)
 # priority outbox: alerts (0) are written before control (1) and risk summaries (2)
 outbox: "queue.PriorityQueue[tuple[int, int, float, str, str, dict]]" = queue.PriorityQueue(maxsize=1000)
@@ -564,6 +566,7 @@ def snapshot():
                  "method": engine.method, "r_safe": engine.cfg.r_safe,
                  "network": state["network"], "location_fixes": state["location_fixes"]}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]),
+                "obstacles": [list(r) for r in SITEMAP.rects],
                 "stats": stats, "server_ms": now_ms()}
 
 

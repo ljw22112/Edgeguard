@@ -118,6 +118,7 @@ class Mover:
         self.pending = []                            # (apply_at, scale)
         self.stop_from = self.stop_until = -1.0      # worker reaction window
         self.lost_s = 0.0                            # forklift seconds lost to slow-downs
+        self.human_cap = None                        # (from, until, m/s): the driver slows on his own
         self.stops = 0
 
     def on_alert(self, t, event, limit=None, vibrate=False):
@@ -140,6 +141,8 @@ class Mover:
                     self.fl.on_alert(t, ev, lim)
             lim = self.fl.effective(t)
             target = vn if lim is None else min(vn, lim)
+            if self.human_cap and self.human_cap[0] <= t < self.human_cap[1]:
+                target = min(target, self.human_cap[2])
             dec, acc = 2.5, 1.0
             if vn > 0.1:
                 self.lost_s += (1 - min(1.0, self.v / vn)) * dt

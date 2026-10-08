@@ -1,0 +1,185 @@
+{
+ "episodes": 320,
+ "results": {
+  "people see each other | no map": {
+   "blind": {
+    "collisions": 17,
+    "conflicts": 80,
+    "false_alarms": 39,
+    "recall": 1.0,
+    "throughput": 0.698150133096567,
+    "lost_s_mean": 3.688386119225971
+   },
+   "open": {
+    "collisions": 7,
+    "conflicts": 84,
+    "false_alarms": 36,
+    "recall": 0.7619047619047619,
+    "throughput": 0.6709235343477697,
+    "lost_s_mean": 3.909109665250969
+   }
+  },
+  "people see each other | map: time +1 s": {
+   "blind": {
+    "collisions": 22,
+    "conflicts": 80,
+    "false_alarms": 48,
+    "recall": 1.0,
+    "throughput": 0.7500314195081772,
+    "lost_s_mean": 3.1026017026310555
+   },
+   "open": {
+    "collisions": 7,
+    "conflicts": 84,
+    "false_alarms": 36,
+    "recall": 0.7619047619047619,
+    "throughput": 0.6709235343477697,
+    "lost_s_mean": 3.909109665250969
+   }
+  },
+  "people see each other | map: r +0.3 m, debounce 1": {
+   "blind": {
+    "collisions": 17,
+    "conflicts": 80,
+    "false_alarms": 53,
+    "recall": 1.0,
+    "throughput": 0.6907411043071601,
+    "lost_s_mean": 3.7949925652566128
+   },
+   "open": {
+    "collisions": 7,
+    "conflicts": 84,
+    "false_alarms": 36,
+    "recall": 0.7619047619047619,
+    "throughput": 0.6709235343477697,
+    "lost_s_mean": 3.909109665250969
+   }
+  },
+  "people see each other | map: r +0.5 m, debounce 1": {
+   "blind": {
+    "collisions": 11,
+    "conflicts": 80,
+    "false_alarms": 57,
+    "recall": 1.0,
+    "throughput": 0.6791699735195159,
+    "lost_s_mean": 3.921844490653419
+   },
+   "open": {
+    "collisions": 7,
+    "conflicts": 84,
+    "false_alarms": 36,
+    "recall": 0.7619047619047619,
+    "throughput": 0.6709235343477697,
+    "lost_s_mean": 3.909109665250969
+   }
+  },
+  "people see each other | map: r +0.8 m, debounce 1": {
+   "blind": {
+    "collisions": 9,
+    "conflicts": 80,
+    "false_alarms": 60,
+    "recall": 1.0,
+    "throughput": 0.6482095835300852,
+    "lost_s_mean": 4.27842089882497
+   },
+   "open": {
+    "collisions": 7,
+    "conflicts": 84,
+    "false_alarms": 36,
+    "recall": 0.7619047619047619,
+    "throughput": 0.6709235343477697,
+    "lost_s_mean": 3.909109665250969
+   }
+  },
+  "no human yielding | no map": {
+   "blind": {
+    "collisions": 5,
+    "conflicts": 80,
+    "false_alarms": 27,
+    "recall": 1.0,
+    "throughput": 0.8212882551140739,
+    "lost_s_mean": 2.139498461889423
+   },
+   "open": {
+    "collisions": 2,
+    "conflicts": 84,
+    "false_alarms": 26,
+    "recall": 1.0,
+    "throughput": 0.8562428116270521,
+    "lost_s_mean": 1.7404934668585876
+   }
+  },
+  "no human yielding | map: time +1 s": {
+   "blind": {
+    "collisions": 12,
+    "conflicts": 80,
+    "false_alarms": 38,
+    "recall": 1.0,
+    "throughput": 0.8747909573089002,
+    "lost_s_mean": 1.5404939731811564
+   },
+   "open": {
+    "collisions": 2,
+    "conflicts": 84,
+    "false_alarms": 26,
+    "recall": 1.0,
+    "throughput": 0.8562428116270521,
+    "lost_s_mean": 1.7404934668585876
+   }
+  },
+  "no human yielding | map: r +0.3 m, debounce 1": {
+   "blind": {
+    "collisions": 4,
+    "conflicts": 80,
+    "false_alarms": 45,
+    "recall": 1.0,
+    "throughput": 0.7893715919401857,
+    "lost_s_mean": 2.566381633984114
+   },
+   "open": {
+    "collisions": 2,
+    "conflicts": 84,
+    "false_alarms": 26,
+    "recall": 1.0,
+    "throughput": 0.8562428116270521,
+    "lost_s_mean": 1.7404934668585876
+   }
+  },
+  "no human yielding | map: r +0.5 m, debounce 1": {
+   "blind": {
+    "collisions": 4,
+    "conflicts": 80,
+    "false_alarms": 49,
+    "recall": 1.0,
+    "throughput": 0.7672080498937685,
+    "lost_s_mean": 2.8360783941826564
+   },
+   "open": {
+    "collisions": 2,
+    "conflicts": 84,
+    "false_alarms": 26,
+    "recall": 1.0,
+    "throughput": 0.8562428116270521,
+    "lost_s_mean": 1.7404934668585876
+   }
+  },
+  "no human yielding | map: r +0.8 m, debounce 1": {
+   "blind": {
+    "collisions": 2,
+    "conflicts": 80,
+    "false_alarms": 53,
+    "recall": 1.0,
+    "throughput": 0.7186276184027015,
+    "lost_s_mean": 3.3851137822956083
+   },
+   "open": {
+    "collisions": 2,
+    "conflicts": 84,
+    "false_alarms": 26,
+    "recall": 1.0,
+    "throughput": 0.8562428116270521,
+    "lost_s_mean": 1.7404934668585876
+   }
+  }
+ }
+}

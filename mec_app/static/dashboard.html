@@ -86,7 +86,7 @@ const $ = id => document.getElementById(id);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const LV = {SAFE:"--safe",CAUTION:"--caution",WARNING:"--warning",DANGER:"--danger"};
 const fmt = (v, d=1, u="") => v === null || v === undefined ? "–" : (+v).toFixed(d) + u;
-let S = null, view = {cx:0, cy:0, scale:20};
+let S = null, HEAT = null, view = {cx:0, cy:0, scale:20};
 
 function fitView(){
   if(!S) return;
@@ -117,6 +117,22 @@ function draw(){
   g.fillStyle = css("--muted"); g.font = "11px " + css("--f-num");
   g.fillText("5 m grid", 10, H-10);
   if(!S) return;
+  // near-miss heat map (1 m cells, /nearmiss)
+  if(HEAT && HEAT.cells && HEAT.cells.length){
+    const mx = Math.max(...HEAT.cells.map(c=>c[2]));
+    HEAT.cells.forEach(([cx,cy,n]) => { g.fillStyle = css("--danger"); g.globalAlpha = 0.12 + 0.5*n/mx;
+      g.fillRect(X(cx), Y(cy+HEAT.cell_m), HEAT.cell_m*view.scale, HEAT.cell_m*view.scale); });
+    g.globalAlpha = 1;
+  }
+  // racks / walls from the site map
+  (S.obstacles||[]).forEach(([x0,y0,x1,y1]) => { g.fillStyle = css("--grid-major"); g.globalAlpha = .6;
+    g.fillRect(X(x0), Y(y1), (x1-x0)*view.scale, (y1-y0)*view.scale); g.globalAlpha = 1; });
+  // pairs that cannot see each other
+  S.pairs.forEach(p => { if(!p.occluded) return; const a = S.tracks[p.worker], b = S.tracks[p.forklift]; if(!a||!b) return;
+    g.strokeStyle = css("--muted"); g.setLineDash([2,4]); g.lineWidth = 1; g.beginPath();
+    g.moveTo(X(a.pos[0]),Y(a.pos[1])); g.lineTo(X(b.pos[0]),Y(b.pos[1])); g.stroke(); g.setLineDash([]);
+    g.fillStyle = css("--muted"); g.font = "11px " + css("--f-num");
+    g.fillText("no line of sight", (X(a.pos[0])+X(b.pos[0]))/2+6, (Y(a.pos[1])+Y(b.pos[1]))/2); });
   const levelOf = {};
   S.pairs.forEach(p => { levelOf[p.forklift] = Math.max(levelOf[p.forklift]||0, p.level); levelOf[p.worker] = Math.max(levelOf[p.worker]||0, p.level); });
   // predicted paths + closest approach
@@ -216,8 +232,12 @@ async function poll(){
   }
   setTimeout(poll, 200);
 }
+async function pollHeat(){
+  try{ const r = await fetch("/nearmiss", {cache:"no-store"}); if(r.ok) HEAT = await r.json(); }catch(e){}
+  setTimeout(pollHeat, 5000);
+}
 function frame(){ fitView(); draw(); requestAnimationFrame(frame); }
-poll(); frame();
+poll(); pollHeat(); frame();
 </script>
 </body>
 </html>
