@@ -9,6 +9,10 @@ Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커�
   for devices in radio shadows.  Worker dead zone 66 -> 16, forklift dead zone 52 -> 19 collisions of 180 at
   76 % throughput.  firmware/common/d2d.h + both sketches; Python/C++ cross-tested; results/d2d_sensitivity.json.
 
+- Server hardening: late samples no longer reset tracks (jitter 50 ms: 178 resets -> 0), outbox TTL (no stale
+  heartbeats), track/pair GC, /notify always 2000 + threadpool, clock-skew guard, subscription watchdog,
+  /health degraded flag, /metrics (Prometheus).  tests/test_server_hardening.py.
+
 ## Done in v0.8
 - Graceful degradation on network loss: MEC prediction -> local UWB (direct forklift<->tag ranging,
   distance + range-rate TTC, tag vibrates too) after 2 s of MEC silence -> stop under an active limit.

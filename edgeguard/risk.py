@@ -197,7 +197,8 @@ class RiskEngine:
         tr = self.tracks.get(obj_id)
         if tr is None:
             tr = self.tracks[obj_id] = track_factory(obj_id, kind)
-        tr.update(t, **meas)
+        if tr.update(t, **meas) is False:
+            return False                     # late (out-of-order) sample, ignored by the track
         return tr
 
     def evaluate(self, method=None, stale_s=2.0, only=None, gate_m=None):

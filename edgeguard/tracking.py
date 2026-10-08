@@ -13,6 +13,9 @@ from collections import deque
 import numpy as np
 
 
+
+REORDER_S = 1.0   # a sample up to this much older than the newest is a late arrival, not a restart
+
 class Track:
     def __init__(self, obj_id: str, kind: str, pos_sigma=0.15, accel_sigma=None,
                  vel_sigma=0.15):
@@ -29,6 +32,7 @@ class Track:
         self.r_vel = vel_sigma ** 2
         self.q = accel_sigma ** 2
         self.src_ts = None                    # device timestamp of last sample (ms)
+        self.dropped_late = 0                 # out-of-order samples ignored
         self.history = deque(maxlen=40)       # raw (t, x, y) samples; learned.resample() uses the last 1.9 s
 
     def _predict(self, dt):
@@ -43,11 +47,14 @@ class Track:
         """t in seconds. heading in radians (0 = +x axis, CCW positive).
         pos_sigma overrides the position noise for this sample (e.g. a coarse
         network-based fix from the MEC Location API)."""
+        if self.t is not None and self.t - REORDER_S <= t <= self.t:
+            self.dropped_late += 1            # arrived out of order (network jitter): the newer
+            return False                      # sample already moved the track, ignore this one
         self.source = source
         self.src_ts = src_ts
         self.last_seen = time.monotonic()
         if self.t is not None and (t < self.t or t - self.t > 2.0):
-            self.x = None                     # device restarted or long gap: re-initialise
+            self.x = None                     # device restarted (clock went back) or long gap
             self.history.clear()
         if source == "uwb":
             self.uwb_seen = self.last_seen
@@ -64,7 +71,7 @@ class Track:
             if vel is not None:
                 self.P[2, 2] = self.P[3, 3] = self.r_vel
             self.t = t
-            return
+            return True
         dt = max(1e-3, t - self.t)
         self.t = t
         self._predict(dt)
@@ -82,6 +89,7 @@ class Track:
         K = self.P @ H.T @ np.linalg.inv(S)
         self.x = self.x + K @ y_res
         self.P = (np.eye(4) - K @ H) @ self.P
+        return True
 
     @property
     def pos(self):

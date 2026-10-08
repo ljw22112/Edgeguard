@@ -21,6 +21,7 @@ import time
 from collections import deque
 
 from fastapi import FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,17 +41,26 @@ MEC = CFG["mec"]
 engine = RiskEngine(config.risk_config(CFG), method=MEC.get("method", "guidance_ctrv"))
 cse = config.client(CFG)
 # priority outbox: alerts (0) are written before control (1) and risk summaries (2)
-outbox: "queue.PriorityQueue[tuple[int, int, str, dict]]" = queue.PriorityQueue(maxsize=1000)
+outbox: "queue.PriorityQueue[tuple[int, int, float, str, str, dict]]" = queue.PriorityQueue(maxsize=1000)
 _seq = itertools.count()
 PRIO = {"alert": 0, "control": 1, "risk": 2}
+# Stale messages are worse than none while the CSE is slow or recovering: a heartbeat delivered
+# late tells a forklift "MEC alive" when it is not, and an old alert is superseded by the 1 s
+# refresh anyway.  Messages older than this when their turn comes are dropped.
+TTL_S = {"alert": MEC.get("alert_ttl_s", 1.5), "control": MEC.get("control_ttl_s", 1.0),
+         "risk": MEC.get("risk_ttl_s", 1.0)}
 
 
 def post(kind, con):
     try:
-        outbox.put_nowait((PRIO[kind], next(_seq), PATHS[kind], con))
+        outbox.put_nowait((PRIO[kind], next(_seq), time.monotonic(), kind, PATHS[kind], con))
     except queue.Full:
+        state["publisher"]["dropped_full"] += 1
         log.warning("outbox full, dropping %s", kind)
 state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0,
+         "publisher": {"ok": 0, "failed": 0, "dropped_stale": 0, "dropped_full": 0, "last_ok": None,
+                       "last_error": None},
+         "input": {"bad": 0, "clock_skew": 0, "late": 0}, "gc": {"tracks_removed": 0},
          "network": {"cell_load": None, "congested": False}, "location_fixes": 0,
          "alert_log": deque(maxlen=60), "ingest_ms": deque(maxlen=200)}
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -58,15 +68,23 @@ lock = threading.Lock()
 
 
 def publisher():
-    """Write contentInstances to the CSE off the request path."""
+    """Write contentInstances to the CSE off the request path (stale entries dropped)."""
+    pub = state["publisher"]
     while True:
-        _, _, path, con = outbox.get()
+        _, _, t_enq, kind, path, con = outbox.get()
+        if time.monotonic() - t_enq > TTL_S[kind]:
+            pub["dropped_stale"] += 1
+            continue
         delay = MEC.get("emulated_extra_delay_ms", 0)
         if delay:
             time.sleep(delay / 1000)
         try:
             cse.create_cin(path, con)
+            pub["ok"] += 1
+            pub["last_ok"] = time.monotonic()
         except Exception as e:                       # keep the loop alive
+            pub["failed"] += 1
+            pub["last_error"] = f"{type(e).__name__}: {str(e)[:120]}"
             log.warning("publish to %s failed: %s", path, e)
 
 
@@ -232,6 +250,23 @@ def mec_services_loop():
         time.sleep(MS.get("poll_s", 0.25))
 
 
+MAX_SKEW_MS = MEC.get("max_clock_skew_ms", 5000)
+
+
+def _num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def valid_sample(p: dict) -> bool:
+    if not isinstance(p.get("id"), str) or not p["id"] or not _num(p.get("x")) or not _num(p.get("y")):
+        return False
+    if p.get("kind") == "forklift":
+        for k in ("speed", "heading", "yaw_rate"):
+            if p.get(k) is not None and not _num(p[k]):
+                return False
+    return True
+
+
 def handle_sample(p: dict):
     rx = now_ms()
     kind = p.get("kind")
@@ -239,7 +274,16 @@ def handle_sample(p: dict):
         return handle_camera(p, rx)
     if kind not in ("worker", "forklift"):
         return
-    t = p.get("ts", rx) / 1000.0
+    if not valid_sample(p):
+        state["input"]["bad"] += 1
+        return
+    ts = p.get("ts")
+    if not _num(ts) or abs(rx - ts) > MAX_SKEW_MS:     # device clock not synced (NTP lost?): use arrival
+        if _num(ts):
+            state["input"]["clock_skew"] += 1
+        ts = rx
+        p = {**p, "ts": rx}
+    t = ts / 1000.0
     meas = {"x": p["x"], "y": p["y"], "src_ts": p.get("ts"),
             "pos_sigma": p.get("pos_sigma"), "source": p.get("source", "uwb")}
     if kind == "forklift":
@@ -248,7 +292,9 @@ def handle_sample(p: dict):
         state["rx"] += 1
         if p.get("ts"):
             state["ingest_ms"].append(rx - p["ts"])
-        engine.update(Track, p["id"], kind, t, **meas)
+        if engine.update(Track, p["id"], kind, t, **meas) is False:
+            state["input"]["late"] += 1                # out-of-order sample, the track kept the newer one
+            return
         evaluate_and_alert(p.get("ts"), rx, only=p["id"])
         if rate_ctl is not None:
             control_rates()
@@ -372,7 +418,58 @@ def evaluate_and_alert(src_ts, rx, only=None):
             to_cloud("risk", summary)
 
 
+GC_S = MEC.get("track_gc_s", 30.0)
+
+
+def gc_once(now=None):
+    """Forget tracks silent for GC_S and their pairs (camera `untagged_N` ids, devices that left).
+    Without this the track and pair tables grow for ever on a long-running host."""
+    now = time.monotonic() if now is None else now
+    with lock:
+        gone = [k for k, t in engine.tracks.items() if now - getattr(t, "last_seen", now) > GC_S]
+        for k in gone:
+            del engine.tracks[k]
+        for key in [k for k in state["pairs"] if k[0] in gone or k[1] in gone]:
+            del state["pairs"][key]
+        if rate_ctl is not None:
+            for k in gone:
+                for d in (rate_ctl.rate, rate_ctl.far_since):
+                    if isinstance(d, dict):
+                        d.pop(k, None)
+        state["gc"]["tracks_removed"] += len(gone)
+    return gone
+
+
+def housekeeping():
+    """Every 10 s: GC; every 60 s: make sure the CSE still notifies us (a CSE restored without its
+    database, or a subscription removed after failed notifications, would silently stop the feed)."""
+    cl = config.client(CFG)
+    last_sub = 0.0
+    state["subs"] = {"checks": 0, "repaired_errors": 0}
+    while True:
+        time.sleep(10.0)
+        try:
+            gc_once()
+        except Exception as e:
+            log.warning("gc failed: %s", e)
+        if not MEC.get("subscription_watchdog", True) or time.monotonic() - last_sub < MEC.get("subscription_check_s", 60):
+            continue
+        last_sub = time.monotonic()
+        state["subs"]["checks"] += 1
+        for path in list(PATHS["workers"].values()) + list(PATHS["forklifts"].values()) + list(PATHS["cameras"].values()):
+            try:
+                cl.create_subscription(path, "sub_mec", [MEC["notify_url"]])   # create or update nu
+            except Exception as e:
+                state["subs"]["repaired_errors"] += 1
+                log.debug("subscription check %s: %s", path, e)
+
+
 app = FastAPI(title="EdgeGuard MEC App")
+
+
+@app.on_event("startup")
+def _start_housekeeping():
+    threading.Thread(target=housekeeping, daemon=True).start()
 
 
 @app.on_event("startup")
@@ -382,9 +479,7 @@ def _start_mec_services():
         threading.Thread(target=ipe_watch if src == "cse" else mec_services_loop, daemon=True).start()
 
 
-@app.post("/notify")
-async def notify(req: Request):
-    body = await req.json()
+def process_notification(body):
     kind, payload = parse_notification(body)
     if kind == "cin" and isinstance(payload, dict):
         if is_mec_location(payload):
@@ -393,13 +488,35 @@ async def notify(req: Request):
             handle_mec_cell(payload)
         else:
             handle_sample(payload)
+
+
+@app.post("/notify")
+async def notify(req: Request):
+    """Always answers 2000: a CSE that gets errors back may drop the subscription.  The risk
+    engine runs in the thread pool so a slow evaluation never blocks the event loop."""
+    try:
+        body = await req.json()
+        await run_in_threadpool(process_notification, body)
+    except Exception as e:                            # malformed JSON or a bad sample
+        state["input"]["bad"] += 1
+        log.warning("bad notification: %s", e)
     return Response(status_code=200, headers={"X-M2M-RSC": "2000"})
+
+
+def publisher_status():
+    pub = state["publisher"]
+    age = None if pub["last_ok"] is None else round(time.monotonic() - pub["last_ok"], 1)
+    return {**{k: v for k, v in pub.items() if k != "last_ok"}, "last_ok_age_s": age, "backlog": outbox.qsize()}
 
 
 @app.get("/health")
 def health():
     ing = sorted(state["ingest_ms"])
-    return {"ok": True, "method": engine.method, "samples": state["rx"],
+    pub = publisher_status()
+    # degraded: the CSE has not accepted a write for 5 s although we have been trying
+    degraded = pub["failed"] > 0 and (pub["last_ok_age_s"] is None or pub["last_ok_age_s"] > 5)
+    return {"ok": True, "degraded": degraded, "method": engine.method, "samples": state["rx"],
+            "publisher": pub, "input": state["input"], "tracks": len(engine.tracks), "gc": state["gc"],
             "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
             "network": state["network"], "location_fixes": state["location_fixes"], "mec": state["mec"],
             "camera": state["camera"], "rates": state["rates"],
@@ -448,6 +565,25 @@ def snapshot():
                  "network": state["network"], "location_fixes": state["location_fixes"]}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]),
                 "stats": stats, "server_ms": now_ms()}
+
+
+@app.get("/metrics")
+def metrics():
+    """Prometheus text format (scrape with Prometheus / Grafana)."""
+    pub = publisher_status()
+    ing = sorted(state["ingest_ms"])
+    rows = [("edgeguard_samples_total", state["rx"]), ("edgeguard_alerts_total", state["alerts_sent"]),
+            ("edgeguard_tracks", len(engine.tracks)), ("edgeguard_pairs", len(state["pairs"])),
+            ("edgeguard_publish_ok_total", pub["ok"]), ("edgeguard_publish_failed_total", pub["failed"]),
+            ("edgeguard_publish_dropped_stale_total", pub["dropped_stale"]),
+            ("edgeguard_publish_dropped_full_total", pub["dropped_full"]), ("edgeguard_outbox_backlog", pub["backlog"]),
+            ("edgeguard_input_bad_total", state["input"]["bad"]), ("edgeguard_input_late_total", state["input"]["late"]),
+            ("edgeguard_input_clock_skew_total", state["input"]["clock_skew"]),
+            ("edgeguard_mec_location_fixes_total", state["location_fixes"]),
+            ("edgeguard_ingest_ms_median", ing[len(ing) // 2] if ing else 0),
+            ("edgeguard_network_congested", int(state["network"]["congested"]))]
+    body = "".join(f"{k} {v}\n" for k, v in rows)
+    return Response(body, media_type="text/plain; version=0.0.4")
 
 
 @app.get("/")
