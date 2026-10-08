@@ -8,7 +8,15 @@ Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커�
   distance + range-rate TTC, tag vibrates too) after 2 s of MEC silence -> stop under an active limit.
   Network down for a whole encounter: 180 -> 1 collisions at 54 % throughput (halt-all: 2 at 18 %).
   results/failsafe_eval.json / .png; Python + C++ (LocalGuard) cross-tested.
-- Firmware still needs the peer ranging exchange itself (hardware).
+- Peer ranging without a new protocol: forklift DW1000 = mobile anchor 0x20NN (firmware done, needs hardware check);
+  ranging sensitivity: results/peer_ranging_sensitivity.json.
+- LSTM fed by time-resampled 10 Hz history (irregular / 2 Hz / lossy reports): results/lstm_irregular.json.
+
+## Where work runs (from 2026-10-08)
+jw works on the laptop (Galaxy Book2 Pro, 8 GB RAM). Heavy work (simulations, training, builds, tests,
+evaluations) runs in the cloud workspace; the laptop only runs what needs jw's network: the Docker stack
+for live Sandbox checks / demos (limit WSL to ~4 GB via %UserProfile%\.wslconfig), never the AdvantEDGE VM
+(that stays on the 32 GB desktop; the laptop can reach it on the same LAN at http://<desktop-ip>:8088).
 
 ## Done in v0.7
 - LSTM v2 (odd behaviour included) adopted; CTRV stays the closed-loop default (15 vs 23 collisions)

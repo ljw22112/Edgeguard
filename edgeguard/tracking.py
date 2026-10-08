@@ -29,7 +29,7 @@ class Track:
         self.r_vel = vel_sigma ** 2
         self.q = accel_sigma ** 2
         self.src_ts = None                    # device timestamp of last sample (ms)
-        self.history = deque(maxlen=20)       # raw (t, x, y) samples for learned predictors
+        self.history = deque(maxlen=40)       # raw (t, x, y) samples; learned.resample() uses the last 1.9 s
 
     def _predict(self, dt):
         F = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]], float)
@@ -51,7 +51,7 @@ class Track:
             self.history.clear()
         if source == "uwb":
             self.uwb_seen = self.last_seen
-            self.history.append((t, x, y))      # learned predictor expects 10 Hz UWB samples
+            self.history.append((t, x, y))      # resampled to 10 Hz by the learned predictor
         vel = None
         if speed is not None and heading is not None:
             vel = (speed * math.cos(heading), speed * math.sin(heading))

@@ -1,6 +1,6 @@
 """Learned worker-trajectory predictor (LSTM).
 
-Input  : the last HIST raw position samples of a worker (10 Hz), expressed
+Input  : the worker's positions over the last 1.9 s resampled to 10 Hz (resample()), expressed
          relative to the newest sample, plus the forklift's relative position
          and velocity (repeated on every step).
 Output : FUT future worker positions (0.1 s .. 3.0 s) relative to the newest sample.
@@ -14,6 +14,7 @@ import math
 import os
 
 HIST, FUT, DT = 20, 30, 0.1
+MAX_GAP_S = 0.8          # interpolate over gaps up to this (swept 0.35 / 0.55 / 0.8 s); longer -> CV fallback
 POS_SCALE, VEL_SCALE = 5.0, 3.0
 DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                "models", "worker_lstm.pt")
@@ -66,12 +67,41 @@ def available(path=DEFAULT_WEIGHTS):
     return os.path.exists(path)
 
 
+def resample(history):
+    """Raw (t, x, y) samples -> HIST positions on the 10 Hz grid ending at the newest sample.
+
+    The model was trained on 10 Hz samples.  Real reports are not: uplink loss, jitter and the
+    adaptive reporting rate (2 Hz far from forklifts) would otherwise be read as 0.1 s apart and
+    give a 5x wrong speed.  Returns None when the samples do not cover the last 1.9 s or have a
+    gap longer than MAX_GAP_S inside it (the caller falls back to constant velocity)."""
+    h = list(history)
+    if len(h) < 2:
+        return None
+    t_end = h[-1][0]
+    t0 = t_end - (HIST - 1) * DT
+    if h[0][0] > t0 + 1e-6:
+        return None
+    k0 = max(i for i in range(len(h)) if h[i][0] <= t0 + 1e-6)
+    seg = h[k0:]
+    if any(b[0] - a[0] > MAX_GAP_S for a, b in zip(seg, seg[1:])):
+        return None
+    out, j = [], 0
+    for k in range(HIST):
+        tk = t0 + k * DT
+        while j + 1 < len(seg) and seg[j + 1][0] < tk - 1e-9:
+            j += 1
+        (ta, xa, ya), (tb, xb, yb) = seg[j], seg[min(j + 1, len(seg) - 1)]
+        w = 0.0 if tb <= ta else min(1.0, max(0.0, (tk - ta) / (tb - ta)))
+        out.append((xa + w * (xb - xa), ya + w * (yb - ya)))
+    return out
+
+
 class LSTMPredictor:
     """Predicts with the LSTM up to 3 s, then extrapolates the last predicted velocity."""
 
     def __init__(self, worker_track, forklift_track):
         import torch
-        hist = [(x, y) for _, x, y in worker_track.history]
+        hist = resample(worker_track.history)
         lx, ly = hist[-1]
         fx, fy = forklift_track.pos
         feat = features(hist, (fx - lx, fy - ly), forklift_track.vel)
@@ -98,7 +128,7 @@ class LSTMPredictor:
 
 
 def usable(worker_track):
-    return len(getattr(worker_track, "history", ())) >= HIST
+    return resample(getattr(worker_track, "history", ())) is not None
 
 
 def predictor_or_none(worker_track, forklift_track):
@@ -107,5 +137,5 @@ def predictor_or_none(worker_track, forklift_track):
     return LSTMPredictor(worker_track, forklift_track)
 
 
-__all__ = ["HIST", "FUT", "build_model", "features", "load", "available", "LSTMPredictor",
+__all__ = ["HIST", "FUT", "build_model", "features", "load", "available", "LSTMPredictor", "resample",
            "predictor_or_none", "math"]

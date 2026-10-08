@@ -1,0 +1,98 @@
+{
+ "regular 10 Hz": {
+  "index": {
+   "ade_m": 0.257,
+   "fde_m": 0.398
+  },
+  "time": {
+   "ade_m": 0.257,
+   "fde_m": 0.398
+  },
+  "cv": {
+   "ade_m": 0.413,
+   "fde_m": 0.684
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 0
+ },
+ "jitter +-40 ms": {
+  "index": {
+   "ade_m": 0.26,
+   "fde_m": 0.417
+  },
+  "time": {
+   "ade_m": 0.261,
+   "fde_m": 0.418
+  },
+  "cv": {
+   "ade_m": 0.42,
+   "fde_m": 0.709
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 0
+ },
+ "20 % uplink loss": {
+  "index": {
+   "ade_m": 0.378,
+   "fde_m": 0.655
+  },
+  "time": {
+   "ade_m": 0.268,
+   "fde_m": 0.416
+  },
+  "cv": {
+   "ade_m": 0.452,
+   "fde_m": 0.754
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 0
+ },
+ "40 % loss + jitter": {
+  "index": {
+   "ade_m": 0.724,
+   "fde_m": 1.335
+  },
+  "time": {
+   "ade_m": 0.299,
+   "fde_m": 0.455
+  },
+  "cv": {
+   "ade_m": 0.516,
+   "fde_m": 0.86
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 42
+ },
+ "5 Hz": {
+  "index": {
+   "ade_m": 1.047,
+   "fde_m": 1.961
+  },
+  "time": {
+   "ade_m": 0.289,
+   "fde_m": 0.449
+  },
+  "cv": {
+   "ade_m": 0.49,
+   "fde_m": 0.821
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 0
+ },
+ "adaptive 2 Hz -> 10 Hz": {
+  "index": {
+   "ade_m": 0.689,
+   "fde_m": 1.165
+  },
+  "time": {
+   "ade_m": 0.28,
+   "fde_m": 0.436
+  },
+  "cv": {
+   "ade_m": 0.421,
+   "fde_m": 0.693
+  },
+  "samples": 3080,
+  "time_fallback_to_cv": 0
+ }
+}
