@@ -16,6 +16,10 @@ for app in meep-auth-svc meep-virt-engine meep-tc-sidecar; do
   sed -i 's#^FROM debian:11[^ ]*#FROM debian:12-slim#' "go-apps/$app/Dockerfile"
 done
 sed -i 's#repository: bitnami/#repository: bitnamilegacy/#' charts/redis/values*.yaml charts/postgis/values*.yaml
+# bitnamilegacy kept the plain version tags (6.0.9, 1.15.0, 0.8.0) but not the old -debian-10-rNN ones;
+# minideb is still published under bitnami/ (buster gone -> bookworm)
+sed -i -E 's#tag: ([0-9.]+)-debian-10-r[0-9]+#tag: \1#' charts/redis/values*.yaml charts/postgis/values*.yaml
+sed -i 's#repository: bitnamilegacy/minideb#repository: bitnami/minideb#; s#tag: buster#tag: bookworm#' charts/redis/values*.yaml charts/postgis/values*.yaml
 sed -i 's#repository: quay.io/coreos/kube-state-metrics#repository: registry.k8s.io/kube-state-metrics/kube-state-metrics#; s#tag: v1.9.7#tag: v1.9.8#' \
   charts/kube-state-metrics/values.yaml
 grep -h "^FROM" go-apps/meep-auth-svc/Dockerfile go-apps/meep-virt-engine/Dockerfile go-apps/meep-tc-sidecar/Dockerfile
