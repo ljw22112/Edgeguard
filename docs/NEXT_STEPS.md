@@ -1,9 +1,9 @@
 # Status (updated 2026-10-08, v1.0)
 
 The final presentation is deliberately not being prepared yet; development comes first.
-Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커톤 MEC Sandbox 정렬").
+README is the short overview; details live in docs/ (risk-and-evaluation, resilience, site-features, deployment, mec-sandbox, adoption).
 
-## Done in v1.0 (README "v1.0: 현장 운영 기능")
+## Done in v1.0 (docs/site-features.md, docs/resilience.md)
 - Blind corners: config sitemap.obstacles, line-of-sight per pair (edgeguard/sitemap.py); occluded pairs get
   r_safe +0.5 m and debounce 1.  Blind-corner collisions 17 -> 11 of 80 (false alarms 39 -> 57 there only);
   a +1 s time margin was worse (22) and rejected.  results/occlusion_eval.json.
@@ -81,7 +81,7 @@ sandbox-setup http://host.docker.internal:8088/<sandbox>).
 minideb bookworm, registry.k8s.io kube-state-metrics). Next: import warehouse scenario, connect EdgeGuard.
 
 ## Remaining
-- Docker deployment (w4a): done - images + compose stack, CI builds/tests/publishes to GHCR (README "MEC 호스트 배포").
+- Docker deployment (w4a): done - images + compose stack, CI builds/tests/publishes to GHCR (docs/deployment.md).
 - Final report / demo video / slides (W7) - not started on purpose
 
 ## Environment recovery (new session)
@@ -94,7 +94,7 @@ python -m pytest -q
 ```
 
 ## MEC Sandbox (organizer answers, 2026-10-06; TR-0086 draft, rollout expected the week of 10/6)
-**Applied 2026-10-06** (location_source: cse, tools/mec_ipe.py, scenarios/edgeguard-warehouse.yaml, tools/sandbox_e2e.py; see README). Live Sandbox integration is out of scope (2026-10-07); kept for reference.
+**Applied 2026-10-06** (location_source: cse, tools/mec_ipe.py, scenarios/edgeguard-warehouse.yaml, tools/sandbox_e2e.py; see docs/mec-sandbox.md). Live Sandbox integration is out of scope (2026-10-07); kept for reference.
 
 - When connected to a CSE, the CSE registers AEs with the MEC host (no separate MEC 011 registration).
 - UE positions are written into CSE resources by MEC-IPE → **the preferred path is reading location from oneM2M resources**.

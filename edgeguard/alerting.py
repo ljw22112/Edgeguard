@@ -18,7 +18,7 @@ class AlertState:
     The debounce is a time window (debounce x 0.1 s at the nominal 10 Hz).  When samples
     are sparser than that window - e.g. ~1 Hz network positions from the MEC Location API -
     one evaluation already spans it, so it counts in full instead of costing an extra
-    sample period of warning time (measured on the MEC Sandbox path: 62 % -> see README)."""
+    sample period of warning time (measured on the MEC Sandbox path: 62 % -> see docs/mec-sandbox.md)."""
 
     def __init__(self, debounce=2, refresh_s=1.0, hold_s=2.0):
         self.level, self.streak, self.last_sent, self.below_since = 0, 0, 0.0, None
