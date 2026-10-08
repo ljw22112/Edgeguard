@@ -27,3 +27,16 @@ def test_classify_by_speed():
 def test_latlon_scalar_and_missing():
     assert sp.latlon({"latitude": 1.5, "longitude": 2.5}) == (1.5, 2.5)
     assert sp.latlon({"locationInfo": {}}) is None
+
+
+def test_peak_speed_over_series():
+    lat, lon = 43.7335, 7.4135
+    d = 1e-5
+    # 'v' pauses in the first interval and drives in the second; 'w' walks steadily
+    snaps = [{"v": ue("v", lat, lon), "w": ue("w", lat, lon)},
+             {"v": ue("v", lat, lon), "w": ue("w", lat + d, lon)},
+             {"v": ue("v", lat + 5 * d, lon), "w": ue("w", lat + 2 * d, lon)}]
+    kinds, _ = sp.classify_series(snaps, 2.0, 1.7)
+    assert kinds["v"][1] == "forklift" and kinds["w"][1] == "worker"
+    kinds, _ = sp.classify_series(snaps, 2.0, 1.7, forced={"w"})
+    assert kinds["w"][1] == "forklift"
