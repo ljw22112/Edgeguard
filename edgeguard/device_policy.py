@@ -21,6 +21,20 @@ silence is never worse than v0.6 and better in every outage (of 180 conflicts: r
 30, restart + 20 % loss 42 vs 43, 8 s outage 78 vs 93; normal 19 = 19).  v0.6 ("legacy")
 lifted the limit after 5 s even when the MEC app was dead.
 
+Local UWB fallback (modes "failsafe_local_zone" / "failsafe_local_ttc", v0.8):
+  holding the plan only protects pairs the MEC app had already flagged; a worker who appears
+  while the MEC app is silent is unprotected.  The forklift module therefore ranges the worker
+  tags directly (the same DW1000 two-way ranging it does with the anchors, peer to peer) and,
+  only while the MEC app is silent, applies a local rule on top of the held plan:
+    zone : distance < LOCAL_STOP_M -> stop, < LOCAL_SLOW_M -> LOCAL_SLOW_MPS
+    ttc  : the same zones, plus range-rate: closing and distance / closing speed below
+           LOCAL_TTC_STOP_S -> stop, below LOCAL_TTC_SLOW_S -> LOCAL_SLOW_MPS
+  "halt_on_silence" (reference, not used): every forklift stops after 2 s of silence.
+  "failsafe_local_ttc_tag" also vibrates the worker's tag from the same ranging (two-way
+  ranging gives both ends the distance), so the worker stops too.
+  With the local guard the 2 s "stop under an active limit" still applies.  While the MEC app
+  is heard, the local rule is off (the MEC prediction has far fewer false alarms).
+
 Reporting rate: follow the commanded rate; without any command for RATE_FAILSAFE_S fall
 back to the full rate.
 
@@ -33,17 +47,63 @@ SILENCE_S = 1.3          # heartbeat (1 s) and alert refresh (1 s) both missing
 STOP_AFTER_S = 2.0       # swept 1.3-3.0 s (results/failsafe_stop_sweep.json): best overall
 CREEP_MPS = 0.5          # crawl speed (evaluated variant "failsafe_creep", not used)
 RATE_FAILSAFE_S = 6.0
+LOCAL_SLOW_M = 6.0       # local fallback zones (direct UWB ranging forklift <-> worker tag)
+LOCAL_STOP_M = 3.0
+LOCAL_SLOW_MPS = 1.0
+LOCAL_TTC_SLOW_S = 4.0
+LOCAL_TTC_STOP_S = 2.0
+LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
+LOCAL_RANGE_STALE_S = 0.5   # no range for this long -> the tag is out of reach, rule idle
+LOCAL_RATE_WINDOW_S = 0.6   # range-rate from a least-squares fit over this window
 FULL_HZ = 10.0
 
 
 class ForkliftLimit:
-    """mode "failsafe" (default, above), "legacy" (v0.6: lift after 5 s even when the MEC app
+    """mode "failsafe_local_ttc_tag" (default, v0.8), "failsafe" (v0.7, above), "legacy" (v0.6: lift after 5 s even when the MEC app
     is silent) or the rejected variants "failsafe_creep" / "failsafe_stop"."""
-    MODE = "failsafe"
+    MODE = "failsafe_local_ttc_tag"     # v0.8; without direct ranges it behaves as "failsafe"
 
     def __init__(self, mode=None):
         self.mode = mode or ForkliftLimit.MODE
         self.limit, self.limit_t, self.hb_t = None, -1e9, -1e9
+        self.ranges = {}                               # tag -> [(t, d)] recent direct ranges
+
+    def on_range(self, t, tag, d):
+        """Direct UWB range to a worker tag (local fallback; ignored by the other modes)."""
+        h = self.ranges.setdefault(tag, [])
+        h.append((t, d))
+        while h and t - h[0][0] > LOCAL_RATE_WINDOW_S:
+            h.pop(0)
+
+    def local_limit(self, t):
+        """Speed cap from direct ranging, or None (no tag close / not a local mode)."""
+        if not self.mode.startswith("failsafe_local"):
+            return None
+        cap = None
+        for h in self.ranges.values():
+            if not h or t - h[-1][0] > LOCAL_RANGE_STALE_S:
+                continue
+            d = h[-1][1]
+            c = None
+            if d < LOCAL_STOP_M:
+                c = 0.0
+            elif d < LOCAL_SLOW_M:
+                c = LOCAL_SLOW_MPS
+            if "ttc" in self.mode and len(h) >= 3 and h[-1][0] - h[0][0] > 0.2:
+                n = len(h)
+                mt = sum(x for x, _ in h) / n
+                md = sum(y for _, y in h) / n
+                den = sum((x - mt) ** 2 for x, _ in h)
+                rate = sum((x - mt) * (y - md) for x, y in h) / den if den else 0.0
+                if rate < -0.2:                          # closing faster than 0.2 m/s
+                    ttc = d / -rate
+                    if ttc < LOCAL_TTC_STOP_S:
+                        c = 0.0
+                    elif ttc < LOCAL_TTC_SLOW_S:
+                        c = LOCAL_SLOW_MPS if c is None else min(c, LOCAL_SLOW_MPS)
+            if c is not None:
+                cap = c if cap is None else min(cap, c)
+        return cap
 
     def on_alert(self, t, event, limit):
         self.hb_t = t                                  # any MEC message proves it is alive
@@ -52,7 +112,24 @@ class ForkliftLimit:
     def on_heartbeat(self, t):
         self.hb_t = t
 
+    def mec_silent(self, t):
+        return t - self.hb_t > LOCAL_AFTER_S
+
+    def vibrate_local(self, t):
+        """Worker-tag side of the local fallback: vibrate when the rule says stop."""
+        return self.mode.startswith("failsafe_local") and self.mec_silent(t) and self.local_limit(t) == 0.0
+
     def effective(self, t):
+        if self.mode == "halt_on_silence" and t - self.hb_t > STOP_AFTER_S:
+            return 0.0                                 # reference only: every truck stops
+        held = self._held(t)
+        if self.mode.startswith("failsafe_local") and t - self.hb_t > LOCAL_AFTER_S:
+            loc = self.local_limit(t)
+            if loc is not None:
+                return loc if held is None else min(held, loc)
+        return held
+
+    def _held(self, t):
         if self.limit is None:
             return None
         if self.mode == "legacy":
@@ -62,7 +139,8 @@ class ForkliftLimit:
         if t - self.hb_t > SILENCE_S:                  # MEC silent
             if self.mode == "failsafe_creep":
                 return min(self.limit, CREEP_MPS)
-            if self.mode == "failsafe_stop" or (self.mode == "failsafe" and t - self.hb_t > STOP_AFTER_S):
+            if self.mode == "failsafe_stop" or (self.mode.startswith("failsafe") and self.mode != "failsafe_creep"
+                                                and t - self.hb_t > STOP_AFTER_S):
                 return 0.0
             return self.limit                          # hold the last plan (MEC restarting)
         if t - self.limit_t > ALERT_STALE_S:           # MEC alive, refreshes stopped: clear lost

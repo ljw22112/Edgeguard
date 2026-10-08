@@ -1,7 +1,14 @@
-# Status (updated 2026-10-07, v0.7)
+# Status (updated 2026-10-08, v0.8)
 
 The final presentation is deliberately not being prepared yet; development comes first.
 Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커톤 MEC Sandbox 정렬").
+
+## Done in v0.8
+- Graceful degradation on network loss: MEC prediction -> local UWB (direct forklift<->tag ranging,
+  distance + range-rate TTC, tag vibrates too) after 2 s of MEC silence -> stop under an active limit.
+  Network down for a whole encounter: 180 -> 1 collisions at 54 % throughput (halt-all: 2 at 18 %).
+  results/failsafe_eval.json / .png; Python + C++ (LocalGuard) cross-tested.
+- Firmware still needs the peer ranging exchange itself (hardware).
 
 ## Done in v0.7
 - LSTM v2 (odd behaviour included) adopted; CTRV stays the closed-loop default (15 vs 23 collisions)

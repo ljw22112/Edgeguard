@@ -6,6 +6,8 @@ legacy   : v0.6 - hold the last speed limit, lift it after 5 s without alerts
 failsafe : edgeguard/device_policy.py - 1 s heartbeat; MEC silent -> hold the plan,
            silent > 2 s -> stop; MEC alive but no refresh 5 s -> lift (lost "clear")
 failsafe_creep / failsafe_stop : rejected variants (crawl / stop as soon as silent)
+failsafe_local_zone / failsafe_local_ttc : v0.8 - failsafe + direct UWB ranging to the worker
+           tag while the MEC app is silent (distance zones / + range-rate time-to-collision)
 
 Conditions (same held-out encounters and network draws for both modes):
   normal         randomised network (latency, jitter, loss) as in policy validation
@@ -13,6 +15,7 @@ Conditions (same held-out encounters and network draws for both modes):
                  and restarts with empty state (measured restart: 1.4-2.2 s)
   restart_loss20 + 20 % downlink loss on top of the restart
   mec_dead_8s    MEC app down for 8 s (crash, host reboot)
+  network_down_30s  no MEC app for the whole encounter (network or MEC host lost)
 
 The silence actions crawl / stop and an early 2.2 s lift were evaluated too and rejected
 (more collisions; see the "rejected" entry in the results file).
@@ -36,7 +39,8 @@ from edgeguard.risk import RiskConfig                               # noqa: E402
 from sim.closed_loop import run_episode, score                      # noqa: E402
 from sim.train_policy import GENS, episodes_for                     # noqa: E402
 
-MODES = ("legacy", "failsafe", "failsafe_creep", "failsafe_stop")
+MODES = ("legacy", "failsafe", "failsafe_creep", "failsafe_stop", "failsafe_local_zone", "failsafe_local_ttc",
+         "failsafe_local_ttc_tag", "halt_on_silence")
 REJECTED = {"early_lift_2.2s": "normal 24 / restart 32 / restart+loss 52 collisions of 180 "
                                "(legacy 19 / 30 / 43) - evaluated before ALERT_STALE_S went back to 5 s"}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -56,6 +60,8 @@ def condition(net, seed, name):
     if name == "mec_dead_8s":
         t0 = random.Random(seed ^ 0x5EED).uniform(2.0, 7.0)
         net.mec_down = (t0, t0 + 8.0)
+    if name == "network_down_30s":                # whole encounter without the MEC app / network
+        net.mec_down = (0.6, 1e9)
     if name == "restart_loss20":
         net.down_loss = max(net.down_loss, 0.2)
     return net
@@ -73,12 +79,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--per-gen", type=int, default=30)
     ap.add_argument("--out", default="results/failsafe_eval.json")
+    ap.add_argument("--conditions", default="normal,mec_restart,restart_loss20,mec_dead_8s,network_down_30s")
+    ap.add_argument("--modes", default=",".join(MODES))
     a = ap.parse_args()
     eps = episodes_for(999_999, a.per_gen)
     out = {}
     with Pool(os.cpu_count() or 1) as pool:
-        for cond in ("normal", "mec_restart", "restart_loss20", "mec_dead_8s"):
-            for mode in MODES:
+        for cond in a.conditions.split(","):
+            for mode in a.modes.split(","):
                 n = os.cpu_count() or 1
                 res = sum(pool.map(job, [(mode, cond, eps[i::n]) for i in range(n)]), [])
                 s = score(res, collision_penalty=50)

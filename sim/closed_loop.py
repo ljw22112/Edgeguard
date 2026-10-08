@@ -29,6 +29,9 @@ class Net:
     down_loss: float = 0.0
     mec_down: tuple | None = None   # (t_start, t_end): MEC app dead, restarts with empty state
     heartbeat_s: float = 1.0        # <ae>/control heartbeat (edgeguard/device_policy.py)
+    uwb_peer_range_m: float = 30.0  # direct forklift <-> tag ranging (local fallback modes)
+    uwb_peer_sigma: float = 0.10
+    uwb_peer_drop: float = 0.10     # missed ranging rounds (NLOS, collisions)
 
 
 @dataclass
@@ -89,6 +92,12 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
         forklift.step(t, DT)
         (xw, yw), (xf, yf) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
         actual_min = min(actual_min, math.hypot(xw - xf, yw - yf))
+        # direct UWB ranging forklift <-> worker tag (used only by the local-fallback modes)
+        d_true = math.hypot(xw - xf, yw - yf)
+        if d_true <= net.uwb_peer_range_m and rng.random() >= net.uwb_peer_drop:
+            forklift.fl.on_range(t, "w", max(0.0, d_true + rng.gauss(0, net.uwb_peer_sigma)))
+        if react and forklift.fl.mode.endswith("_tag") and forklift.fl.vibrate_local(t):
+            worker.on_alert(t, "raise", vibrate=True)    # the tag sees the same two-way range
         # sensors
         if rng.random() >= net.up_loss:
             engine.update(Track, "w", "worker", t, x=xw + rng.gauss(0, noise), y=yw + rng.gauss(0, noise))
