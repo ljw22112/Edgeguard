@@ -29,7 +29,7 @@ MEC 서비스 대역(`mec_mock`, `tools/mec_ipe.py`)과 자체 Sandbox 시나리
 | 작업자 궤적 LSTM (3 s 예측) | ✅ v2: 이상 행동까지 학습, 위험도 엔진에 연결 (`guidance_lstm`, 기본값은 CTRV — 아래) |
 | 관제 대시보드 (실시간 맵, 예측 경로, 위험도, 경보 로그) | ✅ MEC 앱 `/`에서 서빙 |
 | 가상 디바이스 (실기 도착 전 대체) | ✅ |
-| ETSI MEC Location API(013) · RNIS(012) 연동 | ✅ 해커톤 Sandbox 방식(MEC-IPE → CSE 리소스)으로 정렬, 자체 시나리오 종단 검증, **공개 ETSI MEC Sandbox 실연동 확인** (`results/etsi_sandbox_live.json`) |
+| ETSI MEC Location API(013) · RNIS(012) 연동 | ✅ 해커톤 Sandbox 방식(MEC-IPE → CSE 리소스)으로 정렬, 자체 시나리오 종단 검증, **공개 ETSI MEC Sandbox 실연동 확인** (`results/etsi_sandbox_live.json`), **자체 설치 Sandbox에서 창고 시나리오 경보 70건** (`results/sandbox_selfhosted_live.json`) |
 | 카메라 사람 탐지 (YOLOv8n) + 태그 없는 작업자 융합 | ✅ |
 | 디바이스별 접근제어 (ACP) | ✅ Mobius에서 위조 쓰기 차단 확인 |
 | 아차사고 히트맵 · 안전 리포트 | ✅ `tools/safety_report.py` |
@@ -379,6 +379,22 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 | 셀 혼잡 (RNIS 90%) | 2.86, 2.77, 2.97, 3.17 |
 
 폴백이 없으면 한 번은 1초 기준을 못 맞췄고, 폴백을 켜면 정상 때와 같은 수준으로 돌아왔습니다.
+
+### 자체 설치 MEC Sandbox + 창고 시나리오 (AdvantEDGE v1.9.2)
+
+공개 Sandbox는 기본 시나리오만 고를 수 있어, ETSI MEC Sandbox의 오픈소스 기반인 AdvantEDGE v1.9.2를 팀 PC의 Hyper-V VM
+(Ubuntu 22.04, Kubernetes 1.27)에 설치하고 **우리 창고 시나리오**(`scenarios/edgeguard-warehouse.json`)를 배포했습니다.
+설치 절차와 2026년 현재 깨진 이미지 경로 보정은 `deploy/sandbox-host/` (README · 스크립트)에 있습니다.
+
+경로: AdvantEDGE Location API → MEC-IPE → Mobius 리소스 → 구독 알림 → MEC 앱 → 경보 (`results/sandbox_selfhosted_live.json`)
+
+| 항목 | 결과 (2026-10-08, 2분) |
+|---|---|
+| 판정 | **CONNECTED** |
+| UE 분류 (최고 속도 기준) | 지게차 2 · 작업자 4 — 시나리오와 일치 |
+| 위치 수신 | 828회, 6.0 회/s, 미등록 UE 0 |
+| 평가한 작업자-지게차 쌍 | 8 |
+| **경보** | **70건** |
 
 ### 실제 ETSI MEC Sandbox 연동 (try-mec.etsi.org)
 

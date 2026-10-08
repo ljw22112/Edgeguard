@@ -12,7 +12,49 @@
     "platform auth subrequest returned 500 -> auth disabled (single-team lab host)",
     "scenario needed deployment.connectivity / d2d for the 1.9 validator"
   ],
-  "report_after_2_min": {
+  "final_run": {
+    "time": "2026-10-08T04:08:39+0000",
+    "classification": {
+      "10.100.0.11": [
+        "forklift",
+        3.0
+      ],
+      "10.100.0.12": [
+        "forklift",
+        2.1
+      ],
+      "10.100.0.1": [
+        "worker",
+        1.5
+      ],
+      "10.100.0.2": [
+        "worker",
+        0.9
+      ],
+      "10.100.0.3": [
+        "worker",
+        1.1
+      ],
+      "10.100.0.4": [
+        "worker",
+        1.1
+      ]
+    },
+    "probe": "peak speed over 12 s, --vehicle-mps 1.7 -> 4 workers, 2 forklifts (matches the scenario)",
+    "report_after_2_min": {
+      "ipe_ue_containers": 6,
+      "mec_ipe_subscriptions": 6,
+      "mec_location_fixes": 828,
+      "fixes_per_s": 6.0,
+      "unknown_ue": 0,
+      "live_tracks": 6,
+      "pairs_assessed": 8,
+      "alerts_sent": 70,
+      "connected": true
+    }
+  },
+  "first_run_note": "This run classified forklift_02 (10.100.0.12) as a worker: one 4 s speed sample caught it slowing (0.75 m/s), so 5 pairs instead of 8. sandbox_probe now classifies by peak speed over 12 s (verified against the scenario replay: 2 forklifts, 4 workers) and accepts --forklifts.",
+  "report_first_run": {
     "ipe_ue_containers": 6,
     "mec_ipe_subscriptions": 6,
     "mec_location_fixes": 1098,
@@ -22,9 +64,5 @@
     "pairs_assessed": 5,
     "alerts_sent": 25,
     "connected": true
-  },
-  "notes": [
-    "This run classified forklift_02 (10.100.0.12) as a worker: one 4 s speed sample caught it slowing (0.75 m/s), so 5 pairs instead of 8. sandbox_probe now classifies by peak speed over 12 s (verified against the scenario replay: 2 forklifts, 4 workers) and accepts --forklifts.",
-    "No RNIS cell load in this scenario run (ipe_cell_containers 0) - the congestion margin stayed off."
-  ]
+  }
 }

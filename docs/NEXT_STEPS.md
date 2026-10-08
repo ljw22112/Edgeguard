@@ -33,7 +33,7 @@ docker compose run --rm sandbox-check                 # -> deploy/sandbox/report
 Then record report.json as results/etsi_sandbox_live.json, README + roadmap (w1d).
 Leave Sandbox mode: delete deploy/sandbox/overrides.yaml and `docker compose up -d --force-recreate mec`.
 
-## Self-hosted Sandbox (in progress, 2026-10-08)
+## Self-hosted Sandbox (DONE 2026-10-08: 8 pairs, 70 alerts in 2 min - results/sandbox_selfhosted_live.json)
 Team desktop (Ryzen 7 9800X3D, 32 GB, Windows 11 Enterprise LTSC, 723 GB free) hosts a Hyper-V VM running
 AdvantEDGE v1.9.2 (base of the ETSI MEC Sandbox) with our warehouse scenario. Procedure: deploy/sandbox-host/README.md
 (create-vm.ps1 -> Ubuntu 22.04 at 192.168.200.10 -> install-runtime.sh -> install-advantedge.sh -> import scenario ->
