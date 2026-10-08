@@ -16,6 +16,10 @@
 // rule in device_policy.h, which vibrates the tag while the MEC app is silent and a forklift is
 // close or closing (vibrateLocal).  arduino-dw1000 ranges at most MAX_DEVICES (default 4) devices:
 // set it to 8 in DW1000Ranging.h for 4 anchors + up to 4 forklifts.
+// Cooperative D2D (v0.9, d2d.h): the tag broadcasts its state over ESP-NOW every report tick and
+// listens to forklifts' states (2-D closest-approach rule while MEC is silent).  If it still hears
+// the MEC app it relays: MEC alerts / heartbeats to a forklift that reported mecOk = 0, and that
+// forklift's state up to the CSE (same originator).  ESP-NOW shares the Wi-Fi channel of the AP.
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
 #include <WiFi.h>
@@ -24,6 +28,8 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <DW1000Ranging.h>
+#include <esp_now.h>
+#include "d2d.h"            // copy of firmware/common/d2d.h (kept identical by tests)
 #include <time.h>
 #include "uwb_position.h"   // copy of firmware/common/uwb_position.h (kept identical by tests)
 #include "device_policy.h"  // copy of firmware/common/device_policy.h (rate commands)
@@ -39,6 +45,14 @@ const int   LED_PIN   = 2;
 policy::ReportRate reportRate;                                  // 10 Hz until told otherwise
 policy::ForkliftLimit peerGuard;                                // local rule on forklift ranges
 const uint16_t FORKLIFT_ADDR_BASE = 0x2000;                     // forklift mobile anchors 0x20NN
+const char* TAG_EUI = "01:10:22:EA:82:60:3B:9C";                // fixed short address 0x1001
+const uint16_t MY_SHORT = 0x1001;
+const uint8_t BCAST[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+d2d::Inbox inbox;
+d2d::Neighbours neighbours;
+float lastFixX = 0, lastFixY = 0, lastFixT = -1;
+uint32_t lastRelayPost = 0, lastProbe = 0;
+float directT = -1e9f;                  // last MEC notification received directly (not relayed)
 
 WebServer server(80);
 uint32_t vibrateUntil = 0;
@@ -86,6 +100,68 @@ bool readPosition(float& x, float& y) {
   return true;
 }
 
+float nowS() { return millis() / 1000.0f; }
+bool mecHeard() { return nowS() - directT <= policy::SILENCE_S; }   // own link to the MEC app
+
+void onD2D(const esp_now_recv_info_t*, const uint8_t* data, int len) {
+  if (d2d::valid(data, len)) inbox.push(data);
+}
+
+void sendState(float x, float y, float vx, float vy) {
+  d2d::Frame f;
+  f.type = d2d::STATE;
+  d2d::setId(f, DEVICE_ID);
+  f.shortAddr = MY_SHORT;
+  f.kind = d2d::WORKER;
+  f.mecOk = mecHeard();
+  f.x = x; f.y = y; f.vx = vx; f.vy = vy;
+  esp_now_send(BCAST, (const uint8_t*)&f, sizeof(f));
+}
+
+// relay a forklift's state (it cannot reach the CSE) - at most 5 Hz
+void relayUp(const d2d::Frame& f) {
+  if (millis() - lastRelayPost < 200) return;
+  lastRelayPost = millis();
+  JsonDocument doc;
+  JsonObject con = doc["m2m:cin"]["con"].to<JsonObject>();
+  con["id"] = f.id;
+  con["kind"] = "forklift";
+  con["ts"] = epochMs();
+  con["x"] = f.x;
+  con["y"] = f.y;
+  con["speed"] = sqrtf(f.vx * f.vx + f.vy * f.vy);
+  con["heading"] = atan2f(f.vy, f.vx);
+  con["relay"] = DEVICE_ID;
+  String body;
+  serializeJson(doc, body);
+  HTTPClient http;
+  http.begin(String(CSE_URL) + "/EdgeGuard/" + f.id + "/motion");
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String("rl") + (rqi++));
+  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("Content-Type", "application/json;ty=4");
+  http.POST(body);
+  http.end();
+}
+
+void handleD2D() {
+  d2d::Frame f;
+  while (inbox.pop(f)) {
+    float t = nowS();
+    if (f.type == d2d::STATE) {
+      if (f.kind != d2d::FORKLIFT) continue;              // workers do not collide with workers
+      peerGuard.onPeerState(t, f.shortAddr, f.x, f.y, f.vx, f.vy);
+      neighbours.seen(f, t);
+      if (!f.mecOk && mecHeard()) relayUp(f);
+    } else if (f.type == d2d::ALERT && d2d::idIs(f, DEVICE_ID)) {   // relayed MEC alert for me
+      peerGuard.onHeartbeat(t);
+      if (f.vibrate) vibrateUntil = millis() + (f.level >= 2 ? 1500 : 600);
+    } else if (f.type == d2d::HEARTBEAT && !mecHeard()) {
+      peerGuard.onHeartbeat(t);
+    }
+  }
+}
+
 void publishLocation(float x, float y) {
   JsonDocument doc;
   JsonObject con = doc["m2m:cin"]["con"].to<JsonObject>();
@@ -119,7 +195,28 @@ void handleAlert() {
   JsonObject sgn = doc["m2m:sgn"];
   if (sgn["vrq"] | false) return;                                 // subscription verification
   JsonObject alert = sgn["nev"]["rep"]["m2m:cin"]["con"];
-  if (!alert.isNull()) peerGuard.onHeartbeat(millis() / 1000.0f); // any MEC message: MEC alive
+  float t = nowS();
+  if (!alert.isNull()) { peerGuard.onHeartbeat(t); directT = t; } // any MEC message: MEC alive
+  // relay for forklifts in a radio shadow (one hop)
+  if (!alert.isNull() && neighbours.anyOffline(t)) {
+    d2d::Frame r;
+    if (!alert["rates"].isNull()) {
+      r.type = d2d::HEARTBEAT;
+      for (int i = 0; i < d2d::RELAY_REPEAT; i++) esp_now_send(BCAST, (const uint8_t*)&r, sizeof(r));
+    } else {
+      const char* fk = alert["forklift"] | "";
+      if (neighbours.offline(fk, t)) {
+        r.type = d2d::ALERT;
+        d2d::setId(r, fk);
+        JsonObject act = alert["actions"][fk];
+        r.clear = String((const char*)(alert["event"] | "")) == "clear";
+        r.beacon = act["beacon"] | false;
+        r.limit = act["speed_limit"].isNull() ? -1.0f : (float)act["speed_limit"];
+        r.level = strcmp(alert["level"] | "SAFE", "DANGER") == 0 ? 2 : 1;
+        for (int i = 0; i < d2d::RELAY_REPEAT; i++) esp_now_send(BCAST, (const uint8_t*)&r, sizeof(r));
+      }
+    }
+  }
   if (!alert["rates"].isNull()) {                                 // <ae>/control: rate command / heartbeat
     float hz = alert["rates"][DEVICE_ID] | 0.0f;
     if (hz > 0) reportRate.onCommand(millis() / 1000.0f, hz);
@@ -145,12 +242,18 @@ void setup() {
   server.begin();
   DW1000Ranging.initCommunication(PIN_RST, PIN_SS, PIN_IRQ);
   DW1000Ranging.attachNewRange(onNewRange);
-  DW1000Ranging.startAsTag("7D:00:22:EA:82:60:3B:9C", DW1000.MODE_LONGDATA_RANGE_ACCURACY);
+  DW1000Ranging.startAsTag(TAG_EUI, DW1000.MODE_LONGDATA_RANGE_ACCURACY, false);
+  esp_now_init();
+  esp_now_register_recv_cb(onD2D);
+  esp_now_peer_info_t peer = {};
+  memcpy(peer.peer_addr, BCAST, 6);
+  esp_now_add_peer(&peer);
 }
 
 void loop() {
   DW1000Ranging.loop();
   server.handleClient();
+  handleD2D();
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
   bool on = millis() < vibrateUntil;
   digitalWrite(MOTOR_PIN, on);
@@ -158,6 +261,17 @@ void loop() {
   if (millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
     lastPublish = millis();
     float x, y;
-    if (readPosition(x, y)) publishLocation(x, y);
+    if (readPosition(x, y)) {
+      float t = nowS(), vx = 0, vy = 0;
+      if (lastFixT > 0 && t - lastFixT > 0.05f && t - lastFixT < 1.0f) {
+        vx = (x - lastFixX) / (t - lastFixT);
+        vy = (y - lastFixY) / (t - lastFixT);
+      }
+      lastFixX = x; lastFixY = y; lastFixT = t;
+      peerGuard.onOwnState(t, x, y, vx, vy);
+      sendState(x, y, vx, vy);                                     // D2D, works without the network
+      // in a radio shadow an HTTP POST would block the loop; probe every 2 s, a neighbour relays meanwhile
+      if (mecHeard() || millis() - lastProbe > 2000) { lastProbe = millis(); publishLocation(x, y); }
+    }
   }
 }

@@ -1,7 +1,13 @@
-# Status (updated 2026-10-08, v0.8)
+# Status (updated 2026-10-08, v0.9)
 
 The final presentation is deliberately not being prepared yet; development comes first.
 Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커톤 MEC Sandbox 정렬").
+
+## Done in v0.9
+- Cooperative D2D (the "cars in a tunnel" idea): ESP-NOW state broadcast {x,y,vx,vy,mecOk}, local 2-D
+  closest-approach rule while MEC is silent, one-hop relay (x3) of MEC alerts / heartbeats down and positions up
+  for devices in radio shadows.  Worker dead zone 66 -> 16, forklift dead zone 52 -> 19 collisions of 180 at
+  76 % throughput.  firmware/common/d2d.h + both sketches; Python/C++ cross-tested; results/d2d_sensitivity.json.
 
 ## Done in v0.8
 - Graceful degradation on network loss: MEC prediction -> local UWB (direct forklift<->tag ranging,

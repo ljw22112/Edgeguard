@@ -35,6 +35,20 @@ Local UWB fallback (modes "failsafe_local_zone" / "failsafe_local_ttc", v0.8):
   With the local guard the 2 s "stop under an active limit" still applies.  While the MEC app
   is heard, the local rule is off (the MEC prediction has far fewer false alarms).
 
+Cooperative D2D fallback (mode "coop", v0.9) - the "cars in a tunnel" idea:
+  every device broadcasts its own state peer to peer (ESP-NOW on the ESP32; 5G sidelink / PC5
+  in a real deployment): worker tag {x, y, vx, vy} from its UWB fix, forklift {x, y, vx, vy}
+  from its tag board and drive.  Positions keep coming because the UWB anchors do not depend on
+  the network.  Two uses:
+    1. local 2-D prediction while the MEC app is silent: closest point of approach under
+       constant velocity (d_min at t_cpa) instead of range + range-rate - a worker walking past
+       is no longer a reason to stop.  stop: now < LOCAL_STOP_M, or t_cpa < CPA_STOP_S with
+       d_min < CPA_STOP_D_M; slow (LOCAL_SLOW_MPS): t_cpa < CPA_SLOW_S with d_min < CPA_SLOW_D_M.
+       A peer whose state is older than D2D_STALE_S falls back to the v0.8 range rule.
+    2. relay for dead zones (metal racks): a device that still hears the MEC app forwards MEC
+       alerts / heartbeats to neighbours that do not, and forwards their state up to the MEC
+       app (sim/closed_loop.py).  A device in a dead zone then behaves as if it were connected.
+
 Reporting rate: follow the commanded rate; without any command for RATE_FAILSAFE_S fall
 back to the full rate.
 
@@ -52,6 +66,10 @@ LOCAL_STOP_M = 3.0
 LOCAL_SLOW_MPS = 1.0
 LOCAL_TTC_SLOW_S = 4.0
 LOCAL_TTC_STOP_S = 2.0
+D2D_STALE_S = 0.5        # peer state older than this -> range rule for that peer
+CPA_HORIZON_S = 5.0
+CPA_STOP_S, CPA_STOP_D_M = 2.5, 2.0
+CPA_SLOW_S, CPA_SLOW_D_M = 4.5, 3.0
 LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
@@ -59,14 +77,45 @@ FULL_HZ = 10.0
 
 
 class ForkliftLimit:
-    """mode "failsafe_local_ttc_tag" (default, v0.8), "failsafe" (v0.7, above), "legacy" (v0.6: lift after 5 s even when the MEC app
+    """mode "coop" (default, v0.9), "failsafe_local_ttc_tag" (v0.8), "failsafe" (v0.7, above), "legacy" (v0.6: lift after 5 s even when the MEC app
     is silent) or the rejected variants "failsafe_creep" / "failsafe_stop"."""
-    MODE = "failsafe_local_ttc_tag"     # v0.8; without direct ranges it behaves as "failsafe"
+    MODE = "coop"     # v0.9; without D2D frames it behaves as v0.8, without direct ranges as v0.7
 
     def __init__(self, mode=None):
         self.mode = mode or ForkliftLimit.MODE
         self.limit, self.limit_t, self.hb_t = None, -1e9, -1e9
         self.ranges = {}                               # tag -> [(t, d)] recent direct ranges
+        self.own = None                                # (t, x, y, vx, vy) this device (coop)
+        self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
+
+    def on_own_state(self, t, x, y, vx, vy):
+        self.own = (t, x, y, vx, vy)
+
+    def on_peer_state(self, t, tag, x, y, vx, vy):
+        """D2D broadcast received from a neighbour (coop mode)."""
+        self.peers[tag] = (t, x, y, vx, vy)
+
+    def _cpa_cap(self, t, tag):
+        """Speed cap from the 2-D closest point of approach with this peer, or "stale"."""
+        p = self.peers.get(tag)
+        if self.own is None or p is None or t - p[0] > D2D_STALE_S or t - self.own[0] > D2D_STALE_S:
+            return "stale"
+        rx, ry = p[1] - self.own[1], p[2] - self.own[2]
+        wx, wy = p[3] - self.own[3], p[4] - self.own[4]
+        d_now = (rx * rx + ry * ry) ** 0.5
+        if d_now < LOCAL_STOP_M:
+            return 0.0
+        ww = wx * wx + wy * wy
+        t_cpa = 0.0 if ww < 1e-9 else max(0.0, -(rx * wx + ry * wy) / ww)
+        if t_cpa > CPA_HORIZON_S:
+            return None
+        cx, cy = rx + wx * t_cpa, ry + wy * t_cpa
+        d_min = (cx * cx + cy * cy) ** 0.5
+        if t_cpa < CPA_STOP_S and d_min < CPA_STOP_D_M:
+            return 0.0
+        if t_cpa < CPA_SLOW_S and d_min < CPA_SLOW_D_M:
+            return LOCAL_SLOW_MPS
+        return None
 
     def on_range(self, t, tag, d):
         """Direct UWB range to a worker tag (local fallback; ignored by the other modes)."""
@@ -77,10 +126,17 @@ class ForkliftLimit:
 
     def local_limit(self, t):
         """Speed cap from direct ranging, or None (no tag close / not a local mode)."""
-        if not self.mode.startswith("failsafe_local"):
+        if not (self.mode.startswith("failsafe_local") or self.mode.startswith("coop")):
             return None
         cap = None
-        for h in self.ranges.values():
+        for tag in set(self.ranges) | set(self.peers):
+            if self.mode.startswith("coop"):
+                c = self._cpa_cap(t, tag)
+                if c != "stale":
+                    if c is not None:
+                        cap = c if cap is None else min(cap, c)
+                    continue
+            h = self.ranges.get(tag)
             if not h or t - h[-1][0] > LOCAL_RANGE_STALE_S:
                 continue
             d = h[-1][1]
@@ -89,7 +145,7 @@ class ForkliftLimit:
                 c = 0.0
             elif d < LOCAL_SLOW_M:
                 c = LOCAL_SLOW_MPS
-            if "ttc" in self.mode and len(h) >= 3 and h[-1][0] - h[0][0] > 0.2:
+            if ("ttc" in self.mode or self.mode.startswith("coop")) and len(h) >= 3 and h[-1][0] - h[0][0] > 0.2:
                 n = len(h)
                 mt = sum(x for x, _ in h) / n
                 md = sum(y for _, y in h) / n
@@ -117,13 +173,16 @@ class ForkliftLimit:
 
     def vibrate_local(self, t):
         """Worker-tag side of the local fallback: vibrate when the rule says stop."""
-        return self.mode.startswith("failsafe_local") and self.mec_silent(t) and self.local_limit(t) == 0.0
+        return self.local_mode() and self.mec_silent(t) and self.local_limit(t) == 0.0
+
+    def local_mode(self):
+        return self.mode.startswith("failsafe_local") or self.mode.startswith("coop")
 
     def effective(self, t):
         if self.mode == "halt_on_silence" and t - self.hb_t > STOP_AFTER_S:
             return 0.0                                 # reference only: every truck stops
         held = self._held(t)
-        if self.mode.startswith("failsafe_local") and t - self.hb_t > LOCAL_AFTER_S:
+        if self.local_mode() and t - self.hb_t > LOCAL_AFTER_S:
             loc = self.local_limit(t)
             if loc is not None:
                 return loc if held is None else min(held, loc)
@@ -139,8 +198,8 @@ class ForkliftLimit:
         if t - self.hb_t > SILENCE_S:                  # MEC silent
             if self.mode == "failsafe_creep":
                 return min(self.limit, CREEP_MPS)
-            if self.mode == "failsafe_stop" or (self.mode.startswith("failsafe") and self.mode != "failsafe_creep"
-                                                and t - self.hb_t > STOP_AFTER_S):
+            if self.mode == "failsafe_stop" or ((self.mode.startswith("failsafe") or self.mode.startswith("coop"))
+                                                and self.mode != "failsafe_creep" and t - self.hb_t > STOP_AFTER_S):
                 return 0.0
             return self.limit                          # hold the last plan (MEC restarting)
         if t - self.limit_t > ALERT_STALE_S:           # MEC alive, refreshes stopped: clear lost

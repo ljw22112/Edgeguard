@@ -72,6 +72,72 @@ def test_local_fallback_ttc_slows_before_the_zone():
     assert ForkliftLimit("failsafe").local_limit(10.6) is None
 
 
+def test_coop_cpa_ignores_a_worker_walking_past():
+    """D2D state: a worker 4 m away walking parallel is no reason to stop (range-rate would slow)."""
+    fl = ForkliftLimit("coop")
+    fl.on_heartbeat(0.0)
+    fl.on_own_state(5.0, 0.0, 0.0, 2.0, 0.0)                 # forklift east at 2 m/s
+    fl.on_peer_state(5.0, "w", 0.0, 4.0, 2.0, 0.0)            # worker 4 m north, same velocity
+    assert fl.effective(5.1) is None
+    fl.on_own_state(5.2, 0.0, 0.0, 2.0, 0.0)
+    fl.on_peer_state(5.2, "w", 5.0, -1.0, 0.0, 1.0)           # crossing 5 m ahead: closest 1.3 m in 2.2 s
+    assert fl.effective(5.3) == 0.0
+    assert fl.vibrate_local(5.3)
+
+
+def test_coop_falls_back_to_range_when_d2d_is_stale():
+    fl = ForkliftLimit("coop")
+    fl.on_own_state(1.0, 0, 0, 0, 0)
+    fl.on_peer_state(1.0, "w", 20, 0, 0, 0)
+    for k in range(6):
+        fl.on_range(4.0 + 0.1 * k, "w", 2.5)                  # D2D silent since 1.0 s, UWB says 2.5 m
+    assert fl.effective(4.6) == 0.0
+
+
+@pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
+def test_firmware_coop_matches_python(tmp_path):
+    """D2D own / peer states + ranges + heartbeats in random order: same caps in C++ and Python."""
+    exe = tmp_path / "policy"
+    subprocess.run(["g++", "-std=c++17", "-O1", "-I", os.path.join(ROOT, "firmware", "common"),
+                    os.path.join(ROOT, "tests", "firmware", "policy_driver.cpp"), "-o", str(exe)], check=True)
+    rng = random.Random(23)
+    for _ in range(300):
+        fl, lines, expect, t = ForkliftLimit("coop"), ["M 1", "C 1"], [], 0.0
+        own = [0.0, 0.0, rng.uniform(-2.5, 2.5), rng.uniform(-2.5, 2.5)]
+        peers = {tg: [rng.uniform(-12, 12), rng.uniform(-12, 12), rng.uniform(-1.5, 1.5), rng.uniform(-1.5, 1.5)]
+                 for tg in (1, 2)}
+        for _ in range(60):
+            t = round(t + rng.choice((0.1, 0.1, 0.2, 0.7)), 3)
+            if rng.random() < 0.06:
+                fl.on_heartbeat(t)
+                lines.append(f"H {t:.3f}")
+            own[0] += own[2] * 0.1
+            own[1] += own[3] * 0.1
+            if rng.random() < 0.9:
+                o = [round(v, 3) for v in own]
+                fl.on_own_state(t, *o)
+                lines.append(f"O {t:.3f} {o[0]} {o[1]} {o[2]} {o[3]}")
+            for tg, p in peers.items():
+                p[0] += p[2] * 0.1
+                p[1] += p[3] * 0.1
+                tr = round(t + 0.011 * tg, 3)
+                if rng.random() < 0.7:
+                    q = [round(v, 3) for v in p]
+                    fl.on_peer_state(tr, str(tg), *q)
+                    lines.append(f"P {tr:.3f} {tg} {q[0]} {q[1]} {q[2]} {q[3]}")
+                if rng.random() < 0.6:
+                    d = round(((p[0] - own[0]) ** 2 + (p[1] - own[1]) ** 2) ** 0.5, 3)
+                    fl.on_range(tr, str(tg), d)
+                    lines.append(f"D {tr:.3f} {tg} {d}")
+            q = round(t + 0.037, 3)
+            lim = fl.effective(q)
+            expect.append(-1.0 if lim is None else lim)
+            lines.append(f"Q {q:.3f}")
+        out = subprocess.run([str(exe)], input="\n".join(lines), capture_output=True, text=True, check=True)
+        got = [float(ln.split()[0]) for ln in out.stdout.split("\n") if ln]
+        assert got == [pytest.approx(e, abs=1e-3) for e in expect]
+
+
 @pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
 def test_firmware_local_fallback_matches_python(tmp_path):
     """Local UWB fallback: random heartbeats / alerts / direct ranges, same answers in C++."""

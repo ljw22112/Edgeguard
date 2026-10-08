@@ -12,6 +12,7 @@ import random
 from dataclasses import dataclass, field
 
 from edgeguard.alerting import AlertState, decide
+from edgeguard.device_policy import ForkliftLimit
 from edgeguard.risk import RiskConfig, RiskEngine
 from edgeguard.tracking import Track
 from sim import scenarios
@@ -34,6 +35,12 @@ class Net:
     uwb_peer_drop: float = 0.10     # missed ranging rounds (NLOS, collisions)
     uwb_peer_hz: float = 10.0       # ranging rounds per second (arduino-dw1000 ~80 ms cycle)
     uwb_peer_bias: float = 0.0      # NLOS adds path length: ranges read long by this (m)
+    f_link_down: tuple | None = None  # (t0, t1): forklift in a radio dead zone (no MEC up/down link)
+    w_link_down: tuple | None = None  # (t0, t1): worker tag in a dead zone
+    d2d_range_m: float = 40.0       # peer-to-peer broadcast (ESP-NOW / sidelink), coop mode
+    d2d_loss: float = 0.10
+    d2d_latency_s: float = 0.01
+    d2d_relay_repeat: int = 3       # a relayed MEC message is broadcast this many times (cheap, 1 ms each)
 
 
 @dataclass
@@ -68,7 +75,26 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                                             [(th, 1 if sp >= 0 else -1, yw) for _, _, th, sp, yw in f]))
     engine = RiskEngine(cfg, method)
     st = AlertState()
-    pending = []                                   # (deliver_at, event, actions)
+    pending = []                                   # (deliver_at, event, actions, level, to)
+    coop = forklift.fl.mode.startswith("coop")      # D2D state broadcast
+    relay = forklift.fl.mode == "coop"              # ... and relay through a neighbour
+    wl = ForkliftLimit(forklift.fl.mode)           # the worker tag's copy of the local rules
+
+    def link_up(win, t):
+        return win is None or not (win[0] <= t < win[1])
+
+    def d2d_ok(t):                                 # one D2D frame between the two devices
+        (ax, ay), (bx, by) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
+        return coop and math.hypot(ax - bx, ay - by) <= net.d2d_range_m and rng.random() >= net.d2d_loss
+
+    def route(t, to):
+        """Delay added to a MEC message for device `to` ('f' / 'w'), or None if it cannot arrive."""
+        own, other = (net.f_link_down, net.w_link_down) if to == "f" else (net.w_link_down, net.f_link_down)
+        if link_up(own, t):
+            return 0.0
+        if relay and link_up(other, t) and any(d2d_ok(t) for _ in range(net.d2d_relay_repeat)):
+            return net.d2d_latency_s                   # relayed by the neighbour that still hears MEC
+        return None
     d_nom = [math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(w, f)]
     t_contact = next((k * DT for k, d in enumerate(d_nom) if d < R_CONTACT), None)
     first_alert, alerts, actual_min = None, 0, 1e9
@@ -76,19 +102,25 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
     for k, t in enumerate(times):
         # deliver alerts that have arrived
         keep = []
-        for due, ev, acts, lvl in pending:
+        for due, ev, acts, lvl, to in pending:
             if due > t:
-                keep.append((due, ev, acts, lvl))
+                keep.append((due, ev, acts, lvl, to))
                 continue
             if ev == "hb":
-                forklift.pending.append((t, "hb", None))
+                if to == "f":
+                    forklift.pending.append((t, "hb", None))
+                else:
+                    wl.on_heartbeat(t)
                 continue
             if ev in ("raise", "refresh") and first_alert is None:
                 first_alert = due
+            if to == "w":
+                wl.on_heartbeat(t)
             if react:
-                fa = acts.get("f", {})
-                forklift.on_alert(t, ev, fa.get("speed_limit"))
-                worker.on_alert(t, ev, vibrate=acts.get("w", {}).get("vibrate"))
+                if to == "f":
+                    forklift.on_alert(t, ev, acts.get("f", {}).get("speed_limit"))
+                else:
+                    worker.on_alert(t, ev, vibrate=acts.get("w", {}).get("vibrate"))
         pending = keep
         worker.step(t, DT)
         forklift.step(t, DT)
@@ -98,14 +130,33 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
         d_true = math.hypot(xw - xf, yw - yf)
         every = max(1, round(1.0 / (net.uwb_peer_hz * DT)))
         if k % every == 0 and d_true <= net.uwb_peer_range_m and rng.random() >= net.uwb_peer_drop:
-            forklift.fl.on_range(t, "w", max(0.0, d_true + net.uwb_peer_bias
-                                             + rng.gauss(0, net.uwb_peer_sigma)))
-        if react and forklift.fl.mode.endswith("_tag") and forklift.fl.vibrate_local(t):
-            worker.on_alert(t, "raise", vibrate=True)    # the tag sees the same two-way range
-        # sensors
-        if rng.random() >= net.up_loss:
+            rr = max(0.0, d_true + net.uwb_peer_bias + rng.gauss(0, net.uwb_peer_sigma))
+            forklift.fl.on_range(t, "w", rr)
+            wl.on_range(t, "f", rr)                      # two-way ranging: both ends know it
+        if coop:                                         # D2D state broadcast (10 Hz, both ways)
+            wv = worker.v if not (worker.stop_from <= t < worker.stop_until) else 0.0
+            sw = forklift.sample()
+            fvx, fvy = sw["speed"] * math.cos(sw["heading"]), sw["speed"] * math.sin(sw["heading"])
+            (px, py) = worker.path.pos(min(worker.path.end, worker.s + 0.1))
+            ux, uy = (px - xw, py - yw)
+            un = math.hypot(ux, uy) or 1.0
+            wvx, wvy = wv * ux / un, wv * uy / un
+            nz = lambda: rng.gauss(0, noise)             # noqa: E731  (UWB fix noise)
+            fw = (xw + nz(), yw + nz(), wvx + rng.gauss(0, 0.1), wvy + rng.gauss(0, 0.1))
+            ff = (xf + nz(), yf + nz(), fvx + rng.gauss(0, 0.05), fvy + rng.gauss(0, 0.05))
+            forklift.fl.on_own_state(t, *ff)
+            wl.on_own_state(t, *fw)
+            if d2d_ok(t):
+                forklift.fl.on_peer_state(t, "w", *fw)
+            if d2d_ok(t):
+                wl.on_peer_state(t, "f", *ff)
+        if react and (forklift.fl.mode.endswith("_tag") or coop):
+            if wl.vibrate_local(t):                     # the tag's own copy of the rules
+                worker.on_alert(t, "raise", vibrate=True)
+        # sensors (a device in a dead zone reaches the MEC app only through a D2D relay)
+        if rng.random() >= net.up_loss and route(t, "w") is not None:
             engine.update(Track, "w", "worker", t, x=xw + rng.gauss(0, noise), y=yw + rng.gauss(0, noise))
-        if rng.random() >= net.up_loss:
+        if rng.random() >= net.up_loss and route(t, "f") is not None:
             smp = forklift.sample()
             engine.update(Track, "f", "forklift", t, x=xf + rng.gauss(0, noise), y=yf + rng.gauss(0, noise),
                           speed=smp["speed"] + rng.gauss(0, 0.05), heading=smp["heading"] + rng.gauss(0, 0.035),
@@ -121,15 +172,20 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             engine, st = RiskEngine(cfg, method), AlertState()
         if t - last_hb >= net.heartbeat_s - 1e-9:
             last_hb = t
-            if rng.random() >= net.down_loss:
-                pending.append((t + max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000, "hb", {}, 0))
+            for to in ("f", "w"):
+                extra = route(t, to)
+                if extra is not None and rng.random() >= net.down_loss:
+                    pending.append((t + extra + max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000,
+                                    "hb", {}, 0, to))
         for r in engine.evaluate():
             ev, acts = decide(st, r, engine.tracks.get("w"), engine.tracks.get("f"), cfg, t)
             if ev:
                 alerts += 1
-                if rng.random() >= net.down_loss:
-                    lat = max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000
-                    pending.append((t + lat, ev, acts, r.level))
+                for to in ("f", "w"):
+                    extra = route(t, to)
+                    if extra is not None and rng.random() >= net.down_loss:
+                        lat = max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000
+                        pending.append((t + extra + lat, ev, acts, r.level, to))
     T = times[-1]
     return EpisodeResult(name, t_contact is not None, t_contact, first_alert, min(d_nom), actual_min,
                          min(forklift.path.end, _nominal_s(forklift.path, T)),

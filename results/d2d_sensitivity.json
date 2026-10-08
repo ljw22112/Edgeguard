@@ -1,0 +1,116 @@
+{
+ "episodes": 330,
+ "mode": "coop",
+ "cases": {
+  "assumed (10 % loss, 40 m)": {
+   "forklift_dead_zone_8s": {
+    "collisions": 19,
+    "conflicts": 180,
+    "throughput": 0.7599068144829593
+   },
+   "worker_dead_zone_8s": {
+    "collisions": 16,
+    "conflicts": 180,
+    "throughput": 0.7597869119712788
+   },
+   "mec_dead_8s": {
+    "collisions": 35,
+    "conflicts": 180,
+    "throughput": 0.5887439359017859
+   },
+   "network_down_30s": {
+    "collisions": 2,
+    "conflicts": 180,
+    "throughput": 0.5743357529130169
+   }
+  },
+  "30 % frame loss": {
+   "forklift_dead_zone_8s": {
+    "collisions": 21,
+    "conflicts": 180,
+    "throughput": 0.7569407987224257
+   },
+   "worker_dead_zone_8s": {
+    "collisions": 19,
+    "conflicts": 180,
+    "throughput": 0.7569170203336061
+   },
+   "mec_dead_8s": {
+    "collisions": 34,
+    "conflicts": 180,
+    "throughput": 0.5876040948543031
+   },
+   "network_down_30s": {
+    "collisions": 2,
+    "conflicts": 180,
+    "throughput": 0.5786541165132815
+   }
+  },
+  "60 % frame loss": {
+   "forklift_dead_zone_8s": {
+    "collisions": 26,
+    "conflicts": 180,
+    "throughput": 0.7603769415178744
+   },
+   "worker_dead_zone_8s": {
+    "collisions": 20,
+    "conflicts": 180,
+    "throughput": 0.7492396686215914
+   },
+   "mec_dead_8s": {
+    "collisions": 34,
+    "conflicts": 180,
+    "throughput": 0.5899326930362196
+   },
+   "network_down_30s": {
+    "collisions": 3,
+    "conflicts": 180,
+    "throughput": 0.5740436227911224
+   }
+  },
+  "range 15 m": {
+   "forklift_dead_zone_8s": {
+    "collisions": 19,
+    "conflicts": 180,
+    "throughput": 0.7580693927451712
+   },
+   "worker_dead_zone_8s": {
+    "collisions": 20,
+    "conflicts": 180,
+    "throughput": 0.7621188058689115
+   },
+   "mec_dead_8s": {
+    "collisions": 36,
+    "conflicts": 180,
+    "throughput": 0.5849144950619061
+   },
+   "network_down_30s": {
+    "collisions": 2,
+    "conflicts": 180,
+    "throughput": 0.5710100972574694
+   }
+  },
+  "60 % loss + 15 m": {
+   "forklift_dead_zone_8s": {
+    "collisions": 24,
+    "conflicts": 180,
+    "throughput": 0.7591541323623998
+   },
+   "worker_dead_zone_8s": {
+    "collisions": 17,
+    "conflicts": 180,
+    "throughput": 0.7529148382189372
+   },
+   "mec_dead_8s": {
+    "collisions": 36,
+    "conflicts": 180,
+    "throughput": 0.5858278593050671
+   },
+   "network_down_30s": {
+    "collisions": 4,
+    "conflicts": 180,
+    "throughput": 0.5748016881728497
+   }
+  }
+ }
+}
