@@ -45,6 +45,9 @@ log "meepctl"
 command -v meepctl >/dev/null || { echo "meepctl was not installed"; exit 1; }
 meepctl config ip "$NODE_IP"
 meepctl config gitdir "$AE_DIR"
+# single-user lab host: no login. With auth on, the ingress checks every platform call against
+# https://$http_host/auth/v1/authenticate, which fails here (500 on scenario save / sandbox APIs).
+sed -i '/# enable authentication & authorization/{n;s/enabled: true/enabled: false/}' "$AE_DIR/.meepctl-repocfg.yaml"
 meepctl config
 
 log "deploy dependencies (registry, ingress, databases)"
