@@ -30,6 +30,7 @@
 #include <DW1000Ranging.h>
 #include <esp_now.h>
 #include "d2d.h"            // copy of firmware/common/d2d.h (kept identical by tests)
+#include "d2d_auth.h"       // HMAC + replay guard for D2D frames (copy of firmware/common/d2d_auth.h)
 #include <time.h>
 #include "uwb_position.h"   // copy of firmware/common/uwb_position.h (kept identical by tests)
 #include "device_policy.h"  // copy of firmware/common/device_policy.h (rate commands)
@@ -50,6 +51,26 @@ const uint16_t MY_SHORT = 0x1001;
 const uint8_t BCAST[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 d2d::Inbox inbox;
 d2d::Neighbours neighbours;
+d2d::ReplayGuard replay;
+// Pre-shared site key: provision a random 16+ byte key per site; the same key on every device.
+const uint8_t SITE_KEY[] = "CHANGE-ME-site-key-16+bytes";
+uint32_t d2dRejected = 0;
+
+int64_t epochMs();
+uint32_t nowSeq() {                     // 100 ms units since 2023-11 (NTP clock), 0 if not synced yet
+  int64_t ms = epochMs();
+  return ms > 1700000000000LL ? (uint32_t)(ms / 100 - 17000000000LL) : 0;
+}
+
+void sendFrame(d2d::Frame& f, int repeat = 1) {   // sign once, send `repeat` copies
+  strncpy(f.src, DEVICE_ID, sizeof(f.src) - 1);
+  uint32_t s = nowSeq();
+  static uint32_t lastSeq = 0;
+  f.seq = s > lastSeq ? s : lastSeq + 1;            // strictly increasing even within 100 ms
+  lastSeq = f.seq;
+  d2d::sign(f, SITE_KEY, sizeof(SITE_KEY) - 1);
+  for (int i = 0; i < repeat; i++) esp_now_send(BCAST, (const uint8_t*)&f, sizeof(f));
+}
 float lastFixX = 0, lastFixY = 0, lastFixT = -1;
 uint32_t lastRelayPost = 0, lastProbe = 0;
 float directT = -1e9f;                  // last MEC notification received directly (not relayed)
@@ -115,7 +136,7 @@ void sendState(float x, float y, float vx, float vy) {
   f.kind = d2d::WORKER;
   f.mecOk = mecHeard();
   f.x = x; f.y = y; f.vx = vx; f.vy = vy;
-  esp_now_send(BCAST, (const uint8_t*)&f, sizeof(f));
+  sendFrame(f);
 }
 
 // relay a forklift's state (it cannot reach the CSE) - at most 5 Hz
@@ -148,6 +169,12 @@ void handleD2D() {
   d2d::Frame f;
   while (inbox.pop(f)) {
     float t = nowS();
+    // authenticity first: wrong key / tampered / replayed / stale frames are dropped
+    uint32_t ns = nowSeq();
+    if (!d2d::tagOk(f, SITE_KEY, sizeof(SITE_KEY) - 1) || !replay.accept(f.src, f.seq, ns > 1 ? ns : 0)) {
+      d2dRejected++;
+      continue;
+    }
     if (f.type == d2d::STATE) {
       if (f.kind != d2d::FORKLIFT) continue;              // workers do not collide with workers
       peerGuard.onPeerState(t, f.shortAddr, f.x, f.y, f.vx, f.vy);
@@ -202,7 +229,7 @@ void handleAlert() {
     d2d::Frame r;
     if (!alert["rates"].isNull()) {
       r.type = d2d::HEARTBEAT;
-      for (int i = 0; i < d2d::RELAY_REPEAT; i++) esp_now_send(BCAST, (const uint8_t*)&r, sizeof(r));
+      sendFrame(r, d2d::RELAY_REPEAT);
     } else {
       const char* fk = alert["forklift"] | "";
       if (neighbours.offline(fk, t)) {
@@ -213,7 +240,7 @@ void handleAlert() {
         r.beacon = act["beacon"] | false;
         r.limit = act["speed_limit"].isNull() ? -1.0f : (float)act["speed_limit"];
         r.level = strcmp(alert["level"] | "SAFE", "DANGER") == 0 ? 2 : 1;
-        for (int i = 0; i < d2d::RELAY_REPEAT; i++) esp_now_send(BCAST, (const uint8_t*)&r, sizeof(r));
+        sendFrame(r, d2d::RELAY_REPEAT);
       }
     }
   }

@@ -16,8 +16,9 @@ AJ = os.environ.get("ARDUINOJSON_SRC", "/tmp/claude-0/arduinojson/src")
 
 def test_d2d_header_copies_in_sync():
     for sk in ("worker_tag", "forklift_module"):
-        assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", "d2d.h"),
-                           os.path.join(ROOT, "firmware", sk, "d2d.h"), shallow=False)
+        for h in ("d2d.h", "d2d_auth.h"):
+            assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", h),
+                               os.path.join(ROOT, "firmware", sk, h), shallow=False)
 
 
 @pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")

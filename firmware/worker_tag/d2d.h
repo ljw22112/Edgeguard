@@ -8,6 +8,7 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
+#include <stddef.h>
 
 namespace d2d {
 
@@ -29,6 +30,9 @@ struct Frame {
   float x = 0, y = 0, vx = 0, vy = 0;
   uint8_t clear = 0, vibrate = 0, beacon = 0, level = 0;   // ALERT
   float limit = -1.0f;                                     // ALERT: m/s, -1 = none
+  char src[12] = {0};         // who sent this frame (ALERT / HEARTBEAT: the relayer)
+  uint32_t seq = 0;           // sender clock, 100 ms units (d2d_auth.h)
+  uint8_t tag[8] = {0};       // HMAC-SHA256(site key, bytes before tag)[0..7] (d2d_auth.h)
 };
 #pragma pack(pop)
 static_assert(sizeof(Frame) <= 250, "ESP-NOW payload limit");
