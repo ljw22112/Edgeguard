@@ -53,7 +53,25 @@ TTL_S = {"alert": MEC.get("alert_ttl_s", 1.5), "control": MEC.get("control_ttl_s
          "risk": MEC.get("risk_ttl_s", 1.0), "nearmiss": 300.0}
 
 
+HA = dict(MEC.get("ha") or {})
+if os.environ.get("MEC_HA", "").lower() in ("1", "true", "yes"):   # compose `ha` profile
+    HA["enabled"] = True
+INSTANCE = os.environ.get("MEC_INSTANCE_ID") or HA.get("instance_id") or "mec"
+# a second instance needs its own notification URL and subscription name
+for _env, _key in (("MEC_NOTIFY_URL", "notify_url"), ("MEC_SUBSCRIPTION_RN", "subscription_rn")):
+    if os.environ.get(_env):
+        MEC[_key] = os.environ[_env]
+lease = None                                   # edgeguard.ha.Lease when HA is enabled
+
+
+def is_leader():
+    return lease is None or lease.leader
+
+
 def post(kind, con):
+    if not is_leader():                        # standby: keep state warm, write nothing
+        state["publisher"]["standby_skipped"] = state["publisher"].get("standby_skipped", 0) + 1
+        return
     try:
         outbox.put_nowait((PRIO[kind], next(_seq), time.monotonic(), kind, PATHS[kind], con))
     except queue.Full:
@@ -323,13 +341,17 @@ def control_rates():
         state["rates"] = {**rate_ctl.counts(), "commands": state["rates"]["commands"] + 1}
 
 
+hb_now = threading.Event()                     # set on HA take-over: send a heartbeat at once
+
+
 def heartbeat():
     """<ae>/control heartbeat every heartbeat_s (1 s) (edgeguard/device_policy.py): devices use it to
     tell 'MEC alive, alert over' from 'MEC silent' (forklifts then crawl), and it re-sends
     the full rate map so a lost rate command heals itself.  Written at lower priority than
     alerts, so a heartbeat that arrives also means no alert is waiting behind it."""
     while True:
-        time.sleep(RC.get("heartbeat_s", 1.0))
+        hb_now.wait(RC.get("heartbeat_s", 1.0))
+        hb_now.clear()
         with lock:
             rates = dict(rate_ctl.rate) if rate_ctl is not None else {}
         post("control", {"ts": now_ms(), "hb": True, "rates": rates})
@@ -468,7 +490,7 @@ def housekeeping():
     """Every 10 s: GC; every 60 s: make sure the CSE still notifies us (a CSE restored without its
     database, or a subscription removed after failed notifications, would silently stop the feed)."""
     cl = config.client(CFG)
-    last_sub = 0.0
+    last_sub = 0.0 if not HA.get("enabled") else -1e9   # HA: subscribe right away (second instance)
     state["subs"] = {"checks": 0, "repaired_errors": 0}
     while True:
         time.sleep(10.0)
@@ -481,8 +503,8 @@ def housekeeping():
         last_sub = time.monotonic()
         state["subs"]["checks"] += 1
         for path in list(PATHS["workers"].values()) + list(PATHS["forklifts"].values()) + list(PATHS["cameras"].values()):
-            try:
-                cl.create_subscription(path, "sub_mec", [MEC["notify_url"]])   # create or update nu
+            try:   # each HA instance owns its own subscription (rn), so neither overwrites the other's URL
+                cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
             except Exception as e:
                 state["subs"]["repaired_errors"] += 1
                 log.debug("subscription check %s: %s", path, e)
@@ -494,6 +516,21 @@ app = FastAPI(title="EdgeGuard MEC App")
 @app.on_event("startup")
 def _start_housekeeping():
     threading.Thread(target=housekeeping, daemon=True).start()
+
+
+@app.on_event("startup")
+def _start_ha():
+    global lease
+    if HA.get("enabled"):
+        from edgeguard.ha import Lease
+        cl = config.client(CFG)
+        try:
+            cl.create_container(PATHS["ae"], "mec_lease", mni=20)
+        except Exception as e:
+            log.warning("lease container: %s", e)
+        lease = Lease(cl, PATHS["mec_lease"], INSTANCE, HA.get("lease_s", 0.6), HA.get("renew_s", 0.2),
+                      on_change=lambda leader: leader and hb_now.set()).start()
+        log.info("HA enabled: instance %s", INSTANCE)
 
 
 @app.on_event("startup")
@@ -540,6 +577,7 @@ def health():
     # degraded: the CSE has not accepted a write for 5 s although we have been trying
     degraded = pub["failed"] > 0 and (pub["last_ok_age_s"] is None or pub["last_ok_age_s"] > 5)
     return {"ok": True, "degraded": degraded, "method": engine.method, "samples": state["rx"],
+            "ha": None if lease is None else {"instance": INSTANCE, "leader": lease.leader, **lease.stats},
             "publisher": pub, "input": state["input"], "tracks": len(engine.tracks), "gc": state["gc"],
             "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
             "network": state["network"], "location_fixes": state["location_fixes"], "mec": state["mec"],
@@ -615,6 +653,7 @@ def metrics():
             ("edgeguard_ingest_ms_median", ing[len(ing) // 2] if ing else 0),
             ("edgeguard_network_congested", int(state["network"]["congested"])),
             ("edgeguard_near_miss_total", nearmiss.total),
+            ("edgeguard_ha_leader", int(is_leader())),
             ("edgeguard_near_miss_unalerted", sum(1 for e in nearmiss.events if not e["alerted"]))]
     body = "".join(f"{k} {v}\n" for k, v in rows)
     return Response(body, media_type="text/plain; version=0.0.4")

@@ -26,6 +26,8 @@ x-mec-env: &mec-env
   EDGEGUARD_CONFIG: /app/config/site.yaml
   # second layer exists only while connected to an ETSI MEC Sandbox (tools/sandbox_probe.py)
   EDGEGUARD_OVERRIDES: /app/deploy/compose-overrides.yaml,/app/deploy/sandbox/overrides.yaml
+  # active-standby pair (edgeguard/ha.py): MEC_HA=1 docker compose --profile ha up -d
+  MEC_HA: ${MEC_HA:-0}
 
 services:
   mariadb:
@@ -81,6 +83,25 @@ services:
       - ./sandbox:/app/deploy/sandbox:ro
     ports:
       - "${MEC_PUBLISH:-9090}:9090"  # dashboard + /health
+    depends_on:
+      mobius:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- ha profile: standby MEC app; takes over <0.8 s after the leader stops (needs MEC_HA=1) ----
+  mec2:
+    <<: *mec-image
+    profiles: [ha]
+    environment:
+      <<: *mec-env
+      MEC_HA: "1"
+      MEC_INSTANCE_ID: mec2
+      MEC_NOTIFY_URL: http://mec2:9090/notify
+      MEC_SUBSCRIPTION_RN: sub_mec_mec2
+    volumes:
+      - ./sandbox:/app/deploy/sandbox:ro
+    ports:
+      - "${MEC2_PUBLISH:-9092}:9090"
     depends_on:
       mobius:
         condition: service_healthy

@@ -53,4 +53,5 @@ def paths(cfg):
         "alert": f"{ae}/alert",
         "control": f"{ae}/control",
         "nearmiss": f"{ae}/nearmiss",
+        "mec_lease": f"{ae}/mec_lease",
     }

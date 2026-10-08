@@ -35,7 +35,7 @@ def main():
             for dev, path in p[group].items():
                 c.delete(path)
                 c.delete(f"{p['ae']}/{dev}")
-        for leaf in ("risk", "alert", "control", "nearmiss"):
+        for leaf in ("risk", "alert", "control", "nearmiss", "mec_lease"):
             c.delete(f"{p['ae']}/{leaf}")
         c.delete(p["ae"])
         time.sleep(0.5)
@@ -51,6 +51,7 @@ def main():
             print("  ", path, "-> MEC")
     c.with_retry(c.create_container, p["ae"], "risk")
     c.with_retry(c.create_container, p["ae"], "nearmiss", mni=2000)   # measured close passes (edgeguard/nearmiss.py)
+    c.with_retry(c.create_container, p["ae"], "mec_lease", mni=20)    # active-standby lease (edgeguard/ha.py)
     c.with_retry(c.create_container, p["ae"], "alert")
     c.with_retry(c.create_subscription, p["alert"], "sub_devices", [cfg["device_sim"]["notify_url"]])
     # adaptive reporting rate commands (MEC -> devices), see edgeguard/rate_control.py

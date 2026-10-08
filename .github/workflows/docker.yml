@@ -44,6 +44,14 @@ jobs:
           docker compose logs mobius | grep "schema present"
           python3 deploy/check_demo.py deploy/out/devices.json http://localhost:9090/health
 
+      - name: HA fail-over (kill the leader MEC app, standby takes over)
+        env:
+          MEC_HA: "1"
+          COMPOSE_PROFILES: demo,ha
+        run: |
+          docker compose up -d --no-deps mec mec2
+          python3 deploy/check_ha.py
+
       - name: Logs on failure
         if: failure()
         run: |
