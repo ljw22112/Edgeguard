@@ -69,7 +69,11 @@ sudo systemctl restart docker containerd
 sudo setfacl --modify "user:$ME:rw" /run/containerd/containerd.sock
 
 log "Helm 3.7"
-sudo snap install helm --channel=3.7/stable --classic 2>/dev/null || sudo snap refresh helm --channel=3.7/stable --classic
+if ! helm version --short 2>/dev/null | grep -q '^v3\.7\.'; then       # the snap 3.7 channel is gone
+  curl -fsSL https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz | tar -xz -C /tmp
+  sudo install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+fi
+helm version --short
 
 log "waiting for the node to become Ready"
 for _ in $(seq 60); do
