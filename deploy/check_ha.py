@@ -90,6 +90,7 @@ def main():
            "max_heartbeat_gap_s": None if worst is None else round(worst, 2),
            "heartbeats": len(seen), "limit_s": GAP_LIMIT_S}
     print(json.dumps(out))
+    print("::notice title=check_ha::" + json.dumps(out))   # result readable via the annotations API
     if t_lead is None:
         fail("standby never took over")
     if worst is None or worst >= GAP_LIMIT_S:

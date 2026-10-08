@@ -52,6 +52,14 @@ jobs:
           docker compose up -d --no-deps mec mec2
           python3 deploy/check_ha.py
 
+      - name: Monitoring (Prometheus scrapes the MEC app, Grafana has the dashboard)
+        env:
+          COMPOSE_PROFILES: demo,ha,monitoring
+          MEC_HA: "1"
+        run: |
+          docker compose up -d --no-deps prometheus grafana
+          python3 deploy/check_monitoring.py
+
       - name: Logs on failure
         if: failure()
         run: |

@@ -107,6 +107,33 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ---- monitoring profile: Prometheus (http://localhost:9095) + Grafana (http://localhost:3000) ----
+  prometheus:
+    image: ${PROM_IMAGE:-prom/prometheus:v2.53.2}
+    profiles: [monitoring]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "${PROM_PUBLISH:-9095}:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:11.2.2}
+    profiles: [monitoring]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"            # site-local demo dashboard; set a password for real sites
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/edgeguard.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PUBLISH:-3000}:3000"
+    depends_on: [prometheus]
+    restart: unless-stopped
+
   # ---- demo profile: virtual devices and the oneM2M resource tree ----
   devices:
     <<: *mec-image

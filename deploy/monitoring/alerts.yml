@@ -1,0 +1,23 @@
+# Operator alerts (safety alerts go to the devices; these are about the service itself)
+groups:
+  - name: edgeguard
+    rules:
+      - alert: CSEWritesFailing
+        expr: increase(edgeguard_publish_failed_total[30s]) > 0 and increase(edgeguard_publish_ok_total[30s]) == 0
+        for: 5s
+        annotations: {summary: "MEC app cannot write to the CSE: devices fall back to local rules"}
+      - alert: NoDeviceSamples
+        expr: sum(rate(edgeguard_samples_total[30s])) == 0
+        for: 30s
+        annotations: {summary: "no device samples reach the MEC app (subscriptions / network)"}
+      - alert: NoLeader
+        expr: sum(edgeguard_ha_leader) < 1
+        for: 3s
+        annotations: {summary: "no MEC app instance is leader"}
+      - alert: UnalertedNearMiss
+        expr: increase(edgeguard_near_miss_unalerted[10m]) > 0
+        annotations: {summary: "a close pass happened without an alert first - check /nearmiss hotspots"}
+      - alert: OutboxBacklog
+        expr: edgeguard_outbox_backlog > 50
+        for: 10s
+        annotations: {summary: "CSE slower than the MEC app's output"}
