@@ -46,7 +46,7 @@ Hyper-V가 꺼져 있었다면 켜고 끝나므로, **재부팅 후 같은 명�
 
 ```
 cd $HOME\Edgeguard\deploy\sandbox-host
-scp install-runtime.sh install-advantedge.sh <사용자>@192.168.200.10:
+scp install-runtime.sh install-advantedge.sh fix-images.sh <사용자>@192.168.200.10:
 ssh <사용자>@192.168.200.10
 ```
 VM 안에서:

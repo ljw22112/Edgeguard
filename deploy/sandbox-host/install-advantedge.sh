@@ -37,6 +37,9 @@ log "AdvantEDGE $AE_TAG"
 [ -d "$AE_DIR/.git" ] || git clone https://github.com/InterDigitalInc/AdvantEDGE.git "$AE_DIR"
 git -C "$AE_DIR" fetch --tags -q && git -C "$AE_DIR" checkout -q "$AE_TAG"
 
+log "patch image sources that disappeared since v1.9.2 (fix-images.sh)"
+[ -f "$(dirname "$0")/fix-images.sh" ] && bash "$(dirname "$0")/fix-images.sh" --patch-only
+
 log "meepctl"
 (cd "$AE_DIR/go-apps/meepctl" && ./install.sh) || true      # its lint step fails without golangci-lint; the build still happens
 command -v meepctl >/dev/null || { echo "meepctl was not installed"; exit 1; }
