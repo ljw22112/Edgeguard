@@ -1,7 +1,21 @@
-# Status (updated 2026-10-08, v0.9)
+# Status (updated 2026-10-08, v1.0)
 
 The final presentation is deliberately not being prepared yet; development comes first.
 Everything below is in the README ("v0.7: 신뢰성 · 규모 확장", "해커톤 MEC Sandbox 정렬").
+
+## Done in v1.0 (README "v1.0: 현장 운영 기능")
+- Blind corners: config sitemap.obstacles, line-of-sight per pair (edgeguard/sitemap.py); occluded pairs get
+  r_safe +0.5 m and debounce 1.  Blind-corner collisions 17 -> 11 of 80 (false alarms 39 -> 57 there only);
+  a +1 s time margin was worse (22) and rejected.  results/occlusion_eval.json.
+- D2D auth: HMAC-SHA256 8-byte tag + per-sender seq (fresh window 50, replay drop), firmware/common/d2d_auth.h,
+  Python reference edgeguard/d2d_auth.py, byte-exact cross test.  Pre-shared site key.
+- MEC HA: active-standby via lease in <AE>/mec_lease (renew 0.2 s, take-over after 0.6 s, immediate heartbeat),
+  compose profile `ha` (MEC_HA=1, mec2 on 9092), CI kills the leader (deploy/check_ha.py).
+- Monitoring: compose profile `monitoring` (Prometheus 9095, Grafana 3000, provisioned dashboard, 5 operator
+  alert rules), CI check deploy/check_monitoring.py.
+- Near-miss analytics: measured close passes < 2 m, alerted-before flag, 1 m heat map, hotspots with advice,
+  <AE>/nearmiss, /nearmiss, dashboard overlay, safety report section.
+- Fixed: OneM2MClient.with_retry dropped keyword args (setup crashed on mni=, stack CI was red for one commit).
 
 ## Done in v0.9
 - Cooperative D2D (the "cars in a tunnel" idea): ESP-NOW state broadcast {x,y,vx,vy,mecOk}, local 2-D
