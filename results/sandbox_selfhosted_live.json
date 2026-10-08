@@ -1,0 +1,30 @@
+{
+  "what": "EdgeGuard connected to a self-hosted MEC Sandbox (AdvantEDGE v1.9.2, the open-source base of the ETSI MEC Sandbox) running our own warehouse scenario",
+  "date": "2026-10-08",
+  "host": "team desktop (Ryzen 7 9800X3D, 32 GB, Windows 11 Enterprise LTSC): Hyper-V VM Ubuntu 22.04, 6 vCPU / 16 GB, Kubernetes 1.27; EdgeGuard stack on Docker Desktop of the same PC",
+  "scenario": "scenarios/edgeguard-warehouse.json (2 forklifts, 4 workers, 2 private-5G cells, MEC edge); MOVEMENT, MOBILITY, POAS-IN-RANGE automation on",
+  "path": "AdvantEDGE Location API (/edgeguard/location/v2) -> MEC-IPE -> Mobius IN-CSE resources -> subscription -> EdgeGuard MEC app -> alerts",
+  "install_notes": [
+    "k8s v1.27 apt repo key expired -> repository trusted explicitly",
+    "Helm 3.7 snap channel gone -> binary from get.helm.sh",
+    "Debian 11 left the mirrors -> auth-svc / virt-engine / tc-sidecar images built on debian:12-slim",
+    "Bitnami images moved -> bitnamilegacy plain tags, minideb bookworm; kube-state-metrics from registry.k8s.io",
+    "platform auth subrequest returned 500 -> auth disabled (single-team lab host)",
+    "scenario needed deployment.connectivity / d2d for the 1.9 validator"
+  ],
+  "report_after_2_min": {
+    "ipe_ue_containers": 6,
+    "mec_ipe_subscriptions": 6,
+    "mec_location_fixes": 1098,
+    "fixes_per_s": 6.0,
+    "unknown_ue": 0,
+    "live_tracks": 6,
+    "pairs_assessed": 5,
+    "alerts_sent": 25,
+    "connected": true
+  },
+  "notes": [
+    "This run classified forklift_02 (10.100.0.12) as a worker: one 4 s speed sample caught it slowing (0.75 m/s), so 5 pairs instead of 8. sandbox_probe now classifies by peak speed over 12 s (verified against the scenario replay: 2 forklifts, 4 workers) and accepts --forklifts.",
+    "No RNIS cell load in this scenario run (ipe_cell_containers 0) - the congestion margin stayed off."
+  ]
+}

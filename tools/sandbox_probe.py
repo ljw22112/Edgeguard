@@ -97,6 +97,18 @@ def latlon(u):
     return (float(lat), float(lon)) if lat is not None and lon is not None else None
 
 
+def classify_series(snaps, dt, vehicle_mps, forced=()):
+    """address -> (peak speed m/s, kind) over consecutive snapshots taken dt apart.
+    The peak, not one interval, decides: vehicles slow down at turns and stops."""
+    peak = {}
+    for s1, s2 in zip(snaps, snaps[1:]):
+        k, origin = classify(s1, s2, dt, vehicle_mps)
+        for addr, (v, _) in k.items():
+            peak[addr] = max(peak.get(addr, 0.0), v)
+    out = {a: (v, "forklift" if (v >= vehicle_mps or a in forced) else "worker") for a, v in peak.items()}
+    return out, classify(snaps[0], snaps[-1], dt, vehicle_mps)[1]
+
+
 def classify(snap1, snap2, dt, vehicle_mps):
     """address -> (speed m/s, kind) from two snapshots."""
     pts = [p for p in (latlon(u) for u in snap1.values()) if p]
@@ -120,7 +132,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("url", help="Sandbox base URL from the dashboard, e.g. https://try-mec.etsi.org/sbxXXXX/mep1")
     ap.add_argument("--out", default=os.path.join(ROOT, "deploy", "sandbox", "overrides.yaml"))
-    ap.add_argument("--wait", type=float, default=4.0, help="seconds between the two snapshots")
+    ap.add_argument("--wait", type=float, default=12.0, help="seconds to observe the UEs (peak speed decides)")
+    ap.add_argument("--interval", type=float, default=2.0, help="seconds between snapshots")
+    ap.add_argument("--forklifts", default="", help="comma-separated UE addresses that are vehicles regardless of speed")
     ap.add_argument("--vehicle-mps", type=float, default=3.0, help="faster than this = vehicle (forklift)")
     ap.add_argument("--max-ues", type=int, default=40, help="map at most this many UEs")
     a = ap.parse_args()
@@ -133,9 +147,13 @@ def main():
     if not snap1:
         raise SystemExit("The Location API answered but reports no UEs. Deploy a network scenario in the "
                          "Sandbox dashboard and start UE movement, then run this again.")
-    time.sleep(a.wait)
-    snap2 = {u.get("address"): u for u in all_users(s, root) if u.get("address")}
-    kinds, (lat0, lon0) = classify(snap1, snap2, a.wait, a.vehicle_mps)
+    snaps = [snap1]
+    for _ in range(max(1, round(a.wait / a.interval))):
+        time.sleep(a.interval)
+        snaps.append({u.get("address"): u for u in all_users(s, root) if u.get("address")})
+    snap2 = snaps[-1]
+    forced = {x.strip() for x in a.forklifts.split(",") if x.strip()}
+    kinds, (lat0, lon0) = classify_series(snaps, a.interval, a.vehicle_mps, forced)
     rnis_api = None
     try:
         b2, rnis_api, body = find_api(s, base, RNIS_APIS, ("queries/layer2_meas",))
