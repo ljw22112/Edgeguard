@@ -45,12 +45,12 @@ cse = config.client(CFG)
 # priority outbox: alerts (0) are written before control (1) and risk summaries (2)
 outbox: "queue.PriorityQueue[tuple[int, int, float, str, str, dict]]" = queue.PriorityQueue(maxsize=1000)
 _seq = itertools.count()
-PRIO = {"alert": 0, "control": 1, "risk": 2}
+PRIO = {"alert": 0, "control": 1, "risk": 2, "nearmiss": 3}
 # Stale messages are worse than none while the CSE is slow or recovering: a heartbeat delivered
 # late tells a forklift "MEC alive" when it is not, and an old alert is superseded by the 1 s
 # refresh anyway.  Messages older than this when their turn comes are dropped.
 TTL_S = {"alert": MEC.get("alert_ttl_s", 1.5), "control": MEC.get("control_ttl_s", 1.0),
-         "risk": MEC.get("risk_ttl_s", 1.0)}
+         "risk": MEC.get("risk_ttl_s", 1.0), "nearmiss": 300.0}
 
 
 def post(kind, con):
@@ -380,12 +380,29 @@ def handle_camera(p: dict, rx: int):
         evaluate_and_alert(p.get("ts"), rx)
 
 
+from edgeguard.nearmiss import NearMissTracker   # noqa: E402
+NM = CFG.get("nearmiss") or {}
+nearmiss = NearMissTracker(threshold_m=NM.get("threshold_m", 2.0), cell_m=NM.get("cell_m", 1.0))
+
+
+def record_near_miss(ev):
+    if ev:
+        post("nearmiss", ev)
+        to_cloud("nearmiss", ev)
+        log.info("NEAR MISS %s-%s %.2f m at (%.1f, %.1f)%s", ev["worker"], ev["forklift"], ev["d_min"],
+                 ev["x"], ev["y"], "" if ev["alerted"] else " - no alert before")
+
+
 def evaluate_and_alert(src_ts, rx, only=None):
     """Assess the pairs touched by the new sample and emit alerts; caller holds `lock`."""
     risks = engine.evaluate(only=only)
     now = time.time()
     for r in risks:
         key = (r.worker, r.forklift)
+        w_t, f_t = engine.tracks.get(r.worker), engine.tracks.get(r.forklift)
+        if w_t is not None and f_t is not None and w_t.x is not None and f_t.x is not None:
+            mid = ((w_t.pos[0] + f_t.pos[0]) / 2, (w_t.pos[1] + f_t.pos[1]) / 2)
+            record_near_miss(nearmiss.observe(key, r.range, mid, now, f_t.speed, getattr(r, "occluded", False), r.level))
         st = state["pairs"].setdefault(key, {"alert": AlertState()})
         w_tr, f_tr = engine.tracks.get(r.worker), engine.tracks.get(r.forklift)
         ev, actions = decide(st["alert"], r, w_tr, f_tr, engine.cfg, now, state["network"]["congested"])
@@ -439,6 +456,11 @@ def gc_once(now=None):
                     if isinstance(d, dict):
                         d.pop(k, None)
         state["gc"]["tracks_removed"] += len(gone)
+        live = {(w, f) for w, t in engine.tracks.items() if t.kind == "worker"
+                for f, u in engine.tracks.items() if u.kind == "forklift"
+                and now - getattr(t, "last_seen", now) <= 2.0 and now - getattr(u, "last_seen", now) <= 2.0}
+        for ev in nearmiss.sweep(live):
+            record_near_miss(ev)
     return gone
 
 
@@ -570,6 +592,13 @@ def snapshot():
                 "stats": stats, "server_ms": now_ms()}
 
 
+@app.get("/nearmiss")
+def near_misses():
+    """Measured close passes: heat-map cells, hotspots with a suggested fix, latest events."""
+    with lock:
+        return nearmiss.summary()
+
+
 @app.get("/metrics")
 def metrics():
     """Prometheus text format (scrape with Prometheus / Grafana)."""
@@ -584,7 +613,9 @@ def metrics():
             ("edgeguard_input_clock_skew_total", state["input"]["clock_skew"]),
             ("edgeguard_mec_location_fixes_total", state["location_fixes"]),
             ("edgeguard_ingest_ms_median", ing[len(ing) // 2] if ing else 0),
-            ("edgeguard_network_congested", int(state["network"]["congested"]))]
+            ("edgeguard_network_congested", int(state["network"]["congested"])),
+            ("edgeguard_near_miss_total", nearmiss.total),
+            ("edgeguard_near_miss_unalerted", sum(1 for e in nearmiss.events if not e["alerted"]))]
     body = "".join(f"{k} {v}\n" for k, v in rows)
     return Response(body, media_type="text/plain; version=0.0.4")
 

@@ -35,7 +35,7 @@ def main():
             for dev, path in p[group].items():
                 c.delete(path)
                 c.delete(f"{p['ae']}/{dev}")
-        for leaf in ("risk", "alert", "control"):
+        for leaf in ("risk", "alert", "control", "nearmiss"):
             c.delete(f"{p['ae']}/{leaf}")
         c.delete(p["ae"])
         time.sleep(0.5)
@@ -50,6 +50,7 @@ def main():
             c.with_retry(c.create_subscription, path, "sub_mec", [cfg["mec"]["notify_url"]])
             print("  ", path, "-> MEC")
     c.with_retry(c.create_container, p["ae"], "risk")
+    c.with_retry(c.create_container, p["ae"], "nearmiss", mni=2000)   # measured close passes (edgeguard/nearmiss.py)
     c.with_retry(c.create_container, p["ae"], "alert")
     c.with_retry(c.create_subscription, p["alert"], "sub_devices", [cfg["device_sim"]["notify_url"]])
     # adaptive reporting rate commands (MEC -> devices), see edgeguard/rate_control.py
@@ -81,7 +82,7 @@ def apply_acps(c, cfg, p, sec):
             c.set_acpi(path, f"{p['ae']}/acp_{dev}", acp.get("ri"))
             print(f"   ACP {path}: write = {o}, {mec}")
     readers = [o for o in orig.values()]
-    for leaf in ("risk", "alert", "control"):
+    for leaf in ("risk", "alert", "control", "nearmiss"):
         acp = c.with_retry(c.create_acp, p["ae"], f"acp_{leaf}",
                            [([mec], ALL_OPS)] + ([(readers, RETRIEVE | DISCOVERY)] if readers else []), [mec])
         c.set_acpi(p[leaf], f"{p['ae']}/acp_{leaf}", acp.get("ri"))

@@ -46,7 +46,7 @@ class CloudSync:
     def _send(self, kind, con):
         if not self._ready:
             self.c.create_ae(self.ae)
-            for cnt in ("risk", "alert"):
+            for cnt in ("risk", "alert", "nearmiss"):
                 self.c.create_container(self.ae, cnt, mni=10000)
             self._ready = True
         self.c.create_cin(f"{self.ae}/{kind}", con)

@@ -94,6 +94,27 @@ def main():
     c = config.client(cfg)
     p = config.paths(cfg)
     alerts = fetch_alerts(c, p["alert"])
+    try:                                    # measured close passes (edgeguard/nearmiss.py), newer CSEs only
+        nms = fetch_alerts(c, p["nearmiss"])
+    except Exception:
+        nms = []
+    from edgeguard.nearmiss import NearMissTracker
+    nmt = NearMissTracker()
+    for e in nms:                           # rebuild the hotspot bookkeeping from the stored events
+        nmt.events.appendleft(e)
+        nmt.total += 1
+        cell = (int(e["x"] // 1), int(e["y"] // 1))
+        nmt.cells[cell] += 1
+        info = nmt.cell_info[cell]
+        info["occluded"] += bool(e.get("occluded"))
+        info["unalerted"] += not e.get("alerted")
+        info["speed"] += e.get("forklift_speed", 0.0)
+    nm_hot = nmt.hotspots()
+    nm_unalerted = sum(1 for e in nms if not e.get("alerted"))
+    ADVICE_KO = {"blind_corner": "사각 코너 — 랙을 사이트 지도에 등록하거나 반사경 설치",
+                 "speed": "지게차 통행이 빠름 — 속도 제한 구역 지정",
+                 "unalerted": "경보 없이 근접 — 태그 착용·앵커 배치 점검",
+                 "crossing": "잦은 교차 지점 — 보행 통로 분리 또는 횡단 표시"}
     raises = [x for x in alerts if x.get("event") == "raise"]
     events = [x for x in raises if x.get("level") in ("WARNING", "DANGER")]
 
@@ -151,6 +172,8 @@ img{{max-width:100%;border:1px solid {GRID};border-radius:10px}}
 <div class="k"><b>{by_level.get('WARNING', 0)}</b><span>WARNING · 작업자 진동</span></div>
 <div class="k"><b>{untagged}</b><span>태그 없이 카메라로 감지</span></div>
 <div class="k"><b>{(sum(slow) / len(slow)) if slow else 0:.2f}</b><span>DANGER 시 평균 속도 명령 (×)</span></div>
+<div class="k"><b>{len(nms)}</b><span>실측 근접 통과 (2 m 이내)</span></div>
+<div class="k"><b>{nm_unalerted}</b><span>그중 사전 경보 없음</span></div>
 </div>
 <h2>위험 구역 히트맵</h2>
 {'<img alt="near-miss heatmap" src="data:image/png;base64,' + img + '">' if img else '<p class="note">경보가 없습니다.</p>'}
@@ -159,6 +182,9 @@ img{{max-width:100%;border:1px solid {GRID};border-radius:10px}}
 <div><h2>경보가 많은 구역 (5 m 단위)</h2><table><tr><th>구역</th><th class=n>경보</th></tr>{hot}</table></div>
 <div><h2>경보가 많은 작업자–지게차 쌍</h2><table><tr><th>작업자</th><th>지게차</th><th class=n>경보</th></tr>{rows}</table></div>
 </div>
+<h2>실측 근접 통과 핫스팟 (1 m 단위)</h2>
+<p class="note">경보(예측)와 별개로, 지게차가 움직이는 중에 실제로 2 m 이내까지 다가간 순간을 셉니다. 사전 경보가 없었던 근접은 감지 공백입니다.</p>
+<table><tr><th>위치</th><th class=n>건수</th><th>제안</th></tr>{''.join(f"<tr><td>x {h['x']}–{h['x'] + 1} m, y {h['y']}–{h['y'] + 1} m</td><td class=n>{h['count']}</td><td>{ADVICE_KO[h['advice']]}</td></tr>" for h in nm_hot) or '<tr><td colspan=3 class=note>기록 없음</td></tr>'}</table>
 <h2>개선 제안</h2>
 <ul>
 {''.join(f'<li>x {x}–{x + 5} m, y {y}–{y + 5} m 구역: 경보 {n}건. 교차로 반사경·바닥 표시, 지게차 서행 구간 지정을 검토하세요.</li>' for (x, y), n in cells.most_common(2)) or '<li>특이 구역이 없습니다.</li>'}

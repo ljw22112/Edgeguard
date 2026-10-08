@@ -52,4 +52,5 @@ def paths(cfg):
         "risk": f"{ae}/risk",
         "alert": f"{ae}/alert",
         "control": f"{ae}/control",
+        "nearmiss": f"{ae}/nearmiss",
     }
