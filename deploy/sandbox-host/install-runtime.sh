@@ -43,8 +43,9 @@ sudo systemctl restart containerd
 sudo setfacl --modify "user:$ME:rw" /run/containerd/containerd.sock
 
 log "Kubernetes 1.27 (kubeadm, single node)"
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /" \
+# v1.27 is end-of-life and its repository signing key has expired (EXPKEYSIG), so apt rejects it.
+# The packages still come over HTTPS from the official pkgs.k8s.io CDN; trust that repository explicitly.
+echo "deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /" \
   | sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
 sudo apt-get update -q
 sudo apt-get install -y -q kubelet kubeadm kubectl kubernetes-cni
