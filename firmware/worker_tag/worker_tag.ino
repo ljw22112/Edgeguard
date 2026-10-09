@@ -34,6 +34,7 @@
 #include <time.h>
 #include "uwb_position.h"   // copy of firmware/common/uwb_position.h (kept identical by tests)
 #include "device_policy.h"  // copy of firmware/common/device_policy.h (rate commands)
+#include "worker_cue.h"     // WAIT / GO cue (copy of firmware/common/worker_cue.h)
 
 // ---------- settings ----------
 const char* WIFI_SSID = "YOUR_WIFI";
@@ -76,7 +77,8 @@ uint32_t lastRelayPost = 0, lastProbe = 0;
 float directT = -1e9f;                  // last MEC notification received directly (not relayed)
 
 WebServer server(80);
-uint32_t vibrateUntil = 0;
+uint32_t vibrateUntil = 0;           // local-rule buzz (MEC silent)
+cue::WaitCue waitCue;                // WAIT until GO for MEC alerts (worker_cue.h)
 uint32_t lastPublish = 0;
 uint32_t rqi = 0;
 
@@ -182,7 +184,8 @@ void handleD2D() {
       if (!f.mecOk && mecHeard()) relayUp(f);
     } else if (f.type == d2d::ALERT && d2d::idIs(f, DEVICE_ID)) {   // relayed MEC alert for me
       peerGuard.onHeartbeat(t);
-      if (f.vibrate) vibrateUntil = millis() + (f.level >= 2 ? 1500 : 600);
+      // relay frames carry clear (clear / release) or an active alert (raise / refresh / wait)
+      waitCue.onAlert(t, f.clear ? "clear" : (f.vibrate ? "raise" : "wait"), f.vibrate, f.level >= 2);
     } else if (f.type == d2d::HEARTBEAT && !mecHeard()) {
       peerGuard.onHeartbeat(t);
     }
@@ -252,9 +255,10 @@ void handleAlert() {
   if (alert.isNull() || String((const char*)alert["worker"]) != DEVICE_ID) return;
   bool vibrate = alert["actions"][DEVICE_ID]["vibrate"] | false;
   const char* level = alert["level"] | "SAFE";
-  // DANGER: continuous 1.5 s, WARNING: 0.6 s pulse
-  vibrateUntil = vibrate ? millis() + (strcmp(level, "DANGER") == 0 ? 1500 : 600) : 0;
-  Serial.printf("alert %s vibrate=%d\n", level, vibrate);
+  const char* ev = alert["event"] | "";
+  // WAIT until GO: burst (DANGER 1.5 s, WARNING 0.6 s), red LED + 1 s pulses, two pulses on GO
+  waitCue.onAlert(nowS(), ev, vibrate, strcmp(level, "DANGER") == 0);
+  Serial.printf("alert %s %s vibrate=%d wait=%d\n", ev, level, vibrate, waitCue.waiting);
 }
 
 void setup() {
@@ -282,9 +286,10 @@ void loop() {
   server.handleClient();
   handleD2D();
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
-  bool on = millis() < vibrateUntil;
-  digitalWrite(MOTOR_PIN, on);
-  digitalWrite(LED_PIN, on);
+  float tc = nowS();
+  bool local = millis() < vibrateUntil;
+  digitalWrite(MOTOR_PIN, local || waitCue.motor(tc));
+  digitalWrite(LED_PIN, local || waitCue.led(tc));
   if (millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
     lastPublish = millis();
     float x, y;

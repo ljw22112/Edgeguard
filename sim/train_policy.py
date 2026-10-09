@@ -83,6 +83,13 @@ def episodes_for(seed, per_gen, randomize=True):
 
 
 METHOD = "guidance_ctrv"                        # predictor used inside the loop (--method)
+W_WORKER = 0.0                                  # reward weight of worker seconds lost (--w-worker)
+
+
+def _init_worker(ux, comply):
+    """Pool initializer: worker-tag UX of the simulated people (sim/online_sim.Mover)."""
+    from sim.online_sim import Mover
+    Mover.UX, Mover.COMPLY = ux, comply
 
 
 def _evaluate(args):
@@ -116,7 +123,7 @@ def cem(pool, penalty, iters, pop, per_gen, seed, log, w_fp=0.5):
         eps = episodes_for(seed * 1000 + it, per_gen)
         zs = [mu.copy()] + [np.clip(mu + sd * rng.standard_normal(len(NAMES)), 0, 1) for _ in range(pop - 1)]
         batch = evaluate(pool, zs, eps)
-        scores = [score(b, collision_penalty=penalty, w_fp=w_fp) for b in batch]
+        scores = [score(b, collision_penalty=penalty, w_fp=w_fp, w_worker=W_WORKER) for b in batch]
         rewards = np.array([s["reward"] for s in scores])
         elite = np.argsort(rewards)[-max(2, pop // 4):]
         mu = 0.3 * mu + 0.7 * np.mean([zs[i] for i in elite], axis=0)
@@ -169,14 +176,17 @@ def main():
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--method", default="guidance_ctrv", help="guidance_ctrv | guidance_lstm")
     ap.add_argument("--no-write", action="store_true", help="do not overwrite config/policy_trained.yaml")
+    ap.add_argument("--ux", default="buzz", help="worker tag UX: buzz (stop ~2 s) | hold (WAIT until GO)")
+    ap.add_argument("--comply", type=float, default=1.0, help="share of workers who obey a hold")
+    ap.add_argument("--w-worker", type=float, default=0.0, help="reward weight of worker seconds lost")
     a = ap.parse_args()
-    global METHOD
-    METHOD = a.method
+    global METHOD, W_WORKER
+    METHOD, W_WORKER = a.method, a.w_worker
 
     t0 = time.time()
     log, cands = [], {}
     val_eps = episodes_for(999_999, a.val_per_gen)                    # held out, randomised conditions
-    with Pool(max(1, os.cpu_count() or 1)) as pool:
+    with Pool(max(1, os.cpu_count() or 1), initializer=_init_worker, initargs=(a.ux, a.comply)) as pool:
         default_z = from_cfg(RiskConfig())
         for C in a.penalties:
             for wfp in a.w_fp:
@@ -200,7 +210,7 @@ def main():
         _, params = to_cfg(z)
         rows.append({"policy": n, "params": params, **{k: s[k] for k in
                      ("precision", "recall", "f_beta", "throughput", "collisions", "conflicts",
-                      "episodes", "false_alarms", "lost_s_mean")},
+                      "episodes", "false_alarms", "lost_s_mean", "worker_wait_s_mean")},
                      "f1": s1["f_beta"], "f3": s3["f_beta"]})
     chosen = select(rows)
     print("\nvalidation (held-out, randomised conditions)")

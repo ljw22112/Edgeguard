@@ -1,0 +1,88 @@
+{
+ "per_gen": 100,
+ "seeds": [
+  999999,
+  424242
+ ],
+ "variants": {
+  "v1.0 buzz": {
+   "collisions": 145,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.7729,
+   "lost_s_mean": 2.7586,
+   "worker_wait_s_mean": 2.074,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  },
+  "hold": {
+   "collisions": 59,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8044,
+   "lost_s_mean": 2.3677,
+   "worker_wait_s_mean": 2.9669,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  },
+  "hold + keep-alive": {
+   "collisions": 19,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8201,
+   "lost_s_mean": 2.1669,
+   "worker_wait_s_mean": 3.3521,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  },
+  "v1.1 hold + keep-alive + GO check": {
+   "collisions": 11,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8167,
+   "lost_s_mean": 2.2047,
+   "worker_wait_s_mean": 3.5106,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  }
+ },
+ "compliance": {
+  "0.85": {
+   "collisions": 22,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8094,
+   "lost_s_mean": 2.2989,
+   "worker_wait_s_mean": 3.323,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  },
+  "0.7": {
+   "collisions": 31,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8014,
+   "lost_s_mean": 2.3927,
+   "worker_wait_s_mean": 3.1204,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  },
+  "0.5": {
+   "collisions": 44,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.7928,
+   "lost_s_mean": 2.5063,
+   "worker_wait_s_mean": 2.8953,
+   "false_alarms": 622,
+   "recall": 1.0,
+   "precision": 0.6599
+  }
+ }
+}

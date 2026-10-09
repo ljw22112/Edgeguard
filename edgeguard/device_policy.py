@@ -163,6 +163,8 @@ class ForkliftLimit:
 
     def on_alert(self, t, event, limit):
         self.hb_t = t                                  # any MEC message proves it is alive
+        if event in ("wait", "release"):               # worker-only cues: the speed limit stays
+            return
         self.limit, self.limit_t = (None if event == "clear" else limit), t
 
     def on_heartbeat(self, t):

@@ -19,6 +19,8 @@ def test_d2d_header_copies_in_sync():
         for h in ("d2d.h", "d2d_auth.h"):
             assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", h),
                                os.path.join(ROOT, "firmware", sk, h), shallow=False)
+    assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", "worker_cue.h"),
+                       os.path.join(ROOT, "firmware", "worker_tag", "worker_cue.h"), shallow=False)
 
 
 @pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")

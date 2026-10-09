@@ -1,0 +1,122 @@
+{
+ "episodes": 330,
+ "ux": "hold",
+ "comply": 1.0,
+ "results": {
+  "normal": {
+   "coop": {
+    "reward": -2.4749123358823435,
+    "precision": 0.6382978723404256,
+    "recall": 1.0,
+    "f_beta": 0.8982035928143712,
+    "beta": 2.0,
+    "throughput": 0.8015629070792059,
+    "collisions": 0,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 102,
+    "lost_s_mean": 2.3203668813368896,
+    "worker_wait_s_mean": 3.7331169834823377
+   }
+  },
+  "mec_restart": {
+   "coop": {
+    "reward": -4.530898006452772,
+    "precision": 0.6433823529411765,
+    "recall": 0.9722222222222222,
+    "f_beta": 0.8820564516129032,
+    "beta": 2.0,
+    "throughput": 0.7725052665686846,
+    "collisions": 11,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 97,
+    "lost_s_mean": 2.717261642816416,
+    "worker_wait_s_mean": 3.2619159156077067
+   }
+  },
+  "restart_loss20": {
+   "coop": {
+    "reward": -5.955083163618657,
+    "precision": 0.6654135338345865,
+    "recall": 0.9833333333333333,
+    "f_beta": 0.8975659229208924,
+    "beta": 2.0,
+    "throughput": 0.7553834763674624,
+    "collisions": 19,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 89,
+    "lost_s_mean": 2.9414467999822973,
+    "worker_wait_s_mean": 3.091160056790012
+   }
+  },
+  "mec_dead_8s": {
+   "coop": {
+    "reward": -6.632248691909321,
+    "precision": 0.620253164556962,
+    "recall": 0.8166666666666667,
+    "f_beta": 0.768025078369906,
+    "beta": 2.0,
+    "throughput": 0.5949150630732243,
+    "collisions": 11,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 90,
+    "lost_s_mean": 4.829218388879022,
+    "worker_wait_s_mean": 3.2638371619617375
+   }
+  },
+  "network_down_30s": {
+   "coop": {
+    "reward": -5.476294817041298,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f_beta": 0.0,
+    "beta": 2.0,
+    "throughput": 0.5743724581227333,
+    "collisions": 2,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 0,
+    "lost_s_mean": 5.173264514010995,
+    "worker_wait_s_mean": 2.411200886024922
+   }
+  },
+  "forklift_dead_zone_8s": {
+   "coop": {
+    "reward": -2.6013683569107138,
+    "precision": 0.6405693950177936,
+    "recall": 1.0,
+    "f_beta": 0.8991008991008992,
+    "beta": 2.0,
+    "throughput": 0.8041335664955196,
+    "collisions": 1,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 101,
+    "lost_s_mean": 2.296822902365258,
+    "worker_wait_s_mean": 3.637284097292177
+   }
+  },
+  "worker_dead_zone_8s": {
+   "coop": {
+    "reward": -2.615417528370373,
+    "precision": 0.6428571428571429,
+    "recall": 1.0,
+    "f_beta": 0.9,
+    "beta": 2.0,
+    "throughput": 0.803882243754545,
+    "collisions": 1,
+    "conflicts": 180,
+    "episodes": 330,
+    "false_alarms": 100,
+    "lost_s_mean": 2.312387225340071,
+    "worker_wait_s_mean": 3.6304718215539054
+   }
+  }
+ },
+ "rejected": {
+  "early_lift_2.2s": "normal 24 / restart 32 / restart+loss 52 collisions of 180 (legacy 19 / 30 / 43) - evaluated before ALERT_STALE_S went back to 5 s"
+ }
+}

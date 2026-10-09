@@ -52,8 +52,12 @@ class AlertHandler(BaseHTTPRequestHandler):
         lat_s = f"{lat} ms" if lat is not None else "?"
         if QUIET:
             return
+        if a["event"] in ("wait", "release"):            # worker-only WAIT keep-alive / GO
+            if a["event"] == "release":
+                print(f"  [{w}] GO (forklift past)   (e2e {lat_s})")
+            return
         if a["event"] == "clear":
-            print(f"  [{w}] stop vibrating   [{f}] resume normal speed   (e2e {lat_s})")
+            print(f"  [{w}] GO   [{f}] resume normal speed   (e2e {lat_s})")
         else:
             who = f"[{w}] VIBRATE ({a['level']})" if acts.get(w, {}).get("vibrate") else f"[{w}] no tag ({a['level']})"
             print(f"  {who}   [{f}] beacon on, speed x{acts[f]['speed_scale']:.2f}"

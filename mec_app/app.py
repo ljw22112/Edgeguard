@@ -77,7 +77,7 @@ def post(kind, con):
     except queue.Full:
         state["publisher"]["dropped_full"] += 1
         log.warning("outbox full, dropping %s", kind)
-state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0,
+state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0, "worker_cues": {"wait": 0, "release": 0},
          "publisher": {"ok": 0, "failed": 0, "dropped_stale": 0, "dropped_full": 0, "last_ok": None,
                        "last_error": None},
          "input": {"bad": 0, "clock_skew": 0, "late": 0}, "gc": {"tracks_removed": 0},
@@ -442,6 +442,9 @@ def evaluate_and_alert(src_ts, rx, only=None):
                 "src_ts": src_ts, "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
             }
             post("alert", alert)
+            if ev in ("wait", "release"):              # worker WAIT keep-alive / GO (edgeguard/worker_cue.py)
+                state["worker_cues"][ev] += 1
+                continue
             to_cloud("alert", alert)
             state["alerts_sent"] += 1
             state["alert_log"].appendleft({k: alert[k] for k in
@@ -579,7 +582,7 @@ def health():
     return {"ok": True, "degraded": degraded, "method": engine.method, "samples": state["rx"],
             "ha": None if lease is None else {"instance": INSTANCE, "leader": lease.leader, **lease.stats},
             "publisher": pub, "input": state["input"], "tracks": len(engine.tracks), "gc": state["gc"],
-            "alerts_sent": state["alerts_sent"], "cloud": state["cloud"],
+            "alerts_sent": state["alerts_sent"], "worker_cues": state["worker_cues"], "cloud": state["cloud"],
             "network": state["network"], "location_fixes": state["location_fixes"], "mec": state["mec"],
             "camera": state["camera"], "rates": state["rates"],
             "ingest_ms_median": ing[len(ing) // 2] if ing else None}

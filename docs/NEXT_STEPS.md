@@ -1,7 +1,18 @@
-# Status (updated 2026-10-08, v1.0)
+# Status (updated 2026-10-09, v1.1)
 
 The final presentation is deliberately not being prepared yet; development comes first.
 README is the short overview; details live in docs/ (risk-and-evaluation, resilience, site-features, deployment, mec-sandbox, adoption).
+
+## Done in v1.1 (docs/risk-and-evaluation.md "v1.1")
+- Root cause of the remaining collisions: all were timely alerts; the buzzed worker stopped ~2 s and walked on into
+  a forklift planned for a worker who stays.  Fix: worker tag WAIT until GO (edgeguard/worker_cue.py +
+  firmware/common/worker_cue.h, C++/Python cross-tested; gives up after 2.5 s without a message), MEC `wait`
+  keep-alive every 1 s while the alert is active, GO check (no clear while walking on would cross the forklift).
+  Forklift ignores worker-only events (wait / release).  sim: Mover.UX = "hold" (default), COMPLY sweep.
+- Result (2,200 encounters, 2 seed sets): collisions 145 -> 11 (-92 %), forklift throughput 77.3 -> 81.7 %,
+  worker +1.4 s per encounter.  50 % compliance still 44.  Outage conditions: normal 23 -> 0, dead zones 17/16 -> 1/1.
+  results/worker_cue_eval.json, failsafe_eval_hold*.json.  Rejected: early release, trust_hold, shorter clear_hold,
+  retraining for the new UX, LSTM.
 
 ## Done in v1.0 (docs/site-features.md, docs/resilience.md)
 - Blind corners: config sitemap.obstacles, line-of-sight per pair (edgeguard/sitemap.py); occluded pairs get

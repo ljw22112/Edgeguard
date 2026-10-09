@@ -224,8 +224,9 @@ void handleAlert() {
       if (neighbours.offline(wk, t)) {
         r.type = d2d::ALERT;
         d2d::setId(r, wk);
-        r.clear = String((const char*)(alert["event"] | "")) == "clear";
-        r.vibrate = alert["actions"][wk]["vibrate"] | false;
+        String ev = (const char*)(alert["event"] | "");
+        r.clear = ev == "clear" || ev == "release";             // GO for the waiting worker
+        r.vibrate = alert["actions"][wk]["vibrate"] | false;      // wait keep-alive: neither
         r.level = strcmp(alert["level"] | "SAFE", "DANGER") == 0 ? 2 : 1;
         sendFrame(r, d2d::RELAY_REPEAT);
       }
@@ -237,6 +238,8 @@ void handleAlert() {
     return;
   }
   if (String((const char*)alert["forklift"]) != DEVICE_ID) return;
+  String ev = (const char*)(alert["event"] | "");
+  if (ev == "wait" || ev == "release") return;      // worker-only cues: the speed limit stays
   JsonObject act = alert["actions"][DEVICE_ID];
   bool clear = String((const char*)(alert["event"] | "")) == "clear";
   beacon = !clear && (act["beacon"] | false);

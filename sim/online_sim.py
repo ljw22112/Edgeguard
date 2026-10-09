@@ -120,13 +120,35 @@ class Mover:
         self.lost_s = 0.0                            # forklift seconds lost to slow-downs
         self.human_cap = None                        # (from, until, m/s): the driver slows on his own
         self.stops = 0
+        self.holding = False                         # worker waiting for the GO signal (UX "hold")
+        self.wait_s = 0.0                            # worker seconds lost (stopped while he wanted to walk)
 
-    def on_alert(self, t, event, limit=None, vibrate=False):
+    # Worker tag UX.  "buzz": a vibration burst, the worker stops for ~2 s and walks on.
+    # "hold": WAIT until GO - the tag keeps a red LED and a pulsing vibration while the alert
+    # is active (the MEC app refreshes it every second) and shows GO on `clear` / `release`.
+    # No alert message for HOLD_IDLE_S (a lost clear, MEC silent) also ends the wait, so a
+    # dead MEC app never pins people in place.  A worker who does not comply (probability
+    # 1 - COMPLY per alert) behaves as with "buzz".
+    UX, COMPLY, HOLD_IDLE_S = "hold", 1.0, 2.5         # v1.1 tags hold (edgeguard/worker_cue.py)
+
+    def on_alert(self, t, event, limit=None, vibrate=False, rng=None):
         if self.kind == "forklift":                       # limit: absolute m/s, None = no limit
             self.pending.append((t + 0.2, event, limit))                         # actuator delay
-        elif vibrate and t > self.stop_until:
-            self.stop_from, self.stop_until = t + 0.8, t + 2.8                   # reaction 0.8 s, stop 2 s
+            return
+        if Mover.UX == "hold" and event in ("clear", "release"):
+            if self.holding and self.stop_until > t:
+                self.stop_until = max(self.stop_from, t + 0.3)                   # GO: walks on 0.3 s later
+            self.holding = False
+            return
+        if self.holding and t < self.stop_until and event in ("raise", "refresh", "wait"):
+            self.stop_until = max(self.stop_until, t + Mover.HOLD_IDLE_S)        # still WAIT
+            return
+        if vibrate and t > self.stop_until:
             self.stops += 1
+            comply = Mover.UX == "hold" and event != "local" and (rng is None or rng.random() < Mover.COMPLY)
+            self.holding = comply
+            self.stop_from = t + 0.8                                             # reaction 0.8 s
+            self.stop_until = t + 0.8 + (Mover.HOLD_IDLE_S if comply else 2.0)   # stop 2 s / WAIT
 
     def step(self, t, dt):
         vn = self.path.v_nom(self.s)
@@ -149,6 +171,8 @@ class Mover:
         else:
             target = 0.0 if self.stop_from <= t < self.stop_until else vn
             dec, acc = 2.0, 1.5
+            if vn > 0.1:
+                self.wait_s += (1 - min(1.0, self.v / vn)) * dt
         if target < self.v:
             self.v = max(target, self.v - dec * dt)
         else:

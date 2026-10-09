@@ -56,6 +56,7 @@ class EpisodeResult:
     lost_s: float
     worker_stops: int
     alerts: int
+    worker_wait_s: float = 0.0      # worker seconds lost to stops
 
     @property
     def collision(self):
@@ -138,7 +139,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                 if to == "f":
                     forklift.on_alert(t, ev, acts.get("f", {}).get("speed_limit"))
                 else:
-                    worker.on_alert(t, ev, vibrate=acts.get("w", {}).get("vibrate"))
+                    worker.on_alert(t, ev, vibrate=acts.get("w", {}).get("vibrate"), rng=rng)
         pending = keep
         worker.step(t, DT)
         forklift.step(t, DT)
@@ -151,7 +152,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             if closing and d_now < VISION_M and not world.blocked((xw, yw), (xf, yf)):
                 seen = True
                 if rng.random() < P_WORKER_SEES and not _in_lane(worker, forklift):
-                    worker.on_alert(t, "raise", vibrate=True)            # stops after 0.8 s, for 2 s
+                    worker.on_alert(t, "local", vibrate=True)            # stops after 0.8 s, for 2 s
                 if rng.random() < P_DRIVER_SEES:
                     forklift.human_cap = (t + 0.8, t + 3.8, 1.0)      # slows to 1 m/s for 3 s
         # direct UWB ranging forklift <-> worker tag (used only by the local-fallback modes)
@@ -180,7 +181,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                 wl.on_peer_state(t, "f", *ff)
         if react and (forklift.fl.mode.endswith("_tag") or coop):
             if wl.vibrate_local(t):                     # the tag's own copy of the rules
-                worker.on_alert(t, "raise", vibrate=True)
+                worker.on_alert(t, "local", vibrate=True)
         # sensors (a device in a dead zone reaches the MEC app only through a D2D relay)
         if rng.random() >= net.up_loss and route(t, "w") is not None:
             engine.update(Track, "w", "worker", t, x=xw + rng.gauss(0, noise), y=yw + rng.gauss(0, noise))
@@ -209,7 +210,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             ev, acts = decide(st, r, engine.tracks.get("w"), engine.tracks.get("f"), cfg, t)
             if ev:
                 alerts += 1
-                for to in ("f", "w"):
+                for to in (("w",) if ev in ("release", "wait") else ("f", "w")):
                     extra = route(t, to)
                     if extra is not None and rng.random() >= net.down_loss:
                         lat = max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000
@@ -217,7 +218,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
     T = times[-1]
     return EpisodeResult(name, t_contact is not None, t_contact, first_alert, min(d_nom), actual_min,
                          min(forklift.path.end, _nominal_s(forklift.path, T)),
-                         forklift.s, forklift.lost_s, worker.stops, alerts)
+                         forklift.s, forklift.lost_s, worker.stops, alerts, worker.wait_s)
 
 
 def _nominal_s(path, T):
@@ -230,11 +231,12 @@ def _nominal_s(path, T):
 
 
 # ----------------------------------------------------------------------------- metrics
-def score(results, beta=2.0, collision_penalty=20.0, w_time=1.0, w_fp=0.5):
+def score(results, beta=2.0, collision_penalty=20.0, w_time=1.0, w_fp=0.5, w_worker=0.0):
     """Training reward and evaluation metrics for a batch of episodes.
 
     Reward per episode (what the optimiser maximises):
-        r = - C * collision - w_time * forklift_seconds_lost - w_fp * false_alarm
+        r = - C * collision - w_time * forklift_seconds_lost - w_worker * worker_seconds_lost
+            - w_fp * false_alarm
     Evaluation (what we select by):
         precision = TP / (TP + FP)       alarms that were real conflicts
         recall    = TP / (TP + FN)       real conflicts warned >= 1 s ahead
@@ -253,9 +255,10 @@ def score(results, beta=2.0, collision_penalty=20.0, w_time=1.0, w_fp=0.5):
     act = sum(min(r.forklift_actual_m, r.forklift_nominal_m) for r in results)
     thr = act / nom if nom else 1.0
     coll = sum(r.collision for r in results)
-    reward = -sum(collision_penalty * r.collision + w_time * r.lost_s
+    reward = -sum(collision_penalty * r.collision + w_time * r.lost_s + w_worker * r.worker_wait_s
                   + w_fp * (1 if (not r.conflict and r.first_alert is not None) else 0)
                   for r in results) / len(results)
     return {"reward": reward, "precision": p, "recall": rc, "f_beta": fb, "beta": beta,
             "throughput": thr, "collisions": coll, "conflicts": len(conf), "episodes": len(results),
-            "false_alarms": fp, "lost_s_mean": sum(r.lost_s for r in results) / len(results)}
+            "false_alarms": fp, "lost_s_mean": sum(r.lost_s for r in results) / len(results),
+            "worker_wait_s_mean": sum(r.worker_wait_s for r in results) / len(results)}

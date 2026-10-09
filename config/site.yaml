@@ -115,6 +115,10 @@ risk:
   pass_speed: 1.681
   clear_hold: 2.464
   stand_speed: 0.577
+  # worker WAIT until GO (edgeguard/worker_cue.py): keep the tag's WAIT alive while the alert is on,
+  # and do not let a waiting worker go while walking on would cross the forklift (docs/risk-and-evaluation.md)
+  wait_keepalive: true
+  go_check: true
 
 # Adaptive reporting rate (edgeguard/rate_control.py): devices with no counterpart close or
 # closing in report at 2 Hz, the rest at 10 Hz; commands go to <ae>/control.  On by default:

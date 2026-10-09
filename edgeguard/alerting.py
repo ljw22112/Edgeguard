@@ -5,7 +5,7 @@ simulation is exactly what runs on the MEC host.
 """
 from __future__ import annotations
 
-from .risk import LEVELS, waiting_at_lane
+from .risk import LEVELS, go_safe, waiting_at_lane
 
 
 NOMINAL_DT = 0.1      # s: the debounce count is tuned for 10 Hz tag data
@@ -25,9 +25,13 @@ class AlertState:
         self.debounce, self.refresh_s, self.hold_s = debounce, refresh_s, hold_s
         self.sent_limit = None
         self.last_eval = None
+        self.released = False             # worker already told GO in this encounter
+        self.intent = None                # worker velocity while walking during the alert (where he wants to go)
+        self.last_any = 0.0               # last message of any kind for this pair (WAIT keep-alive)
 
     def reset(self):
         self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
+        self.released, self.intent = False, None
 
     def step(self, level, now):
         """Return 'raise', 'refresh', 'clear' or None."""
@@ -70,21 +74,45 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
     if getattr(r, "occluded", False) and getattr(cfg, "occl_debounce", 0):
         st.debounce = cfg.occl_debounce          # blind corner: no time to confirm twice
     r.hold = False
-    if r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
+    if st.level >= 2 and w_tr is not None and w_tr.speed > 0.5:
+        st.intent = tuple(w_tr.vel)                # where the worker is heading while the alert is on
+    # GO check: a worker who stopped for the alert no longer conflicts, but walking on would -
+    # keep him waiting (and the forklift at passing speed) until the forklift is clear of his way
+    go_blocked = (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and st.intent is not None
+                  and w_tr is not None and f_tr is not None and f_tr.speed > 0.2 and w_tr.speed < 0.5
+                  and not go_safe(w_tr.pos, st.intent, f_tr, cfg))
+    if go_blocked or r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
             and f_tr.speed > 0.2 and waiting_at_lane(w_tr, f_tr, cfg):
         # keep the alert: pass the worker waiting at the lane edge at walking pace
         limit = round(min(cfg.pass_speed, f_tr.speed), 2)
         r.level, r.level_name = 2, LEVELS[2]
-        r.reason = "worker waiting at the lane edge: pass at walking pace"
+        r.reason = ("worker waiting: forklift still to pass his way" if go_blocked
+                    else "worker waiting at the lane edge: pass at walking pace")
         r.speed_limit, r.speed_scale = limit, round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True
     ev = st.step(r.level, now)
+    if ev == "raise":
+        st.released = False
+    if ev:
+        st.last_any = now
+    # GO for the worker as soon as the forklift is past him (separating, nothing predicted):
+    # the forklift keeps its limit for clear_hold, the waiting worker need not
+    if ev is None and getattr(cfg, "release_worker", False) and st.level >= 2 and r.level < 2 \
+            and not st.released and r.closing_speed < -0.3 and r.range > cfg.r_safe + 1.5:
+        st.released = True
+        st.last_any = now
+        return "release", {r.worker: {"release": True}}
     # a tighter speed limit must reach the forklift now, not at the next periodic refresh
     if ev is None and r.level >= 2 and st.level >= 2 and r.speed_limit is not None \
             and st.sent_limit is not None and r.speed_limit < st.sent_limit - 0.3:
         ev = "refresh"
         st.last_sent = now
     if not ev:
+        # WAIT keep-alive: the tag holds the worker while it hears the alert; between refreshes
+        # (level flickering, clear-hold window) it would otherwise time out and show GO early
+        if getattr(cfg, "wait_keepalive", False) and st.level >= 2 and now - st.last_any >= st.refresh_s:
+            st.last_any = now
+            return "wait", {r.worker: {"wait": True}}
         return None, None
     st.sent_limit = None if ev == "clear" else r.speed_limit
     untagged = r.worker.startswith("untagged_")

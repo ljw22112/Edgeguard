@@ -79,8 +79,10 @@ def condition(net, seed, name):
 
 
 def job(args):
-    mode, cond, chunk = args
+    mode, cond, chunk, ux, comply = args
     ForkliftLimit.MODE = mode
+    from sim.online_sim import Mover
+    Mover.UX, Mover.COMPLY = ux, comply
     cfg = site_cfg()
     return [run_episode(GENS[gi], random.Random(s), cfg, net=condition(net, s, cond), noise=noise)
             for gi, s, noise, net in chunk]
@@ -93,6 +95,8 @@ def main():
     ap.add_argument("--conditions", default="normal,mec_restart,restart_loss20,mec_dead_8s,network_down_30s,"
                                             "forklift_dead_zone_8s,worker_dead_zone_8s")
     ap.add_argument("--modes", default=",".join(MODES))
+    ap.add_argument("--ux", default="hold", help="worker tag UX: hold (WAIT until GO, v1.1) | buzz (v1.0)")
+    ap.add_argument("--comply", type=float, default=1.0)
     a = ap.parse_args()
     eps = episodes_for(999_999, a.per_gen)
     out = {}
@@ -100,12 +104,13 @@ def main():
         for cond in a.conditions.split(","):
             for mode in a.modes.split(","):
                 n = os.cpu_count() or 1
-                res = sum(pool.map(job, [(mode, cond, eps[i::n]) for i in range(n)]), [])
+                res = sum(pool.map(job, [(mode, cond, eps[i::n], a.ux, a.comply) for i in range(n)]), [])
                 s = score(res, collision_penalty=50)
                 out.setdefault(cond, {})[mode] = s
                 print(f"{cond:15s} {mode:9s} coll {s['collisions']:3d}/{s['conflicts']}  recall {s['recall']:.3f}  "
-                      f"F2 {s['f_beta']:.3f}  thr {s['throughput']:.3f}  lost {s['lost_s_mean']:.2f} s", flush=True)
-    json.dump({"episodes": len(eps), "results": out, "rejected": REJECTED}, open(os.path.join(ROOT, a.out), "w"), indent=1)
+                      f"F2 {s['f_beta']:.3f}  thr {s['throughput']:.3f}  lost {s['lost_s_mean']:.2f} s  "
+                      f"worker {s['worker_wait_s_mean']:.2f} s", flush=True)
+    json.dump({"episodes": len(eps), "ux": a.ux, "comply": a.comply, "results": out, "rejected": REJECTED}, open(os.path.join(ROOT, a.out), "w"), indent=1)
 
 
 if __name__ == "__main__":

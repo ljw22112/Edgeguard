@@ -42,6 +42,10 @@ class RiskConfig:
     brake_decel: float = 2.0       # m/s^2: deceleration assumed when capping the speed
     brake_margin: float = 0.5      # m: stopping-distance margin before the conflict point
     pass_speed: float = 1.0        # m/s: passing speed while a worker waits at the lane edge
+    wait_keepalive: bool = False   # resend WAIT to the worker every refresh_s while the alert is active
+    go_check: bool = False         # keep a waiting worker held until walking on is safe (alerting.decide)
+    trust_hold: bool = False       # WARNING plans for a worker who stops (WAIT-until-GO tag), DANGER never
+    release_worker: bool = False   # send the waiting worker GO once the forklift is past (alerting.decide)
     wait_lateral: float = 2.5      # m: "waiting at the lane edge" distance from the lane
     clear_hold: float = 2.0        # s: risk must stay low this long before an alert clears
     debounce: int = 2              # evaluations at WARNING before the first alert
@@ -115,6 +119,15 @@ def waiting_at_lane(worker, forklift, cfg, lateral=None, lookahead=None):
                for x, y in geo.positions(steps))
 
 
+def go_safe(worker_pos, intent_vel, forklift, cfg):
+    """Would the waiting worker be safe if he walked on now with his intended velocity?
+    (forklift on its CTRV path; used before telling a held worker GO)"""
+    pw = CVPredictor(worker_pos, intent_vel)
+    pf = CTRVPredictor(forklift.pos, forklift.speed, _heading(forklift), forklift.yaw_rate)
+    _, d_min = min_separation(pw, pf, cfg.horizon)
+    return d_min >= cfg.r_safe
+
+
 def _level_from_geometry(cfg: RiskConfig, t_min, d_min, R, forklift_moving):
     rs = cfg.r_safe
     if d_min < rs and t_min <= cfg.t_danger:
@@ -183,8 +196,11 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
                 stopping = StopAfterPredictor(worker.pos, worker.vel, t_react=cfg.worker_react)
                 bk = dict(a_dec=cfg.brake_decel, margin=cfg.brake_margin)
                 scale = min(speed_scale_on_path(stopping, pf, cfg.r_safe, horizon=cfg.horizon),
-                            braking_scale(stopping, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk),
-                            braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk))
+                            braking_scale(stopping, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk))
+                # the worker who does not stop: always for DANGER; for WARNING only when the tag
+                # cannot hold the worker (cfg.trust_hold: WAIT-until-GO tags, sim/online_sim.Mover)
+                if level >= 3 or not cfg.trust_hold:
+                    scale = min(scale, braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk))
             else:
                 scale = vo_speed_scale(worker.pos, worker.vel, forklift.pos, forklift.vel,
                                        cfg.r_safe, horizon=cfg.t_warn)
