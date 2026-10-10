@@ -33,6 +33,17 @@ def test_wait_until_go_and_idle_timeout():
     assert not c.led(10.1)
 
 
+def test_clear_from_one_forklift_keeps_the_other_hold():
+    c = WaitCue()
+    c.on_alert(0.0, "raise", vibrate=True, src="forklift_01")
+    c.on_alert(0.5, "raise", vibrate=True, src="forklift_02")
+    c.on_alert(1.0, "clear", src="forklift_01")
+    assert c.led(1.1)                                  # forklift_02 still coming: no GO
+    c.on_alert(1.5, "wait", src="forklift_02")
+    c.on_alert(2.0, "clear", src="forklift_02")
+    assert not c.led(2.05) and c.motor(2.05)           # now GO
+
+
 @pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
 def test_cpp_cue_matches_python(tmp_path):
     exe = tmp_path / "cue"
@@ -46,8 +57,9 @@ def test_cpp_cue_matches_python(tmp_path):
             if rng.random() < 0.35:
                 ev = rng.choice(["raise", "refresh", "wait", "clear", "release", "hb"])
                 vb, dg = rng.random() < 0.6, rng.random() < 0.3
-                py.on_alert(t, ev, vb, dg)
-                lines.append(f"A {t:.3f} {ev} {int(vb)} {int(dg)}")
+                src = rng.choice(["f1", "f2", "f3", "f4", "f5"])
+                py.on_alert(t, ev, vb, dg, src)
+                lines.append(f"A {t:.3f} {ev} {int(vb)} {int(dg)} {src}")
             else:
                 expect.append(f"{int(py.motor(t))} {int(py.led(t))}")
                 lines.append(f"Q {t:.3f}")

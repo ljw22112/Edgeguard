@@ -1,4 +1,4 @@
-// Reads "A t event vibrate danger" (alert) and "Q t" (query) lines; prints "motor led" per query.
+// Reads "A t event vibrate danger src" (alert) and "Q t" (query) lines; prints "motor led" per query.
 #include <cstdio>
 #include "worker_cue.h"
 
@@ -8,9 +8,9 @@ int main() {
   while (std::scanf(" %c", &op) == 1) {
     float t;
     if (op == 'A') {
-      char ev[16]; int vb, dg;
-      if (std::scanf("%f %15s %d %d", &t, ev, &vb, &dg) != 4) return 1;
-      c.onAlert(t, ev, vb, dg);
+      char ev[16], src[16]; int vb, dg;
+      if (std::scanf("%f %15s %d %d %15s", &t, ev, &vb, &dg, src) != 5) return 1;
+      c.onAlert(t, ev, vb, dg, src);
     } else if (op == 'Q') {
       if (std::scanf("%f", &t) != 1) return 1;
       std::printf("%d %d\n", c.motor(t) ? 1 : 0, c.led(t) ? 1 : 0);

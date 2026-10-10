@@ -1,6 +1,7 @@
 // EdgeGuard worker tag WAIT / GO cue - C++ mirror of edgeguard/worker_cue.py (cross-tested).
 // raise/refresh+vibrate -> WAIT (burst, red LED, 1 s pulses); raise/refresh/wait keep it;
 // clear/release -> GO (two short pulses); nothing heard for HOLD_IDLE_S -> GO by itself.
+// One hold per forklift (key = forklift id): a clear from one forklift keeps the WAIT of another.
 #pragma once
 #include <cmath>
 #include <cstring>
@@ -8,31 +9,51 @@
 namespace cue {
 
 constexpr float HOLD_IDLE_S = 2.5f, PULSE_PERIOD_S = 1.0f, PULSE_ON_S = 0.15f;
+constexpr int MAX_HOLDS = 4;
 
 struct WaitCue {
-  bool waiting = false;
-  float until = 0, since = 0, burstUntil = 0, goAt = -1;
+  struct Hold { char key[16]; float until; bool used; };
+  Hold holds[MAX_HOLDS] = {};
+  float since = 0, burstUntil = 0, goAt = -1;
 
-  void onAlert(float t, const char* ev, bool vibrate, bool danger) {
+  int find(const char* key) const {
+    for (int i = 0; i < MAX_HOLDS; i++) if (holds[i].used && !strcmp(holds[i].key, key)) return i;
+    return -1;
+  }
+  int count() const { int n = 0; for (const Hold& h : holds) n += h.used; return n; }
+  bool waiting() const { return count() > 0; }
+  void drop(float t, int i) {
+    holds[i].used = false;
+    if (count() == 0) goAt = t;
+  }
+  void onAlert(float t, const char* ev, bool vibrate, bool danger, const char* src = "") {
+    const char* key = src;
+    tick(t);
+    int i = find(key);
     if (!strcmp(ev, "clear") || !strcmp(ev, "release")) {
-      if (waiting) { waiting = false; goAt = t; }
+      if (i >= 0) drop(t, i);
       return;
     }
     if (strcmp(ev, "raise") && strcmp(ev, "refresh") && strcmp(ev, "wait")) return;
-    if (waiting && t < until) {
-      until = t + HOLD_IDLE_S;
+    if (i >= 0) {
+      holds[i].until = t + HOLD_IDLE_S;
       if (vibrate && !strcmp(ev, "raise")) burstUntil = t + (danger ? 1.5f : 0.6f);
-    } else if (vibrate) {
-      waiting = true; since = t; until = t + HOLD_IDLE_S;
-      burstUntil = t + (danger ? 1.5f : 0.6f); goAt = -1;
+    } else if (vibrate && count() < MAX_HOLDS) {
+      if (count() == 0) { since = t; goAt = -1; }
+      for (Hold& h : holds) if (!h.used) {
+        h.used = true; h.until = t + HOLD_IDLE_S;
+        strncpy(h.key, key, sizeof h.key - 1); h.key[sizeof h.key - 1] = 0;
+        break;
+      }
+      burstUntil = t + (danger ? 1.5f : 0.6f);
     }
   }
-  void tick(float t) { if (waiting && t >= until) { waiting = false; goAt = t; } }
-  bool led(float t) { tick(t); return waiting; }
+  void tick(float t) { for (int i = 0; i < MAX_HOLDS; i++) if (holds[i].used && t >= holds[i].until) drop(t, i); }
+  bool led(float t) { tick(t); return waiting(); }
   bool motor(float t) {
     tick(t);
     if (t < burstUntil) return true;
-    if (waiting) return std::fmod(t - since, PULSE_PERIOD_S) < PULSE_ON_S;
+    if (waiting()) return std::fmod(t - since, PULSE_PERIOD_S) < PULSE_ON_S;
     if (goAt >= 0) { float d = t - goAt; return (d >= 0 && d < 0.08f) || (d >= 0.16f && d < 0.24f); }
     return false;
   }
