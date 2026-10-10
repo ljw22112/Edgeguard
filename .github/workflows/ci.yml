@@ -56,6 +56,9 @@ jobs:
           python tools/handover_demo.py
           python tools/handover_demo.py --failover --out results/handover_failover.json
 
+      - name: Federated learning through oneM2M (TR-0084 roles, dropout, late join)
+        run: python tools/fl_demo.py
+
       - name: SIL logs on failure
         if: failure()
         run: |

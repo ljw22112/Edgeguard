@@ -154,9 +154,17 @@ class OneM2MClient:
                 time.sleep(wait)
 
     def create_acp(self, parent, rn, rules, owners):
-        """rules: [(originators, ops)]; owners may change the ACP itself."""
+        """rules: [(originators, ops)] or [(originators, ops, child types)] - the third element limits
+        CREATE to those child resource types (accessControlObjectDetails chty), e.g. (23,) = may
+        create subscriptions but no data; owners may change the ACP itself."""
+        def acr(rule):
+            o, op = rule[0], rule[1]
+            e = {"acor": list(o), "acop": op}
+            if len(rule) > 2 and rule[2]:
+                e["acod"] = [{"chty": list(rule[2])}]
+            return e
         body = {"m2m:acp": {"rn": rn,
-                            "pv": {"acr": [{"acor": list(o), "acop": op} for o, op in rules]},
+                            "pv": {"acr": [acr(r) for r in rules]},
                             "pvs": {"acr": [{"acor": list(owners), "acop": ALL_OPS}]}}}
         res = self.request("POST", parent, TY_ACP, body, ok_conflict=True)
         if res is None:                                  # exists: refresh its rules

@@ -1,0 +1,173 @@
+{
+ "rounds": [
+  {
+   "round": 1,
+   "eligible": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_incheon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 1
+  },
+  {
+   "round": 2,
+   "eligible": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_incheon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 2
+  },
+  {
+   "round": 3,
+   "eligible": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_seoul"
+   ],
+   "dropped": [
+    "fl_incheon"
+   ],
+   "aggregated": true,
+   "version": 3
+  },
+  {
+   "round": 4,
+   "eligible": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_daejeon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 4
+  },
+  {
+   "round": 5,
+   "eligible": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_daejeon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 5
+  },
+  {
+   "round": 6,
+   "eligible": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_daejeon",
+    "fl_busan"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_daejeon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 6
+  }
+ ],
+ "events": [
+  "round 3: incheon goes offline after selection",
+  "round 4: daejeon registers (label discovery)",
+  "round 6: incheon back online"
+ ],
+ "ade_2s_m": {
+  "constant_velocity": {
+   "seoul": 0.652,
+   "busan": 0.615,
+   "incheon": 0.548,
+   "daejeon": 0.6
+  },
+  "federated_global": {
+   "seoul": 0.476,
+   "busan": 0.499,
+   "incheon": 0.501,
+   "daejeon": 0.469
+  },
+  "local_only_on_all_sites_mean": {
+   "seoul": 0.503,
+   "busan": 0.518,
+   "incheon": 0.553,
+   "daejeon": 0.51
+  }
+ },
+ "mean_ade_2s_m": {
+  "constant_velocity": 0.604,
+  "federated_global": 0.486,
+  "local_only_mean": 0.521
+ },
+ "update_bytes": 2032,
+ "checks": {
+  "task resource tracks the run (status done, model version = aggregated rounds)": true,
+  "dynamic selection: participants found by label, offline client never selected while offline": true,
+  "dropout tolerated: round 3 aggregated with the quorum": true,
+  "late join: daejeon selected after it registered": true,
+  "data stays local: updates carry only weights (no positions)": true,
+  "model lineage: every version published with parent and participants": true,
+  "global model beats constant velocity on every site": true,
+  "global model generalises better than models trained alone (mean over all sites)": true
+ }
+}

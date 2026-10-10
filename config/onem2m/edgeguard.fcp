@@ -79,5 +79,43 @@
             { "sname" : "zone", "lname" : "zone", "type" : "string", "car" : "01" }
         ],
         "children"  : [ "egs:kinSt", "egs:spdLt", "cod:bat" ]
+    },
+
+    // ModuleClass: federatedLearningTask (coordinator: what is trained, how, and where it stands; TR-0084)
+    {
+        "type"      : "egs:flTsk",
+        "lname"     : "federatedLearningTask",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.federatedLearningTask",
+        "attributes": [
+            { "sname" : "mdlNm", "lname" : "modelName", "type" : "string", "car" : "1" },
+            { "sname" : "rnds",  "lname" : "rounds", "type" : "integer", "car" : "1" },
+            { "sname" : "curRd", "lname" : "currentRound", "type" : "integer", "car" : "01" },
+            { "sname" : "cpr",   "lname" : "clientsPerRound", "type" : "integer", "car" : "1" },
+            { "sname" : "quorm", "lname" : "quorum", "type" : "integer", "car" : "01" },
+            { "sname" : "minSm", "lname" : "minSamples", "type" : "integer", "car" : "01" },
+            { "sname" : "lclEp", "lname" : "localEpochs", "type" : "integer", "car" : "01" },
+            { "sname" : "lrnRt", "lname" : "learningRate", "type" : "float", "car" : "01" },
+            { "sname" : "rdTmo", "lname" : "roundTimeout", "type" : "float", "car" : "01" },
+            { "sname" : "tskSt", "lname" : "taskStatus", "type" : "string", "car" : "01" },
+            { "sname" : "mdlVr", "lname" : "modelVersion", "type" : "integer", "car" : "01" }
+        ]
+    },
+
+    // ModuleClass: federatedLearningParticipant (a client: its data, availability, progress; TR-0084)
+    {
+        "type"      : "egs:flPrt",
+        "lname"     : "federatedLearningParticipant",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.federatedLearningParticipant",
+        "attributes": [
+            { "sname" : "site",  "lname" : "site", "type" : "string", "car" : "01" },
+            { "sname" : "smpCt", "lname" : "sampleCount", "type" : "integer", "car" : "1" },
+            { "sname" : "avail", "lname" : "available", "type" : "boolean", "car" : "1" },
+            { "sname" : "cmpSc", "lname" : "computeScore", "type" : "float", "car" : "01" },
+            { "sname" : "lstRd", "lname" : "lastRound", "type" : "integer", "car" : "01" },
+            { "sname" : "mdlVr", "lname" : "modelVersion", "type" : "integer", "car" : "01" },
+            { "sname" : "prtSt", "lname" : "participantStatus", "type" : "string", "car" : "01" }
+        ]
     }
 ]
