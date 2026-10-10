@@ -42,6 +42,29 @@
    지게차: 부딪히지 않을 만큼만 감속. 대치 상황은 한쪽씩 먼저 보내 동시 출발 충돌을 막습니다.
 5. **장애 시** — MEC 예측 → 단말 간 UWB 거리 · D2D 상태 교환 → 정지 순으로 단계적 강등, 음영 단말에는 이웃이 경보를 중계.
 
+## EdgeGuard의 oneM2M
+
+**왜 oneM2M인가.** 자체 서버가 해야 할 일을 CSE가 대신합니다.
+
+- **데이터베이스가 아닌 허브** — 단말과 앱은 직접 통신하지 않습니다. 구독이 위치를 MEC 앱으로, 경보를 태그로 보내므로 브로커 · 폴링 코드가 없습니다.
+- **다른 앱에 열려 있음** — 경보 · 아차사고가 표준 리소스라 WMS · 리포트 도구 · 카메라 업체가 연동 작업 없이 구독할 수 있습니다.
+- **접근제어 내장** — 디바이스 AE마다 ACP로 최소 권한. CI가 매 커밋 Mobius에서 다른 단말의 위조 쓰기 차단을 확인합니다(8/8).
+- **벤더 중립, 엣지에서 클라우드까지** — 같은 코드가 KETI Mobius 3.0.1 · ACME에서 동작, 엣지 MN-CSE가 클라우드 IN-CSE에 Mcc로 등록. 상호운용성 문제 7건 정리.
+
+| oneM2M 기능 | 용도 | 상태 |
+|---|---|---|
+| AE · container · contentInstance | 디바이스별 데이터(originator = 디바이스), MEC 앱 판단 결과 | 사용 중 |
+| subscription / notify | 위치 → MEC 앱, 경보 → 태그 · 대시보드 | 사용 중 |
+| accessControlPolicy | 디바이스 AE마다 ACP, 최소 권한 ([리소스 트리](docs/ko/deployment.md#onem2m-리소스-트리)) | 사용 중 |
+| maxNrOfInstances | 이력 상한(아차사고 2,000, 이중화 리스 20) | 사용 중 |
+| Mcc 등록 | 엣지 MN-CSE ↔ 클라우드 IN-CSE | 사용 중 |
+| flexContainer + 라벨 + 탐색 | 형식 있는 단말 상태, 설정 없는 등록 | 10/20 예정 |
+| group(fanOutPoint) · pollingChannel · announcement | 구역 내 모든 태그에 경보 1회 · NAT 뒤 태그 · 아차사고를 IN-CSE로 | 10/31 예정 |
+
+**ETSI MEC.** MEC-IPE가 MEC 013 Location · MEC 012 RNIS를 CSE에 넣어(`location/<ue>`, `rnis/<cell>`) MEC 앱이 oneM2M을 통해 MEC 서비스를 씁니다. 공개 ETSI MEC Sandbox(try-mec.etsi.org) 실연동, 자체 설치 AdvantEDGE 창고 시나리오에서 경보 70건.
+
+**더 알아보기:** [oneM2M](https://www.onem2m.org) · [oneM2M 표준 문서](https://www.onem2m.org/technical/published-specifications) (TS-0001 구조, TS-0004 프로토콜) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
+
 ## 핵심 결과
 
 ### 안전
@@ -71,13 +94,6 @@
 | MEC 앱 장애 인수 (이중화) | **0.73 s**, 하트비트 공백 1.0 s | 지게차 로컬 전환 기준 2 s |
 | 경보 지연 중앙값 | **25 ms** (엣지), 팀 노트북 58 ms | 클라우드 전용 85 ms · 단절 시 0건 |
 | 규모 (단말 40대) | 경보 지연 p95 1,642 → **256 ms** | 고정 보고 주기 |
-
-### 표준 연동
-
-- **oneM2M 구조**: 디바이스마다 자기 AE(originator = 디바이스)를 등록하고, MEC 앱 AE에 위험도 · 경보 · 아차사고를 씁니다.
-  디바이스 AE마다 ACP — CI가 매 커밋 Mobius에서 위조 쓰기 차단을 확인합니다(8/8). [리소스 트리](docs/ko/deployment.md#onem2m-리소스-트리)
-- **상호운용성**: KETI Mobius 3.0.1 · ACME CSE 양쪽 검증, MN-CSE ↔ IN-CSE 등록(Mcc), 상호운용성 문제 7건 정리.
-- **ETSI MEC Sandbox**: 공개 Sandbox(try-mec.etsi.org) 실연동, 자체 설치 Sandbox(AdvantEDGE)에서 창고 시나리오 경보 70건.
 
 ### 비용 · 사업성
 
@@ -179,6 +195,18 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 | v1.1 | 작업자 WAIT → GO 신호 (남은 사고의 원인: 진동 후 다시 걸어 나옴) |
 | v1.2 | 다대다 검증 · 쌍별 계획, 대치 해소, STEP ASIDE, 오경보 감소(정지 판정 · 경로 공유), 대시보드 WAIT/GO 표시 |
 | v1.3 | 디바이스별 oneM2M AE · ACP (위조 쓰기 차단 CI 검증), 비용 · 시장 · 사업 모델, 반응하는 라이브 데모 · 새 데모 영상, 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그, 실물 시연 키트(HIL), 사용자 검증 키트, 영문 문서 |
+
+## 본선까지 로드맵 (11/20)
+
+| 기한 | 추가 내용 | 대회 평가 항목 |
+|---|---|---|
+| 10/20 | flexContainer 단말 상태, 라벨, 탐색 기반 등록 | Data interoperability |
+| 10/31 | group · pollingChannel · announcement, 단말 MQTT, TLS | Innovative use of oneM2M, protocols, security |
+| 11/10 | MEC Location 기반 구역 MN-CSE 간 지게차 AE 핸드오버, 지오펜싱, 다중 호스트 배포 | CSE handover, geolocation, MEC services |
+| 11/17 | oneM2M MCP 서버와 안전관리 에이전트 (연합학습은 선택) | AI agents and MCP |
+| 11/20 | ESP32 실물 시연, 사용자 실험, hackster.io 기사, 최종 영상, 저장소 공개 | Article, video, GitHub |
+
+평가 항목별 현재 점수: [docs/SCORECARD.md](docs/SCORECARD.md)
 
 ## 검증 범위와 한계
 

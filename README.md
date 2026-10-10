@@ -42,6 +42,29 @@ If the network or the server fails, the devices talk to each other directly (D2D
    Forklift: slows only as much as needed to avoid contact. In a standoff one side goes first, so both never start at once.
 5. **On failure** — graceful degradation: MEC prediction → device-to-device UWB ranging and D2D state exchange → stop; neighbours relay alerts to devices in coverage holes.
 
+## oneM2M in EdgeGuard
+
+**Why oneM2M.** The CSE does the work our own server would otherwise have to do:
+
+- **A hub, not a database** — devices and apps never talk directly; subscriptions push positions to the MEC app and alerts to the tags, so there is no custom broker or polling code.
+- **Open to other applications** — alerts and near misses are standard resources; a WMS, a reporting tool or a camera vendor can subscribe without integration work.
+- **Access control built in** — one ACP per device AE gives least privilege; CI checks on every commit, on Mobius, that a forged write from another device is rejected (8/8).
+- **Vendor-neutral, edge to cloud** — the same code runs on KETI Mobius 3.0.1 and ACME; the edge MN-CSE registers with a cloud IN-CSE over Mcc. 7 interoperability issues documented.
+
+| oneM2M feature | Used for | Status |
+|---|---|---|
+| AE · container · contentInstance | per-device data (originator = device), MEC app decisions | in use |
+| subscription / notify | positions → MEC app, alerts → tags and dashboards | in use |
+| accessControlPolicy | one ACP per device AE, least privilege ([resource tree](docs/deployment.md#onem2m-resource-tree)) | in use |
+| maxNrOfInstances | bounded history (near misses 2,000, HA lease 20) | in use |
+| Mcc registration | edge MN-CSE ↔ cloud IN-CSE | in use |
+| flexContainer + labels + discovery | typed device state, zero-config onboarding | planned, Oct 20 |
+| group (fanOutPoint) · pollingChannel · announcement | one alert to every tag in a zone · tags behind NAT · near misses to the IN-CSE | planned, Oct 31 |
+
+**ETSI MEC.** A MEC-IPE brings MEC 013 Location and MEC 012 RNIS into the CSE (`location/<ue>`, `rnis/<cell>`), so the MEC app consumes MEC services through oneM2M. Live on the public ETSI MEC Sandbox (try-mec.etsi.org); 70 alerts in a warehouse scenario on a self-hosted AdvantEDGE.
+
+**Learn more:** [oneM2M](https://www.onem2m.org) · [oneM2M specifications](https://www.onem2m.org/technical/published-specifications) (TS-0001 architecture, TS-0004 protocols) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
+
 ## Key results
 
 ### Safety
@@ -71,13 +94,6 @@ If the network or the server fails, the devices talk to each other directly (D2D
 | MEC app takeover (HA) | **0.73 s**, heartbeat gap 1.0 s | forklift local fallback threshold: 2 s |
 | Median alert latency | **25 ms** (edge), 58 ms on the team laptop | cloud only: 85 ms · none during an outage |
 | Scale (40 devices) | alert latency p95 1,642 → **256 ms** | fixed reporting interval |
-
-### Standards integration
-
-- **oneM2M structure**: every device registers its own AE (originator = the device); the MEC app's AE holds risk, alerts and near misses.
-  Each device AE has its own ACP — CI checks on every commit, on Mobius, that forged writes are rejected (8/8). [Resource tree](docs/deployment.md#onem2m-resource-tree)
-- **Interoperability**: verified on both KETI Mobius 3.0.1 and ACME CSE, MN-CSE ↔ IN-CSE registration (Mcc), 7 interoperability issues documented.
-- **ETSI MEC Sandbox**: live integration with the public Sandbox (try-mec.etsi.org); 70 alerts in a warehouse scenario on a self-hosted Sandbox (AdvantEDGE).
 
 ### Cost and business
 
@@ -180,6 +196,16 @@ results/     evaluation results (JSON · figures) · devices/ mec_mock/ scenario
 | v1.1 | worker WAIT → GO cue (cause of the remaining accidents: workers walking on after the vibration) |
 | v1.2 | many-to-many validation · per-pair plans, standoff resolution, STEP ASIDE, fewer false alarms (stillness check · route sharing), WAIT/GO on the dashboard |
 | v1.3 | per-device oneM2M AEs · ACPs (forged writes rejected, verified in CI), cost · market · business model, reactive live demo · new demo video, firmware-in-the-loop (SIL, CI) · phone tag, hardware demo kit (HIL), user study kit, English documentation |
+
+## Roadmap to the final (Nov 20)
+
+| By | Adds | Hackathon criteria |
+|---|---|---|
+| Oct 20 | flexContainer device state, labels, discovery-based onboarding | Data interoperability |
+| Oct 31 | group, pollingChannel, announcement; MQTT for devices; TLS | Innovative use of oneM2M, protocols, security |
+| Nov 10 | forklift AE handover between zone MN-CSEs triggered by MEC Location; geofencing; multi-host deployment | CSE handover, geolocation, MEC services |
+| Nov 17 | MCP server for oneM2M and a safety agent (federated learning as a stretch goal) | AI agents and MCP |
+| Nov 20 | ESP32 board demo, user study, hackster.io article, final video, public repository | Article, video, GitHub |
 
 ## Validation scope and limitations
 
