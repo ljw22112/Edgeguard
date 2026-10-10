@@ -99,29 +99,42 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
 ## oneM2M 리소스 트리
 
+디바이스마다 **자기 AE**를 등록합니다(originator = 그 디바이스). MEC 앱은 자기 AE에 판단 결과를 씁니다.
+
 ```
 /Mobius (CSEBase)
-└── EdgeGuard (AE)                          originator SEdgeGuard (MEC 앱)
-    ├── worker_01 (CNT) / location (CNT)    작업자 태그 → CIN {id, kind:"worker", ts, x, y}
-    ├── forklift_01 (CNT) / motion (CNT)    지게차 모듈 → CIN {id, kind:"forklift", ts, x, y, speed, heading, yaw_rate, route?}
-    ├── camera_01 (CNT) / detect (CNT)      카메라 노드 → CIN {kind:"camera", ts, persons:[{x, y}, ...]}
-    ├── risk (CNT)                          MEC → 쌍별 위험도 요약 {pairs:[{level, range, tcpa, dcpa, ttc, d_min, speed_scale, reason}]}
-    ├── alert (CNT)                         MEC → 경보 {event, level, worker, forklift, actions, reason, src_ts, mec_tx_ts}
-    │                                        event: raise · refresh · clear (지게차 + 작업자), wait · release · aside (작업자만)
-    ├── control (CNT)                       MEC → 하트비트 1 s + 보고 주기 명령 {ts, hb, rates}
-    ├── nearmiss (CNT, mni 2000)            MEC → 아차사고 기록 {worker, forklift, d_min, x, y, alerted}
-    ├── mec_lease (CNT, mni 20)             MEC 앱 이중화 임대 {id, seq, ts}
-    └── acp_<device> · acp_risk · acp_alert · acp_control · acp_nearmiss (ACP)
+├── worker_01 (AE, originator SWorker01)        작업자 태그가 부팅 시 스스로 등록
+│   ├── location (CNT)                          → CIN {id, kind:"worker", ts, x, y}
+│   ├── relay (CNT)                             음영에 들어간 이웃의 위치를 대신 올림 (D2D 중계) {id: 이웃, relay: worker_01, ...}
+│   └── acp_worker_01 (ACP)                     태그: 전부 · MEC 앱/MEC-IPE: 조회 · 구독 · 쓰기 · 다른 단말: 없음
+├── forklift_01 (AE, originator SForklift01)
+│   ├── motion (CNT)                            → CIN {id, kind:"forklift", ts, x, y, speed, heading, yaw_rate, route?}
+│   ├── relay (CNT)
+│   └── acp_forklift_01 (ACP)
+├── camera_01 (AE, originator SCamera01)
+│   ├── detect (CNT)                            → CIN {kind:"camera", ts, persons:[{x, y}, ...]}
+│   └── acp_camera_01 (ACP)
+└── EdgeGuard (AE, originator SEdgeGuard = MEC 앱)
+    ├── risk (CNT)                              쌍별 위험도 요약 {pairs:[{level, range, tcpa, dcpa, ttc, d_min, speed_scale, reason}]}
+    ├── alert (CNT)                             경보 {event, level, worker, forklift, actions, reason, src_ts, mec_tx_ts}
+    │                                            event: raise · refresh · clear (지게차 + 작업자), wait · release · aside (작업자만)
+    ├── control (CNT)                           하트비트 1 s + 보고 주기 명령 {ts, hb, rates}
+    ├── nearmiss (CNT, mni 2000)                아차사고 기록 {worker, forklift, d_min, x, y, alerted}
+    ├── mec_lease (CNT, mni 20)                 MEC 앱 이중화 임대 {id, seq, ts}
+    └── acp_risk · acp_alert · acp_control · acp_nearmiss (ACP)   MEC 앱만 쓰기, 디바이스는 읽기
 ```
 
 | 구독 (SUB) | 대상 | 알림 받는 곳 |
 |---|---|---|
-| `sub_mec` (이중화 시 `sub_mec_mec2` 추가) | 각 `location` · `motion` · `detect` | MEC 앱 `/notify` |
-| `sub_devices`, `sub_hw<N>` | `alert`, `control` | 가상 디바이스 · 실기 단말 |
+| `sub_mec` (이중화 시 `sub_mec_mec2` 추가) | 각 디바이스 AE의 `location` · `motion` · `detect` · `relay` | MEC 앱 `/notify` |
+| `sub_devices`, `sub_hw<N>` | `EdgeGuard/alert`, `EdgeGuard/control` | 가상 디바이스 · 실기 단말 (`poa` = `http://<단말>/alert`) |
 
-- 접근제어: 디바이스 컨테이너는 그 디바이스와 MEC 앱만 쓸 수 있고, `risk` · `alert` · `control`은 MEC 앱만 쓰고 디바이스는 읽기만 합니다
-  ([현장 기능](site-features.md) "접근제어"). Mobius에서 위조 쓰기 차단을 확인했습니다.
-- 현재는 AE 하나 아래에 디바이스별 컨테이너를 두고, 디바이스별 ACP로 쓰기 권한을 나눕니다.
+- **등록**: 펌웨어가 부팅할 때 `registerAE()`로 AE와 컨테이너를 만듭니다(이미 있으면 409, 그대로 진행).
+  `tools/setup_resources.py`는 같은 등록을 디바이스 originator로 대신 하고 ACP를 붙입니다(현장 설치 시 1회).
+- **접근제어**: 어떤 디바이스도 다른 디바이스의 AE에 쓸 수 없습니다. MEC 앱은 읽고 구독하며, 판단 결과는 MEC 앱만 씁니다.
+  CI가 매 커밋 Mobius에서 위조 쓰기가 막히는지 확인합니다(`deploy/check_acl.py`).
+- **D2D 중계**: 음영 속 이웃의 위치는 중계하는 단말이 **자기 AE**의 `relay`에 올립니다. 중계 프레임은 D2D 구간에서 HMAC으로 인증됩니다.
+- 이전 구조(AE 하나 아래 디바이스 컨테이너)는 `layout: single_ae`로 계속 쓸 수 있습니다.
 
 ## 펌웨어
 - 작업자 태그: DW1000 양방향 거리 측정 → `firmware/common/uwb_position.h`(선형화 최소제곱 + 가우스-뉴턴, 앵커 1개 NLOS 배제).

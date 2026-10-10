@@ -97,13 +97,12 @@ def main():
     clients = {}                                  # per-device originators when ACPs are on
 
     def dev_client(dev):
-        if not sec.get("enabled"):
+        # each device writes as itself: its own AE (layout "device_ae") or, in the single-AE layout,
+        # with its own originator when per-device ACPs are on
+        if paths.get("layout") != "device_ae" and not sec.get("enabled"):
             return cse
         if dev not in clients:
-            from edgeguard.onem2m import OneM2MClient
-            cc = cfg["cse"]
-            clients[dev] = OneM2MClient(cc["base_url"], cc["cse_rn"], sec["originators"][dev],
-                                        str(cc.get("rvi", "3")))
+            clients[dev] = config.device_client(cfg, dev)
         return clients[dev]
     w_id, f_id = next(iter(paths["workers"])), next(iter(paths["forklifts"]))
 

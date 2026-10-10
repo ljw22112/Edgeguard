@@ -35,6 +35,9 @@ jobs:
       - name: Check alerts end to end
         run: python3 deploy/check_demo.py deploy/out/devices.json http://localhost:9090/health
 
+      - name: oneM2M structure and access control (device AEs, forged writes refused)
+        run: python3 deploy/check_acl.py http://localhost:7579/Mobius
+
       - name: Restart with the database kept, play again
         run: |
           docker compose down

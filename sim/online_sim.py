@@ -360,7 +360,9 @@ def run_case(name, case, cse, sink, seed, scen_seed=None):
                    stdout=subprocess.DEVNULL, check=True)
     subprocess.run([sys.executable, "tools/setup_resources.py", "--config", cfg_path, "--reset"],
                    cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-    ae = cfg["ae"]
+    from edgeguard import config as egconfig
+    dev_paths = egconfig.paths(cfg)
+    dev_paths = {**dev_paths["workers"], **dev_paths["forklifts"]}
     combos, latencies, pubs_all = [], [], []
     forklift_lost, worker_stops, episodes = [], 0, 0
     restarts = []
@@ -374,8 +376,9 @@ def run_case(name, case, cse, sink, seed, scen_seed=None):
             movers[fid] = Mover(fid, "forklift", Path([(x, y) for x, y, *_ in pr["f"]],
                                                      [(th, 1 if sp >= 0 else -1, yw) for _, _, th, sp, yw in pr["f"]]))
             for oid, leaf in ((wid, "location"), (fid, "motion")):
-                cl = OneM2MClient(cse["base_url"], cse["cse_rn"], cse["origin"], cse["rvi"], timeout=3)
-                pubs[oid] = Publisher(cl, f"{ae}/{oid}/{leaf}", case, random.Random(rng.random()))
+                cl = OneM2MClient(cse["base_url"], cse["cse_rn"], egconfig.device_origin(cfg, oid), cse["rvi"],
+                                  timeout=3)                          # each device writes as itself (its AE)
+                pubs[oid] = Publisher(cl, dev_paths[oid], case, random.Random(rng.random()))
                 pubs[oid].start()
                 skew[oid] = rng.uniform(-case["skew_ms"], case["skew_ms"])
         dev_rate = {oid: ReportRate() for oid in movers}      # commanded rate with fail-safe

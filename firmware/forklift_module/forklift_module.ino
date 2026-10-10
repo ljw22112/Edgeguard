@@ -1,6 +1,6 @@
 // EdgeGuard forklift module (ESP32 + MPU6050 + beacon LED + motor driver on the RC car)
 //
-// - Publishes motion to oneM2M:  <CSE>/EdgeGuard/forklift_01/motion
+// - Publishes motion to oneM2M:  <CSE>/forklift_01/motion (its own AE)
 //   {id, kind, ts, x, y, speed, heading, yaw_rate}
 // - Receives alerts on http://<module-ip>/alert:
 //   beacon on/off and the absolute speed limit applied to the drive PWM
@@ -39,7 +39,7 @@
 const char* WIFI_SSID = "YOUR_WIFI";
 const char* WIFI_PASS = "YOUR_PASS";
 const char* CSE_URL   = "http://192.168.0.10:7579/Mobius";
-const char* ORIGIN    = "CEdgeGuard";
+const char* ORIGIN    = "SForklift01";        // this device's own AE (config/site.yaml security.originators)
 const char* DEVICE_ID = "forklift_01";
 const int   BEACON_PIN = 26;
 const int   MOTOR_PWM_PIN = 27;
@@ -139,7 +139,7 @@ void relayUp(const d2d::Frame& f) {     // a worker in a shadow: post its positi
   String body;
   serializeJson(doc, body);
   HTTPClient http;
-  http.begin(String(CSE_URL) + "/EdgeGuard/" + f.id + "/location");
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/relay");   // into this device's own AE
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("rl") + (rqi++));
   http.addHeader("X-M2M-RVI", "3");
@@ -191,7 +191,7 @@ void publishMotion(float x, float y, float v, float yawRate) {
   String body;
   serializeJson(doc, body);
   HTTPClient http;
-  http.begin(String(CSE_URL) + "/EdgeGuard/" + DEVICE_ID + "/motion");
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/motion");
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("fk") + (rqi++));
   http.addHeader("X-M2M-RVI", "3");
@@ -251,6 +251,30 @@ void handleAlert() {
   Serial.printf("alert %s beacon=%d limit %.2f m/s\n", (const char*)(alert["level"] | "?"), beacon, lim);
 }
 
+// oneM2M registration: this device is its own AE (<CSE>/{DEVICE_ID}) with its data container
+// under it.  Idempotent (409 = already registered); tools/setup_resources.py adds the ACP.
+bool m2mCreate(const String& path, int ty, const String& body) {
+  HTTPClient http;
+  http.begin(String(CSE_URL) + path);
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String("reg") + (rqi++));
+  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("Content-Type", String("application/json;ty=") + ty);
+  http.addHeader("Accept", "application/json");
+  int code = http.POST(body);
+  http.end();
+  return code == 201 || code == 409;
+}
+
+void registerAE() {
+  String poa = String("http://") + WiFi.localIP().toString() + ":80/alert";
+  bool ae = m2mCreate("", 2, String("{\"m2m:ae\":{\"rn\":\"") + DEVICE_ID +
+                      "\",\"api\":\"Nedgeguard.forklift\",\"rr\":true,\"poa\":[\"" + poa + "\"],\"srv\":[\"2a\",\"3\"]}}");
+  bool cnt = m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"motion\"}}");
+  m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"relay\",\"mni\":50}}");   // D2D relay for neighbours
+  Serial.printf("oneM2M AE %s: %s, container motion: %s\n", DEVICE_ID, ae ? "ok" : "failed", cnt ? "ok" : "failed");
+}
+
 void setup() {
   Serial.begin(115200);
   pinMode(BEACON_PIN, OUTPUT);
@@ -262,6 +286,7 @@ void setup() {
   ledcAttach(MOTOR_PWM_PIN, 20000, 8);             // ESP32 core 3.x
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) { delay(250); Serial.print("."); }
+  registerAE();
   Serial.printf("\nIP %s\n", WiFi.localIP().toString().c_str());
   configTime(9 * 3600, 0, "pool.ntp.org");
   server.on("/alert", HTTP_POST, handleAlert);

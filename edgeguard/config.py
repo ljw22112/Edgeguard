@@ -40,18 +40,36 @@ def risk_config(cfg):
     return RiskConfig(**cfg.get("risk", {}))
 
 
+def device_origin(cfg, dev):
+    """oneM2M originator of a device's own AE (security.originators, else S<id> without '_')."""
+    o = ((cfg.get("security") or {}).get("originators") or {}).get(dev)
+    return o or "S" + dev.replace("_", "")
+
+
+def device_client(cfg, dev):
+    """Client acting as the device itself (its AE owns its containers)."""
+    c = cfg["cse"]
+    return OneM2MClient(c["base_url"], c["cse_rn"], device_origin(cfg, dev), str(c.get("rvi", "3")))
+
+
 def paths(cfg):
-    """oneM2M resource paths relative to the CSE root."""
+    """oneM2M resource paths relative to the CSE root.
+
+    layout "device_ae" (default): every device registers its own AE (originator = the device) with
+    its data container under it - <CSE>/worker_01/location - and the MEC app's AE holds what the
+    MEC app writes - <CSE>/EdgeGuard/{risk, alert, control, nearmiss, mec_lease}.
+    layout "single_ae" (v1.2 and earlier): device containers under the MEC app's AE."""
     ae = cfg["ae"]
     d = cfg["devices"]
-    return {
-        "ae": ae,
-        "workers": {w: f"{ae}/{w}/location" for w in d.get("workers", [])},
-        "forklifts": {f: f"{ae}/{f}/motion" for f in d.get("forklifts", [])},
-        "cameras": {c: f"{ae}/{c}/detect" for c in d.get("cameras", [])},
-        "risk": f"{ae}/risk",
-        "alert": f"{ae}/alert",
-        "control": f"{ae}/control",
-        "nearmiss": f"{ae}/nearmiss",
-        "mec_lease": f"{ae}/mec_lease",
-    }
+    root = "" if cfg.get("layout", "device_ae") == "device_ae" else f"{ae}/"
+    leaf = {"workers": "location", "forklifts": "motion", "cameras": "detect"}
+    out = {"ae": ae, "layout": "device_ae" if not root else "single_ae"}
+    for group, cnt in leaf.items():
+        out[group] = {dev: f"{root}{dev}/{cnt}" for dev in d.get(group, [])}
+    out["device_ae"] = {dev: f"{root}{dev}" for g in leaf for dev in d.get(g, [])}
+    # D2D relay: a tag / forklift module posts positions it heard from a neighbour in a radio shadow
+    # into its OWN AE (<dev>/relay), so no device ever writes into another device's AE
+    out["relay"] = ({dev: f"{dev}/relay" for g in ("workers", "forklifts") for dev in d.get(g, [])}
+                    if not root else {})
+    out.update({k: f"{ae}/{k}" for k in ("risk", "alert", "control", "nearmiss", "mec_lease")})
+    return out

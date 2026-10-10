@@ -517,7 +517,8 @@ def housekeeping():
             continue
         last_sub = time.monotonic()
         state["subs"]["checks"] += 1
-        for path in list(PATHS["workers"].values()) + list(PATHS["forklifts"].values()) + list(PATHS["cameras"].values()):
+        for path in (list(PATHS["workers"].values()) + list(PATHS["forklifts"].values())
+                     + list(PATHS["cameras"].values()) + list(PATHS.get("relay", {}).values())):
             try:   # each HA instance owns its own subscription (rn), so neither overwrites the other's URL
                 cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
             except Exception as e:

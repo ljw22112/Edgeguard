@@ -3,7 +3,7 @@
 Runs on the Raspberry Pi / Jetson next to the camera.  Detects people with a
 lightweight YOLO model, maps each person's foot point (bottom-centre of the
 box) to site-floor metres with a homography, and writes the list to
-`<AE>/camera_01/detect`.  The MEC app fuses these detections with the tag tracks.
+`<CSE>/camera_01/detect` (the camera's own AE).  The MEC app fuses these detections with the tag tracks.
 
     python devices/camera_node.py --source 0                # webcam
     python devices/camera_node.py --source clip.mp4
@@ -74,7 +74,7 @@ def main():
     path = config.paths(cfg)["cameras"][cam_id]
     H = homography(cam_cfg["calib_points"])
     det = Detector(a.weights, cam_cfg.get("conf", 0.4))
-    cse = None if a.once else config.client(cfg)
+    cse = None if a.once else config.device_client(cfg, cam_id)    # the camera writes as itself (its AE)
 
     cap = None if a.image else cv2.VideoCapture(int(a.source) if a.source.isdigit() else a.source)
     period = 1.0 / a.hz

@@ -1,6 +1,6 @@
 // EdgeGuard worker tag (ESP32 + DW1000 UWB + vibration motor + LED)
 //
-// - Publishes the worker's position to oneM2M:  <CSE>/EdgeGuard/worker_01/location
+// - Publishes the worker's position to oneM2M:  <CSE>/worker_01/location (its own AE)
 // - Receives alert notifications from the CSE on  http://<tag-ip>/alert
 //   (add that URL to `alert_subscribers` in config/edgeguard.yaml, then run
 //    tools/setup_resources.py - it subscribes the URL to <ae>/alert and <ae>/control)
@@ -40,7 +40,7 @@
 const char* WIFI_SSID = "YOUR_WIFI";
 const char* WIFI_PASS = "YOUR_PASS";
 const char* CSE_URL   = "http://192.168.0.10:7579/Mobius";     // Mobius; ACME: http://<host>:8080/cse-in
-const char* ORIGIN    = "CEdgeGuard";
+const char* ORIGIN    = "SWorker01";        // this device's own AE (config/site.yaml security.originators)
 const char* DEVICE_ID = "worker_01";
 const int   MOTOR_PIN = 25;
 const int   LED_PIN   = 2;
@@ -158,7 +158,7 @@ void relayUp(const d2d::Frame& f) {
   String body;
   serializeJson(doc, body);
   HTTPClient http;
-  http.begin(String(CSE_URL) + "/EdgeGuard/" + f.id + "/motion");
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/relay");   // into this device's own AE
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("rl") + (rqi++));
   http.addHeader("X-M2M-RVI", "3");
@@ -204,7 +204,7 @@ void publishLocation(float x, float y) {
   serializeJson(doc, body);
 
   HTTPClient http;
-  http.begin(String(CSE_URL) + "/EdgeGuard/" + DEVICE_ID + "/location");
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/location");
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("tag") + (rqi++));
   http.addHeader("X-M2M-RVI", "3");
@@ -261,12 +261,37 @@ void handleAlert() {
   Serial.printf("alert %s %s vibrate=%d wait=%d\n", ev, level, vibrate, waitCue.waiting());
 }
 
+// oneM2M registration: this device is its own AE (<CSE>/{DEVICE_ID}) with its data container
+// under it.  Idempotent (409 = already registered); tools/setup_resources.py adds the ACP.
+bool m2mCreate(const String& path, int ty, const String& body) {
+  HTTPClient http;
+  http.begin(String(CSE_URL) + path);
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String("reg") + (rqi++));
+  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("Content-Type", String("application/json;ty=") + ty);
+  http.addHeader("Accept", "application/json");
+  int code = http.POST(body);
+  http.end();
+  return code == 201 || code == 409;
+}
+
+void registerAE() {
+  String poa = String("http://") + WiFi.localIP().toString() + ":80/alert";
+  bool ae = m2mCreate("", 2, String("{\"m2m:ae\":{\"rn\":\"") + DEVICE_ID +
+                      "\",\"api\":\"Nedgeguard.worker\",\"rr\":true,\"poa\":[\"" + poa + "\"],\"srv\":[\"2a\",\"3\"]}}");
+  bool cnt = m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"location\"}}");
+  m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"relay\",\"mni\":50}}");   // D2D relay for neighbours
+  Serial.printf("oneM2M AE %s: %s, container location: %s\n", DEVICE_ID, ae ? "ok" : "failed", cnt ? "ok" : "failed");
+}
+
 void setup() {
   Serial.begin(115200);
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) { delay(250); Serial.print("."); }
+  registerAE();
   Serial.printf("\nIP %s\n", WiFi.localIP().toString().c_str());
   configTime(9 * 3600, 0, "pool.ntp.org");                        // timestamps for latency
   server.on("/alert", HTTP_POST, handleAlert);
