@@ -135,7 +135,7 @@ def build_twin(dc, cfg, dev, kind, readers, zone=None, state=None, announce_to=N
     notify/delete, nobody else.  `state` ({rn: attrs}) restores module values (CSE handover);
     `announce_to` (CSE-IDs) announces the AE (oneM2M announcement: the IN-CSE then holds an
     AEAnnc whose lnk points at the serving CSE).  Returns the ACP resource."""
-    from .onem2m import ALL_OPS, CREATE, RETRIEVE, DISCOVERY, NOTIFY, DELETE
+    from .onem2m import ALL_OPS, CREATE, RETRIEVE, DISCOVERY, NOTIFY
     rn, tp, cnd, act_rn, act_tp, act_cnd = DEVICE[kind]
     twin = twin_path(dev, kind)
     ae = {"m2m:ae": {"rn": dev, "api": f"Nedgeguard.{kind}", "rr": False, "srv": [dc.rvi],
@@ -156,12 +156,15 @@ def build_twin(dc, cfg, dev, kind, readers, zone=None, state=None, announce_to=N
     dc.with_retry(dc.create_smd, twin, "smd", turtle_b64(saref_turtle(dev, kind, twin, zone)),
                   lbl=labels(cfg, dev, kind, "semantics"))
     me = dc.origin
-    rules = [([me], ALL_OPS), (list(readers), CREATE | RETRIEVE | DISCOVERY | NOTIFY | DELETE)]
+    # readers (MEC app, MEC-IPE) read, discover and subscribe; their CREATE is limited to subscriptions
+    # (accessControlObjectDetails chty 23), so no other entity can write into the twin
+    rules = [([me], ALL_OPS), (list(readers), CREATE | RETRIEVE | DISCOVERY | NOTIFY, (23,))]
     acp = dc.with_retry(dc.create_acp, dev, f"acp_{dev}", rules, [me] + list(readers)[:1])
     for path, ptp in ((twin, tp), (f"{twin}/{KIN_RN}", KIN_TP), (f"{twin}/{act_rn}", act_tp),
                       (f"{twin}/battery", BAT_TP), (f"{twin}/smd", "m2m:smd")):
         dc.set_acpi(path, f"{dev}/acp_{dev}", acp.get("ri") if acp else None, tp=ptp)
-    log(f"   {twin}: {tp} twin (kinematics, {act_rn}, battery, SAREF smd), ACP all = {me}, read = {', '.join(readers)}")
+    log(f"   {twin}: {tp} twin (kinematics, {act_rn}, battery, SAREF smd), ACP all = {me}, "
+        f"read/subscribe = {', '.join(readers)}")
     return acp
 
 
