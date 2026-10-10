@@ -4,3 +4,7 @@ cse:
   base_url: http://localhost:8080
   cse_rn: cse-in
   rvi: "3"
+# ACME knows the EdgeGuard SDT domain (scripts/acme.sh installs config/onem2m/edgeguard.fcp):
+# devices publish into flexContainer twins, labelled and described with SAREF (docs/data-model.md)
+onem2m:
+  data_model: sdt

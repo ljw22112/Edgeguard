@@ -172,10 +172,10 @@ def main():
                 print(f"  -- t={t:.1f}s worker UWB tag shadowed until {drop[1]:.1f}s --")
             try:
                 if not silent:
-                    dev_client(w_id).create_cin(paths["workers"][w_id], {
+                    dev_client(w_id).publish(paths["workers"][w_id], {
                         "id": w_id, "kind": "worker", "ts": ts,
                         "x": round(wx + rng.gauss(0, a.noise), 3), "y": round(wy + rng.gauss(0, a.noise), 3)})
-                dev_client(f_id).create_cin(paths["forklifts"][f_id], {
+                dev_client(f_id).publish(paths["forklifts"][f_id], {
                     "id": f_id, "kind": "forklift", "ts": ts,
                     "x": round(fx + rng.gauss(0, a.noise), 3), "y": round(fy + rng.gauss(0, a.noise), 3),
                     "speed": round(sp, 3), "heading": round(th, 4), "yaw_rate": round(yaw, 4)})

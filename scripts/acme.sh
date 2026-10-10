@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Start / stop local ACME CSEs with the EdgeGuard SDT domain installed.
+#
+#   scripts/acme.sh start [in|mn-a|mn-b ...]     (default: in)
+#   scripts/acme.sh stop  [in|mn-a|mn-b ...]
+#
+#   in    IN-CSE  cse-in      :8080   (scripts/acme.ini)
+#   mn-a  MN-CSE  zone A      :8081   (scripts/acme-mn-a.ini, registers with the IN-CSE)
+#   mn-b  MN-CSE  zone B      :8082   (scripts/acme-mn-b.ini)
+#
+# Every start copies config/onem2m/edgeguard.fcp (flexContainer specializations, docs/data-model.md)
+# next to ACME's own .fcp files, so the CSE knows the egs:* device and module classes.
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ACME_DIR="${ACME_DIR:-$ROOT/../ACME-oneM2M-CSE}"
+ACME_PY="${ACME_PYTHON:-python3}"
+cmd="${1:-start}"; shift || true
+names="${*:-in}"
+
+port_of() { case "$1" in in) echo 8080;; mn-a) echo 8081;; mn-b) echo 8082;; *) echo "unknown CSE $1" >&2; exit 2;; esac; }
+ini_of() { case "$1" in in) echo acme.ini;; *) echo "acme-$1.ini";; esac; }
+rn_of() { case "$1" in in) echo cse-in;; mn-a) echo cse-mn-a;; mn-b) echo cse-mn-b;; esac; }
+up() { curl -sf -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" "localhost:$(port_of "$1")/$(rn_of "$1")" >/dev/null; }
+
+case "$cmd" in
+  start)
+    if [ ! -d "$ACME_DIR" ]; then
+      git clone --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git "$ACME_DIR"
+      $ACME_PY -m pip install -r "$ACME_DIR/requirements.txt"
+    fi
+    cp "$ROOT/config/onem2m/edgeguard.fcp" "$ACME_DIR/acmecse/init/"
+    for n in $names; do
+      if up "$n"; then echo "ACME $n already up on :$(port_of "$n")"; continue; fi
+      d="$ROOT/.acme/$n"; mkdir -p "$d"; cp "$ROOT/scripts/$(ini_of "$n")" "$d/acme.ini"
+      (cd "$ACME_DIR" && nohup $ACME_PY -m acmecse --base-directory "$d" --config acme.ini \
+          </dev/null > "$d/acme.out" 2>&1 & echo $! > "$d/acme.pid")
+      for _ in $(seq 1 90); do up "$n" && break; sleep 0.5; done
+      up "$n" && echo "ACME $n up on :$(port_of "$n")" || { echo "ACME $n did not start, see $d/acme.out"; exit 1; }
+    done ;;
+  stop)
+    for n in $names; do
+      f="$ROOT/.acme/$n/acme.pid"; [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"
+    done ;;
+  *) echo "usage: $0 start|stop [in|mn-a|mn-b ...]"; exit 2 ;;
+esac

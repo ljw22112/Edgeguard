@@ -14,6 +14,10 @@ Each device AE is created with the device's own originator (here on its behalf; 
 registers itself the same way on boot).  Its ACP lets the device do everything and the MEC app
 read / subscribe / write fixes from network positioning (MEC-IPE); no other device may write it.
 Positions a tag or module relays for a neighbour in a radio shadow go to its own <dev>/relay.
+
+onem2m.data_model "sdt" (edgeguard/sdt.py, needs config/onem2m/edgeguard.fcp on the CSE): instead of
+<dev>/location | motion, each tag / module gets a labelled device twin of flexContainers
+(<dev>/tag | module with kinematics, cue | speedLimit, battery) and a SAREF semanticDescriptor.
 """
 import argparse
 import os
@@ -55,12 +59,15 @@ def main():
         parent, leaf = path.rsplit("/", 1)
         if per_device:
             dc = config.device_client(cfg, dev)
-            dc.with_retry(dc.create_ae, dev, f"Nedgeguard.{g[:-1]}")
-            dc.with_retry(dc.create_container, parent, leaf)
-            device_acp(dc, cfg, p, dev, path)
+            if dev in p.get("twin", {}):
+                create_twin(dc, cfg, p, dev, g[:-1])
+            else:
+                dc.with_retry(dc.create_ae, dev, f"Nedgeguard.{g[:-1]}")
+                dc.with_retry(dc.create_container, parent, leaf)
+                device_acp(dc, cfg, p, dev, path)
             for extra in ("relay", "status"):          # D2D relay; actuator confirmations (HIL boards)
                 if dev in p[extra]:
-                    dc.with_retry(dc.create_container, parent, extra, mni=50)
+                    dc.with_retry(dc.create_container, p["device_ae"][dev], extra, mni=50)
                     dc.set_acpi(p[extra][dev], f"{p['device_ae'][dev]}/acp_{dev}")
                     c.with_retry(c.create_subscription, p[extra][dev], "sub_mec", [cfg["mec"]["notify_url"]])
         else:
@@ -86,7 +93,29 @@ def main():
     print("  ", p["risk"], ";", p["alert"], "-> devices")
 
 
-def device_acp(dc, cfg, p, dev, path):
+def create_twin(dc, cfg, p, dev, kind):
+    """SDT device twin, created by the device itself (edgeguard/sdt.py)."""
+    from edgeguard import sdt
+    rn, tp, cnd, act_rn, act_tp, act_cnd = sdt.DEVICE[kind]
+    twin = p["twin"][dev]
+    zone = ((cfg.get("site") or {}).get("zones") or {}).get(dev) if isinstance(cfg.get("site"), dict) else None
+    dc.with_retry(dc.create_ae, dev, f"Nedgeguard.{kind}", lbl=sdt.labels(cfg, dev, kind)[:3])
+    dc.with_retry(dc.create_fcnt, dev, tp, rn, cnd, {"zone": zone} if zone else None, lbl=sdt.labels(cfg, dev, kind))
+    dc.with_retry(dc.create_fcnt, twin, sdt.KIN_TP, sdt.KIN_RN, sdt.KIN_CND, {"posX": 0.0, "posY": 0.0, "smpTe": 0},
+                  lbl=sdt.labels(cfg, dev, kind, "kinematics"), mni=100)
+    init = {"cueSe": "IDLE"} if kind == "worker" else {"maxSd": float((cfg.get("forklift") or {}).get("max_speed", 2.5))}
+    dc.with_retry(dc.create_fcnt, twin, act_tp, act_rn, act_cnd, init, lbl=sdt.labels(cfg, dev, kind, act_rn))
+    dc.with_retry(dc.create_fcnt, twin, sdt.BAT_TP, "battery", sdt.BAT_CND, {"lvl": 100},
+                  lbl=sdt.labels(cfg, dev, kind, "battery"))
+    dc.with_retry(dc.create_smd, twin, "smd", sdt.turtle_b64(sdt.saref_turtle(dev, kind, twin, zone)),
+                  lbl=sdt.labels(cfg, dev, kind, "semantics"))
+    acp = device_acp(dc, cfg, p, dev, twin, tp=tp)
+    for sub_rn, sub_tp in ((sdt.KIN_RN, sdt.KIN_TP), (act_rn, act_tp), ("battery", sdt.BAT_TP), ("smd", "m2m:smd")):
+        dc.set_acpi(f"{twin}/{sub_rn}", f"{p['device_ae'][dev]}/acp_{dev}", acp.get("ri") if acp else None, tp=sub_tp)
+    print(f"   {twin}: {tp} twin (kinematics, {act_rn}, battery, SAREF smd)")
+
+
+def device_acp(dc, cfg, p, dev, path, tp="m2m:cnt"):
     """ACP of a device's own AE (created by the device): the device everything; the MEC app (and
     MEC-IPE) read, discover, subscribe and write fixes from network positioning; nobody else."""
     from edgeguard.onem2m import CREATE, RETRIEVE, DISCOVERY, DELETE, NOTIFY, ALL_OPS
@@ -94,8 +123,9 @@ def device_acp(dc, cfg, p, dev, path):
     ipe = (cfg.get("mec_ipe") or {}).get("origin", "SMecIpe")
     rules = [([me], ALL_OPS), ([mec, ipe], CREATE | RETRIEVE | DISCOVERY | NOTIFY | DELETE)]
     acp = dc.with_retry(dc.create_acp, p["device_ae"][dev], f"acp_{dev}", rules, [me, mec])
-    dc.set_acpi(path, f"{p['device_ae'][dev]}/acp_{dev}", acp.get("ri") if acp else None)
+    dc.set_acpi(path, f"{p['device_ae'][dev]}/acp_{dev}", acp.get("ri") if acp else None, tp=tp)
     print(f"   ACP {path}: all = {me}; read/subscribe = MEC app; others: none")
+    return acp
 
 
 def apply_acps(c, cfg, p, sec, devices_done=False):

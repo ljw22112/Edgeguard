@@ -2,3 +2,6 @@
 alert_subscribers:
   - http://127.0.0.1:19001/alert     # worker tag firmware (worker_01)
   - http://127.0.0.1:19002/alert     # forklift module firmware (forklift_01)
+# the ESP32 firmware writes contentInstances (<device>/location | motion)
+onem2m:
+  data_model: cin

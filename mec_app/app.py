@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from edgeguard import config                          # noqa: E402
+from edgeguard import sdt                             # noqa: E402
 from edgeguard.onem2m import parse_notification, now_ms  # noqa: E402
 from edgeguard.risk import RiskEngine, LEVELS               # noqa: E402
 from edgeguard.alerting import AlertState, decide            # noqa: E402
@@ -78,7 +79,7 @@ def post(kind, con):
         state["publisher"]["dropped_full"] += 1
         log.warning("outbox full, dropping %s", kind)
 state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0, "worker_cues": {"wait": 0, "release": 0, "aside": 0},
-         "worker_cue": {}, "worker_aside": {},
+         "worker_cue": {}, "worker_aside": {}, "onboarded": [],
          "m2m": {"in": {}, "out": {}}, "acks": {},
          "publisher": {"ok": 0, "failed": 0, "dropped_stale": 0, "dropped_full": 0, "last_ok": None,
                        "last_error": None},
@@ -505,6 +506,33 @@ def gc_once(now=None):
     return gone
 
 
+def discover_devices(cl=None):
+    """SDT data model: find every kinematics module by its label (oneM2M discovery) and subscribe to
+    the ones not known yet, so a tag or forklift module that registered itself is onboarded without
+    a device list.  Returns the newly onboarded paths."""
+    if PATHS.get("data_model") != "sdt":
+        return []
+    cl = cl or config.client(CFG)
+    known = set(PATHS["workers"].values()) | set(PATHS["forklifts"].values())
+    new = []
+    for path in cl.discover_label("egs:module/kinematics", ty=28):
+        if path in known or not path.endswith("/kinematics"):
+            continue
+        dev, twin = path.split("/")[0], path.split("/")[1]
+        group = {"tag": "workers", "module": "forklifts"}.get(twin)
+        if not group:
+            continue
+        cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
+        with lock:
+            PATHS[group][dev] = path
+            PATHS["device_ae"][dev] = dev
+            PATHS.setdefault("twin", {})[dev] = f"{dev}/{twin}"
+            state["onboarded"].append({"device": dev, "path": path, "ts": time.time()})
+        log.info("onboarded %s by discovery (lbl egs:module/kinematics): %s", dev, path)
+        new.append(path)
+    return new
+
+
 def housekeeping():
     """Every 10 s: GC; every 60 s: make sure the CSE still notifies us (a CSE restored without its
     database, or a subscription removed after failed notifications, would silently stop the feed)."""
@@ -517,6 +545,10 @@ def housekeeping():
             gc_once()
         except Exception as e:
             log.warning("gc failed: %s", e)
+        try:
+            discover_devices(cl)
+        except Exception as e:
+            log.debug("device discovery: %s", e)
         if not MEC.get("subscription_watchdog", True) or time.monotonic() - last_sub < MEC.get("subscription_check_s", 60):
             continue
         last_sub = time.monotonic()
@@ -576,6 +608,8 @@ def _count_in(payload):
 
 def process_notification(body):
     kind, payload = parse_notification(body)
+    if kind == "fcnt" and payload.get("tp") == sdt.KIN_TP:      # SDT data model: kinematics module updated
+        kind, payload = "cin", sdt.from_kin(payload)
     if kind == "cin" and isinstance(payload, dict):
         _count_in(payload)
     if kind == "cin" and isinstance(payload, dict) and payload.get("kind") == "ack":
@@ -678,7 +712,8 @@ def snapshot():
                            for g in ("workers", "forklifts", "cameras") for d, path in PATHS[g].items()},
                "mec": {"ae": PATHS["ae"], "out": {k: state["m2m"]["out"].get(PATHS[k], 0)
                                                   for k in ("alert", "control", "risk", "nearmiss")}},
-               "cse": CFG["cse"]["cse_rn"]}
+               "cse": CFG["cse"]["cse_rn"], "data_model": PATHS.get("data_model", "cin"),
+               "onboarded": [o["device"] for o in state["onboarded"]]}
         acks = {d: a for d, a in state["acks"].items() if time.time() - a["rx"] < 10}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]), "cues": cues,
                 "m2m": m2m, "acks": acks,

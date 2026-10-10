@@ -30,15 +30,25 @@ jobs:
           git clone --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git /tmp/acme
           python -m venv /tmp/acmevenv            # own venv: ACME pins packages the MEC app needs newer
           /tmp/acmevenv/bin/pip install -q -r /tmp/acme/requirements.txt
-          mkdir -p .acme && cp scripts/acme.ini .acme/
-          (cd /tmp/acme && nohup /tmp/acmevenv/bin/python -m acmecse --base-directory "$GITHUB_WORKSPACE/.acme" --config acme.ini </dev/null > /tmp/acme.out 2>&1 &)
-          for i in $(seq 60); do curl -sf -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" localhost:8080/cse-in >/dev/null && break; sleep 1; done
+          ACME_DIR=/tmp/acme ACME_PYTHON=/tmp/acmevenv/bin/python scripts/acme.sh start in   # + EdgeGuard SDT domain
           python tools/sil_run.py --scene crossing
           python tools/sil_run.py --scene head_on --out results/sil_run_head_on.json
+
+      - name: SDT data model (flexContainer twins, label discovery, SAREF semantic query, onboarding)
+        env:
+          EDGEGUARD_CONFIG: config/site.yaml
+          EDGEGUARD_OVERRIDES: config/local-acme.yaml,config/live-demo.yaml
+        run: |
+          bash scripts/mec.sh restart
+          (timeout 90 python devices/live_devices.py --scene crossing --seconds 40 --start-delay 5 > /tmp/live.out 2>&1 &)
+          sleep 2
+          python tools/setup_resources.py --reset
+          sleep 10
+          python deploy/check_sdt.py --onboard
 
       - name: SIL logs on failure
         if: failure()
         run: |
           echo "::error title=mec.log::$(tail -15 mec.log 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
-          echo "::error title=acme.out::$(tail -15 /tmp/acme.out 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
+          echo "::error title=acme.out::$(tail -15 .acme/in/acme.out 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
 

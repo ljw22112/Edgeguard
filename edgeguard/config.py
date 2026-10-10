@@ -66,6 +66,16 @@ def paths(cfg):
     out = {"ae": ae, "layout": "device_ae" if not root else "single_ae"}
     for group, cnt in leaf.items():
         out[group] = {dev: f"{root}{dev}/{cnt}" for dev in d.get(group, [])}
+    # SDT data model (edgeguard/sdt.py): tags and forklift modules publish into the kinematics
+    # flexContainer of their device twin instead of a contentInstance container
+    from . import sdt
+    out["data_model"] = sdt.model(cfg) if not root else "cin"
+    out["twin"] = {}
+    if out["data_model"] == "sdt":
+        for group in ("workers", "forklifts"):
+            for dev in d.get(group, []):
+                out[group][dev] = sdt.kin_path(dev, sdt.KIND_OF[group])
+                out["twin"][dev] = sdt.twin_path(dev, sdt.KIND_OF[group])
     out["device_ae"] = {dev: f"{root}{dev}" for g in leaf for dev in d.get(g, [])}
     # D2D relay: a tag / forklift module posts positions it heard from a neighbour in a radio shadow
     # into its OWN AE (<dev>/relay), so no device ever writes into another device's AE

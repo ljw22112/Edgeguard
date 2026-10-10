@@ -1,0 +1,83 @@
+
+// EdgeGuard SDT domain (oneM2M TS-0023 style) - flexContainer specializations
+// Domain:   org.edgeguard.safety    Namespace prefix: egs
+//
+// Device classes reuse the standard module class "battery" (cod:bat, org.onem2m.common) and add
+// three module classes of their own.  Installed into a CSE by copying this file next to the
+// CSE's own .fcp files (ACME: acmecse/init/), see docs/data-model.md.
+[
+    // ModuleClass: kinematicState (one update per position sample)
+    {
+        "type"      : "egs:kinSt",
+        "lname"     : "kinematicState",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.kinematicState",
+        "attributes": [
+            // DataPoint: positionX, positionY (site frame, metres)
+            { "sname" : "posX", "lname" : "positionX", "type" : "float", "car" : "1" },
+            { "sname" : "posY", "lname" : "positionY", "type" : "float", "car" : "1" },
+            // DataPoint: positionSigma (1-sigma position error, metres)
+            { "sname" : "posSa", "lname" : "positionSigma", "type" : "float", "car" : "01" },
+            // DataPoint: positionSource (uwb | mec | camera)
+            { "sname" : "posSe", "lname" : "positionSource", "type" : "string", "car" : "01" },
+            // DataPoint: speed (m/s, signed for forklifts: negative = reversing), heading (rad), yawRate (rad/s)
+            { "sname" : "speed", "lname" : "speed", "type" : "float", "car" : "01" },
+            { "sname" : "headg", "lname" : "heading", "type" : "float", "car" : "01" },
+            { "sname" : "yawRe", "lname" : "yawRate", "type" : "float", "car" : "01" },
+            // DataPoint: sampleTime (ms since the epoch, device clock)
+            { "sname" : "smpTe", "lname" : "sampleTime", "type" : "integer", "car" : "1" }
+        ]
+    },
+
+    // ModuleClass: workerCue (what the worker's tag shows)
+    {
+        "type"      : "egs:wrkCe",
+        "lname"     : "workerCue",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.workerCue",
+        "attributes": [
+            // DataPoint: cueState (IDLE | WAIT | ASIDE | GO)
+            { "sname" : "cueSe", "lname" : "cueState", "type" : "string", "car" : "1" },
+            // DataPoint: cueSource (forklift the cue is about)
+            { "sname" : "cueSo", "lname" : "cueSource", "type" : "string", "car" : "01" }
+        ]
+    },
+
+    // ModuleClass: speedLimit (what the forklift module enforces)
+    {
+        "type"      : "egs:spdLt",
+        "lname"     : "speedLimit",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.speedLimit",
+        "attributes": [
+            // DataPoint: limit (m/s, absent = no limit), maxSpeed (m/s)
+            { "sname" : "limit", "lname" : "limit", "type" : "float", "car" : "01" },
+            { "sname" : "maxSd", "lname" : "maxSpeed", "type" : "float", "car" : "01" }
+        ]
+    },
+
+    // DeviceClass: workerTag
+    {
+        "type"      : "egs:wrkTg",
+        "lname"     : "workerTag",
+        "sdttype"   : "device",
+        "cnd"       : "org.edgeguard.safety.device.workerTag",
+        "attributes": [
+            // Property: zone (site zone the tag is in)
+            { "sname" : "zone", "lname" : "zone", "type" : "string", "car" : "01" }
+        ],
+        "children"  : [ "egs:kinSt", "egs:wrkCe", "cod:bat" ]
+    },
+
+    // DeviceClass: forkliftModule
+    {
+        "type"      : "egs:frkMe",
+        "lname"     : "forkliftModule",
+        "sdttype"   : "device",
+        "cnd"       : "org.edgeguard.safety.device.forkliftModule",
+        "attributes": [
+            { "sname" : "zone", "lname" : "zone", "type" : "string", "car" : "01" }
+        ],
+        "children"  : [ "egs:kinSt", "egs:spdLt", "cod:bat" ]
+    }
+]

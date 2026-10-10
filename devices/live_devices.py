@@ -121,6 +121,24 @@ class Live:
                 wa = acts.get(w) or {}
                 self.movers[w].on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), src=f)
             self.log.append((round(t, 1), ev, w, f))
+            self._twin_state(ev, w, f, acts)
+
+    def _twin_state(self, ev, w, f, acts):
+        """SDT data model: each device reports what it now shows / enforces in its own twin
+        (worker tag: cue module, forklift module: speedLimit module)."""
+        twins = self.paths.get("twin") or {}
+        if w in twins and w in self.movers:
+            cue = {"aside": "ASIDE", "release": "GO", "clear": "GO"}.get(ev, "WAIT")
+            self.pool.submit(self._update, w, f"{twins[w]}/cue", "egs:wrkCe", {"cueSe": cue, "cueSo": f or ""})
+        if f in twins and f in self.movers and ev not in ("wait", "release", "aside"):
+            lim = None if ev == "clear" else (acts.get(f) or {}).get("speed_limit")
+            self.pool.submit(self._update, f, f"{twins[f]}/speedLimit", "egs:spdLt", {"limit": lim})
+
+    def _update(self, dev, path, tp, attrs):
+        try:
+            self.client(dev).update_fcnt(path, tp, attrs)
+        except Exception as e:
+            print(f"twin {dev}: {e}", file=sys.stderr)
 
     def step(self):
         t = self.now()
@@ -144,7 +162,7 @@ class Live:
 
     def _send(self, dev, path, con):
         try:
-            self.client(dev).create_cin(path, con)
+            self.client(dev).publish(path, con)
         except Exception as e:                                   # keep playing; the CSE may be restarting
             print(f"publish {dev}: {e}", file=sys.stderr)
 
