@@ -25,6 +25,8 @@
 
 ## 동작 방식
 
+![EdgeGuard 구조: 구역별 MEC 호스트(MN-CSE), IN-CSE, 연합학습, AI 에이전트](docs/img/architecture_en.png)
+
 ```
  작업자 태그 · 지게차 모듈 (ESP32 + UWB)
         │ 위치 · 속도 (oneM2M CIN)                 ▲ WAIT / GO / STEP ASIDE · 속도 제한
@@ -58,12 +60,24 @@
 | accessControlPolicy | 디바이스 AE마다 ACP, 최소 권한 ([리소스 트리](docs/ko/deployment.md#onem2m-리소스-트리)) | 사용 중 |
 | maxNrOfInstances | 이력 상한(아차사고 2,000, 이중화 리스 20) | 사용 중 |
 | Mcc 등록 | 엣지 MN-CSE ↔ 클라우드 IN-CSE | 사용 중 |
-| flexContainer + 라벨 + 탐색 | 형식 있는 단말 상태, 설정 없는 등록 | 10/20 예정 |
-| group(fanOutPoint) · pollingChannel · announcement | 구역 내 모든 태그에 경보 1회 · NAT 뒤 태그 · 아차사고를 IN-CSE로 | 10/31 예정 |
+| flexContainer(SDT, TS-0023 방식) + 라벨 + 탐색 | 자체 SDT 도메인 `org.edgeguard.safety` + 표준 `cod:bat`로 만든 디바이스 트윈, 라벨로 단말 자동 등록(단말 목록 불필요) ([데이터 모델](docs/ko/data-model.md)) | 사용 중 |
+| semanticDescriptor(SAREF) + 시맨틱 쿼리 | "A 구역에서 구동 속도를 제어하는 지게차" → oneM2M 경로 | 사용 중 |
+| accessControlObjectDetails(chty) | MEC 앱은 디바이스 트윈에 구독만 만들 수 있음 | 사용 중 |
+| announcement · CSE 핸드오버 | 디바이스 AE가 상태 · ACP · 구독과 함께 구역 MN-CSE 사이를 이동, IN-CSE에 AEAnnc ([핸드오버](docs/ko/handover.md)) | 사용 중 |
+| group(fanOutPoint) · pollingChannel | 구역 내 모든 태그에 경보 1회 · NAT 뒤 태그 | 10/31 예정 |
 
 **ETSI MEC.** MEC-IPE가 MEC 013 Location · MEC 012 RNIS를 CSE에 넣어(`location/<ue>`, `rnis/<cell>`) MEC 앱이 oneM2M을 통해 MEC 서비스를 씁니다. 공개 ETSI MEC Sandbox(try-mec.etsi.org) 실연동, 자체 설치 AdvantEDGE 창고 시나리오에서 경보 70건.
 
 **더 알아보기:** [oneM2M](https://www.onem2m.org) · [oneM2M 표준 문서](https://www.onem2m.org/technical/published-specifications) (TS-0001 구조, TS-0004 프로토콜) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
+
+## 엣지 너머: 연속성 · 학습 · AI 에이전트
+
+| | 내용 | 측정 (CI, 매 커밋) |
+|---|---|---|
+| [CSE 핸드오버](docs/ko/handover.md) | 지게차의 oneM2M 존재가 구역 MN-CSE 사이를 따라 이동(make-before-break), 구역 CSE 고장 시 자동 전환 | 위치 기반: 서비스 중단 **3~9 ms**, 유실 **0** · 고장 전환 약 0.3초 |
+| [연합학습](docs/ko/federated-learning.md) | 사이트마다 자기 데이터로 작업자 이동 모델 학습, 작업 · 참여자 · 라운드 · 모델 버전이 oneM2M 리소스(TR-0084) | 2초 예측 오차 0.604 → **0.486 m**, 이탈 · 늦은 참여 처리 |
+| [AI 안전 에이전트](docs/ko/ai-agent.md) | IN-CSE · 두 구역 MN-CSE · ETSI MEC의 MCP 서버로 교대 안전 리포트, 상태는 oneM2M에 저장 | 도구 호출 16회 · 검증 통과, 구역 고장 시 부분 리포트 |
+| [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨, SAREF 시맨틱 | 스스로 등록한 단말 약 9초 만에 자동 편입 |
 
 ## 핵심 결과
 
@@ -135,6 +149,11 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 |---|---|
 | Docker 없이 로컬 데모 | `pip install -r requirements.txt && scripts/run_local_demo.sh crossing_conflict` |
 | 테스트 | `python -m pytest` |
+| EdgeGuard SDT 도메인을 설치한 ACME CSE | `scripts/acme.sh start in mn-a mn-b` (IN-CSE :8080, 구역 MN-CSE :8081 / :8082) |
+| 데이터 모델 점검(트윈 · 라벨 · SAREF · 자동 등록) | `python deploy/check_sdt.py --onboard` (라이브 데모 실행 중) |
+| 구역 간 CSE 핸드오버 | `python tools/handover_demo.py [--failover]` |
+| oneM2M 기반 연합학습 | `python tools/fl_demo.py` |
+| MCP 기반 AI 안전 에이전트 | `python tools/agent_demo.py` · `python -m agent.safety_agent report` |
 | 반응하는 라이브 데모 / 데모 영상 녹화 | `scripts/run_live_demo.sh` / `scripts/run_live_demo.sh record` |
 | 펌웨어 그대로 실행 (SIL, CI와 동일) | `python tools/sil_run.py` · `--scene head_on` |
 | 휴대폰을 작업자 태그로 | MEC 앱 실행 중 휴대폰에서 `http://<주소>:9090/tag?worker=worker_01` |
@@ -168,6 +187,11 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [비용 · 시장 · 사업 모델](docs/ko/business.md) | 문제 규모, 시장, 도입 비용, 투자 회수, 수익 모델, 확장성, oneM2M 생태계 기여 |
 | [도입 장벽과 대응](docs/ko/adoption.md) | 유사 시스템이 현장에 퍼지지 못한 이유와 대응 |
 | [상호운용성 노트](docs/ko/interop-notes.md) | CSE 간 시험에서 찾은 문제와 해결 |
+| [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨 · 탐색, SAREF 시맨틱 디스크립터, ACP |
+| [CSE 핸드오버](docs/ko/handover.md) | 구역 MN-CSE, make-before-break 핸드오버, 고장 전환, 이동 가능한 구독, 측정 |
+| [연합학습](docs/ko/federated-learning.md) | TR-0084 역할을 oneM2M 리소스로, 참여자 선택 · 이탈 · 늦은 참여, 결과 |
+| [AI 안전 에이전트](docs/ko/ai-agent.md) | MCP 서버(CSE별 oneM2M, ETSI MEC), 교대 리포트 워크플로, 라우팅, 상태 저장 |
+| [hackster.io 기사 초안 (영문)](docs/hackster-article.md) | 대회 기사용 프로젝트 이야기 |
 | [실물 시연](docs/ko/hardware-demo.md) | 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그 · ESP32 보드(준비물 · 배선 · 체크리스트) |
 | [사용자 검증](docs/ko/user-study.md) | 휴대폰 태그로 신호 반응 실험, 안전관리자 인터뷰, 결과를 시뮬레이션에 반영 |
 | [대회 채점표 자체 평가](docs/SCORECARD.md) | 평가 항목별 현재 점수 · 근거 · 점수를 올릴 작업 (업데이트마다 갱신) |
@@ -194,17 +218,19 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 | v1.0 | 사각 코너 지도, D2D 프레임 인증, MEC 앱 이중화, 모니터링, 아차사고 분석 |
 | v1.1 | 작업자 WAIT → GO 신호 (남은 사고의 원인: 진동 후 다시 걸어 나옴) |
 | v1.2 | 다대다 검증 · 쌍별 계획, 대치 해소, STEP ASIDE, 오경보 감소(정지 판정 · 경로 공유), 대시보드 WAIT/GO 표시 |
+| v1.4 | SDT flexContainer 데이터 모델(라벨 · 탐색 기반 자동 등록 · SAREF 시맨틱 · chty ACP), 구역 MN-CSE 간 CSE 핸드오버, oneM2M 기반 연합학습, MCP 기반 AI 안전 에이전트, hackster.io 기사 초안 |
 | v1.3 | 디바이스별 oneM2M AE · ACP (위조 쓰기 차단 CI 검증), 비용 · 시장 · 사업 모델, 반응하는 라이브 데모 · 새 데모 영상, 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그, 실물 시연 키트(HIL), 사용자 검증 키트, 영문 문서 |
 
 ## 본선까지 로드맵 (11/20)
 
 | 기한 | 추가 내용 | 대회 평가 항목 |
 |---|---|---|
-| 10/20 | flexContainer 단말 상태, 라벨, 탐색 기반 등록 | Data interoperability |
-| 10/31 | group · pollingChannel · announcement, 단말 MQTT, TLS | Innovative use of oneM2M, protocols, security |
-| 11/10 | MEC Location 기반 구역 MN-CSE 간 지게차 AE 핸드오버, 지오펜싱, 다중 호스트 배포 | CSE handover, geolocation, MEC services |
-| 11/17 | oneM2M MCP 서버와 안전관리 에이전트 (연합학습은 선택) | AI agents and MCP |
-| 11/20 | ESP32 실물 시연, 사용자 실험, hackster.io 기사, 최종 영상, 저장소 공개 | Article, video, GitHub |
+| ~~10/20~~ 완료 | flexContainer 데이터 모델, 라벨, 탐색, SAREF 시맨틱 | Data interoperability |
+| ~~11/10~~ 완료 | 구역 MN-CSE 간 CSE 핸드오버 · 고장 전환 | CSE handover |
+| ~~11/17~~ 완료 | MCP 서버와 안전 에이전트, 연합학습 | AI agents and MCP, federated learning |
+| 10/31 | group · pollingChannel, 단말 MQTT, TLS | Innovative use of oneM2M, protocols, security |
+| 11/10 | MEC Location 구역 이벤트 → 지오펜싱 · 핸드오버 트리거, 양방향 MEC–oneM2M, 다중 호스트 배포 | Geolocation, MEC services, deployment |
+| 11/20 | ESP32 실물 시연, 사용자 실험, hackster.io 기사 게시, 최종 영상, 저장소 공개 | Article, video, GitHub, promotion |
 
 평가 항목별 현재 점수: [docs/SCORECARD.md](docs/SCORECARD.md)
 
@@ -218,6 +244,10 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 - 비켜서는 방향은 "가까운 가장자리"이며 다른 지게차 위치는 고려하지 않습니다. 태그에는 방향 표시가 없습니다.
 - 작업자가 통로 앞에서 스스로 멈추는 경우의 오경보는 남아 있습니다(사람은 마지막 1초 안에 감속).
 - 현장 지도는 손으로 넣는 직사각형 장애물이며, 사각 코너 보정은 그 구간의 오경보를 늘립니다(39 → 57 / 80).
+
+**학습과 에이전트**
+- 연합학습은 사이트별 시뮬레이터가 만든 보행 데이터로 했고, 학습한 모델은 아직 실시간 위험도 엔진에 쓰이지 않습니다.
+- 에이전트 워크플로는 규칙 기반이고, Claude는 자유 질문(`ask`, API 키 필요)에만 씁니다.
 
 **시스템**
 - 경로 공유는 지게차 관제(WMS) · 운전자 태블릿 연동이 필요한 선택 기능입니다.

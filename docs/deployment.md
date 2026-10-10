@@ -99,6 +99,8 @@ Issues found in interoperability testing and their fixes are documented in [docs
 
 ## oneM2M resource tree
 
+> With `onem2m.data_model: sdt` (ACME, local demos) the `location` / `motion` containers are replaced by SDT flexContainer device twins (`<dev>/tag|module/kinematics`, …), see [data model](data-model.md). Zone MN-CSEs and CSE handover: [handover](handover.md).
+
 Each device registers **its own AE** (originator = that device). The MEC app writes its decisions to its own AE.
 
 ```

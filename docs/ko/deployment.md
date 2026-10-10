@@ -99,6 +99,8 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 
 ## oneM2M 리소스 트리
 
+> `onem2m.data_model: sdt`(ACME, 로컬 데모)에서는 `location` / `motion` 컨테이너 대신 SDT flexContainer 디바이스 트윈(`<dev>/tag|module/kinematics` 등)을 씁니다. [데이터 모델](data-model.md) 참고. 구역 MN-CSE와 CSE 핸드오버는 [핸드오버](handover.md).
+
 디바이스마다 **자기 AE**를 등록합니다(originator = 그 디바이스). MEC 앱은 자기 AE에 판단 결과를 씁니다.
 
 ```
