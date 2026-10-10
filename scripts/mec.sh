@@ -8,7 +8,7 @@ start() {
   nohup python3 -m uvicorn mec_app.app:app --host 0.0.0.0 --port 9090 --log-level warning \
     > "$LOG" 2>&1 &
   echo $! > $PIDFILE
-  for _ in $(seq 1 30); do curl -sf localhost:9090/health >/dev/null && { echo "MEC app up"; return; }; sleep 0.2; done
+  for _ in $(seq 1 150); do curl -sf localhost:9090/health >/dev/null && { echo "MEC app up"; return; }; sleep 0.2; done
   echo "MEC app did not start; see $LOG"; return 1
 }
 case "$1" in

@@ -38,6 +38,6 @@ jobs:
       - name: SIL logs on failure
         if: failure()
         run: |
-          tail -40 mec.log || true
-          tail -40 /tmp/acme.out || true
+          echo "::error title=mec.log::$(tail -15 mec.log 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
+          echo "::error title=acme.out::$(tail -15 /tmp/acme.out 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
 

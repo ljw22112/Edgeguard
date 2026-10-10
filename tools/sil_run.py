@@ -87,7 +87,7 @@ def main():
     ap.add_argument("--record", help="also record the dashboard + a phone tag side by side to this .mp4")
     a = ap.parse_args()
     if shutil.which("g++") is None or not os.path.isdir(AJ):
-        sys.exit("needs g++ and ArduinoJson (ARDUINOJSON_SRC)")
+        sys.exit("::error title=sil_run::needs g++ and ArduinoJson (ARDUINOJSON_SRC)")
     build(a.build_dir, a.cse)
     env = dict(os.environ, EDGEGUARD_CONFIG="config/site.yaml",
                EDGEGUARD_OVERRIDES="config/local-acme.yaml,config/live-demo.yaml,config/sil.yaml")
@@ -175,4 +175,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as e:
+        print(f"::error title=sil_run::step failed: {' '.join(map(str, e.cmd))[:300]} (exit {e.returncode})")
+        raise
