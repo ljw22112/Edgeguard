@@ -176,4 +176,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:                   # visible in CI annotations
+        import traceback
+        tb = traceback.format_exc().strip().splitlines()
+        print("::error title=agent_demo::" + " | ".join(tb[-6:])[:1500])
+        raise

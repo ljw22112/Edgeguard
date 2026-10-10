@@ -6,6 +6,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      ACME_DIR: /tmp/acme                  # zone MN-CSEs are (re)started by scripts/acme.sh in several steps
+      ACME_PYTHON: /tmp/acmevenv/bin/python
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,9 +50,6 @@ jobs:
           python deploy/check_sdt.py --onboard
 
       - name: CSE handover between zone MN-CSEs (location trigger, then availability failover)
-        env:
-          ACME_DIR: /tmp/acme
-          ACME_PYTHON: /tmp/acmevenv/bin/python
         run: |
           scripts/acme.sh start mn-a mn-b
           sleep 5
@@ -57,7 +57,9 @@ jobs:
           python tools/handover_demo.py --failover --out results/handover_failover.json
 
       - name: AI safety agent over MCP servers (oneM2M IN + zone MN-CSEs, ETSI MEC)
-        run: python tools/agent_demo.py
+        run: |
+          bash scripts/mec.sh stop             # the MEC app of the data-model step would onboard the demo's devices
+          python tools/agent_demo.py
 
       - name: Federated learning through oneM2M (TR-0084 roles, dropout, late join)
         run: python tools/fl_demo.py
