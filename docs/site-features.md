@@ -52,8 +52,8 @@ CI에서 수집 · 규칙 로드 · 대시보드 등록을 확인합니다(`depl
 
 ## 접근제어 (디바이스별 ACP)
 
-`security.enabled: true`이면 `tools/setup_resources.py`가 디바이스마다 ACP를 만들어, 각 디바이스는 자기 컨테이너에만 쓸 수 있고
-`risk`·`alert`는 MEC 앱만 쓰고 디바이스는 읽기만 합니다. Mobius에서 확인한 결과:
+디바이스마다 자기 AE를 등록하고(v1.3), 그 AE의 ACP가 디바이스 자신과 MEC 앱(조회 · 구독)만 허용합니다.
+`risk` · `alert` · `control` · `nearmiss`는 MEC 앱만 쓰고 디바이스는 읽기만 합니다. CI가 매 커밋 Mobius에서 아래를 확인합니다(`deploy/check_acl.py`, 8/8 통과):
 
 | 시도 | 결과 |
 |---|---|
@@ -61,6 +61,7 @@ CI에서 수집 · 규칙 로드 · 대시보드 등록을 확인합니다(`depl
 | SWorker01 → `forklift_01/motion` 쓰기 (위조) | 403 / 4103 거부 |
 | SWorker01 → `alert` 쓰기 (가짜 경보) | 403 / 4103 거부 |
 | 등록 안 된 SIntruder → `worker_01/location` 쓰기 | 403 / 4103 거부 |
+| 디바이스 AE · MEC AE · MEC 구독 존재 | 확인 |
 
 ## 안전 리포트 · 데모 영상
 
