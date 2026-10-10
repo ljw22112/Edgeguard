@@ -1,6 +1,54 @@
-# 실물 시연 (Hardware-in-the-loop)
+# 실물 시연 (Firmware-in-the-loop · 휴대폰 태그 · 보드)
 
 [← README](../README.md)
+
+실제 동작은 세 단계로 보여 줍니다. 앞의 두 단계는 부품 없이 지금 바로 되고, 세 번째만 보드가 필요합니다.
+
+| 단계 | 무엇이 실제인가 | 필요한 것 | 상태 |
+|---|---|---|---|
+| ① 펌웨어 그대로 실행 (SIL) | **보드에 올리는 펌웨어 코드 그대로**가 oneM2M AE 등록 · 구독 알림 수신 · 출력 제어 · 확인 기록 | PC 1대 | **CI에서 매 커밋 자동 시험 (6/6)** |
+| ② 휴대폰 태그 | 진짜 휴대폰이 작업자 태그로 진동 · 소리 · 화면 (WAIT / STEP ASIDE / GO) | 휴대폰 1대 | 동작 확인 |
+| ③ ESP32 보드 | ①과 같은 펌웨어가 진동 모터 · LED · DC 모터를 실제로 구동 | 부품 약 5만 원 | 키트 준비 (팀 시연 예정) |
+
+![펌웨어 그대로 실행 + 휴대폰 태그: STEP ASIDE](img/sil_phone.png)
+
+## ① 펌웨어 그대로 실행 (Firmware-in-the-loop)
+
+`firmware/worker_tag` · `firmware/forklift_module` 스케치를 **한 줄도 고치지 않고** PC용으로 컴파일합니다.
+Arduino API는 `tests/firmware/sil/sil_core.cpp`가 채웁니다 — HTTP 클라이언트 · 서버는 실제 TCP로 동작하고,
+진동 모터 · LED · 모터 PWM · 경광등 핀에 쓰는 값은 시간과 함께 기록됩니다. UWB · IMU는 HIL 모드처럼 빠지고 위치는 `devices/live_devices.py`가 공급합니다.
+
+```bash
+python tools/sil_run.py                       # crossing (로컬 ACME 필요: scripts/run_local_demo.sh 가 설치 · 실행)
+python tools/sil_run.py --scene head_on       # STEP ASIDE → WAIT → GO, 지게차 정지 후 재출발
+python tools/sil_run.py --scene head_on --record results/edgeguard_firmware_in_the_loop.mp4   # 대시보드 + 휴대폰 화면 녹화
+```
+
+| 자동 확인 (CI가 매 커밋, crossing · head_on 둘 다) | 최근 결과 (crossing) |
+|---|---|
+| 작업자 태그 펌웨어: WAIT 동안 LED 켜짐(2초 이상) · 진동 펄스 | LED 4.3초, 진동 펄스 반복 |
+| 작업자 태그 펌웨어: 지게차 통과 후 GO (LED 꺼짐) | 통과 |
+| 지게차 펌웨어: 속도 제한만큼 모터 PWM 감속 → 해제 후 복귀 | PWM 180 → 158 → 180 (2.2 m/s 제한) |
+| 지게차 펌웨어: 경보 중 경광등 깜빡임 | 통과 |
+| MEC 앱이 펌웨어의 동작 확인(`<디바이스 AE>/status`)을 구독으로 받음 | `WAIT`, `limit 2.20 m/s` |
+
+결과: `results/sil_run.json` (모든 출력 변화의 타임라인). head_on에서는 펌웨어가 `STEP ASIDE`와 `limit 0.00 m/s`(정지)를 확인합니다.
+대시보드 oneM2M 패널에는 펌웨어 확인이 **FW ✓ (SIL)** 로 표시됩니다.
+
+## ② 휴대폰 태그
+
+MEC 앱이 휴대폰용 태그 화면을 제공합니다. 같은 Wi-Fi에서 휴대폰으로 열고 **Start tag**를 누르면 됩니다.
+
+```
+http://<MEC 앱 주소>:9090/tag?worker=worker_01
+```
+
+- 펌웨어(`worker_cue.h`)와 같은 규칙: WAIT(빨강, 긴 진동 + 1초마다 짧은 진동) · STEP ASIDE(주황, 더 긴 진동) · GO(초록, 짧은 진동 2번)
+- 화면이 바뀔 때마다 MEC 앱에 확인을 보내 대시보드에 **PHONE ✓** 표시
+- 안드로이드 크롬은 진동, 아이폰은 진동 대신 소리 · 화면
+- 라이브 데모(`scripts/run_live_demo.sh`) 중에 열면 휴대폰이 바로 worker_01의 태그가 됩니다 — 휴대폰을 손에 들고 찍으면 "실제 진동" 영상이 됩니다.
+
+## ③ ESP32 보드 (Hardware-in-the-loop)
 
 ESP32 보드 2개가 **작업자 태그(worker_01)** 와 **지게차 모듈(forklift_01)** 역할을 실제로 합니다.
 UWB 측위 대신 위치는 `devices/live_devices.py`가 공급하고, 보드는 실제 단말이 하는 일을 그대로 합니다.

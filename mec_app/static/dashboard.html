@@ -208,8 +208,9 @@ function renderM2M(){
   const cue = id => { const c = (S.cues||{})[id]; if(!c) return "";
     const col = c.state === "GO" ? "--safe" : c.state === "ASIDE" ? "--warning" : "--danger";
     return `<span class="tag" style="background:var(${col})">${c.state === "ASIDE" ? "STEP ASIDE" : c.state}</span>`; };
-  const ack = id => { const a = (S.acks||{})[id]; if(!a) return "";
-    return `<span class="tag" style="background:var(--worker)">HW ✓ ${a.state || ""}</span>`; };
+  const ack = id => [(S.acks||{})[id], (S.acks||{})[id + "@phone"]].filter(Boolean).map(a => {
+    const label = {esp32: "HW ✓", sil: "FW ✓ (SIL)", phone: "PHONE ✓"}[a.hw] || "✓";
+    return `<span class="tag" style="background:var(--worker)">${label} ${a.state || ""}</span>`; }).join("");
   const devs = Object.entries(m.devices);
   let out = `<span class="muted">/${m.cse}</span>\n`;
   devs.forEach(([id, d], i) => {

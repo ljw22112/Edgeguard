@@ -45,7 +45,15 @@
 // ---------- settings ----------
 const char* WIFI_SSID = "YOUR_WIFI";
 const char* WIFI_PASS = "YOUR_PASS";
+#ifdef SIL_CSE_URL
+const char* CSE_URL   = SIL_CSE_URL;                            // software-in-the-loop build (tools/sil_run.py)
+#else
 const char* CSE_URL   = "http://192.168.0.10:7579/Mobius";     // Mobius; ACME: http://<host>:8080/cse-in
+#endif
+const char* RVI       = "2a";            // oneM2M release both Mobius 3 and ACME accept (docs/interop-notes.md #5)
+#ifndef HTTP_PORT
+#define HTTP_PORT 80                     // alert listener (the AE's poa)
+#endif
 const char* ORIGIN    = "SWorker01";        // this device's own AE (config/site.yaml security.originators)
 const char* DEVICE_ID = "worker_01";
 const int   MOTOR_PIN = 25;
@@ -82,7 +90,7 @@ float lastFixX = 0, lastFixY = 0, lastFixT = -1;
 uint32_t lastRelayPost = 0, lastProbe = 0;
 float directT = -1e9f;                  // last MEC notification received directly (not relayed)
 
-WebServer server(80);
+WebServer server(HTTP_PORT);
 uint32_t vibrateUntil = 0;           // local-rule buzz (MEC silent)
 cue::WaitCue waitCue;                // WAIT until GO for MEC alerts (worker_cue.h)
 bool asideCue = false;               // the current WAIT started with STEP ASIDE
@@ -168,7 +176,7 @@ void relayUp(const d2d::Frame& f) {
   http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/relay");   // into this device's own AE
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("rl") + (rqi++));
-  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("X-M2M-RVI", RVI);
   http.addHeader("Content-Type", "application/json;ty=4");
   http.POST(body);
   http.end();
@@ -214,7 +222,7 @@ void publishLocation(float x, float y) {
   http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/location");
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("tag") + (rqi++));
-  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("X-M2M-RVI", RVI);
   http.addHeader("Content-Type", "application/json;ty=4");
   http.addHeader("Accept", "application/json");
   int code = http.POST(body);
@@ -280,6 +288,11 @@ void postAck(const String& st) {
   JsonObject con = doc["m2m:cin"]["con"].to<JsonObject>();
   con["id"] = DEVICE_ID;
   con["kind"] = "ack";
+#ifdef SIL_CSE_URL
+  con["hw"] = "sil";                    // same firmware, compiled for a PC (tools/sil_run.py)
+#else
+  con["hw"] = "esp32";
+#endif
   con["state"] = st;
   con["ts"] = epochMs();
   String body;
@@ -288,7 +301,7 @@ void postAck(const String& st) {
   http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/status");
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("ack") + (rqi++));
-  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("X-M2M-RVI", RVI);
   http.addHeader("Content-Type", "application/json;ty=4");
   http.POST(body);
   http.end();
@@ -301,7 +314,7 @@ bool m2mCreate(const String& path, int ty, const String& body) {
   http.begin(String(CSE_URL) + path);
   http.addHeader("X-M2M-Origin", ORIGIN);
   http.addHeader("X-M2M-RI", String("reg") + (rqi++));
-  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("X-M2M-RVI", RVI);
   http.addHeader("Content-Type", String("application/json;ty=") + ty);
   http.addHeader("Accept", "application/json");
   int code = http.POST(body);
@@ -310,7 +323,7 @@ bool m2mCreate(const String& path, int ty, const String& body) {
 }
 
 void registerAE() {
-  String poa = String("http://") + WiFi.localIP().toString() + ":80/alert";
+  String poa = String("http://") + WiFi.localIP().toString() + ":" + String(HTTP_PORT) + "/alert";
   bool ae = m2mCreate("", 2, String("{\"m2m:ae\":{\"rn\":\"") + DEVICE_ID +
                       "\",\"api\":\"Nedgeguard.worker\",\"rr\":true,\"poa\":[\"" + poa + "\"],\"srv\":[\"2a\",\"3\"]}}");
   bool cnt = m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"location\"}}");

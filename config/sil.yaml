@@ -1,0 +1,4 @@
+# Software-in-the-loop test (tools/sil_run.py): the firmware, compiled for a PC, listens on these ports
+alert_subscribers:
+  - http://127.0.0.1:19001/alert     # worker tag firmware (worker_01)
+  - http://127.0.0.1:19002/alert     # forklift module firmware (forklift_01)

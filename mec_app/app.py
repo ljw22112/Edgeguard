@@ -718,3 +718,35 @@ def metrics():
 @app.get("/")
 def dashboard():
     return FileResponse(os.path.join(STATIC, "dashboard.html"))
+
+
+@app.get("/tag")
+def phone_tag():
+    """A phone as a worker tag: http://<mec-host>:9090/tag?worker=worker_01 (vibrates, WAIT / STEP ASIDE / GO)."""
+    return FileResponse(os.path.join(STATIC, "tag.html"))
+
+
+@app.get("/cue")
+def worker_cue_state(worker: str):
+    """What this worker's tag shows now (the MEC-side mirror of the tag's cue)."""
+    with lock:
+        c = state["worker_cue"].get(worker)
+        wall = time.time()
+        if c is not None and c.led(wall):
+            st = "ASIDE" if wall - state["worker_aside"].get(worker, -1e9) < 3.0 else "WAIT"
+        elif c is not None and c.go_at is not None and wall - c.go_at < 2.0:
+            st = "GO"
+        else:
+            st = "IDLE"
+        return {"worker": worker, "state": st, "go_at": None if c is None else c.go_at}
+
+
+@app.post("/ack")
+async def phone_ack(req: Request):
+    """Confirmation from a phone tag (it is not a oneM2M device; real boards confirm in <device>/status)."""
+    b = await req.json()
+    dev = str(b.get("id", ""))[:40]
+    with lock:
+        state["acks"][dev + "@phone"] = {"id": dev, "kind": "ack", "hw": "phone", "state": str(b.get("state", ""))[:20],
+                                         "rx": time.time()}
+    return {"ok": True}

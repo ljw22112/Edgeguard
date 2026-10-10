@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EdgeGuard tag</title><style>
+html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:#111;color:#fff}
+#s{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:800;font-size:15vw;text-align:center;transition:background .15s}
+#s small{font-size:5vw;font-weight:500;opacity:.85;margin-top:2vh}
+#id{position:fixed;top:2vh;left:0;right:0;text-align:center;font:600 4vw ui-monospace,monospace;opacity:.6}
+button{font-size:6vw;padding:3vw 6vw;border-radius:3vw;border:0}
+</style></head><body><div id="id"></div>
+<div id="s"><button id="go">Start tag</button><small>tap to allow vibration</small></div>
+<script>
+// A phone as the worker's tag: same cue as firmware/common/worker_cue.h, driven by the MEC app.
+const worker = new URLSearchParams(location.search).get('worker') || 'worker_01';
+document.getElementById('id').textContent = worker;
+const s = document.getElementById('s'); let last = 'IDLE', pulse = null, ctx = null;
+function beep(ms){ try{ ctx = ctx || new AudioContext(); const o = ctx.createOscillator(); o.connect(ctx.destination);
+  o.frequency.value = 880; o.start(); setTimeout(()=>o.stop(), ms);}catch(e){} }
+function buzz(p){ if(navigator.vibrate) navigator.vibrate(p); beep(Array.isArray(p)?p[0]:p); }
+function show(bg, big, small){ s.style.background = bg; s.innerHTML = big + (small?`<small>${small}</small>`:''); }
+function ack(st){ fetch('/ack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:worker,state:st})}).catch(()=>{}); }
+async function poll(){
+  try{ const c = await (await fetch('/cue?worker='+encodeURIComponent(worker),{cache:'no-store'})).json();
+    if(c.state !== last){ last = c.state; if(pulse){ clearInterval(pulse); pulse = null; }
+      if(c.state==='WAIT'){ buzz(600); show('#c62828','WAIT','forklift coming - wait'); pulse = setInterval(()=>buzz(150), 1000); }
+      else if(c.state==='ASIDE'){ buzz(1500); show('#ef6c00','STEP<br>ASIDE','step to the lane edge and wait'); pulse = setInterval(()=>buzz(150), 1000); }
+      else if(c.state==='GO'){ buzz([80,80,80]); show('#2e7d32','GO','clear - go ahead'); }
+      else { show('#111','',''); }
+      ack(c.state === 'ASIDE' ? 'STEP ASIDE' : c.state);
+    }}catch(e){}
+  setTimeout(poll, 150);
+}
+document.getElementById('go').onclick = () => { buzz(50); show('#111','',''); poll(); };
+</script></body></html>

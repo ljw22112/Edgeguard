@@ -1,0 +1,303 @@
+{
+ "scene": "crossing",
+ "cse": "http://127.0.0.1:8080/cse-in",
+ "wait_s": 4.3,
+ "drive_pwm_min": 158,
+ "drive_pwm_base": 180,
+ "checks": {
+  "worker tag: WAIT (LED on >= 2 s, vibration pulses)": true,
+  "worker tag: GO (LED off after the WAIT)": true,
+  "forklift: drive PWM reduced under the limit": true,
+  "forklift: drive PWM restored after the clear": true,
+  "forklift: beacon blinking during the alert": true,
+  "MEC app received the firmware's confirmations (WAIT and a speed limit)": true
+ },
+ "acks_seen_by_mec": [
+  {
+   "device": "worker_01",
+   "state": "GO",
+   "t": 3.23
+  },
+  {
+   "device": "forklift_01",
+   "state": "full speed",
+   "t": 3.23
+  },
+  {
+   "device": "worker_01",
+   "state": "WAIT",
+   "t": 9.31
+  },
+  {
+   "device": "forklift_01",
+   "state": "limit 2.20 m/s",
+   "t": 9.31
+  }
+ ],
+ "timeline": [
+  {
+   "t": 0.02,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 0.02,
+   "device": "worker_01",
+   "output": "led",
+   "value": 0
+  },
+  {
+   "t": 1.09,
+   "device": "forklift_01",
+   "output": "drive_pwm",
+   "value": 180
+  },
+  {
+   "t": 1.09,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 3.24,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 3.24,
+   "device": "worker_01",
+   "output": "led",
+   "value": 0
+  },
+  {
+   "t": 4.31,
+   "device": "forklift_01",
+   "output": "drive_pwm",
+   "value": 180
+  },
+  {
+   "t": 4.31,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 9.18,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 9.18,
+   "device": "worker_01",
+   "output": "led",
+   "value": 1
+  },
+  {
+   "t": 9.18,
+   "device": "forklift_01",
+   "output": "drive_pwm",
+   "value": 158
+  },
+  {
+   "t": 9.18,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 9.23,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 9.48,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 9.73,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 9.78,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 9.98,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 10.18,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 10.23,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 10.33,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 10.48,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 10.73,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 10.98,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 11.18,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 11.23,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 11.33,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 11.48,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 11.73,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 11.98,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 12.18,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 12.23,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 12.33,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 12.48,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 12.73,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 12.98,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 1
+  },
+  {
+   "t": 13.18,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 13.23,
+   "device": "forklift_01",
+   "output": "beacon",
+   "value": 0
+  },
+  {
+   "t": 13.33,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 13.48,
+   "device": "forklift_01",
+   "output": "drive_pwm",
+   "value": 180
+  },
+  {
+   "t": 13.48,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 13.48,
+   "device": "worker_01",
+   "output": "led",
+   "value": 0
+  },
+  {
+   "t": 13.56,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  },
+  {
+   "t": 13.64,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 1
+  },
+  {
+   "t": 13.72,
+   "device": "worker_01",
+   "output": "vibration",
+   "value": 0
+  }
+ ]
+}

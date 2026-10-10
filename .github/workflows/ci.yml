@@ -22,3 +22,22 @@ jobs:
         env:
           ARDUINOJSON_SRC: /tmp/arduinojson/src
         run: python -m pytest -q
+
+      - name: Firmware in the loop (real firmware compiled for the PC, on an ACME CSE)
+        env:
+          ARDUINOJSON_SRC: /tmp/arduinojson/src
+        run: |
+          git clone --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git /tmp/acme
+          pip install -r /tmp/acme/requirements.txt
+          mkdir -p .acme && cp scripts/acme.ini .acme/
+          (cd /tmp/acme && nohup python -m acmecse --base-directory "$GITHUB_WORKSPACE/.acme" --config acme.ini </dev/null > /tmp/acme.out 2>&1 &)
+          for i in $(seq 60); do curl -sf -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" localhost:8080/cse-in >/dev/null && break; sleep 1; done
+          python tools/sil_run.py --scene crossing
+          python tools/sil_run.py --scene head_on --out results/sil_run_head_on.json
+
+      - name: SIL logs on failure
+        if: failure()
+        run: |
+          tail -40 mec.log || true
+          tail -40 /tmp/acme.out || true
+

@@ -16,8 +16,8 @@
 | 1:1 조우 충돌 (위험 1,207회) | 145건 | **1건** |
 | 통신 음영 속 충돌 (작업자 / 지게차, 180회) | 16 / 19건 | **0 / 0건** |
 
-> 모든 수치는 시뮬레이션 결과입니다. 실물 보드 시연 · 사용자 실험은 키트를 준비해 두었습니다([실물 시연](docs/hardware-demo.md), [사용자 검증](docs/user-study.md)).
-> 데모 영상: `results/edgeguard_demo_v1.3.mp4` (로컬 ACME CSE 위에서 단말이 실제로 반응하는 장면, 약 1분 50초).
+> 수치는 시뮬레이션 결과입니다. 단말 동작은 **보드용 펌웨어를 그대로 PC에서 돌려** 실제 oneM2M CSE와 매 커밋 시험하고(CI 6/6), 휴대폰을 작업자 태그로 씁니다([실물 시연](docs/hardware-demo.md)).
+> 데모 영상: `results/edgeguard_demo_v1.3.mp4` (라이브 데모 3장면, 약 1분 50초) · `results/edgeguard_firmware_in_the_loop.mp4` (펌웨어 + 휴대폰 태그, 약 30초).
 
 ![라이브 데모: 작업자 태그 WAIT, oneM2M 리소스 패널](docs/img/demo_wait.png)
 
@@ -118,6 +118,8 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | Docker 없이 로컬 데모 | `pip install -r requirements.txt && scripts/run_local_demo.sh crossing_conflict` |
 | 테스트 | `python -m pytest` |
 | 반응하는 라이브 데모 / 데모 영상 녹화 | `scripts/run_live_demo.sh` / `scripts/run_live_demo.sh record` |
+| 펌웨어 그대로 실행 (SIL, CI와 동일) | `python tools/sil_run.py` · `--scene head_on` |
+| 휴대폰을 작업자 태그로 | MEC 앱 실행 중 휴대폰에서 `http://<주소>:9090/tag?worker=worker_01` |
 | 실물 보드 시연 (ESP32 2개) | [실물 시연 가이드](docs/hardware-demo.md) |
 | 사용자 검증 실험 (휴대폰 태그) | `python tools/user_study.py` → [사용자 검증](docs/user-study.md) |
 | 다대다 시뮬레이션 | `python -m sim.multi_sim` |
@@ -134,7 +136,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | MEC 앱 | FastAPI: 알림 수신 → risk / alert / control 게시, 우선순위 송신 큐, 대시보드, `/health` · `/metrics` · `/nearmiss` |
 | 단말 펌웨어 | ESP32 + DW1000 (작업자 태그 · 지게차 모듈): UWB 측위, WAIT/GO 신호, 쌍별 속도 계획, 로컬 규칙, ESP-NOW D2D + HMAC |
 | 연동 | oneM2M Mobius / ACME, ETSI MEC Location · RNIS (MEC-IPE), 클라우드 사본 동기화, 카메라(YOLOv8n) 노드 |
-| 배포 · CI | Docker Compose (demo · ha · monitoring · sandbox), GitHub Actions: 테스트 → 스택 종단 · 재시작 · 장애 인수 · 모니터링 시험 → GHCR |
+| 배포 · CI | Docker Compose (demo · ha · monitoring · sandbox), GitHub Actions: 테스트 → 펌웨어 그대로 실행(SIL) → 스택 종단 · 재시작 · 장애 인수 · 모니터링 시험 → GHCR |
 
 ## 문서
 
@@ -148,7 +150,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [비용 · 시장 · 사업 모델](docs/business.md) | 문제 규모, 시장, 도입 비용, 투자 회수, 수익 모델, 확장성, oneM2M 생태계 기여 |
 | [도입 장벽과 대응](docs/adoption.md) | 유사 시스템이 현장에 퍼지지 못한 이유와 대응 |
 | [상호운용성 노트](docs/interop-notes.md) | CSE 간 시험에서 찾은 문제와 해결 |
-| [실물 시연 (HIL)](docs/hardware-demo.md) | ESP32 2개로 진동 · LED · 모터 감속을 실제로 — 준비물 · 배선 · 체크리스트 |
+| [실물 시연](docs/hardware-demo.md) | 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그 · ESP32 보드(준비물 · 배선 · 체크리스트) |
 | [사용자 검증](docs/user-study.md) | 휴대폰 태그로 신호 반응 실험, 안전관리자 인터뷰, 결과를 시뮬레이션에 반영 |
 | [대회 채점표 자체 평가](docs/SCORECARD.md) | 평가 항목별 현재 점수 · 근거 · 점수를 올릴 작업 (업데이트마다 갱신) |
 
@@ -174,12 +176,12 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 | v1.0 | 사각 코너 지도, D2D 프레임 인증, MEC 앱 이중화, 모니터링, 아차사고 분석 |
 | v1.1 | 작업자 WAIT → GO 신호 (남은 사고의 원인: 진동 후 다시 걸어 나옴) |
 | v1.2 | 다대다 검증 · 쌍별 계획, 대치 해소, STEP ASIDE, 오경보 감소(정지 판정 · 경로 공유), 대시보드 WAIT/GO 표시 |
-| v1.3 | 디바이스별 oneM2M AE · ACP (위조 쓰기 차단 CI 검증), 비용 · 시장 · 사업 모델, 반응하는 라이브 데모 · 새 데모 영상, 실물 시연 키트(HIL), 사용자 검증 키트 |
+| v1.3 | 디바이스별 oneM2M AE · ACP (위조 쓰기 차단 CI 검증), 비용 · 시장 · 사업 모델, 반응하는 라이브 데모 · 새 데모 영상, 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그, 실물 시연 키트(HIL), 사용자 검증 키트 |
 
 ## 검증 범위와 한계
 
-**검증 방법** — 하드웨어 실기 시험은 하지 않습니다. 온라인 · 고속 폐루프 시뮬레이션, 실제 Mobius / ACME CSE, ETSI MEC Sandbox로 검증했고,
-펌웨어는 PC 타입 검사와 Python 기준 구현과의 교차 테스트까지 마친 참조 구현입니다.
+**검증 방법** — 온라인 · 고속 폐루프 시뮬레이션, 실제 Mobius / ACME CSE, ETSI MEC Sandbox로 검증했습니다.
+펌웨어는 PC용으로 그대로 컴파일해 실제 CSE와 주고받는 시험(SIL)을 CI에서 매 커밋 돌립니다. ESP32 보드 실기 시연은 팀이 진행할 예정입니다.
 
 **사람과 현장 모델**
 - 작업자 행동(진동 시 멈춤, WAIT 준수율, 비켜서기)은 모델입니다. 준수율 50~100 %로 민감도를 보였지만 실제 값은 현장 시험이 필요합니다.
