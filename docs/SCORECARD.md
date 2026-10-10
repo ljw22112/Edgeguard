@@ -15,7 +15,7 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 4 | Quality of Article | 0 | hackster.io 기사 없음 | 기사 작성 (M5 → 4) |
 | 5 | Quality of Video | 2 | 데모 영상 2편(라이브 데모, 펌웨어 + 휴대폰) | 최종 영상: 실물 보드 · 스토리 (M5 → 4) |
 | 6 | Quality of Github | 3 | 영문 README · 빌드/배포 문서 · CI. **저장소 비공개**, 기사 링크 없음 | 공개 전환 + 기사 링크 (M5 → 5) |
-| 7 | Promotion of oneM2M | 2 | README · 문서 전반에 oneM2M | 기사 · 영상에서 oneM2M 장점과 링크 (M5 → 4) |
+| 7 | Promotion of oneM2M | 3 | README에 'Why oneM2M' · 사용 기능 표 · oneM2M 표준 · ACME · Mobius 링크, 발표 자료에 oneM2M 장점 슬라이드 | 기사 · 영상에서 oneM2M 추천 (M5 → 4~5) |
 | 8 | Judge points | 0~1 | 공개 포럼 활동 미확인 | ACME 이슈(Content-Type) 공개 보고, Discord 질의 (팀) |
 | 9 | Interview points | (본선) | 리소스 트리 · 장점 설명 가능 | 통합 방법론 · 선택 이유 Q&A 준비 |
 | 10 | Security and Privacy | 3 | 디바이스별 ACP · 최소 권한, CI 위조 쓰기 403 검증, D2D HMAC | TLS + ACP (M2 → 4~5) |
@@ -26,7 +26,7 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 15 | Geolocation Services | 2 | MEC Location → MEC-IPE → oneM2M → 앱 | 위치 구역 이벤트 · 지오펜싱 (M3 → 4) |
 | 16 | MEC Services | 2 | RNIS(위치 외 MEC 서비스)를 oneM2M으로 사용 | 양방향 MEC–oneM2M (M3 → 4) |
 | 17 | AI Agents & MCP | 0 | 미구현 | oneM2M MCP 서버 + 안전관리 에이전트 (M4 → 3~4) |
-| | **합계** | **23~24 / 85** (인터뷰 제외 80점 중) | | **계획 완료 시 약 60** |
+| | **합계** | **24~25 / 85** (인터뷰 제외 80점 중) | | **계획 완료 시 약 60** |
 
 ## 개발 계획 (중간 보고서와 동일)
 
@@ -45,3 +45,4 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 날짜 | 합계 | 변화 |
 |---|---|---|
 | 2026-10-11 | 23~24 / 85 | 공식 루브릭으로 재평가, 중간 보고서(.pptx) 작성 |
+| 2026-10-11 | 24~25 / 85 | 발표 자료를 루브릭 항목별로 재구성(oneM2M 장점 · 기능 · 프로토콜 · 보안 · MEC 서비스 · 로드맵), README에 oneM2M 섹션 · 로드맵 추가(Promotion 2 → 3) |
