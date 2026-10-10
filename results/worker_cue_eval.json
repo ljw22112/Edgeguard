@@ -39,50 +39,61 @@
    "precision": 0.6599
   },
   "v1.1 hold + keep-alive + GO check": {
-   "collisions": 11,
+   "collisions": 8,
    "conflicts": 1207,
    "episodes": 2200,
-   "throughput": 0.8167,
-   "lost_s_mean": 2.2047,
-   "worker_wait_s_mean": 3.5106,
+   "throughput": 0.8157,
+   "lost_s_mean": 2.1679,
+   "worker_wait_s_mean": 2.9054,
    "false_alarms": 622,
    "recall": 1.0,
    "precision": 0.6599
+  },
+  "v1.2 + standoffs + STEP ASIDE + still gate": {
+   "collisions": 1,
+   "conflicts": 1207,
+   "episodes": 2200,
+   "throughput": 0.8636,
+   "lost_s_mean": 1.6222,
+   "worker_wait_s_mean": 3.157,
+   "false_alarms": 570,
+   "recall": 1.0,
+   "precision": 0.6792
   }
  },
  "compliance": {
   "0.85": {
-   "collisions": 22,
+   "collisions": 12,
    "conflicts": 1207,
    "episodes": 2200,
-   "throughput": 0.8094,
-   "lost_s_mean": 2.2989,
-   "worker_wait_s_mean": 3.323,
-   "false_alarms": 622,
+   "throughput": 0.851,
+   "lost_s_mean": 1.7794,
+   "worker_wait_s_mean": 3.0669,
+   "false_alarms": 570,
    "recall": 1.0,
-   "precision": 0.6599
+   "precision": 0.6792
   },
   "0.7": {
-   "collisions": 31,
+   "collisions": 27,
    "conflicts": 1207,
    "episodes": 2200,
-   "throughput": 0.8014,
-   "lost_s_mean": 2.3927,
-   "worker_wait_s_mean": 3.1204,
-   "false_alarms": 622,
+   "throughput": 0.8374,
+   "lost_s_mean": 1.9424,
+   "worker_wait_s_mean": 3.0092,
+   "false_alarms": 570,
    "recall": 1.0,
-   "precision": 0.6599
+   "precision": 0.6792
   },
   "0.5": {
-   "collisions": 44,
+   "collisions": 42,
    "conflicts": 1207,
    "episodes": 2200,
-   "throughput": 0.7928,
-   "lost_s_mean": 2.5063,
-   "worker_wait_s_mean": 2.8953,
-   "false_alarms": 622,
+   "throughput": 0.8198,
+   "lost_s_mean": 2.1607,
+   "worker_wait_s_mean": 2.9631,
+   "false_alarms": 570,
    "recall": 1.0,
-   "precision": 0.6599
+   "precision": 0.6792
   }
  }
 }

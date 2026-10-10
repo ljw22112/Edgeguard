@@ -83,7 +83,8 @@ class ForkliftLimit:
 
     def __init__(self, mode=None):
         self.mode = mode or ForkliftLimit.MODE
-        self.limit, self.limit_t, self.hb_t = None, -1e9, -1e9
+        self.limits = {}                               # worker -> (limit m/s, t): one plan per pair
+        self.hb_t = -1e9
         self.ranges = {}                               # tag -> [(t, d)] recent direct ranges
         self.own = None                                # (t, x, y, vx, vy) this device (coop)
         self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
@@ -161,11 +162,20 @@ class ForkliftLimit:
                 cap = c if cap is None else min(cap, c)
         return cap
 
-    def on_alert(self, t, event, limit):
+    def on_alert(self, t, event, limit, src=""):
+        """src: the worker the alert is about.  Each pair keeps its own limit and the tightest
+        one applies, so a `clear` for one worker does not lift the limit another worker needs."""
         self.hb_t = t                                  # any MEC message proves it is alive
-        if event in ("wait", "release"):               # worker-only cues: the speed limit stays
+        if event in ("wait", "release", "aside"):      # worker-only cues: the speed limit stays
             return
-        self.limit, self.limit_t = (None if event == "clear" else limit), t
+        if event == "clear" or limit is None:
+            self.limits.pop(src, None)
+        else:
+            self.limits[src] = (limit, t)
+
+    @property
+    def limit(self):
+        return min((v for v, _ in self.limits.values()), default=None)
 
     def on_heartbeat(self, t):
         self.hb_t = t
@@ -191,21 +201,21 @@ class ForkliftLimit:
         return held
 
     def _held(self, t):
-        if self.limit is None:
+        if not self.limits:
             return None
         if self.mode == "legacy":
-            if t - self.limit_t > 5.0:
-                self.limit = None
+            self.limits = {k: v for k, v in self.limits.items() if t - v[1] <= 5.0}
             return self.limit
         if t - self.hb_t > SILENCE_S:                  # MEC silent
+            lim = self.limit
             if self.mode == "failsafe_creep":
-                return min(self.limit, CREEP_MPS)
+                return min(lim, CREEP_MPS)
             if self.mode == "failsafe_stop" or ((self.mode.startswith("failsafe") or self.mode.startswith("coop"))
                                                 and self.mode != "failsafe_creep" and t - self.hb_t > STOP_AFTER_S):
                 return 0.0
-            return self.limit                          # hold the last plan (MEC restarting)
-        if t - self.limit_t > ALERT_STALE_S:           # MEC alive, refreshes stopped: clear lost
-            self.limit = None
+            return lim                                 # hold the last plan (MEC restarting)
+        # MEC alive, refreshes for a pair stopped: its clear was lost
+        self.limits = {k: v for k, v in self.limits.items() if t - v[1] <= ALERT_STALE_S}
         return self.limit
 
 

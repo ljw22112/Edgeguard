@@ -86,6 +86,43 @@ class CTRVPredictor:
         return out
 
 
+class RoutePredictor:
+    """Forklift on its planned route (polyline of waypoints from the fleet / WMS system or the
+    driver's tablet) at constant speed; past the last waypoint it keeps the last direction.
+    Knowing the route removes the guesswork of CTRV at intersections: a truck that will turn
+    away does not alarm the worker standing straight ahead, one that will turn into an aisle
+    warns the worker there before it starts turning."""
+    def __init__(self, pos, speed, route):
+        self.pos, self.v = pos, abs(speed)
+        pts = [tuple(pos)] + [tuple(p) for p in route]
+        # start from the route point nearest to the truck (skip waypoints already passed)
+        best = min(range(1, len(pts)), key=lambda i: math.hypot(pts[i][0] - pos[0], pts[i][1] - pos[1]))
+        if best + 1 < len(pts):
+            a, b = pts[best], pts[best + 1]
+            ab = (b[0] - a[0], b[1] - a[1])
+            if (pos[0] - a[0]) * ab[0] + (pos[1] - a[1]) * ab[1] > 0:   # already past waypoint `best`
+                best += 1
+        self.pts = [tuple(pos)] + pts[best:]
+        self.cum = [0.0]
+        for a, b in zip(self.pts, self.pts[1:]):
+            self.cum.append(self.cum[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+
+    def positions(self, times):
+        out = []
+        for t in times:
+            s = self.v * t
+            if len(self.pts) < 2:
+                out.append(self.pos)
+                continue
+            i = min(len(self.cum) - 2, max(0, next((k for k in range(1, len(self.cum)) if self.cum[k] >= s),
+                                                    len(self.cum) - 1) - 1))
+            a, b = self.pts[i], self.pts[i + 1]
+            seg = self.cum[i + 1] - self.cum[i] or 1e-9
+            f = (s - self.cum[i]) / seg                 # > 1 past the end: extrapolate the last leg
+            out.append((a[0] + f * (b[0] - a[0]), a[1] + f * (b[1] - a[1])))
+        return out
+
+
 def min_separation(pred_a, pred_b, horizon=5.0, dt=0.1):
     """Sampled closest approach between two predicted paths -> (t_min, d_min)."""
     n = int(round(horizon / dt))

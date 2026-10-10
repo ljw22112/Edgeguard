@@ -7,6 +7,7 @@ state while an alert is active and shows GO when the MEC app says the way is cle
   raise / refresh with vibrate  -> WAIT: first burst (DANGER 1.5 s, WARNING 0.6 s), red LED,
                                    then a short pulse every second
   raise / refresh / wait        -> stay in WAIT (the MEC app re-sends `wait` every second)
+  aside                         -> STEP ASIDE to the lane edge, then WAIT there (long burst)
   clear / release               -> GO: LED off, two short pulses
   no message for HOLD_IDLE_S    -> GO by itself (lost clear, MEC app silent: never pin people)
 
@@ -39,6 +40,8 @@ class WaitCue:
         """src: the forklift the alert is about (alert["forklift"], or the relaying forklift)."""
         key = src
         self.tick(t)
+        if event == "aside":                          # step to the lane edge and wait there
+            event, vibrate, danger = "raise", True, True
         if event in ("clear", "release"):
             if key in self.holds:
                 self._drop(t, key)

@@ -5,7 +5,7 @@ simulation is exactly what runs on the MEC host.
 """
 from __future__ import annotations
 
-from .risk import LEVELS, go_safe, waiting_at_lane
+from .risk import LEVELS, go_safe, truck_path_clear, waiting_at_lane
 
 
 NOMINAL_DT = 0.1      # s: the debounce count is tuned for 10 Hz tag data
@@ -27,11 +27,13 @@ class AlertState:
         self.last_eval = None
         self.released = False             # worker already told GO in this encounter
         self.intent = None                # worker velocity while walking during the alert (where he wants to go)
+        self.f_speed = None               # forklift speed before the alert slowed it (it resumes on clear)
+        self.aside_sent = False           # STEP ASIDE already sent in this encounter
         self.last_any = 0.0               # last message of any kind for this pair (WAIT keep-alive)
 
     def reset(self):
         self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
-        self.released, self.intent = False, None
+        self.released, self.intent, self.f_speed, self.aside_sent = False, None, None, False
 
     def step(self, level, now):
         """Return 'raise', 'refresh', 'clear' or None."""
@@ -65,6 +67,31 @@ class AlertState:
         return None
 
 
+def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0):
+    """Sideways displacement (site frame) that takes a worker standing on the truck's predicted
+    path (CTRV at its cruising speed, so a turn counts) to r_safe + 0.8 m from it, or None if
+    he is not on it."""
+    import math
+    from .risk import forklift_predictor
+    v = f_speed if f_speed and abs(f_speed) > abs(f_tr.speed) else f_tr.speed
+    if abs(v) < 0.3:
+        return None
+    pts = forklift_predictor(f_tr, v).positions([i * 0.2 for i in range(1, int(horizon / 0.2) + 1)])
+    best = min(range(len(pts)), key=lambda i: math.hypot(wpos[0] - pts[i][0], wpos[1] - pts[i][1]))
+    px, py = pts[best]
+    d = math.hypot(wpos[0] - px, wpos[1] - py)
+    if d >= cfg.r_safe + 0.3:
+        return None
+    qx, qy = pts[min(best + 1, len(pts) - 1)] if best + 1 < len(pts) else pts[best - 1]
+    tx, ty = qx - px, qy - py                                   # path direction there
+    tn = math.hypot(tx, ty) or 1.0
+    nx, ny = -ty / tn, tx / tn                                  # path normal
+    lat = (wpos[0] - px) * nx + (wpos[1] - py) * ny
+    side = 1.0 if lat >= 0 else -1.0
+    move = side * (cfg.r_safe + 0.8) - lat
+    return [round(nx * move, 2), round(ny * move, 2)]
+
+
 def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
     """Update the pair's alert state with assessment `r`.
 
@@ -74,31 +101,69 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
     if getattr(r, "occluded", False) and getattr(cfg, "occl_debounce", 0):
         st.debounce = cfg.occl_debounce          # blind corner: no time to confirm twice
     r.hold = False
-    if st.level >= 2 and w_tr is not None and w_tr.speed > 0.5:
-        st.intent = tuple(w_tr.vel)                # where the worker is heading while the alert is on
+    if st.level >= 2 and w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent:
+        st.intent = tuple(w_tr.vel)                # where the worker is heading (not his sidestep)
+    if f_tr is not None and abs(f_tr.speed) > 0.5 and (st.f_speed is None or abs(f_tr.speed) > abs(st.f_speed)):
+        st.f_speed = f_tr.speed                    # fastest seen (signed): what the truck returns to when let go
     # GO check: a worker who stopped for the alert no longer conflicts, but walking on would -
     # keep him waiting (and the forklift at passing speed) until the forklift is clear of his way
-    go_blocked = (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and st.intent is not None
-                  and w_tr is not None and f_tr is not None and f_tr.speed > 0.2 and w_tr.speed < 0.5
-                  and not go_safe(w_tr.pos, st.intent, f_tr, cfg))
-    if go_blocked or r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
+    # (a truck that stopped for him counts at its cruising speed: clearing the pair releases both,
+    # and two parties starting at the same moment is how a standoff turns into a collision)
+    # STEP ASIDE: the worker stands in the lane of a truck that stopped for him - nobody can pass,
+    # so he is told to step to the nearer lane edge (and WAIT there) instead of holding both
+    if getattr(cfg, "aside_cue", False) and st.level >= 2 and not st.aside_sent and w_tr is not None \
+            and f_tr is not None and w_tr.speed < 0.5:
+        side = _aside_vector(w_tr.pos, f_tr, st.f_speed, cfg)
+        if side is not None:
+            st.aside_sent = True
+            st.last_any = now
+            return "aside", {r.worker: {"aside": side, "vibrate": True}}
+    go_blocked = worker_first = stepping = False
+    if (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and st.intent is not None
+            and w_tr is not None and f_tr is not None and (f_tr.speed > 0.2 or st.f_speed)
+            and (w_tr.speed < 0.5 or st.aside_sent)          # waiting, or still stepping aside
+            and not go_safe(w_tr.pos, st.intent, f_tr, cfg, st.f_speed)):
+        # one of them must go first: the truck if its way past the waiting worker is clear,
+        # otherwise the worker (he stands in the truck's way) while the truck stays stopped
+        sign = -1.0 if (st.f_speed or f_tr.speed) < 0 else 1.0
+        if truck_path_clear(w_tr.pos, f_tr, cfg, sign * cfg.pass_speed):
+            go_blocked = True
+        elif st.aside_sent:                        # told to step aside: the truck waits until he is out of its way
+            stepping = True
+        else:
+            worker_first = True
+    if worker_first or stepping:
+        r.level, r.level_name = 2, LEVELS[2]
+        r.reason = ("worker stepping aside: forklift holds" if stepping
+                    else "worker first: forklift holds until he has crossed")
+        r.speed_limit, r.speed_scale = 0.0, 0.0
+        r.hold = True
+    elif go_blocked or r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
             and f_tr.speed > 0.2 and waiting_at_lane(w_tr, f_tr, cfg):
         # keep the alert: pass the worker waiting at the lane edge at walking pace
-        limit = round(min(cfg.pass_speed, f_tr.speed), 2)
+        # the waiting worker stays put: a truck that stopped for him moves off at passing speed first
+        limit = round(cfg.pass_speed if go_blocked else min(cfg.pass_speed, f_tr.speed), 2)
         r.level, r.level_name = 2, LEVELS[2]
         r.reason = ("worker waiting: forklift still to pass his way" if go_blocked
                     else "worker waiting at the lane edge: pass at walking pace")
         r.speed_limit, r.speed_scale = limit, round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True
+    if st.aside_sent:
+        st.hold_s = min(st.hold_s, 1.0)           # worker parked at the lane edge: no flicker to ride out
     ev = st.step(r.level, now)
-    if ev == "raise":
-        st.released = False
+    if ev in ("raise", "clear"):
+        st.released = st.aside_sent = False        # a new encounter may need a new GO / STEP ASIDE
     if ev:
         st.last_any = now
     # GO for the worker as soon as the forklift is past him (separating, nothing predicted):
     # the forklift keeps its limit for clear_hold, the waiting worker need not
     if ev is None and getattr(cfg, "release_worker", False) and st.level >= 2 and r.level < 2 \
             and not st.released and r.closing_speed < -0.3 and r.range > cfg.r_safe + 1.5:
+        st.released = True
+        st.last_any = now
+        return "release", {r.worker: {"release": True}}
+    # worker first: once the truck has been told to stay stopped, tell the worker GO
+    if worker_first and ev is None and not st.released and st.sent_limit is not None and st.sent_limit <= 0.3:
         st.released = True
         st.last_any = now
         return "release", {r.worker: {"release": True}}
@@ -110,7 +175,8 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
     if not ev:
         # WAIT keep-alive: the tag holds the worker while it hears the alert; between refreshes
         # (level flickering, clear-hold window) it would otherwise time out and show GO early
-        if getattr(cfg, "wait_keepalive", False) and st.level >= 2 and now - st.last_any >= st.refresh_s:
+        if getattr(cfg, "wait_keepalive", False) and st.level >= 2 and not st.released \
+                and now - st.last_any >= st.refresh_s:
             st.last_any = now
             return "wait", {r.worker: {"wait": True}}
         return None, None

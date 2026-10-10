@@ -52,9 +52,9 @@ class AlertHandler(BaseHTTPRequestHandler):
         lat_s = f"{lat} ms" if lat is not None else "?"
         if QUIET:
             return
-        if a["event"] in ("wait", "release"):            # worker-only WAIT keep-alive / GO
-            if a["event"] == "release":
-                print(f"  [{w}] GO (forklift past)   (e2e {lat_s})")
+        if a["event"] in ("wait", "release", "aside"):   # worker-only WAIT keep-alive / GO / STEP ASIDE
+            if a["event"] != "wait":
+                print(f"  [{w}] {'GO' if a['event'] == 'release' else 'STEP ASIDE'}   (e2e {lat_s})")
             return
         if a["event"] == "clear":
             print(f"  [{w}] GO   [{f}] resume normal speed   (e2e {lat_s})")

@@ -33,7 +33,8 @@ class Track:
         self.q = accel_sigma ** 2
         self.src_ts = None                    # device timestamp of last sample (ms)
         self.dropped_late = 0                 # out-of-order samples ignored
-        self.history = deque(maxlen=40)       # raw (t, x, y) samples; learned.resample() uses the last 1.9 s
+        self.history = deque(maxlen=40)
+        self.route = None       # raw (t, x, y) samples; learned.resample() uses the last 1.9 s
 
     def _predict(self, dt):
         F = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]], float)
@@ -43,7 +44,7 @@ class Track:
         self.P = F @ self.P @ F.T + Q
 
     def update(self, t, x, y, speed=None, heading=None, yaw_rate=None, src_ts=None,
-               pos_sigma=None, source="uwb"):
+               pos_sigma=None, source="uwb", route=None):
         """t in seconds. heading in radians (0 = +x axis, CCW positive).
         pos_sigma overrides the position noise for this sample (e.g. a coarse
         network-based fix from the MEC Location API)."""
@@ -52,6 +53,7 @@ class Track:
             return False                      # sample already moved the track, ignore this one
         self.source = source
         self.src_ts = src_ts
+        self.route = route                    # planned waypoints of a forklift, if its fleet system shares them
         self.last_seen = time.monotonic()
         if self.t is not None and (t < self.t or t - self.t > 2.0):
             self.x = None                     # device restarted (clock went back) or long gap

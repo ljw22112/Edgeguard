@@ -5,66 +5,66 @@
  "results": {
   "normal": {
    "coop": {
-    "reward": -2.4749123358823435,
-    "precision": 0.6382978723404256,
+    "reward": -1.92881834124341,
+    "precision": 0.6498194945848376,
     "recall": 1.0,
-    "f_beta": 0.8982035928143712,
+    "f_beta": 0.9027081243731193,
     "beta": 2.0,
-    "throughput": 0.8015629070792059,
+    "throughput": 0.8460645684906186,
     "collisions": 0,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 102,
-    "lost_s_mean": 2.3203668813368896,
-    "worker_wait_s_mean": 3.7331169834823377
+    "false_alarms": 97,
+    "lost_s_mean": 1.7818486442737123,
+    "worker_wait_s_mean": 3.397297694777496
    }
   },
   "mec_restart": {
    "coop": {
-    "reward": -4.530898006452772,
-    "precision": 0.6433823529411765,
-    "recall": 0.9722222222222222,
-    "f_beta": 0.8820564516129032,
+    "reward": -3.3307868507818594,
+    "precision": 0.6518518518518519,
+    "recall": 0.9777777777777777,
+    "f_beta": 0.8888888888888888,
     "beta": 2.0,
-    "throughput": 0.7725052665686846,
-    "collisions": 11,
+    "throughput": 0.8101456375158874,
+    "collisions": 6,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 97,
-    "lost_s_mean": 2.717261642816416,
-    "worker_wait_s_mean": 3.2619159156077067
+    "false_alarms": 94,
+    "lost_s_mean": 2.2792716992667095,
+    "worker_wait_s_mean": 3.2075511898451614
    }
   },
   "restart_loss20": {
    "coop": {
-    "reward": -5.955083163618657,
-    "precision": 0.6654135338345865,
-    "recall": 0.9833333333333333,
-    "f_beta": 0.8975659229208924,
+    "reward": -4.655116004733315,
+    "precision": 0.6793893129770993,
+    "recall": 0.9888888888888889,
+    "f_beta": 0.9063136456211813,
     "beta": 2.0,
-    "throughput": 0.7553834763674624,
-    "collisions": 19,
+    "throughput": 0.7749769039806579,
+    "collisions": 12,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 89,
-    "lost_s_mean": 2.9414467999822973,
-    "worker_wait_s_mean": 3.091160056790012
+    "false_alarms": 84,
+    "lost_s_mean": 2.7096614592787702,
+    "worker_wait_s_mean": 3.1345222127955465
    }
   },
   "mec_dead_8s": {
    "coop": {
-    "reward": -6.632248691909321,
-    "precision": 0.620253164556962,
-    "recall": 0.8166666666666667,
-    "f_beta": 0.768025078369906,
+    "reward": -6.4554744869848255,
+    "precision": 0.6244725738396625,
+    "recall": 0.8222222222222222,
+    "f_beta": 0.77324973876698,
     "beta": 2.0,
-    "throughput": 0.5949150630732243,
+    "throughput": 0.6105050085295906,
     "collisions": 11,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 90,
-    "lost_s_mean": 4.829218388879022,
-    "worker_wait_s_mean": 3.2638371619617375
+    "false_alarms": 89,
+    "lost_s_mean": 4.653959335469677,
+    "worker_wait_s_mean": 3.3590143783870823
    }
   },
   "network_down_30s": {
@@ -85,34 +85,34 @@
   },
   "forklift_dead_zone_8s": {
    "coop": {
-    "reward": -2.6013683569107138,
-    "precision": 0.6405693950177936,
+    "reward": -1.8912221836663548,
+    "precision": 0.6545454545454545,
     "recall": 1.0,
-    "f_beta": 0.8991008991008992,
+    "f_beta": 0.9045226130653266,
     "beta": 2.0,
-    "throughput": 0.8041335664955196,
-    "collisions": 1,
+    "throughput": 0.8485207523860216,
+    "collisions": 0,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 101,
-    "lost_s_mean": 2.296822902365258,
-    "worker_wait_s_mean": 3.637284097292177
+    "false_alarms": 95,
+    "lost_s_mean": 1.7472827897269605,
+    "worker_wait_s_mean": 3.315804260866435
    }
   },
   "worker_dead_zone_8s": {
    "coop": {
-    "reward": -2.615417528370373,
-    "precision": 0.6428571428571429,
+    "reward": -1.9228484694075494,
+    "precision": 0.6545454545454545,
     "recall": 1.0,
-    "f_beta": 0.9,
+    "f_beta": 0.9045226130653266,
     "beta": 2.0,
-    "throughput": 0.803882243754545,
-    "collisions": 1,
+    "throughput": 0.8471299530415076,
+    "collisions": 0,
     "conflicts": 180,
     "episodes": 330,
-    "false_alarms": 100,
-    "lost_s_mean": 2.312387225340071,
-    "worker_wait_s_mean": 3.6304718215539054
+    "false_alarms": 95,
+    "lost_s_mean": 1.7789090754681558,
+    "worker_wait_s_mean": 3.3013506846534297
    }
   }
  },

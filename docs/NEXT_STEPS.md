@@ -1,7 +1,18 @@
-# Status (updated 2026-10-09, v1.1)
+# Status (updated 2026-10-10, v1.2)
 
 The final presentation is deliberately not being prepared yet; development comes first.
 README is the short overview; details live in docs/ (risk-and-evaluation, resilience, site-features, deployment, mec-sandbox, adoption).
+
+## Done in v1.2 (docs/risk-and-evaluation.md "v1.2")
+- sim/multi_sim.py: 8 workers x 4 forklifts, 200 episodes.  Found and fixed: devices kept one plan / one wait
+  (forklift limit per worker, tag WAIT per forklift, Python + C++); standoff release race (one side first:
+  truck if its way is clear, else the worker); GO check over the truck's speed range incl. acceleration;
+  STEP ASIDE for a worker standing on a truck's predicted path; intent frozen while stepping aside.
+  Multi: collisions 100 -> 4 of 750, throughput 61.7 -> 86.0 %.  1:1: 145 -> 1 of 1207, 77.3 -> 86.4 %.
+- False alarms: still gate (worker < 0.4 m/s predicted standing), optional route sharing (RoutePredictor,
+  forklift samples may carry "route").  622 -> 570 -> 400 of 993.  results/false_alarm_eval.json.
+- Dashboard shows WAIT / STEP ASIDE / GO per worker (MEC-side WaitCue mirror).
+- Not adopted: min_move had no measurable effect after the other fixes (kept for physical reasons).
 
 ## Done in v1.1 (docs/risk-and-evaluation.md "v1.1")
 - Root cause of the remaining collisions: all were timely alerts; the buzzed worker stopped ~2 s and walked on into

@@ -16,7 +16,7 @@ import math
 from dataclasses import dataclass, asdict, field
 
 from .geometry import encounter, vo_speed_scale, INF
-from .predict import (CVPredictor, CTRVPredictor, StopAfterPredictor, min_separation,
+from .predict import (CVPredictor, CTRVPredictor, RoutePredictor, StopAfterPredictor, min_separation,
                       speed_scale_on_path, braking_scale)
 
 LEVELS = ["SAFE", "CAUTION", "WARNING", "DANGER"]
@@ -43,6 +43,9 @@ class RiskConfig:
     brake_margin: float = 0.5      # m: stopping-distance margin before the conflict point
     pass_speed: float = 1.0        # m/s: passing speed while a worker waits at the lane edge
     wait_keepalive: bool = False   # resend WAIT to the worker every refresh_s while the alert is active
+    still_speed: float = 0.0       # m/s: a worker slower than this is predicted to stand still
+    aside_cue: bool = False        # tell a worker standing in a stopped truck's lane to STEP ASIDE
+    min_move: float = 0.0          # m/s: speed commands below this become a stop
     go_check: bool = False         # keep a waiting worker held until walking on is safe (alerting.decide)
     trust_hold: bool = False       # WARNING plans for a worker who stops (WAIT-until-GO tag), DANGER never
     release_worker: bool = False   # send the waiting worker GO once the forklift is past (alerting.decide)
@@ -82,6 +85,14 @@ class PairRisk:
         return d
 
 
+def forklift_predictor(forklift, speed=None):
+    """Planned route if the truck's fleet system shares one (Track.route), else CTRV."""
+    v = forklift.speed if speed is None else speed
+    if getattr(forklift, "route", None):
+        return RoutePredictor(forklift.pos, v, forklift.route)
+    return CTRVPredictor(forklift.pos, v, _heading(forklift), forklift.yaw_rate)
+
+
 def _heading(track):
     """Direction of travel.  While moving use the velocity (a reversing forklift
     travels opposite to where it faces); when slow, fall back to the IMU heading."""
@@ -97,7 +108,7 @@ def _lane_block(worker, forklift, cfg):
     Time-independent on purpose: once the forklift has slowed down, the
     time-based prediction says "no conflict within 5 s" and would release the
     alert, the forklift speeds up again, and the conflict comes back too late."""
-    geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
+    geo = forklift_predictor(forklift, 1.0)
     steps = [i * 0.2 for i in range(int(cfg.lane_lookahead / 0.2) + 1)]
     for d, (x, y) in zip(steps, geo.positions(steps)):
         if math.hypot(worker.pos[0] - x, worker.pos[1] - y) < cfg.r_safe:
@@ -113,17 +124,49 @@ def waiting_at_lane(worker, forklift, cfg, lateral=None, lookahead=None):
     should pass at walking pace instead of resuming full speed."""
     lateral = cfg.wait_lateral if lateral is None else lateral
     lookahead = cfg.lane_lookahead if lookahead is None else lookahead
-    geo = CTRVPredictor(forklift.pos, 1.0, _heading(forklift), forklift.yaw_rate)
+    geo = forklift_predictor(forklift, 1.0)
     steps = [i * 0.2 for i in range(1, int(lookahead / 0.2) + 1)]
     return any(math.hypot(worker.pos[0] - x, worker.pos[1] - y) < lateral
                for x, y in geo.positions(steps))
 
 
-def go_safe(worker_pos, intent_vel, forklift, cfg):
+class _Profile:
+    """Positions of a truck on its current heading that speeds up from v0 to v1 at `acc` m/s^2."""
+    def __init__(self, forklift, v0, v1, acc=1.0):
+        self.f, self.v0, self.v1, self.acc = forklift, v0, v1, acc
+        sp = abs(forklift.speed)
+        self.kappa = forklift.yaw_rate / sp if sp > 0.3 else 0.0     # path curvature (1/m)
+
+    def positions(self, times):
+        sign = -1.0 if self.v1 < 0 or (self.v1 == 0 and self.v0 < 0) else 1.0
+        a0, a1 = abs(self.v0), abs(self.v1)
+        t_up = max(0.0, (a1 - a0) / self.acc)
+        arcs = [a0 * t + 0.5 * self.acc * t * t if t < t_up
+                else a0 * t_up + 0.5 * self.acc * t_up * t_up + a1 * (t - t_up) for t in times]
+        geo = CTRVPredictor(self.f.pos, sign, _heading(self.f), sign * self.kappa)   # unit speed: time = arc
+        return geo.positions(arcs)
+
+
+def go_safe(worker_pos, intent_vel, forklift, cfg, f_speed=None):
     """Would the waiting worker be safe if he walked on now with his intended velocity?
-    (forklift on its CTRV path; used before telling a held worker GO)"""
+    The forklift may keep its current speed, or speed up again to its speed before the alert
+    (f_speed; a truck held for this worker resumes when the pair clears) - any constant speed in
+    between and the acceleration itself (1 m/s^2) must be safe: a truck that is still speeding
+    up passes points at other times than one already at cruising speed."""
     pw = CVPredictor(worker_pos, intent_vel)
-    pf = CTRVPredictor(forklift.pos, forklift.speed, _heading(forklift), forklift.yaw_rate)
+    v0 = forklift.speed
+    v1 = f_speed if f_speed is not None and abs(f_speed) > abs(v0) else v0      # signed (reversing)
+    preds = [forklift_predictor(forklift, v0 + k / 10 * (v1 - v0)) for k in range(11 if v1 != v0 else 1)]
+    if v1 != v0 and not getattr(forklift, "route", None):
+        preds.append(_Profile(forklift, v0, v1))
+    return all(min_separation(pw, pf, cfg.horizon)[1] >= cfg.r_safe for pf in preds)
+
+
+def truck_path_clear(worker_pos, forklift, cfg, speed):
+    """Can the (stopped) forklift move off at `speed` (signed) without coming within r_safe
+    of the worker standing at worker_pos?"""
+    pw = CVPredictor(worker_pos, (0.0, 0.0))
+    pf = forklift_predictor(forklift, speed)
     _, d_min = min_separation(pw, pf, cfg.horizon)
     return d_min >= cfg.r_safe
 
@@ -174,9 +217,12 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
             if method == "guidance_lstm":
                 from .learned import predictor_or_none
                 pw = predictor_or_none(worker, forklift)
-            pw = pw or CVPredictor(worker.pos, worker.vel)
-            pf = CTRVPredictor(forklift.pos, forklift.speed, _heading(forklift),
-                               forklift.yaw_rate)
+            # a worker standing still is predicted to stay put: at 0.1-0.35 m UWB noise the tracker's
+            # velocity of a standing picker wanders by a few tenths of m/s, enough to "walk" him into
+            # the lane within the warning horizon (most false alarms at pick faces)
+            still = worker.speed < getattr(cfg, "still_speed", 0.0)
+            pw = pw or CVPredictor(worker.pos, (0.0, 0.0) if still else worker.vel)
+            pf = forklift_predictor(forklift)
             t_min, d_min = min_separation(pw, pf, cfg.horizon)
         elif t_min > cfg.horizon:
             t_min = INF
@@ -216,7 +262,14 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
 
     return PairRisk(worker.id, forklift.id, level, LEVELS[level], method, enc.range,
                     enc.closing_speed, enc.los_rate, enc.tcpa, enc.dcpa, enc.ttc,
-                    t_min, d_min, scale, reason, round(scale * forklift.speed, 2))
+                    t_min, d_min, scale, reason, _limit(scale, forklift.speed, cfg))
+
+
+def _limit(scale, speed, cfg):
+    """Absolute speed command; below cfg.min_move it is a stop (a truck creeping at a few cm/s
+    still reaches a waiting worker, and drive controllers do not hold such speeds anyway)."""
+    v = round(scale * speed, 2)
+    return 0.0 if v < getattr(cfg, "min_move", 0.0) else v
 
 
 class RiskEngine:

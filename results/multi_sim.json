@@ -1,0 +1,63 @@
+{
+ "episodes": 200,
+ "workers": 8,
+ "forklifts": 4,
+ "variants": {
+  "v1.0 buzz": {
+   "collisions": 100,
+   "conflicts": 750,
+   "collisions_in_conflict": 89,
+   "throughput": 0.6165,
+   "forklift_lost_s_per_forklift": 11.21,
+   "worker_wait_s_per_worker": 2.49
+  },
+  "v1.1 WAIT/GO": {
+   "collisions": 22,
+   "conflicts": 750,
+   "collisions_in_conflict": 18,
+   "throughput": 0.6167,
+   "forklift_lost_s_per_forklift": 11.06,
+   "worker_wait_s_per_worker": 3.06
+  },
+  "v1.2 (per pair + standoffs + STEP ASIDE + still gate)": {
+   "collisions": 4,
+   "conflicts": 750,
+   "collisions_in_conflict": 0,
+   "throughput": 0.8595,
+   "forklift_lost_s_per_forklift": 5.67,
+   "worker_wait_s_per_worker": 2.66
+  },
+  "v1.2 without per-pair plans": {
+   "collisions": 7,
+   "conflicts": 750,
+   "collisions_in_conflict": 2,
+   "throughput": 0.8609,
+   "forklift_lost_s_per_forklift": 5.61,
+   "worker_wait_s_per_worker": 2.43
+  },
+  "v1.2 without the 0.3 m/s stop": {
+   "collisions": 2,
+   "conflicts": 750,
+   "collisions_in_conflict": 1,
+   "throughput": 0.8482,
+   "forklift_lost_s_per_forklift": 5.89,
+   "worker_wait_s_per_worker": 2.78
+  },
+  "v1.2 without STEP ASIDE": {
+   "collisions": 3,
+   "conflicts": 750,
+   "collisions_in_conflict": 1,
+   "throughput": 0.6001,
+   "forklift_lost_s_per_forklift": 11.46,
+   "worker_wait_s_per_worker": 3.24
+  },
+  "v1.2 without the still gate": {
+   "collisions": 5,
+   "conflicts": 750,
+   "collisions_in_conflict": 1,
+   "throughput": 0.8532,
+   "forklift_lost_s_per_forklift": 5.83,
+   "worker_wait_s_per_worker": 2.62
+  }
+ }
+}

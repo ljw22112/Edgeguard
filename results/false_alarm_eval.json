@@ -1,0 +1,60 @@
+{
+ "per_gen": 100,
+ "seeds": [
+  999999,
+  424242
+ ],
+ "variants": {
+  "v1.2 without the still gate": {
+   "collisions": 2,
+   "conflicts": 1207,
+   "false_alarms": 622,
+   "non_conflict": 993,
+   "recall": 1.0,
+   "throughput": 0.8596,
+   "forklift_lost_s": 1.67,
+   "worker_lost_s": 3.17,
+   "false_alarms_by_scenario": {
+    "crossing_clear": 84,
+    "adjacent_aisle_pass": 76,
+    "roadside_picker": 126,
+    "turn_away": 136,
+    "worker_yields": 200
+   }
+  },
+  "+ still gate (v1.2)": {
+   "collisions": 1,
+   "conflicts": 1207,
+   "false_alarms": 570,
+   "non_conflict": 993,
+   "recall": 1.0,
+   "throughput": 0.8636,
+   "forklift_lost_s": 1.62,
+   "worker_lost_s": 3.16,
+   "false_alarms_by_scenario": {
+    "crossing_clear": 84,
+    "adjacent_aisle_pass": 76,
+    "roadside_picker": 81,
+    "turn_away": 129,
+    "worker_yields": 200
+   }
+  },
+  "+ still gate + route sharing": {
+   "collisions": 2,
+   "conflicts": 1207,
+   "false_alarms": 400,
+   "non_conflict": 993,
+   "recall": 1.0,
+   "throughput": 0.89,
+   "forklift_lost_s": 1.32,
+   "worker_lost_s": 3.07,
+   "false_alarms_by_scenario": {
+    "crossing_clear": 84,
+    "adjacent_aisle_pass": 66,
+    "roadside_picker": 47,
+    "worker_yields": 200,
+    "turn_away": 3
+   }
+  }
+ }
+}

@@ -119,6 +119,12 @@ risk:
   # and do not let a waiting worker go while walking on would cross the forklift (docs/risk-and-evaluation.md)
   wait_keepalive: true
   go_check: true
+  # v1.2 (sim/multi_sim.py): speed commands below 0.3 m/s are a stop; a worker standing in a truck's
+  # path is told to STEP ASIDE to the lane edge
+  min_move: 0.3
+  aside_cue: true
+  # a worker slower than this is predicted to stand still (UWB-noise "walking" of standing pickers)
+  still_speed: 0.4
 
 # Adaptive reporting rate (edgeguard/rate_control.py): devices with no counterpart close or
 # closing in report at 2 Hz, the rest at 10 Hz; commands go to <ae>/control.  On by default:

@@ -165,7 +165,7 @@ void handleD2D() {
       if (!f.mecOk && mecHeard()) relayUp(f);
     } else if (f.type == d2d::ALERT && d2d::idIs(f, DEVICE_ID)) {   // relayed MEC alert for me
       beacon = !f.clear && f.beacon;
-      speedLimit.onAlert(t, f.clear, f.limit < 0 ? policy::NO_LIMIT : f.limit);
+      speedLimit.onAlert(t, f.clear, f.limit < 0 ? policy::NO_LIMIT : f.limit, f.src);   // keyed by the relaying tag
     } else if (f.type == d2d::HEARTBEAT && !mecHeard()) {
       speedLimit.onHeartbeat(t);
     }
@@ -239,7 +239,7 @@ void handleAlert() {
   }
   if (String((const char*)alert["forklift"]) != DEVICE_ID) return;
   String ev = (const char*)(alert["event"] | "");
-  if (ev == "wait" || ev == "release") return;      // worker-only cues: the speed limit stays
+  if (ev == "wait" || ev == "release" || ev == "aside") return;   // worker-only cues: the speed limit stays
   JsonObject act = alert["actions"][DEVICE_ID];
   bool clear = String((const char*)(alert["event"] | "")) == "clear";
   beacon = !clear && (act["beacon"] | false);
@@ -247,7 +247,7 @@ void handleAlert() {
   // speed up again.
   float lim = act["speed_limit"].isNull() ? (float)(act["speed_scale"] | 1.0f) * MAX_SPEED
                                           : (float)act["speed_limit"];
-  speedLimit.onAlert(t, clear, lim < 0 ? 0.0f : lim);
+  speedLimit.onAlert(t, clear, lim < 0 ? 0.0f : lim, alert["worker"] | "");   // one plan per worker
   Serial.printf("alert %s beacon=%d limit %.2f m/s\n", (const char*)(alert["level"] | "?"), beacon, lim);
 }
 

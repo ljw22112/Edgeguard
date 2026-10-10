@@ -120,7 +120,10 @@ class Mover:
         self.lost_s = 0.0                            # forklift seconds lost to slow-downs
         self.human_cap = None                        # (from, until, m/s): the driver slows on his own
         self.stops = 0
-        self.holding = False                         # worker waiting for the GO signal (UX "hold")
+        self.holds = {}                              # forklift -> WAIT expires at (UX "hold")
+        self.blocked = False                         # a standing forklift right in front (sim/multi_sim.py)
+        self.offset = (0.0, 0.0)                     # sideways step off the path (STEP ASIDE cue)
+        self.aside = None                            # (start at, target offset)
         self.wait_s = 0.0                            # worker seconds lost (stopped while he wanted to walk)
 
     # Worker tag UX.  "buzz": a vibration burst, the worker stops for ~2 s and walks on.
@@ -131,24 +134,48 @@ class Mover:
     # 1 - COMPLY per alert) behaves as with "buzz".
     UX, COMPLY, HOLD_IDLE_S = "hold", 1.0, 2.5         # v1.1 tags hold (edgeguard/worker_cue.py)
 
-    def on_alert(self, t, event, limit=None, vibrate=False, rng=None):
+    def on_alert(self, t, event, limit=None, vibrate=False, rng=None, src=""):
+        """src: forklift -> the worker the alert is about (one plan per pair);
+                worker   -> the forklift that holds him (one WAIT per forklift)."""
         if self.kind == "forklift":                       # limit: absolute m/s, None = no limit
-            self.pending.append((t + 0.2, event, limit))                         # actuator delay
+            self.pending.append((t + 0.2, event, limit, src))                    # actuator delay
+            return
+        self.holds = {k: u for k, u in self.holds.items() if u > t}
+        if event == "aside" and Mover.UX == "hold" and limit is not None:
+            # STEP ASIDE: after the reaction time walk sideways to the lane edge, then WAIT there
+            if self.aside is None and (rng is None or rng.random() < Mover.COMPLY):
+                self.aside = (t + 0.8, (self.offset[0] + limit[0], self.offset[1] + limit[1]))
+            self.holds[src] = max(self.holds.get(src, 0.0), t + 0.8 + Mover.HOLD_IDLE_S + 3.0)
+            self.stop_from = min(self.stop_from, t + 0.8) if self.stop_until > t else t + 0.8
+            self.stop_until = max(self.stop_until, self.holds[src])
             return
         if Mover.UX == "hold" and event in ("clear", "release"):
-            if self.holding and self.stop_until > t:
-                self.stop_until = max(self.stop_from, t + 0.3)                   # GO: walks on 0.3 s later
-            self.holding = False
+            if src in self.holds:
+                del self.holds[src]
+                if not self.holds and self.stop_until > t:
+                    self.stop_until = max(self.stop_from, t + 0.3)               # GO: walks on 0.3 s later
             return
-        if self.holding and t < self.stop_until and event in ("raise", "refresh", "wait"):
-            self.stop_until = max(self.stop_until, t + Mover.HOLD_IDLE_S)        # still WAIT
+        if event not in ("raise", "refresh", "wait", "local"):
+            return
+        if src in self.holds and event != "local":
+            self.holds[src] = max(self.holds[src], t + Mover.HOLD_IDLE_S)        # still WAIT
+            self.stop_until = max(self.stop_until, self.holds[src])
+            return
+        if vibrate and self.holds and event != "local":                         # waiting already: another forklift
+            self.holds[src] = t + Mover.HOLD_IDLE_S
+            self.stop_until = max(self.stop_until, self.holds[src])
             return
         if vibrate and t > self.stop_until:
             self.stops += 1
             comply = Mover.UX == "hold" and event != "local" and (rng is None or rng.random() < Mover.COMPLY)
-            self.holding = comply
             self.stop_from = t + 0.8                                             # reaction 0.8 s
             self.stop_until = t + 0.8 + (Mover.HOLD_IDLE_S if comply else 2.0)   # stop 2 s / WAIT
+            if comply:
+                self.holds = {src: self.stop_until}
+
+    @property
+    def holding(self):
+        return bool(self.holds)
 
     def step(self, t, dt):
         vn = self.path.v_nom(self.s)
@@ -156,11 +183,11 @@ class Mover:
             ready = sorted((x for x in self.pending if x[0] <= t), key=lambda x: x[0])
             if ready:
                 self.pending = [x for x in self.pending if x[0] > t]
-            for _, ev, lim in ready:
+            for _, ev, lim, src in ready:
                 if ev == "hb":
                     self.fl.on_heartbeat(t)
                 else:
-                    self.fl.on_alert(t, ev, lim)
+                    self.fl.on_alert(t, ev, lim, src)
             lim = self.fl.effective(t)
             target = vn if lim is None else min(vn, lim)
             if self.human_cap and self.human_cap[0] <= t < self.human_cap[1]:
@@ -169,7 +196,15 @@ class Mover:
             if vn > 0.1:
                 self.lost_s += (1 - min(1.0, self.v / vn)) * dt
         else:
-            target = 0.0 if self.stop_from <= t < self.stop_until else vn
+            if self.aside is not None and t >= self.aside[0]:
+                (ox, oy), (tx, ty) = self.offset, self.aside[1]
+                dx, dy = tx - ox, ty - oy
+                d = math.hypot(dx, dy)
+                step = 1.0 * dt                                                 # sidestep at 1 m/s
+                self.offset = (tx, ty) if d <= step else (ox + dx / d * step, oy + dy / d * step)
+                if d <= step:
+                    self.aside = None                                           # stays at the edge
+            target = 0.0 if (self.stop_from <= t < self.stop_until) or self.blocked else vn
             dec, acc = 2.0, 1.5
             if vn > 0.1:
                 self.wait_s += (1 - min(1.0, self.v / vn)) * dt
@@ -179,8 +214,12 @@ class Mover:
             self.v = min(target, self.v + acc * dt)
         self.s += self.v * dt
 
-    def sample(self):
+    def pos(self):
         x, y = self.path.pos(self.s)
+        return (x + self.offset[0], y + self.offset[1])
+
+    def sample(self):
+        x, y = self.pos()
         if self.kind == "worker":
             return {"x": x, "y": y}
         heading, sign, yaw = self.path.meta_at(self.s)
@@ -367,7 +406,7 @@ def run_case(name, case, cse, sink, seed, scen_seed=None):
                                 dev_rate[oid].on_command(t, hz)
                         for m in movers.values():
                             if m.kind == "forklift":
-                                m.pending.append((t, "hb", None))
+                                m.pending.append((t, "hb", None, ""))
                     return
                 w, f = a.get("worker"), a.get("forklift")
                 acts = a.get("actions", {})
@@ -379,15 +418,15 @@ def run_case(name, case, cse, sink, seed, scen_seed=None):
                     if case["react"]:
                         for m in movers.values():               # any MEC message = heartbeat
                             if m.kind == "forklift" and m.id != f:
-                                m.pending.append((t, "hb", None))
+                                m.pending.append((t, "hb", None, ""))
                         if f in movers:
                             fa = acts.get(f, {})
                             lim = fa.get("speed_limit")
                             if lim is None and a["event"] != "clear":      # older MEC app: ratio only
                                 lim = fa.get("speed_scale", 1.0) * movers[f].v
-                            movers[f].on_alert(t, a["event"], lim)
+                            movers[f].on_alert(t, a["event"], lim, src=w)
                         if w in movers:
-                            movers[w].on_alert(t, a["event"], vibrate=acts.get(w, {}).get("vibrate"))
+                            movers[w].on_alert(t, a["event"], vibrate=acts.get(w, {}).get("vibrate"), src=f)
                 if a.get("src_ts") and case["skew_ms"] == 0 and a.get("event") != "clear":
                     latencies.append(time.time() * 1000 - a["src_ts"])
             threading.Timer(delay, apply).start() if delay > 0 else apply()
@@ -414,7 +453,7 @@ def run_case(name, case, cse, sink, seed, scen_seed=None):
                 for m in movers.values():
                     m.step(t, DT)
                 for (w, f) in gt:
-                    (xw, yw), (xf, yf) = movers[w].path.pos(movers[w].s), movers[f].path.pos(movers[f].s)
+                    (xw, yw), (xf, yf) = movers[w].pos(), movers[f].pos()
                     actual_min[(w, f)] = min(actual_min[(w, f)], math.hypot(xw - xf, yw - yf))
                 now_ms = int(time.time() * 1000)
                 for i, pr in enumerate(pairs):

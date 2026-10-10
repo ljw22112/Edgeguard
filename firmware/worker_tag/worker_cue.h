@@ -1,6 +1,6 @@
 // EdgeGuard worker tag WAIT / GO cue - C++ mirror of edgeguard/worker_cue.py (cross-tested).
 // raise/refresh+vibrate -> WAIT (burst, red LED, 1 s pulses); raise/refresh/wait keep it;
-// clear/release -> GO (two short pulses); nothing heard for HOLD_IDLE_S -> GO by itself.
+// aside -> STEP ASIDE (long burst) then WAIT; clear/release -> GO (two short pulses); nothing heard for HOLD_IDLE_S -> GO by itself.
 // One hold per forklift (key = forklift id): a clear from one forklift keeps the WAIT of another.
 #pragma once
 #include <cmath>
@@ -29,6 +29,7 @@ struct WaitCue {
   void onAlert(float t, const char* ev, bool vibrate, bool danger, const char* src = "") {
     const char* key = src;
     tick(t);
+    if (!strcmp(ev, "aside")) { ev = "raise"; vibrate = true; danger = true; }   // step aside, then WAIT
     int i = find(key);
     if (!strcmp(ev, "clear") || !strcmp(ev, "release")) {
       if (i >= 0) drop(t, i);

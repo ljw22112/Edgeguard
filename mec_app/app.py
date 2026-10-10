@@ -77,7 +77,8 @@ def post(kind, con):
     except queue.Full:
         state["publisher"]["dropped_full"] += 1
         log.warning("outbox full, dropping %s", kind)
-state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0, "worker_cues": {"wait": 0, "release": 0},
+state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0, "worker_cues": {"wait": 0, "release": 0, "aside": 0},
+         "worker_cue": {}, "worker_aside": {},
          "publisher": {"ok": 0, "failed": 0, "dropped_stale": 0, "dropped_full": 0, "last_ok": None,
                        "last_error": None},
          "input": {"bad": 0, "clock_skew": 0, "late": 0}, "gc": {"tracks_removed": 0},
@@ -308,6 +309,10 @@ def handle_sample(p: dict):
             "pos_sigma": p.get("pos_sigma"), "source": p.get("source", "uwb")}
     if kind == "forklift":
         meas.update(speed=p.get("speed"), heading=p.get("heading"), yaw_rate=p.get("yaw_rate"))
+        rt = p.get("route")                        # planned waypoints from the fleet system (optional)
+        if isinstance(rt, list) and 0 < len(rt) <= 30 and all(
+                isinstance(q, (list, tuple)) and len(q) == 2 and all(_num(v) for v in q) for q in rt):
+            meas["route"] = [tuple(map(float, q)) for q in rt]
     with lock:
         state["rx"] += 1
         if p.get("ts"):
@@ -403,6 +408,7 @@ def handle_camera(p: dict, rx: int):
 
 
 from edgeguard.nearmiss import NearMissTracker   # noqa: E402
+from edgeguard.worker_cue import WaitCue          # noqa: E402
 NM = CFG.get("nearmiss") or {}
 nearmiss = NearMissTracker(threshold_m=NM.get("threshold_m", 2.0), cell_m=NM.get("cell_m", 1.0))
 
@@ -430,6 +436,12 @@ def evaluate_and_alert(src_ts, rx, only=None):
         ev, actions = decide(st["alert"], r, w_tr, f_tr, engine.cfg, now, state["network"]["congested"])
         st["risk"] = r
         if ev:
+            # mirror of the worker's tag (edgeguard/worker_cue.py) for the dashboard: WAIT / STEP ASIDE / GO
+            cue = state["worker_cue"].setdefault(r.worker, WaitCue())
+            cue.on_alert(now, ev, bool((actions or {}).get(r.worker, {}).get("vibrate")),
+                         r.level >= 3, src=r.forklift)
+            if ev == "aside":
+                state["worker_aside"][r.worker] = now
             untagged = r.worker.startswith("untagged_")
             alert = {
                 "event": ev, "level": LEVELS[r.level],
@@ -442,7 +454,7 @@ def evaluate_and_alert(src_ts, rx, only=None):
                 "src_ts": src_ts, "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
             }
             post("alert", alert)
-            if ev in ("wait", "release"):              # worker WAIT keep-alive / GO (edgeguard/worker_cue.py)
+            if ev in ("wait", "release", "aside"):     # worker WAIT keep-alive / GO / STEP ASIDE (edgeguard/worker_cue.py)
                 state["worker_cues"][ev] += 1
                 continue
             to_cloud("alert", alert)
@@ -628,7 +640,15 @@ def snapshot():
                  "ingest_ms_median": ing[len(ing) // 2] if ing else None,
                  "method": engine.method, "r_safe": engine.cfg.r_safe,
                  "network": state["network"], "location_fixes": state["location_fixes"]}
-        return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]),
+        cues = {}
+        for wid, c in state["worker_cue"].items():
+            wall = time.time()
+            if c.led(wall):
+                cues[wid] = {"state": "ASIDE" if wall - state["worker_aside"].get(wid, -1e9) < 3.0 else "WAIT",
+                             "by": sorted(c.holds)}
+            elif c.go_at is not None and wall - c.go_at < 2.0:
+                cues[wid] = {"state": "GO", "by": []}
+        return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]), "cues": cues,
                 "obstacles": [list(r) for r in SITEMAP.rects],
                 "stats": stats, "server_ms": now_ms()}
 

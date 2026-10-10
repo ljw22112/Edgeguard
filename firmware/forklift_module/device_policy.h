@@ -19,6 +19,7 @@
 //
 // Times are seconds on the device's own monotonic clock (millis() / 1000).
 #pragma once
+#include <cstring>
 #include <cmath>
 
 namespace policy {
@@ -124,8 +125,11 @@ struct LocalGuard {
 };
 
 struct ForkliftLimit {
-  float limit = NO_LIMIT;
-  float limitT = -1e9f;
+  // one plan per pair (src = worker id), the tightest applies: a clear for one worker must not
+  // lift the limit another worker needs
+  static constexpr int MAX_PAIRS = 8;
+  struct Pair { char src[16]; float limit; float t; bool used; };
+  Pair pairs[MAX_PAIRS] = {};
   float hbT = -1e9f;
   bool localTtc = true;                  // v0.8 local UWB fallback (no ranges -> v0.7 behaviour)
   bool coop = true;                      // v0.9 D2D state -> 2-D closest approach (no D2D -> v0.8)
@@ -138,11 +142,30 @@ struct ForkliftLimit {
   // worker tag side: vibrate when the local rule says stop
   bool vibrateLocal(double t) const { return localTtc && mecSilent(t) && local.cap(t, true, coop) == 0.0; }
 
-  // event: 0 = raise / refresh, 1 = clear
-  void onAlert(float t, bool clear, float lim) {
+  // clear = the pair cleared; src = the worker the alert is about
+  void onAlert(float t, bool clear, float lim, const char* src = "") {
     hbT = t;                             // any MEC message proves it is alive
-    limit = clear ? NO_LIMIT : lim;
-    limitT = t;
+    int i = find(src);
+    if (clear || lim < 0) { if (i >= 0) pairs[i].used = false; return; }
+    if (i < 0) {
+      for (int k = 0; k < MAX_PAIRS && i < 0; k++) if (!pairs[k].used) i = k;
+      if (i < 0) {                       // full: replace the oldest plan
+        i = 0;
+        for (int k = 1; k < MAX_PAIRS; k++) if (pairs[k].t < pairs[i].t) i = k;
+      }
+      strncpy(pairs[i].src, src, sizeof pairs[i].src - 1); pairs[i].src[sizeof pairs[i].src - 1] = 0;
+      pairs[i].used = true;
+    }
+    pairs[i].limit = lim; pairs[i].t = t;
+  }
+  int find(const char* src) const {
+    for (int k = 0; k < MAX_PAIRS; k++) if (pairs[k].used && !strcmp(pairs[k].src, src)) return k;
+    return -1;
+  }
+  float tightest() const {
+    float m = NO_LIMIT;
+    for (const Pair& p : pairs) if (p.used && (m < 0 || p.limit < m)) m = p.limit;
+    return m;
   }
   void onHeartbeat(float t) { hbT = t; }
 
@@ -157,13 +180,13 @@ struct ForkliftLimit {
   }
 
   float heldLimit(float t) {
-    if (limit < 0) return NO_LIMIT;
+    if (tightest() < 0) return NO_LIMIT;
     if (t - hbT > SILENCE_S) {           // MEC silent
       if (t - hbT > STOP_AFTER_S) return 0.0f;
-      return limit;                      // restarting: hold the last plan
+      return tightest();                 // restarting: hold the last plan
     }
-    if (t - limitT > ALERT_STALE_S) limit = NO_LIMIT;   // MEC alive, clear lost
-    return limit;
+    for (Pair& p : pairs) if (p.used && t - p.t > ALERT_STALE_S) p.used = false;   // MEC alive, clear lost
+    return tightest();
   }
 };
 

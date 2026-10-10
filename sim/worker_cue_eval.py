@@ -9,6 +9,8 @@ Variants (same held-out encounters, randomised network, two seed sets):
   hold               : tag WAITs until clear (gives up after 2.5 s without a message)
   hold + keep-alive  : MEC app re-sends `wait` every second while the alert is active
   hold + keep-alive + GO check (v1.1): no clear while walking on would cross the forklift
+  v1.2: + speed commands below 0.3 m/s are a stop, standoffs resolved one at a time (truck first
+        if its way is clear, else the worker), STEP ASIDE for a worker standing in a truck's path
 Compliance sweep: share of workers who obey a WAIT (others behave as with the burst).
 Costs are reported for both sides: forklift seconds lost and worker seconds lost per encounter.
 """
@@ -29,11 +31,13 @@ from sim.closed_loop import run_episode, score                      # noqa: E402
 from sim.failsafe_eval import site_cfg                              # noqa: E402
 from sim.train_policy import GENS, episodes_for                     # noqa: E402
 
+OFF = {"wait_keepalive": False, "go_check": False, "min_move": 0.0, "aside_cue": False, "still_speed": 0.0}
 VARIANTS = {   # name: (ux, cfg overrides)
-    "v1.0 buzz": ("buzz", {"wait_keepalive": False, "go_check": False}),
-    "hold": ("hold", {"wait_keepalive": False, "go_check": False}),
-    "hold + keep-alive": ("hold", {"wait_keepalive": True, "go_check": False}),
-    "v1.1 hold + keep-alive + GO check": ("hold", {"wait_keepalive": True, "go_check": True}),
+    "v1.0 buzz": ("buzz", OFF),
+    "hold": ("hold", {**OFF}),
+    "hold + keep-alive": ("hold", {**OFF, "wait_keepalive": True}),
+    "v1.1 hold + keep-alive + GO check": ("hold", {**OFF, "wait_keepalive": True, "go_check": True}),
+    "v1.2 + standoffs + STEP ASIDE + still gate": ("hold", {}),
 }
 SEEDS = (999_999, 424_242)
 
@@ -72,11 +76,11 @@ def main():
             out["variants"][name] = s = summary(res)
             print(f"{name:36s} coll {s['collisions']:3d}/{s['conflicts']}  thr {s['throughput']:.3f}  "
                   f"forklift lost {s['lost_s_mean']:.2f} s  worker lost {s['worker_wait_s_mean']:.2f} s", flush=True)
-        ux, over = VARIANTS["v1.1 hold + keep-alive + GO check"]
+        ux, over = VARIANTS["v1.2 + standoffs + STEP ASIDE + still gate"]
         for comply in (0.85, 0.7, 0.5):
             res = sum((run(pool, eps, ux, over, comply) for eps in eps_all), [])
             out["compliance"][str(comply)] = s = summary(res)
-            print(f"v1.1, {int(comply * 100)} % obey WAIT{'':17s} coll {s['collisions']:3d}/{s['conflicts']}  "
+            print(f"v1.2, {int(comply * 100)} % obey WAIT{'':17s} coll {s['collisions']:3d}/{s['conflicts']}  "
                   f"thr {s['throughput']:.3f}  forklift lost {s['lost_s_mean']:.2f} s  "
                   f"worker lost {s['worker_wait_s_mean']:.2f} s", flush=True)
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

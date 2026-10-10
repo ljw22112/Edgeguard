@@ -73,7 +73,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
 </header>
 <main>
   <section class="panel">
-    <h2>Site map <span class="legend"><span><i class="sw" style="background:var(--worker)"></i>Worker</span><span><i class="sw" style="background:var(--forklift)"></i>Forklift</span><span>··· predicted 3 s</span></span></h2>
+    <h2>Site map <span class="legend"><span><i class="sw" style="background:var(--worker)"></i>Worker</span><span><i class="sw" style="background:var(--forklift)"></i>Forklift</span><span>··· predicted 3 s</span><span><i class="sw" style="background:var(--danger)"></i>WAIT</span><span><i class="sw" style="background:var(--warning)"></i>STEP ASIDE</span><span><i class="sw" style="background:var(--safe)"></i>GO</span></span></h2>
     <div id="mapwrap"><canvas id="map"></canvas><div id="offline">MEC app unreachable, retrying…</div></div>
   </section>
   <div class="side">
@@ -180,6 +180,18 @@ function draw(){
         g.fillStyle = css("--worker"); g.beginPath(); g.arc(x,y,Math.max(6,0.3*view.scale),0,7); g.fill();
         g.strokeStyle = css("--panel"); g.lineWidth = 2; g.stroke();
       }
+    }
+    const cue = t.kind === "worker" && (S.cues||{})[id];
+    if(cue){                                      // the worker's tag: WAIT (red) / STEP ASIDE (amber) / GO (green)
+      const col = css(cue.state === "GO" ? "--safe" : cue.state === "ASIDE" ? "--warning" : "--danger");
+      const rr = Math.max(11, 0.55*view.scale);
+      g.strokeStyle = col; g.lineWidth = 3; g.setLineDash(cue.state === "GO" ? [4,3] : []);
+      g.beginPath(); g.arc(x,y,rr,0,7); g.stroke(); g.setLineDash([]);
+      const label = cue.state === "ASIDE" ? "STEP ASIDE" : cue.state;
+      g.font = "700 11px " + css("--f-num");
+      const tw = g.measureText(label).width + 10;
+      g.fillStyle = col; g.beginPath(); g.roundRect(x - tw/2, y + rr + 4, tw, 16, 8); g.fill();
+      g.fillStyle = css("--bg"); g.textAlign = "center"; g.fillText(label, x, y + rr + 16); g.textAlign = "start";
     }
     g.fillStyle = css("--ink"); g.font = "600 12px " + css("--f-num");
     const off = t.kind === "forklift" ? S.stats.r_safe*view.scale + 6 : 12;

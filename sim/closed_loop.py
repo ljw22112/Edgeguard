@@ -70,13 +70,21 @@ class EpisodeResult:
 
 def _in_lane(worker, forklift, half_width=1.5):
     """Worker already within the forklift's lane (stopping there would not help)."""
-    (xw, yw), (xf, yf) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
+    (xw, yw), (xf, yf) = worker.pos(), forklift.pos()
     hd, _, _ = forklift.path.meta_at(forklift.s)
     return abs(-(xw - xf) * math.sin(hd) + (yw - yf) * math.cos(hd)) < half_width
 
 
 VISION_M = 12.0          # people notice each other within this range when nothing blocks the view
 P_WORKER_SEES, P_DRIVER_SEES = 0.6, 0.7
+
+
+ROUTE_SHARE = False   # forklifts send their planned route (next 10 m of waypoints) with each sample
+
+
+def _route(forklift):
+    p = forklift.path
+    return [p.pos(min(p.end, forklift.s + d)) for d in (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0)]
 
 
 def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv", net: Net = Net(),
@@ -103,7 +111,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
         return win is None or not (win[0] <= t < win[1])
 
     def d2d_ok(t):                                 # one D2D frame between the two devices
-        (ax, ay), (bx, by) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
+        (ax, ay), (bx, by) = worker.pos(), forklift.pos()
         return coop and math.hypot(ax - bx, ay - by) <= net.d2d_range_m and rng.random() >= net.d2d_loss
 
     def route(t, to):
@@ -127,7 +135,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                 continue
             if ev == "hb":
                 if to == "f":
-                    forklift.pending.append((t, "hb", None))
+                    forklift.pending.append((t, "hb", None, ""))
                 else:
                     wl.on_heartbeat(t)
                 continue
@@ -137,13 +145,14 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
                 wl.on_heartbeat(t)
             if react:
                 if to == "f":
-                    forklift.on_alert(t, ev, acts.get("f", {}).get("speed_limit"))
+                    forklift.on_alert(t, ev, acts.get("f", {}).get("speed_limit"), src="w")
                 else:
-                    worker.on_alert(t, ev, vibrate=acts.get("w", {}).get("vibrate"), rng=rng)
+                    wa = acts.get("w", {})
+                    worker.on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), rng=rng, src="f")
         pending = keep
         worker.step(t, DT)
         forklift.step(t, DT)
-        (xw, yw), (xf, yf) = worker.path.pos(worker.s), forklift.path.pos(forklift.s)
+        (xw, yw), (xf, yf) = worker.pos(), forklift.pos()
         actual_min = min(actual_min, math.hypot(xw - xf, yw - yf))
         if human_vision and not seen:
             d_now = math.hypot(xw - xf, yw - yf)
@@ -167,7 +176,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             sw = forklift.sample()
             fvx, fvy = sw["speed"] * math.cos(sw["heading"]), sw["speed"] * math.sin(sw["heading"])
             (px, py) = worker.path.pos(min(worker.path.end, worker.s + 0.1))
-            ux, uy = (px - xw, py - yw)
+            ux, uy = (px - xw + worker.offset[0], py - yw + worker.offset[1])
             un = math.hypot(ux, uy) or 1.0
             wvx, wvy = wv * ux / un, wv * uy / un
             nz = lambda: rng.gauss(0, noise)             # noqa: E731  (UWB fix noise)
@@ -189,7 +198,8 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             smp = forklift.sample()
             engine.update(Track, "f", "forklift", t, x=xf + rng.gauss(0, noise), y=yf + rng.gauss(0, noise),
                           speed=smp["speed"] + rng.gauss(0, 0.05), heading=smp["heading"] + rng.gauss(0, 0.035),
-                          yaw_rate=smp["yaw_rate"] + rng.gauss(0, 0.03))
+                          yaw_rate=smp["yaw_rate"] + rng.gauss(0, 0.03),
+                          route=_route(forklift) if ROUTE_SHARE else None)
         if t < 0.5:
             continue
         down = net.mec_down is not None and net.mec_down[0] <= t < net.mec_down[1]
@@ -210,7 +220,7 @@ def run_episode(gen, rng: random.Random, cfg: RiskConfig, method="guidance_ctrv"
             ev, acts = decide(st, r, engine.tracks.get("w"), engine.tracks.get("f"), cfg, t)
             if ev:
                 alerts += 1
-                for to in (("w",) if ev in ("release", "wait") else ("f", "w")):
+                for to in (("w",) if ev in ("release", "wait", "aside") else ("f", "w")):
                     extra = route(t, to)
                     if extra is not None and rng.random() >= net.down_loss:
                         lat = max(0.0, rng.gauss(net.latency_ms, net.jitter_ms)) / 1000
