@@ -1,0 +1,5 @@
+# Hardware-in-the-loop demo (docs/hardware-demo.md): real ESP32 boards act as worker_01 / forklift_01.
+# The boards' IP addresses (Serial Monitor prints them after Wi-Fi connects):
+alert_subscribers:
+  - http://192.168.0.21/alert     # worker tag board (worker_01)
+  - http://192.168.0.22/alert     # forklift module board (forklift_01)

@@ -177,7 +177,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                 send("hb", {}, f, "")
         for r in engine.evaluate():
             st = states.setdefault((r.worker, r.forklift), AlertState())
-            ev, acts = decide(st, r, engine.tracks.get(r.worker), engine.tracks.get(r.forklift), cfg, t)
+            others = [tr for tr in engine.tracks.values() if tr.kind == "forklift" and tr.x is not None]
+            ev, acts = decide(st, r, engine.tracks.get(r.worker), engine.tracks.get(r.forklift), cfg, t, others=others)
             if ev:
                 send(ev, acts, r.worker, r.forklift)
                 if ev not in ("wait", "release", "aside"):

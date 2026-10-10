@@ -58,10 +58,11 @@ def main():
             dc.with_retry(dc.create_ae, dev, f"Nedgeguard.{g[:-1]}")
             dc.with_retry(dc.create_container, parent, leaf)
             device_acp(dc, cfg, p, dev, path)
-            if dev in p["relay"]:
-                dc.with_retry(dc.create_container, parent, "relay", mni=50)
-                dc.set_acpi(p["relay"][dev], f"{p['device_ae'][dev]}/acp_{dev}")
-                c.with_retry(c.create_subscription, p["relay"][dev], "sub_mec", [cfg["mec"]["notify_url"]])
+            for extra in ("relay", "status"):          # D2D relay; actuator confirmations (HIL boards)
+                if dev in p[extra]:
+                    dc.with_retry(dc.create_container, parent, extra, mni=50)
+                    dc.set_acpi(p[extra][dev], f"{p['device_ae'][dev]}/acp_{dev}")
+                    c.with_retry(c.create_subscription, p[extra][dev], "sub_mec", [cfg["mec"]["notify_url"]])
         else:
             c.with_retry(c.create_container, p["ae"], dev)
             c.with_retry(c.create_container, parent, leaf)

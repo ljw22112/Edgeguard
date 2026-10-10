@@ -71,5 +71,7 @@ def paths(cfg):
     # into its OWN AE (<dev>/relay), so no device ever writes into another device's AE
     out["relay"] = ({dev: f"{dev}/relay" for g in ("workers", "forklifts") for dev in d.get(g, [])}
                     if not root else {})
+    # actuator confirmations from real boards (firmware postAck): <dev>/status
+    out["status"] = {dev: f"{dev}/status" for g in ("workers", "forklifts") for dev in d.get(g, [])} if not root else {}
     out.update({k: f"{ae}/{k}" for k in ("risk", "alert", "control", "nearmiss", "mec_lease")})
     return out

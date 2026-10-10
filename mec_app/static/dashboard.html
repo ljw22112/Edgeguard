@@ -31,6 +31,9 @@ header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:12px
 .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
 main{flex:1;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:14px;padding:14px;min-height:0}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0;display:flex;flex-direction:column}
+.m2m{font:12px/1.65 var(--f-num);padding:10px 14px;white-space:pre;overflow:auto}
+.m2m .ae{color:var(--ink);font-weight:600} .m2m .n{color:var(--safe)} .m2m .muted{color:var(--muted)}
+.m2m .tag{display:inline-block;padding:0 6px;border-radius:7px;font-weight:700;color:var(--bg);margin-left:6px}
 .panel h2{margin:0;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
 #mapwrap{position:relative;flex:1;min-height:360px}
 canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -77,6 +80,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
     <div id="mapwrap"><canvas id="map"></canvas><div id="offline">MEC app unreachable, retrying…</div></div>
   </section>
   <div class="side">
+    <section class="panel"><h2>oneM2M resources <span class="legend">live notifications / writes</span></h2><div id="m2m" class="m2m"></div></section>
     <section class="panel"><h2>Collision risk</h2><div id="pairs"><div class="empty">Waiting for worker and forklift data…</div></div></section>
     <section class="panel" style="flex:1;min-height:0"><h2>Alert log</h2><ul id="log"><li class="empty" style="display:block">No alerts yet.</li></ul></section>
   </div>
@@ -199,7 +203,29 @@ function draw(){
   });
 }
 
+function renderM2M(){
+  const m = S.m2m; const box = $("m2m"); if(!m || !box) return;
+  const cue = id => { const c = (S.cues||{})[id]; if(!c) return "";
+    const col = c.state === "GO" ? "--safe" : c.state === "ASIDE" ? "--warning" : "--danger";
+    return `<span class="tag" style="background:var(${col})">${c.state === "ASIDE" ? "STEP ASIDE" : c.state}</span>`; };
+  const ack = id => { const a = (S.acks||{})[id]; if(!a) return "";
+    return `<span class="tag" style="background:var(--worker)">HW ✓ ${a.state || ""}</span>`; };
+  const devs = Object.entries(m.devices);
+  let out = `<span class="muted">/${m.cse}</span>\n`;
+  devs.forEach(([id, d], i) => {
+    const leaf = d.data.split("/").pop();
+    out += `${i < devs.length ? "├─" : "└─"} <span class="ae">${id}</span> <span class="muted">(AE)</span> / ${leaf}` +
+           `  <span class="n">← ${d.notifications.toLocaleString()}</span>${cue(id)}${ack(id)}\n`;
+  });
+  const o = m.mec.out;
+  out += `└─ <span class="ae">${m.mec.ae}</span> <span class="muted">(AE, MEC app)</span>\n` +
+         `     alert <span class="n">→ ${o.alert}</span>   control <span class="n">→ ${o.control}</span>   ` +
+         `risk <span class="n">→ ${o.risk}</span>   nearmiss <span class="n">→ ${o.nearmiss}</span>`;
+  box.innerHTML = out;
+}
+
 function renderSide(){
+  renderM2M();
   $("sMethod").textContent = S.stats.method;
   $("sIngest").textContent = S.stats.ingest_ms_median === null ? "–" : S.stats.ingest_ms_median + " ms";
   $("sSamples").textContent = S.stats.samples.toLocaleString();

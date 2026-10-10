@@ -46,6 +46,7 @@ class RiskConfig:
     still_speed: float = 0.0       # m/s: a worker slower than this is predicted to stand still
     aside_cue: bool = False        # tell a worker standing in a stopped truck's lane to STEP ASIDE
     min_move: float = 0.0          # m/s: speed commands below this become a stop
+    go_check_all: bool = True      # GO check against every nearby forklift, not only the pair's
     go_check: bool = False         # keep a waiting worker held until walking on is safe (alerting.decide)
     trust_hold: bool = False       # WARNING plans for a worker who stops (WAIT-until-GO tag), DANGER never
     release_worker: bool = False   # send the waiting worker GO once the forklift is past (alerting.decide)

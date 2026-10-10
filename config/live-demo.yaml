@@ -1,0 +1,5 @@
+# Devices for the reacting live demo (devices/live_devices.py): two forklifts for the "two_trucks" scene
+devices:
+  workers: [worker_01]
+  forklifts: [forklift_01, forklift_02]
+  cameras: [camera_01]

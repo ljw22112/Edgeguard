@@ -22,6 +22,12 @@
 // forklift's state up to the CSE (same originator).  ESP-NOW shares the Wi-Fi channel of the AP.
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
+// HIL_MODE 1 (hardware-in-the-loop demo, docs/hardware-demo.md): no UWB / IMU needed - positions come from
+// devices/live_devices.py, this board only does what a real device does with the alerts (actuators) and
+// confirms it in <CSE>/<DEVICE_ID>/status.  Build with -DHIL_MODE=1 or change the default here.
+#ifndef HIL_MODE
+#define HIL_MODE 0
+#endif
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
@@ -79,6 +85,7 @@ float directT = -1e9f;                  // last MEC notification received direct
 WebServer server(80);
 uint32_t vibrateUntil = 0;           // local-rule buzz (MEC silent)
 cue::WaitCue waitCue;                // WAIT until GO for MEC alerts (worker_cue.h)
+bool asideCue = false;               // the current WAIT started with STEP ASIDE
 uint32_t lastPublish = 0;
 uint32_t rqi = 0;
 
@@ -258,7 +265,33 @@ void handleAlert() {
   const char* ev = alert["event"] | "";
   // WAIT until GO: burst (DANGER 1.5 s, WARNING 0.6 s), red LED + 1 s pulses, two pulses on GO
   waitCue.onAlert(nowS(), ev, vibrate, strcmp(level, "DANGER") == 0, alert["forklift"] | "");
+  if (!strcmp(ev, "aside")) asideCue = true;
+  else if (!waitCue.waiting()) asideCue = false;
   Serial.printf("alert %s %s vibrate=%d wait=%d\n", ev, level, vibrate, waitCue.waiting());
+}
+
+// Actuator confirmation: what this board is doing now, written to its own AE (<CSE>/<id>/status) on
+// every change - the MEC dashboard shows it next to the device (HW check mark).
+String lastAck;
+void postAck(const String& st) {
+  if (st == lastAck) return;
+  lastAck = st;
+  JsonDocument doc;
+  JsonObject con = doc["m2m:cin"]["con"].to<JsonObject>();
+  con["id"] = DEVICE_ID;
+  con["kind"] = "ack";
+  con["state"] = st;
+  con["ts"] = epochMs();
+  String body;
+  serializeJson(doc, body);
+  HTTPClient http;
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/status");
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String("ack") + (rqi++));
+  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("Content-Type", "application/json;ty=4");
+  http.POST(body);
+  http.end();
 }
 
 // oneM2M registration: this device is its own AE (<CSE>/{DEVICE_ID}) with its data container
@@ -282,6 +315,7 @@ void registerAE() {
                       "\",\"api\":\"Nedgeguard.worker\",\"rr\":true,\"poa\":[\"" + poa + "\"],\"srv\":[\"2a\",\"3\"]}}");
   bool cnt = m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"location\"}}");
   m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"relay\",\"mni\":50}}");   // D2D relay for neighbours
+  m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"status\",\"mni\":50}}");  // actuator confirmations
   Serial.printf("oneM2M AE %s: %s, container location: %s\n", DEVICE_ID, ae ? "ok" : "failed", cnt ? "ok" : "failed");
 }
 
@@ -296,9 +330,11 @@ void setup() {
   configTime(9 * 3600, 0, "pool.ntp.org");                        // timestamps for latency
   server.on("/alert", HTTP_POST, handleAlert);
   server.begin();
+#if !HIL_MODE
   DW1000Ranging.initCommunication(PIN_RST, PIN_SS, PIN_IRQ);
   DW1000Ranging.attachNewRange(onNewRange);
   DW1000Ranging.startAsTag(TAG_EUI, DW1000.MODE_LONGDATA_RANGE_ACCURACY, false);
+#endif
   esp_now_init();
   esp_now_register_recv_cb(onD2D);
   esp_now_peer_info_t peer = {};
@@ -307,7 +343,9 @@ void setup() {
 }
 
 void loop() {
+#if !HIL_MODE
   DW1000Ranging.loop();
+#endif
   server.handleClient();
   handleD2D();
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
@@ -315,7 +353,8 @@ void loop() {
   bool local = millis() < vibrateUntil;
   digitalWrite(MOTOR_PIN, local || waitCue.motor(tc));
   digitalWrite(LED_PIN, local || waitCue.led(tc));
-  if (millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
+  postAck(waitCue.led(tc) ? (asideCue ? "STEP ASIDE" : "WAIT") : "GO");
+  if (!HIL_MODE && millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
     lastPublish = millis();
     float x, y;
     if (readPosition(x, y)) {

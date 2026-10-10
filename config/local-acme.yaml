@@ -1,0 +1,6 @@
+# Overrides for running config/site.yaml against a local ACME CSE (scripts/run_local_demo.sh, demo recording):
+#   EDGEGUARD_CONFIG=config/site.yaml EDGEGUARD_OVERRIDES=config/local-acme.yaml
+cse:
+  base_url: http://localhost:8080
+  cse_rn: cse-in
+  rvi: "3"

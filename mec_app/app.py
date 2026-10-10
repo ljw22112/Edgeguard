@@ -79,6 +79,7 @@ def post(kind, con):
         log.warning("outbox full, dropping %s", kind)
 state = {"pairs": {}, "last_risk_pub": 0.0, "alerts_sent": 0, "rx": 0, "worker_cues": {"wait": 0, "release": 0, "aside": 0},
          "worker_cue": {}, "worker_aside": {},
+         "m2m": {"in": {}, "out": {}}, "acks": {},
          "publisher": {"ok": 0, "failed": 0, "dropped_stale": 0, "dropped_full": 0, "last_ok": None,
                        "last_error": None},
          "input": {"bad": 0, "clock_skew": 0, "late": 0}, "gc": {"tracks_removed": 0},
@@ -101,6 +102,8 @@ def publisher():
             time.sleep(delay / 1000)
         try:
             cse.create_cin(path, con)
+            m2m_out = state["m2m"]["out"]
+            m2m_out[path] = m2m_out.get(path, 0) + 1
             pub["ok"] += 1
             pub["last_ok"] = time.monotonic()
         except Exception as e:                       # keep the loop alive
@@ -433,7 +436,8 @@ def evaluate_and_alert(src_ts, rx, only=None):
             record_near_miss(nearmiss.observe(key, r.range, mid, now, f_t.speed, getattr(r, "occluded", False), r.level))
         st = state["pairs"].setdefault(key, {"alert": AlertState()})
         w_tr, f_tr = engine.tracks.get(r.worker), engine.tracks.get(r.forklift)
-        ev, actions = decide(st["alert"], r, w_tr, f_tr, engine.cfg, now, state["network"]["congested"])
+        others = [t_ for t_ in engine.tracks.values() if t_.kind == "forklift" and t_.x is not None]
+        ev, actions = decide(st["alert"], r, w_tr, f_tr, engine.cfg, now, state["network"]["congested"], others)
         st["risk"] = r
         if ev:
             # mirror of the worker's tag (edgeguard/worker_cue.py) for the dashboard: WAIT / STEP ASIDE / GO
@@ -518,7 +522,8 @@ def housekeeping():
         last_sub = time.monotonic()
         state["subs"]["checks"] += 1
         for path in (list(PATHS["workers"].values()) + list(PATHS["forklifts"].values())
-                     + list(PATHS["cameras"].values()) + list(PATHS.get("relay", {}).values())):
+                     + list(PATHS["cameras"].values()) + list(PATHS.get("relay", {}).values())
+                     + list(PATHS.get("status", {}).values())):
             try:   # each HA instance owns its own subscription (rn), so neither overwrites the other's URL
                 cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
             except Exception as e:
@@ -556,8 +561,27 @@ def _start_mec_services():
         threading.Thread(target=ipe_watch if src == "cse" else mec_services_loop, daemon=True).start()
 
 
+_GROUP = {"worker": "workers", "forklift": "forklifts", "camera": "cameras"}
+
+
+def _count_in(payload):
+    """Notifications per device container (dashboard oneM2M panel)."""
+    if payload.get("relay") in PATHS.get("relay", {}):
+        src = PATHS["relay"][payload["relay"]]
+    else:
+        src = PATHS.get(_GROUP.get(payload.get("kind"), ""), {}).get(payload.get("id"))
+    if src:
+        state["m2m"]["in"][src] = state["m2m"]["in"].get(src, 0) + 1
+
+
 def process_notification(body):
     kind, payload = parse_notification(body)
+    if kind == "cin" and isinstance(payload, dict):
+        _count_in(payload)
+    if kind == "cin" and isinstance(payload, dict) and payload.get("kind") == "ack":
+        # a real device confirms what its actuators do (firmware HIL mode: <device>/status)
+        state["acks"][payload.get("id", "?")] = {**payload, "rx": time.time()}
+        return
     if kind == "cin" and isinstance(payload, dict):
         if is_mec_location(payload):
             handle_mec_location(payload)
@@ -649,7 +673,15 @@ def snapshot():
                              "by": sorted(c.holds)}
             elif c.go_at is not None and wall - c.go_at < 2.0:
                 cues[wid] = {"state": "GO", "by": []}
+        m2m = {"devices": {d: {"ae": PATHS["device_ae"].get(d), "data": path,
+                               "notifications": state["m2m"]["in"].get(path, 0)}
+                           for g in ("workers", "forklifts", "cameras") for d, path in PATHS[g].items()},
+               "mec": {"ae": PATHS["ae"], "out": {k: state["m2m"]["out"].get(PATHS[k], 0)
+                                                  for k in ("alert", "control", "risk", "nearmiss")}},
+               "cse": CFG["cse"]["cse_rn"]}
+        acks = {d: a for d, a in state["acks"].items() if time.time() - a["rx"] < 10}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]), "cues": cues,
+                "m2m": m2m, "acks": acks,
                 "obstacles": [list(r) for r in SITEMAP.rects],
                 "stats": stats, "server_ms": now_ms()}
 

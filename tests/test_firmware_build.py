@@ -60,9 +60,10 @@ def test_uwb_header_copy_in_sync():
 
 @pytest.mark.skipif(shutil.which("g++") is None or not os.path.isdir(AJ), reason="needs g++ and ArduinoJson")
 @pytest.mark.parametrize("sketch", ["worker_tag", "forklift_module"])
-def test_sketch_type_checks(sketch):
+@pytest.mark.parametrize("hil", ["0", "1"])
+def test_sketch_type_checks(sketch, hil):
     d = os.path.join(ROOT, "firmware", sketch)
-    r = subprocess.run(["g++", "-std=c++17", "-fsyntax-only", "-Wall", "-Wextra", "-Werror", "-x", "c++",
+    r = subprocess.run(["g++", "-std=c++17", "-fsyntax-only", "-Wall", "-Wextra", "-Werror", f"-DHIL_MODE={hil}", "-x", "c++",
                         "-include", "Arduino.h", "-I", os.path.join(ROOT, "tests", "firmware", "stubs"),
                         "-I", AJ, "-I", d, os.path.join(d, f"{sketch}.ino")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-3000:]

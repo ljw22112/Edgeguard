@@ -30,6 +30,7 @@ class String : public std::string {
   String(unsigned v) : std::string(std::to_string(v)) {}
   String(long v) : std::string(std::to_string(v)) {}
   String(unsigned long v) : std::string(std::to_string(v)) {}
+  String(float v, unsigned char decimals) : std::string(std::to_string(v).substr(0, std::to_string(v).find('.') + 1 + decimals)) {}
   String operator+(const String& o) const { return String(std::string(*this) + std::string(o)); }
   String operator+(const char* o) const { return String(std::string(*this) + o); }
   String operator+(int v) const { return *this + String(v); }

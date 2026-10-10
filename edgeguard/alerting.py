@@ -5,6 +5,8 @@ simulation is exactly what runs on the MEC host.
 """
 from __future__ import annotations
 
+import math
+
 from .risk import LEVELS, go_safe, truck_path_clear, waiting_at_lane
 
 
@@ -92,7 +94,7 @@ def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0):
     return [round(nx * move, 2), round(ny * move, 2)]
 
 
-def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
+def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     """Update the pair's alert state with assessment `r`.
 
     Returns (event or None, actions dict).  May modify `r` (hold logic)."""
@@ -132,6 +134,15 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
             stepping = True
         else:
             worker_first = True
+    # ... and no other truck may be on his way either: GO is for the worker, not for one pair
+    # (others = the other forklift tracks; a truck he waits for here passes at passing speed)
+    if (not (go_blocked or worker_first or stepping) and others and getattr(cfg, "go_check", False)
+            and getattr(cfg, "go_check_all", True)
+            and r.level < 2 and st.level >= 2 and st.intent is not None and w_tr is not None and f_tr is not None
+            and (w_tr.speed < 0.5 or st.aside_sent)
+            and any(o is not f_tr and abs(o.speed) > 0.2 and math.hypot(o.pos[0] - w_tr.pos[0], o.pos[1] - w_tr.pos[1]) < 25.0
+                    and not go_safe(w_tr.pos, st.intent, o, cfg) for o in others)):
+        go_blocked = True
     if worker_first or stepping:
         r.level, r.level_name = 2, LEVELS[2]
         r.reason = ("worker stepping aside: forklift holds" if stepping
@@ -144,7 +155,7 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False):
         # the waiting worker stays put: a truck that stopped for him moves off at passing speed first
         limit = round(cfg.pass_speed if go_blocked else min(cfg.pass_speed, f_tr.speed), 2)
         r.level, r.level_name = 2, LEVELS[2]
-        r.reason = ("worker waiting: forklift still to pass his way" if go_blocked
+        r.reason = ("worker waiting: a forklift still to pass his way" if go_blocked
                     else "worker waiting at the lane edge: pass at walking pace")
         r.speed_limit, r.speed_scale = limit, round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True

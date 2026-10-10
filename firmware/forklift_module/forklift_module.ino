@@ -23,6 +23,12 @@
 // Speed comes from the drive command / wheel encoder (stub: readSpeed()).
 // NOTE: written against the ESP32 Arduino core 3.x API; not yet compiled on hardware.
 
+// HIL_MODE 1 (hardware-in-the-loop demo, docs/hardware-demo.md): no UWB / IMU needed - positions come from
+// devices/live_devices.py, this board only does what a real device does with the alerts (actuators) and
+// confirms it in <CSE>/<DEVICE_ID>/status.  Build with -DHIL_MODE=1 or change the default here.
+#ifndef HIL_MODE
+#define HIL_MODE 0
+#endif
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
@@ -45,7 +51,11 @@ const int   BEACON_PIN = 26;
 const int   MOTOR_PWM_PIN = 27;
 const uint8_t MPU = 0x68;
 const float GYRO_LSB = 131.0f;          // +-250 deg/s range
+#if HIL_MODE
+const float MAX_SPEED = 2.5f;           // HIL: the motor stands for a site forklift (2.5 m/s = full PWM)
+#else
 const float MAX_SPEED = 1.0f;           // m/s at full drive PWM (calibrate on the RC car)
+#endif
 policy::ForkliftLimit speedLimit;       // m/s, fail-safe on MEC silence
 policy::ReportRate reportRate;          // 10 Hz until told otherwise
 const char* PEER_ANCHOR_EUI = "01:20:5B:D5:A9:9A:E2:9C";   // short address 0x2001 (forklift_01)
@@ -251,6 +261,30 @@ void handleAlert() {
   Serial.printf("alert %s beacon=%d limit %.2f m/s\n", (const char*)(alert["level"] | "?"), beacon, lim);
 }
 
+// Actuator confirmation: what this board is doing now, written to its own AE (<CSE>/<id>/status) on
+// every change - the MEC dashboard shows it next to the device (HW check mark).
+String lastAck;
+void postAck(const String& st) {
+  if (st == lastAck) return;
+  lastAck = st;
+  JsonDocument doc;
+  JsonObject con = doc["m2m:cin"]["con"].to<JsonObject>();
+  con["id"] = DEVICE_ID;
+  con["kind"] = "ack";
+  con["state"] = st;
+  con["ts"] = epochMs();
+  String body;
+  serializeJson(doc, body);
+  HTTPClient http;
+  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/status");
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String("ack") + (rqi++));
+  http.addHeader("X-M2M-RVI", "3");
+  http.addHeader("Content-Type", "application/json;ty=4");
+  http.POST(body);
+  http.end();
+}
+
 // oneM2M registration: this device is its own AE (<CSE>/{DEVICE_ID}) with its data container
 // under it.  Idempotent (409 = already registered); tools/setup_resources.py adds the ACP.
 bool m2mCreate(const String& path, int ty, const String& body) {
@@ -272,6 +306,7 @@ void registerAE() {
                       "\",\"api\":\"Nedgeguard.forklift\",\"rr\":true,\"poa\":[\"" + poa + "\"],\"srv\":[\"2a\",\"3\"]}}");
   bool cnt = m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"motion\"}}");
   m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"relay\",\"mni\":50}}");   // D2D relay for neighbours
+  m2mCreate(String("/") + DEVICE_ID, 3, "{\"m2m:cnt\":{\"rn\":\"status\",\"mni\":50}}");  // actuator confirmations
   Serial.printf("oneM2M AE %s: %s, container motion: %s\n", DEVICE_ID, ae ? "ok" : "failed", cnt ? "ok" : "failed");
 }
 
@@ -291,9 +326,11 @@ void setup() {
   configTime(9 * 3600, 0, "pool.ntp.org");
   server.on("/alert", HTTP_POST, handleAlert);
   server.begin();
+#if !HIL_MODE
   DW1000Ranging.initCommunication(PIN_RST, PIN_SS, PIN_IRQ);
   DW1000Ranging.attachNewRange(onPeerRange);
   DW1000Ranging.startAsAnchor(PEER_ANCHOR_EUI, DW1000.MODE_LONGDATA_RANGE_ACCURACY, false);
+#endif
   esp_now_init();
   esp_now_register_recv_cb(onD2D);
   esp_now_peer_info_t peer = {};
@@ -303,7 +340,9 @@ void setup() {
 }
 
 void loop() {
+#if !HIL_MODE
   DW1000Ranging.loop();
+#endif
   server.handleClient();
   handleD2D();
   uint32_t now = micros();
@@ -316,7 +355,8 @@ void loop() {
   if (lim < 0) beacon = false;
   ledcWrite(MOTOR_PWM_PIN, (int)(baseDuty * speedScale));
   digitalWrite(BEACON_PIN, beacon && (millis() / 250) % 2);   // blink
-  if (millis() - lastPublish >= reportRate.periodMs(nowS())) {
+  postAck(lim < 0 ? String("full speed") : String("limit ") + String(lim, 2) + " m/s");
+  if (!HIL_MODE && millis() - lastPublish >= reportRate.periodMs(nowS())) {
     lastPublish = millis();
     float x, y;
     if (readPosition(x, y)) {
