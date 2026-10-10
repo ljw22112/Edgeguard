@@ -1,0 +1,43 @@
+{
+ "events": [
+  {
+   "reason": "location",
+   "from": "A",
+   "to": "B",
+   "prep_ms": 115.7,
+   "subscriptions": 1,
+   "interruption_ms": 6.9,
+   "max_gap_ms": 106.9,
+   "samples_in_window": 32,
+   "samples_lost": 0
+  },
+  {
+   "reason": "availability",
+   "from": "B",
+   "to": "A",
+   "prep_ms": 78.4,
+   "subscriptions": "rebuilt",
+   "interruption_ms": 306.0,
+   "max_gap_ms": 406.0,
+   "samples_in_window": 31,
+   "samples_lost": 3
+  }
+ ],
+ "checks": {
+  "location trigger: handover A -> B when 1 m inside zone B": true,
+  "no sample lost across the handover": true,
+  "service interruption < 300 ms": true,
+  "application kept receiving from zone B without re-subscribing": true,
+  "home record at the IN-CSE followed the device (application notified)": true,
+  "availability trigger: zone B down -> back to A": true,
+  "application notified again after the failover": true,
+  "home record shows the failover": true
+ },
+ "samples_sent": 200,
+ "samples_received": 197,
+ "serving_history": [
+  "A",
+  "B",
+  "A"
+ ]
+}

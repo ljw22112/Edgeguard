@@ -40,6 +40,9 @@ case "$cmd" in
   stop)
     for n in $names; do
       f="$ROOT/.acme/$n/acme.pid"; [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"
+      # python3 may be a wrapper that forks the interpreter: also stop the process serving this base directory
+      for p in $(ps -eo pid,args | grep "[a]cmecse --base-directory $ROOT/.acme/$n " | awk '{print $1}'); do kill "$p" 2>/dev/null || true; done
+      for _ in $(seq 1 40); do up "$n" || break; sleep 0.25; done
     done ;;
   *) echo "usage: $0 start|stop [in|mn-a|mn-b ...]"; exit 2 ;;
 esac

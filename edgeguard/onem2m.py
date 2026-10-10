@@ -81,7 +81,7 @@ class OneM2MClient:
             return self.update_fcnt(path, KIN_TP, to_kin(con))
         return self.create_cin(path, con)
 
-    def create_subscription(self, parent, rn, nu, net=None):
+    def create_subscription(self, parent, rn, nu, net=None, acpi=None):
         """net 3 = 'create of a direct child resource' (a new contentInstance); for a flexContainer
         kinematics module (SDT data model) the default is net 1 = 'update of the resource'.
         If the subscription already exists its notification URIs are updated."""
@@ -89,6 +89,8 @@ class OneM2MClient:
             net = (1,) if parent.rstrip("/").endswith("/kinematics") else (3,)
         body = {"m2m:sub": {"rn": rn, "nu": list(nu), "nct": 1,
                             "enc": {"net": list(net)}}}
+        if acpi:      # e.g. the device's ACP: the device may read the subscription and carry it to
+            body["m2m:sub"]["acpi"] = list(acpi)   # another CSE on handover (edgeguard/handover.py)
         res = self.request("POST", parent, TY_SUB, body, ok_conflict=True)
         if res is None:
             res = self.request("PUT", f"{parent}/{rn}", None, {"m2m:sub": {"nu": list(nu)}})

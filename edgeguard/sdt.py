@@ -126,3 +126,57 @@ def query_devices(role=None, zone=None, actuates=None):
         where.append(f"?d saref:controlsProperty egs:{actuates} .")
     return (f"PREFIX saref: <{SAREF}> PREFIX egs: <{NS}> "
             f"SELECT ?d ?path ?role WHERE {{ {' '.join(where)} }}")
+
+
+# --- building a twin (setup, self-registration, CSE handover) --------------------------
+def build_twin(dc, cfg, dev, kind, readers, zone=None, state=None, announce_to=None, log=print):
+    """Create the device's AE and SDT twin on the CSE behind client `dc` (acting as the device),
+    with its ACP: the device everything, `readers` (MEC app, MEC-IPE) create/read/discover/
+    notify/delete, nobody else.  `state` ({rn: attrs}) restores module values (CSE handover);
+    `announce_to` (CSE-IDs) announces the AE (oneM2M announcement: the IN-CSE then holds an
+    AEAnnc whose lnk points at the serving CSE).  Returns the ACP resource."""
+    from .onem2m import ALL_OPS, CREATE, RETRIEVE, DISCOVERY, NOTIFY, DELETE
+    rn, tp, cnd, act_rn, act_tp, act_cnd = DEVICE[kind]
+    twin = twin_path(dev, kind)
+    ae = {"m2m:ae": {"rn": dev, "api": f"Nedgeguard.{kind}", "rr": False, "srv": [dc.rvi],
+                     "lbl": labels(cfg, dev, kind)[:3]}}
+    if announce_to:
+        ae["m2m:ae"].update(at=list(announce_to), aa=["lbl"])
+    dc.with_retry(dc.request, "POST", "", 2, ae, ok_conflict=True)
+    state = state or {}
+    dc.with_retry(dc.create_fcnt, dev, tp, rn, cnd, {**({"zone": zone} if zone else {}), **state.get(rn, {})},
+                  lbl=labels(cfg, dev, kind))
+    kin = {"posX": 0.0, "posY": 0.0, "smpTe": 0, **state.get(KIN_RN, {})}
+    dc.with_retry(dc.create_fcnt, twin, KIN_TP, KIN_RN, KIN_CND, kin, lbl=labels(cfg, dev, kind, "kinematics"), mni=100)
+    init = {"cueSe": "IDLE"} if kind == "worker" else {"maxSd": float((cfg.get("forklift") or {}).get("max_speed", 2.5))}
+    dc.with_retry(dc.create_fcnt, twin, act_tp, act_rn, act_cnd, {**init, **state.get(act_rn, {})},
+                  lbl=labels(cfg, dev, kind, act_rn))
+    dc.with_retry(dc.create_fcnt, twin, BAT_TP, "battery", BAT_CND, {"lvl": 100, **state.get("battery", {})},
+                  lbl=labels(cfg, dev, kind, "battery"))
+    dc.with_retry(dc.create_smd, twin, "smd", turtle_b64(saref_turtle(dev, kind, twin, zone)),
+                  lbl=labels(cfg, dev, kind, "semantics"))
+    me = dc.origin
+    rules = [([me], ALL_OPS), (list(readers), CREATE | RETRIEVE | DISCOVERY | NOTIFY | DELETE)]
+    acp = dc.with_retry(dc.create_acp, dev, f"acp_{dev}", rules, [me] + list(readers)[:1])
+    for path, ptp in ((twin, tp), (f"{twin}/{KIN_RN}", KIN_TP), (f"{twin}/{act_rn}", act_tp),
+                      (f"{twin}/battery", BAT_TP), (f"{twin}/smd", "m2m:smd")):
+        dc.set_acpi(path, f"{dev}/acp_{dev}", acp.get("ri") if acp else None, tp=ptp)
+    log(f"   {twin}: {tp} twin (kinematics, {act_rn}, battery, SAREF smd), ACP all = {me}, read = {', '.join(readers)}")
+    return acp
+
+
+TWIN_MODULES = {"worker": ("tag", KIN_RN, "cue", "battery"), "forklift": ("module", KIN_RN, "speedLimit", "battery")}
+_SYSTEM = {"rn", "ri", "pi", "ty", "ct", "lt", "et", "st", "cs", "cnd", "lbl", "acpi", "at", "aa", "cr",
+           "fcied", "mni", "mbs", "mia", "cni", "cbs", "or", "nl", "lnk"}
+
+
+def read_state(c, dev, kind):
+    """Module values of a twin ({rn: attrs}), for restoring it on another CSE."""
+    twin = twin_path(dev, kind)
+    out = {}
+    for i, rn in enumerate(TWIN_MODULES[kind]):
+        path = twin if i == 0 else f"{twin}/{rn}"
+        res = c.request("GET", path) or {}
+        for v in res.values():
+            out[rn if i else DEVICE[kind][0]] = {k: x for k, x in v.items() if k not in _SYSTEM}
+    return out

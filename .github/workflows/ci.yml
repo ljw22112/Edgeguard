@@ -46,6 +46,16 @@ jobs:
           sleep 10
           python deploy/check_sdt.py --onboard
 
+      - name: CSE handover between zone MN-CSEs (location trigger, then availability failover)
+        env:
+          ACME_DIR: /tmp/acme
+          ACME_PYTHON: /tmp/acmevenv/bin/python
+        run: |
+          scripts/acme.sh start mn-a mn-b
+          sleep 5
+          python tools/handover_demo.py
+          python tools/handover_demo.py --failover --out results/handover_failover.json
+
       - name: SIL logs on failure
         if: failure()
         run: |

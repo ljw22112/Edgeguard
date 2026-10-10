@@ -96,23 +96,9 @@ def main():
 def create_twin(dc, cfg, p, dev, kind):
     """SDT device twin, created by the device itself (edgeguard/sdt.py)."""
     from edgeguard import sdt
-    rn, tp, cnd, act_rn, act_tp, act_cnd = sdt.DEVICE[kind]
-    twin = p["twin"][dev]
     zone = ((cfg.get("site") or {}).get("zones") or {}).get(dev) if isinstance(cfg.get("site"), dict) else None
-    dc.with_retry(dc.create_ae, dev, f"Nedgeguard.{kind}", lbl=sdt.labels(cfg, dev, kind)[:3])
-    dc.with_retry(dc.create_fcnt, dev, tp, rn, cnd, {"zone": zone} if zone else None, lbl=sdt.labels(cfg, dev, kind))
-    dc.with_retry(dc.create_fcnt, twin, sdt.KIN_TP, sdt.KIN_RN, sdt.KIN_CND, {"posX": 0.0, "posY": 0.0, "smpTe": 0},
-                  lbl=sdt.labels(cfg, dev, kind, "kinematics"), mni=100)
-    init = {"cueSe": "IDLE"} if kind == "worker" else {"maxSd": float((cfg.get("forklift") or {}).get("max_speed", 2.5))}
-    dc.with_retry(dc.create_fcnt, twin, act_tp, act_rn, act_cnd, init, lbl=sdt.labels(cfg, dev, kind, act_rn))
-    dc.with_retry(dc.create_fcnt, twin, sdt.BAT_TP, "battery", sdt.BAT_CND, {"lvl": 100},
-                  lbl=sdt.labels(cfg, dev, kind, "battery"))
-    dc.with_retry(dc.create_smd, twin, "smd", sdt.turtle_b64(sdt.saref_turtle(dev, kind, twin, zone)),
-                  lbl=sdt.labels(cfg, dev, kind, "semantics"))
-    acp = device_acp(dc, cfg, p, dev, twin, tp=tp)
-    for sub_rn, sub_tp in ((sdt.KIN_RN, sdt.KIN_TP), (act_rn, act_tp), ("battery", sdt.BAT_TP), ("smd", "m2m:smd")):
-        dc.set_acpi(f"{twin}/{sub_rn}", f"{p['device_ae'][dev]}/acp_{dev}", acp.get("ri") if acp else None, tp=sub_tp)
-    print(f"   {twin}: {tp} twin (kinematics, {act_rn}, battery, SAREF smd)")
+    ipe = (cfg.get("mec_ipe") or {}).get("origin", "SMecIpe")
+    sdt.build_twin(dc, cfg, dev, kind, [cfg["cse"]["origin"], ipe], zone=zone)
 
 
 def device_acp(dc, cfg, p, dev, path, tp="m2m:cnt"):
