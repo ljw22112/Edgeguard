@@ -1,77 +1,77 @@
-# 현장 기능
+# Site features
 
-사각 코너 인지, D2D 프레임 인증, 모니터링, 아차사고 분석, 카메라 노드, 접근제어, 대시보드 · 안전 리포트.
+Blind-corner awareness, D2D frame authentication, monitoring, near-miss analysis, camera node, access control, dashboard and safety report.
 
-[← README](../README.md)
+[← README](../README.md) · [한국어](ko/site-features.md)
 
-## 사각 코너 인지 (현장 지도)
-`config/site.yaml`의 `sitemap.obstacles`(랙 등 직사각형)를 넣으면 MEC 앱이 쌍마다 시야선을 검사합니다
-(`edgeguard/sitemap.py`, Liang–Barsky 선분 클리핑). 서로 안 보이는 쌍은 안전반경 +0.5 m, 디바운스 1회로 더 일찍 경보하고,
-대시보드에는 "시야 없음" 선으로 표시됩니다. 사람이 서로 보면 스스로 피하는 효과(12 m 시야)를 넣은 시뮬레이션 320회
+## Blind-corner awareness (site map)
+When `sitemap.obstacles` (rectangles such as racks) is set in `config/site.yaml`, the MEC app checks line of sight for every pair
+(`edgeguard/sitemap.py`, Liang–Barsky line clipping). Pairs that cannot see each other get a +0.5 m safety radius and a debounce of 1, so they are alerted earlier,
+and the dashboard draws them with a "no line of sight" line. 320 simulation runs including the effect of people avoiding each other once they are in view (12 m sight range)
 (`sim/occlusion_eval.py` → `results/occlusion_eval.json`):
 
-| 사각 코너 80건 | 충돌 | 오경보 |
+| 80 blind-corner cases | Collisions | False alarms |
 |---|---|---|
-| 지도 없음 | 17 | 39 |
-| 지도: 시간 여유 +1 s | 22 | 48 |
-| **지도: 반경 +0.5 m, 디바운스 1** | **11** | 57 |
+| No map | 17 | 39 |
+| Map: time margin +1 s | 22 | 48 |
+| **Map: radius +0.5 m, debounce 1** | **11** | 57 |
 
-개방 구간 결과는 그대로(충돌 7)이고, 늘어난 오경보는 사각 코너에서만 생깁니다. 시간 여유 방식은 오히려 나빠져 채택하지 않았습니다.
+Results in open areas are unchanged (7 collisions), and the extra false alarms occur only at blind corners. The time-margin approach made things worse, so it was not adopted.
 
-## D2D 프레임 인증 (HMAC)
-ESP-NOW 프레임(66 B, 한도 250 B)에 HMAC-SHA256 8바이트 태그와 송신자별 일련번호를 붙입니다
-(`firmware/common/d2d_auth.h`, 외부 라이브러리 없는 SHA-256). 수신 측은 태그를 상수 시간 비교로 확인하고,
-송신자별 최근 50개 이내가 아닌 번호와 이미 받은 번호는 버립니다 — 위조 "정지 해제"나 오래된 경보 재전송(리플레이)을 막습니다.
-릴레이는 서명된 원본을 그대로 3회 반복하므로 중계 장치가 키를 몰라도 됩니다(사이트 키는 펌웨어와 함께 사전 배포).
-C++ 구현은 Python 기준 구현(`edgeguard/d2d_auth.py`)과 바이트 단위로 교차 검증합니다(`tests/test_d2d_auth.py`).
+## D2D frame authentication (HMAC)
+Each ESP-NOW frame (66 B, limit 250 B) carries an 8-byte HMAC-SHA256 tag and a per-sender sequence number
+(`firmware/common/d2d_auth.h`, SHA-256 with no external library). The receiver checks the tag with a constant-time comparison and
+drops numbers outside the latest 50 for that sender as well as numbers already received — blocking forged "release stop" frames and replayed stale alerts.
+Relays repeat the signed original 3 times unchanged, so relay devices do not need the key (the site key is pre-distributed with the firmware).
+The C++ implementation is cross-checked byte for byte against the Python reference implementation (`edgeguard/d2d_auth.py`) (`tests/test_d2d_auth.py`).
 
-## 모니터링 (Prometheus + Grafana)
-MEC 앱 `/metrics`(샘플 · 경보 · CSE 쓰기 성공/실패/폐기 · 대기열 · 입력 오류 · 혼잡 · 아차사고 · HA 리더)를 Prometheus가 2 s마다
-수집하고, Grafana에 대시보드가 자동 등록됩니다. 운영자 경보 규칙 5개: CSE 쓰기 실패, 샘플 끊김, 리더 없음, 경보 없는 아차사고, 대기열 적체.
+## Monitoring (Prometheus + Grafana)
+Prometheus scrapes the MEC app's `/metrics` (samples · alerts · CSE write success/failure/drop · queue · input errors · congestion · near misses · HA leader) every 2 s,
+and the dashboard is provisioned in Grafana automatically. Five operator alert rules: CSE write failures, sample gaps, no leader, near miss without alert, queue backlog.
 ```
 docker compose --profile monitoring up -d         # Grafana http://localhost:3000 · Prometheus http://localhost:9095
 ```
-CI에서 수집 · 규칙 로드 · 대시보드 등록을 확인합니다(`deploy/check_monitoring.py`). 노트북(8 GB)에서도 두 컨테이너 합쳐 수백 MB 수준입니다.
+CI verifies scraping, rule loading and dashboard provisioning (`deploy/check_monitoring.py`). Even on a laptop (8 GB) the two containers together use only a few hundred MB.
 
-## 아차사고 분석
-경보는 *예측*, 아차사고는 *실제*입니다. 지게차가 움직이는 중 작업자와의 실측 거리가 2 m 미만으로 들어온 접근을 한 건으로,
-최근접 시점에 기록합니다(`edgeguard/nearmiss.py`). 그 전에 경보가 나갔는지(`alerted`)와 1 m 격자 히트맵을 함께 남기고,
-많이 모이는 칸은 원인별 개선안을 붙입니다 — 사각 코너(지도 추가 · 볼록거울), 고속 통행(속도 제한 구역), 경보 없이 근접(태그 · 앵커 점검),
-잦은 교차(보행로 분리). `<AE>/nearmiss`(oneM2M)·`/nearmiss` API·대시보드 히트맵·`tools/safety_report.py`에서 봅니다.
-"경보 없는 아차사고"는 시스템의 빈틈이므로 별도로 집계하고 운영자 경보로도 올립니다.
+## Near-miss analysis
+Alerts are *predictions*; near misses are *what actually happened*. An approach in which the measured distance between a moving forklift and a worker falls below 2 m counts as one near miss,
+recorded at the moment of closest approach (`edgeguard/nearmiss.py`). Whether an alert was issued beforehand (`alerted`) is stored along with a 1 m grid heat map,
+and cells with many events get cause-specific recommendations — blind corner (add to map · convex mirror), high-speed traffic (speed-limit zone), close approach without alert (check tags · anchors),
+frequent crossings (separate walkways). Viewable via `<AE>/nearmiss` (oneM2M), the `/nearmiss` API, the dashboard heat map and `tools/safety_report.py`.
+"Near misses without an alert" are gaps in the system, so they are counted separately and also raised as operator alerts.
 
-## 카메라 노드 (태그 없는 작업자)
+## Camera node (untagged workers)
 
-`devices/camera_node.py`: YOLOv8n으로 사람을 찾고, 발 위치(박스 아래 중앙)를 호모그래피로 바닥 좌표(m)로 바꿔
-`camera_01/detect`에 씁니다. MEC 앱은 태그 트랙 1.5 m 이내의 탐지는 같은 사람으로 보고, 나머지는 `untagged_N` 트랙으로 만들어
-지게차 감속·경광등 경보를 냅니다 (진동은 보낼 태그가 없으므로 생략).
+`devices/camera_node.py`: detects people with YOLOv8n, converts the foot position (bottom centre of the box) to floor coordinates (m) via homography, and
+writes them to `camera_01/detect`. The MEC app treats detections within 1.5 m of a tag track as the same person and turns the rest into `untagged_N` tracks,
+issuing forklift slowdown and beacon-light alerts (vibration is skipped since there is no tag to send it to).
 
-- 추론 시간 (2코어 CPU, YOLOv8n): 640px 113 ms, 320px 39 ms → 5 Hz 가능. Jetson에서는 더 빠릅니다.
-- 태그 없이 카메라로만 보이는 작업자 시나리오에서 첫 경보 리드타임 2.27 s, 1.67 s.
-- 실행: `EDGEGUARD_YOLO=yolov8n.pt python devices/camera_node.py --source 0` (보정점은 `camera.calib_points`).
+- Inference time (2-core CPU, YOLOv8n): 113 ms at 640 px, 39 ms at 320 px → 5 Hz feasible. Faster on Jetson.
+- In scenarios with workers visible only to the camera (no tag), first-alert lead times were 2.27 s and 1.67 s.
+- Run: `EDGEGUARD_YOLO=yolov8n.pt python devices/camera_node.py --source 0` (calibration points in `camera.calib_points`).
 
-## 접근제어 (디바이스별 ACP)
+## Access control (per-device ACP)
 
-디바이스마다 자기 AE를 등록하고(v1.3), 그 AE의 ACP가 디바이스 자신과 MEC 앱(조회 · 구독)만 허용합니다.
-`risk` · `alert` · `control` · `nearmiss`는 MEC 앱만 쓰고 디바이스는 읽기만 합니다. CI가 매 커밋 Mobius에서 아래를 확인합니다(`deploy/check_acl.py`, 8/8 통과):
+Each device registers its own AE (v1.3), and that AE's ACP allows only the device itself and the MEC app (retrieve · subscribe).
+`risk` · `alert` · `control` · `nearmiss` are written only by the MEC app; devices can only read them. On every commit, CI verifies the following against Mobius (`deploy/check_acl.py`, 8/8 passing):
 
-| 시도 | 결과 |
+| Attempt | Result |
 |---|---|
-| SWorker01 → 자기 `worker_01/location` 쓰기 | 허용 |
-| SWorker01 → `forklift_01/motion` 쓰기 (위조) | 403 / 4103 거부 |
-| SWorker01 → `alert` 쓰기 (가짜 경보) | 403 / 4103 거부 |
-| 등록 안 된 SIntruder → `worker_01/location` 쓰기 | 403 / 4103 거부 |
-| 디바이스 AE · MEC AE · MEC 구독 존재 | 확인 |
+| SWorker01 → write own `worker_01/location` | Allowed |
+| SWorker01 → write `forklift_01/motion` (spoofing) | Denied 403 / 4103 |
+| SWorker01 → write `alert` (fake alert) | Denied 403 / 4103 |
+| Unregistered SIntruder → write `worker_01/location` | Denied 403 / 4103 |
+| Device AEs · MEC AE · MEC subscriptions exist | Confirmed |
 
-## 안전 리포트 · 데모 영상
+## Safety report and demo video
 
 - `python tools/safety_report.py --config config/site.yaml` → `results/safety_report.html`:
-  CSE에 쌓인 경보 기록으로 1 m 단위 위험 구역 히트맵, 경보가 많은 구역·쌍, 개선 제안을 만듭니다.
+  builds a 1 m risk-zone heat map, the zones and pairs with the most alerts, and improvement suggestions from the alert history stored in the CSE.
 - `python tools/record_demo.py --config config/site.yaml` → `results/edgeguard_demo.mp4`:
-  대시보드를 띄워 놓고 4개 장면(교차 충돌, 회전 지게차, 태그 없는 작업자, UWB 음영 + Location API)을 재생하며 녹화합니다.
+  opens the dashboard and records while replaying 4 scenes (crossing collision, turning forklift, untagged worker, UWB coverage hole + Location API).
 
-## 관제 대시보드
+## Control dashboard
 
-MEC 앱을 띄우고 브라우저에서 `http://<mec-host>:9090/` 를 엽니다.
-작업자·지게차 위치, 3초 예측 경로, 예측 최근접 지점(✕와 남은 시간), 안전 반경, 쌍별 위험도 지표, 경보 로그를 0.2초마다 갱신합니다.
-작업자마다 태그 상태(**WAIT** 빨강 · **STEP ASIDE** 주황 · **GO** 초록)를 지도에 표시합니다. MEC 앱이 태그에 보낸 신호로 태그와 같은 상태 기계(`edgeguard/worker_cue.py`)를 돌려 따라갑니다.
+Start the MEC app and open `http://<mec-host>:9090/` in a browser.
+It refreshes every 0.2 s with worker and forklift positions, 3-second predicted paths, predicted closest-approach points (✕ with time remaining), safety radii, per-pair risk metrics and the alert log.
+Each worker's tag state (**WAIT** red · **STEP ASIDE** orange · **GO** green) is shown on the map. It follows the tag by running the same state machine as the tag (`edgeguard/worker_cue.py`) on the signals the MEC app sent to it.

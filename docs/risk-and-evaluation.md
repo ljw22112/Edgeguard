@@ -1,165 +1,165 @@
-# 위험도 엔진과 성능 평가
+# Risk engine and evaluation
 
-다대다 · 교착 해소 · 비켜서기 · 오경보 감소(v1.2), 작업자 WAIT/GO 신호(v1.1), 가이던스 기하 판정, 방식별 비교 실험, LSTM 궤적 예측, 온라인 폐루프 시뮬레이션, 정책 학습.
+Many-to-many · deadlock resolution · stepping aside · false alarm reduction (v1.2), worker WAIT/GO cues (v1.1), guidance-geometry risk assessment, method comparison, LSTM trajectory prediction, online closed-loop simulation, policy learning.
 
-[← README](../README.md)
+[← README](../README.md) · [한국어](ko/risk-and-evaluation.md)
 
-## v1.2: 다대다 현장 · 교착 해소 · 비켜서기 · 오경보 감소
+## v1.2: many-to-many sites · deadlock resolution · stepping aside · false alarm reduction
 
-v1.1까지의 시뮬레이션은 작업자 1명과 지게차 1대였습니다. 실제 창고처럼 여러 명과 여러 대가 동시에 만나는 시뮬레이터를 만들고
-(`sim/multi_sim.py`: 36 × 24 m, 통로 3 × 교차 통로 3, 작업자 8명 · 지게차 4대, 25 s × 200회, 망 조건 무작위),
-여기서 드러난 문제를 차례로 고쳤습니다.
+Up to v1.1 the simulation had one worker and one forklift. We built a simulator where many workers and forklifts meet at once, as in a real warehouse
+(`sim/multi_sim.py`: 36 × 24 m, 3 aisles × 3 cross aisles, 8 workers · 4 forklifts, 25 s × 200 runs, randomised network conditions),
+and fixed the problems it exposed one by one.
 
-| 문제 (다대다에서 발견) | 대응 |
+| Problem (found in many-to-many) | Fix |
 |---|---|
-| 단말이 계획을 하나만 기억: 작업자 A의 `clear`가 작업자 B 때문에 건 지게차 속도 제한까지 풀고, 지게차 A의 해제가 지게차 B가 오는 작업자를 출발시킴 | 지게차는 **작업자별 속도 계획**(가장 엄격한 값 적용), 태그는 **지게차별 WAIT**(모두 해제돼야 GO) — Python · C++ 모두 (`device_policy`, `worker_cue`) |
-| **교착 해제 경쟁**: 지게차는 멈추고 작업자는 기다리다 경보가 풀리는 순간 둘이 동시에 출발해 충돌 | 해제할 때 **한쪽만 먼저**: 지게차 길이 비어 있으면 지게차가 통과 속도로 먼저(작업자 WAIT 유지), 작업자가 지게차 길 위에 있으면 작업자가 먼저(지게차 0 m/s 유지 후 작업자 GO) |
-| GO 판단이 "지금 속도"의 지게차만 가정: 멈춘 · 가속 중인 지게차를 과소평가 | 멈추기 전 속도까지의 모든 속도와 1 m/s² 가속 구간을 모두 검사 |
-| GO 판단이 경보 쌍의 지게차만 봄: 다른 지게차가 오는데 GO | 주변(25 m) 모든 지게차에 대해 GO 안전을 확인(v1.3, 다대다 충돌 4 vs 4 · 처리량 +0.3 %p로 측정상 차이는 작지만 논리적으로 필요) |
-| 같은 통로 정면 · 회전 진입: 작업자가 지게차 길 위에서 기다리면 아무도 못 지나감 (지게차 손실의 최대 원인) | **STEP ASIDE**: 지게차 예측 경로 위에 선 작업자에게 가까운 통로 가장자리(경로에서 r_safe + 0.8 m)로 비켜서서 기다리라고 알림 → 지게차가 지나감 |
-| 서 있는 피커를 UWB 잡음이 "걷게" 만들어 오경보 | 0.4 m/s 미만인 작업자는 정지로 예측 |
-| 회전 직전 지게차를 CTRV가 직진으로 예측 (오경보), 회전해 들어올 통로의 작업자는 늦게 경고 | (선택) **경로 공유**: 지게차 관제 · WMS · 운전자 태블릿의 계획 경로가 있으면 그 경로를 따라 예측 (`RoutePredictor`) |
+| Devices remembered only one plan: worker A's `clear` lifted a forklift speed limit imposed because of worker B, and forklift A's release sent off a worker that forklift B was approaching | Forklifts keep a **per-worker speed plan** (the strictest value applies); tags keep a **per-forklift WAIT** (GO only when all are released) — in both Python and C++ (`device_policy`, `worker_cue`) |
+| **Release race**: the forklift had stopped and the worker was waiting; the moment the alert cleared, both set off at once and collided | Release **one side first**: if the forklift's path is clear, the forklift goes first at pass-through speed (worker WAIT held); if the worker is on the forklift's path, the worker goes first (forklift held at 0 m/s, then worker GO) |
+| The GO decision assumed the forklift kept its "current speed": it underestimated stopped or accelerating forklifts | Check every speed up to the pre-stop speed, including a 1 m/s² acceleration phase |
+| The GO decision only looked at the forklift in the alert pair: GO while another forklift was approaching | Confirm GO safety against every forklift nearby (25 m) (v1.3; measured difference is small — many-to-many collisions 4 vs 4, throughput +0.3 pp — but logically required) |
+| Head-on or turning entry in the same aisle: if the worker waits on the forklift's path, nobody can pass (the largest source of forklift time loss) | **STEP ASIDE**: tell a worker standing on the forklift's predicted path to step to the nearer aisle edge (r_safe + 0.8 m from the path) and wait there → the forklift passes |
+| UWB noise made standing pickers "walk", causing false alarms | Workers below 0.4 m/s are predicted as stationary |
+| CTRV predicted a forklift about to turn as going straight (false alarm), and warned workers in the aisle it was turning into too late | (Optional) **Route sharing**: if a planned route is available from fleet management, the WMS or a driver tablet, predict along that route (`RoutePredictor`) |
 
-**다대다 결과** (`results/multi_sim.json`, 충돌 위험 쌍 750):
+**Many-to-many results** (`results/multi_sim.json`, 750 collision-risk pairs):
 
-| 방식 | 충돌 | 지게차 처리량 | 지게차 손실 / 대 | 작업자 손실 / 명 |
+| Method | Collisions | Forklift throughput | Forklift loss / vehicle | Worker loss / person |
 |---|---|---|---|---|
-| v1.0 진동만 | 100 | 61.7 % | 11.2 s | 2.5 s |
+| v1.0 vibration only | 100 | 61.7 % | 11.2 s | 2.5 s |
 | v1.1 WAIT/GO | 22 | 61.7 % | 11.1 s | 3.1 s |
 | **v1.2** | **4** | **86.0 %** | **5.7 s** | 2.7 s |
-| v1.2에서 비켜서기 제외 | 3 | 60.0 % | 11.5 s | 3.2 s |
-| v1.2에서 작업자별 계획 제외 | 7 | 86.1 % | 5.6 s | 2.4 s |
+| v1.2 without stepping aside | 3 | 60.0 % | 11.5 s | 3.2 s |
+| v1.2 without per-worker plans | 7 | 86.1 % | 5.6 s | 2.4 s |
 
-- 충돌 **96 % 감소**(100 → 4), 지게차 처리량 **+39 %**(61.7 → 86.0 %). 처리량 증가는 거의 전부 STEP ASIDE에서 나옵니다(빼면 60 %).
-- 0.3 m/s 미만 속도 명령을 정지로 바꾸는 규칙은 다른 수정 이후 효과가 측정되지 않았지만(충돌 4 vs 2, 잡음 범위),
-  수 cm/s로 기어가는 계획은 의미가 없어 유지합니다.
+- Collisions **down 96 %** (100 → 4), forklift throughput **+39 %** (61.7 → 86.0 %). Almost all of the throughput gain comes from STEP ASIDE (60 % without it).
+- The rule that turns speed commands below 0.3 m/s into a stop had no measurable effect after the other fixes (collisions 4 vs 2, within noise),
+  but we keep it because a plan that crawls at a few cm/s is meaningless.
 
-**1:1 결과** (`results/worker_cue_eval.json`, 조우 2,200 · 충돌 위험 1,207): v1.0 145 → v1.1 8 → **v1.2 1**,
-지게차 처리량 77.3 → 81.6 → **86.4 %**, 지게차 손실 2.76 → 1.62 s, 작업자 손실 2.07 → 3.16 s.
-작업자 WAIT 준수율 85 / 70 / 50 %에서 충돌 12 / 27 / 42 (v1.0: 145).
+**1:1 results** (`results/worker_cue_eval.json`, 2,200 encounters · 1,207 collision risks): v1.0 145 → v1.1 8 → **v1.2 1**,
+forklift throughput 77.3 → 81.6 → **86.4 %**, forklift loss 2.76 → 1.62 s, worker loss 2.07 → 3.16 s.
+At worker WAIT compliance rates of 85 / 70 / 50 %, collisions are 12 / 27 / 42 (v1.0: 145).
 
-**장애 조건** (`results/failsafe_eval_hold.json`, 실충돌 180): 정상 0, MEC 재시작 6, 재시작 + 손실 20 % 12, MEC 8 s 다운 11, 망 단절 2,
-지게차 · 작업자 음영 **0 · 0**, 처리량 정상 85 %.
+**Failure conditions** (`results/failsafe_eval_hold.json`, 180 real collisions): normal 0, MEC restart 6, restart + 20 % loss 12, MEC down 8 s 11, network outage 2,
+forklift · worker coverage holes **0 · 0**, normal throughput 85 %.
 
-**오경보** (`results/false_alarm_eval.json`, 충돌 위험이 없는 조우 993):
+**False alarms** (`results/false_alarm_eval.json`, 993 encounters with no collision risk):
 
-| | 오경보 | 충돌 | 처리량 |
+| | False alarms | Collisions | Throughput |
 |---|---|---|---|
-| 정지 판정 없음 | 622 | 2 | 86.0 % |
-| + 정지 판정 (v1.2 기본) | 570 | 1 | 86.4 % |
-| + 경로 공유 (선택) | **400** (−36 %) | 2 | **89.0 %** |
+| No stationary detection | 622 | 2 | 86.0 % |
+| + stationary detection (v1.2 default) | 570 | 1 | 86.4 % |
+| + route sharing (optional) | **400** (−36 %) | 2 | **89.0 %** |
 
-- 회전해 빠지는 지게차의 오경보 136 → 3, 통로 옆 피커 126 → 47.
-- 남은 오경보의 절반은 작업자가 통로 앞에서 스스로 멈추는 경우(200 / 200)입니다. 사람은 마지막 1초 안에 감속하므로 경보 시점에는 구별할 수 없습니다.
+- False alarms from forklifts turning away 136 → 3; from pickers beside the aisle 126 → 47.
+- Half of the remaining false alarms are workers who stop on their own in front of the aisle (200 / 200). People decelerate within the last second, so at alert time the case cannot be distinguished.
 
-**관제 대시보드**: 작업자 태그 상태를 MEC 앱이 그대로 따라가며(`WaitCue` 사본) 지도에 **WAIT(빨강) / STEP ASIDE(주황) / GO(초록)** 를 표시합니다.
+**Control dashboard**: the MEC app mirrors each worker tag's state (a `WaitCue` copy) and shows **WAIT (red) / STEP ASIDE (orange) / GO (green)** on the map.
 
-**한계**: 비켜서는 방향은 "가까운 가장자리"이며 다른 지게차의 위치는 고려하지 않습니다(다대다에서 드물게 다른 지게차 쪽으로 비켜섬).
-태그에는 방향 표시가 없어 사람이 가까운 쪽을 고른다고 가정했습니다. 경로 공유는 현장 시스템 연동이 필요한 선택 기능입니다.
+**Limitations**: the step-aside direction is "the nearer edge" and does not consider other forklifts' positions (in many-to-many, workers occasionally step towards another forklift).
+Tags have no direction indicator, so we assume people pick the nearer side. Route sharing is an optional feature that requires integration with site systems.
 
-## v1.1: 작업자 WAIT / GO 신호 — 남은 사고의 원인을 없앰
+## v1.1: worker WAIT / GO cues — removing the cause of the remaining accidents
 
-**원인 분석**: v1.0에서 남은 충돌(정상 조건 23 / 180)은 **전부 경보가 제때(1 s 이상 전) 나간 경우**였습니다.
-진동을 받은 작업자는 약 2 s 멈췄다가 다시 걸었고, 지게차는 "작업자가 멈춘다"는 가정으로 속도를 정해 둔 상태라
-다시 걸어 나온 작업자와 만났습니다(역방향 주행 지게차 8건, 지그재그 보행 6건 등). 예측이 아니라 **사람에게 주는 신호**가 문제였습니다.
+**Root cause**: the collisions remaining in v1.0 (23 / 180 under normal conditions) **all occurred when the alert had gone out on time (at least 1 s before)**.
+Workers who felt the vibration stopped for about 2 s and then walked on, while the forklift had set its speed on the assumption that "the worker stops",
+so it met the worker who had walked back out (8 cases with a reversing forklift, 6 with zigzag walking, etc.). The problem was not prediction but **the cue given to people**.
 
-**대응** (`edgeguard/worker_cue.py` · `firmware/common/worker_cue.h`, `edgeguard/alerting.py`):
-1. **WAIT까지 유지**: 태그가 경보 동안 빨간 LED + 1초 간격 진동으로 "대기"를 유지하고, `clear`가 오면 짧은 진동 2번으로 **GO**를 알립니다.
-   2.5 s 동안 아무 메시지도 없으면(해제 메시지 손실, MEC 침묵) 스스로 대기를 풀어, 서버가 죽어도 사람을 붙잡아 두지 않습니다.
-2. **WAIT 유지 신호**: 경보가 살아 있는 동안 MEC 앱이 1초마다 작업자에게만 `wait`를 보냅니다(지게차 속도 제한은 그대로).
-3. **GO 안전 확인**: 멈춘 작업자는 지금은 충돌 코스가 아니지만, 원래 가던 방향으로 다시 걸으면 지게차와 만날 수 있습니다.
-   그 경우 경보를 해제하지 않고 대기를 유지하며, 지게차는 통과 속도로 지나갑니다.
+**Fix** (`edgeguard/worker_cue.py` · `firmware/common/worker_cue.h`, `edgeguard/alerting.py`):
+1. **Hold until WAIT ends**: during an alert the tag holds "wait" with a red LED + vibration every second; when `clear` arrives, two short vibrations signal **GO**.
+   If no message arrives for 2.5 s (lost release message, silent MEC), the tag releases the wait on its own, so a dead server never keeps people pinned.
+2. **WAIT keep-alive**: while an alert is active, the MEC app sends `wait` to the worker only, every second (the forklift speed limit stays as is).
+3. **GO safety check**: a stopped worker is not on a collision course now, but may meet the forklift if they resume walking in their original direction.
+   In that case the alert is not cleared and the wait is held, while the forklift passes at pass-through speed.
 
-`python -m sim.worker_cue_eval` → `results/worker_cue_eval.json` (11개 시나리오 × 100회 × 시드 2벌 = 2,200회, 그중 충돌 위험 조우 1,207회, 망 조건 무작위):
+`python -m sim.worker_cue_eval` → `results/worker_cue_eval.json` (11 scenarios × 100 runs × 2 seed sets = 2,200 runs, of which 1,207 are collision-risk encounters, randomised network conditions):
 
-| 방식 | 충돌 | 지게차 처리량 | 지게차 손실 / 조우 | 작업자 손실 / 조우 |
+| Method | Collisions | Forklift throughput | Forklift loss / encounter | Worker loss / encounter |
 |---|---|---|---|---|
-| v1.0 진동만 | 145 / 1207 | 77.3 % | 2.76 s | 2.07 s |
-| WAIT 유지 | 59 | 80.4 % | 2.37 s | 2.97 s |
-| + WAIT 유지 신호 | 19 | 82.0 % | 2.17 s | 3.35 s |
-| **v1.1: + GO 안전 확인 (채택)** | **11** | **81.7 %** | **2.20 s** | 3.51 s |
-| v1.1, 85 % 만 WAIT를 지킴 | 22 | 80.9 % | 2.30 s | 3.32 s |
+| v1.0 vibration only | 145 / 1207 | 77.3 % | 2.76 s | 2.07 s |
+| Hold WAIT | 59 | 80.4 % | 2.37 s | 2.97 s |
+| + WAIT keep-alive | 19 | 82.0 % | 2.17 s | 3.35 s |
+| **v1.1: + GO safety check (adopted)** | **11** | **81.7 %** | **2.20 s** | 3.51 s |
+| v1.1, only 85 % obey WAIT | 22 | 80.9 % | 2.30 s | 3.32 s |
 | v1.1, 70 % | 31 | 80.1 % | 2.39 s | 3.12 s |
 | v1.1, 50 % | 44 | 79.3 % | 2.51 s | 2.90 s |
 
-- **충돌 92 % 감소**(145 → 11), **지게차 처리량 +5.7 %**(손실 시간 −20 %). 작업자가 확실히 기다리니 지게차가 덜 감속합니다.
-- 비용은 작업자 대기 +1.4 s / 조우입니다. 지게차(장비 + 운전자)의 시간이 더 비싸고, 조우는 작업자당 시간에 몇 번 수준입니다.
-- 작업자 절반만 지켜도 충돌은 v1.0의 1/3입니다(지키지 않는 사람은 v1.0처럼 행동하도록 모델링).
-- 장애 조건(`results/failsafe_eval_hold.json`, v1.0은 `results/failsafe_eval_buzz.json`, 같은 조우 180):
-  정상 23 → **0**, MEC 재시작 33 → 11, 재시작 + 손실 20 % 42 → 19, MEC 8 s 다운 36 → 11, 지게차 · 작업자 음영 17 · 16 → **1 · 1**, 망 단절 2 → 2.
-  작업자 70 %만 지켜도 모든 조건에서 v1.0보다 적습니다(`results/failsafe_eval_hold_comply70.json`).
-- 시도했지만 채택하지 않은 것: 지게차가 지나간 즉시 GO(작업자 대기 −0.1 s, 충돌 증가), WARNING에서 작업자 정지를 믿고 지게차 감속 완화(처리량 +0.2 %p, 충돌 증가),
-  짧은 해제 유지(clear_hold 1.0~2.0 s, 시드에 따라 엇갈림), 이 UX에 맞춘 정책 재학습(기존 정책이 더 좋음), LSTM 예측(오경보 −10 %, 역방향 지게차 충돌 증가).
+- **Collisions down 92 %** (145 → 11), **forklift throughput +5.7 %** (lost time −20 %). Because workers reliably wait, forklifts slow down less.
+- The cost is +1.4 s of worker waiting per encounter. Forklift time (equipment + driver) is more expensive, and encounters happen only a few times per worker per hour.
+- Even if only half of the workers comply, collisions are one third of v1.0 (non-compliant workers are modelled as behaving as in v1.0).
+- Failure conditions (`results/failsafe_eval_hold.json`; v1.0 in `results/failsafe_eval_buzz.json`, same 180 encounters):
+  normal 23 → **0**, MEC restart 33 → 11, restart + 20 % loss 42 → 19, MEC down 8 s 36 → 11, forklift · worker coverage holes 17 · 16 → **1 · 1**, network outage 2 → 2.
+  Even with only 70 % compliance, every condition is better than v1.0 (`results/failsafe_eval_hold_comply70.json`).
+- Tried but not adopted: GO immediately after the forklift passes (worker wait −0.1 s, more collisions); relaxing forklift deceleration at WARNING by trusting the worker to stop (throughput +0.2 pp, more collisions);
+  short release hold (clear_hold 1.0–2.0 s, mixed across seeds); retraining the policy for this UX (the existing policy was better); LSTM prediction (false alarms −10 %, more collisions with reversing forklifts).
 
-## 위험도 판정: 가이던스 기하
+## Risk assessment: guidance geometry
 
 `r = p_worker − p_forklift`, `v = v_worker − v_forklift`
 
-| 양 | 식 | 의미 |
+| Quantity | Formula | Meaning |
 |---|---|---|
-| LOS rate | λ̇ = (r × v) / R² | 시선각 변화율. **λ̇≈0 이면서 접근 중 = 충돌 코스 (CBDR)**, 비례항법(PN)의 원리 |
-| CPA 거리 | d_cpa = R²·\|λ̇\| / \|v\| | 최근접 거리를 LOS rate로 쓴 형태 |
-| TCPA | −(r·v) / \|v\|² | 최근접까지 남은 시간 |
-| ZEM | R²·\|λ̇\| / Vc | PN의 zero-effort miss (참고값) |
-| Collision cone | ∠(−v, r) < asin(R_safe/R) | 상대속도가 충돌 원뿔 안 |
-| VO 감속량 | 속도를 k배 했을 때 원뿔을 벗어나는 최대 k | 지게차 `speed_scale` 명령 |
+| LOS rate | λ̇ = (r × v) / R² | Rate of change of the line-of-sight angle. **λ̇≈0 while closing = collision course (CBDR)**, the principle behind proportional navigation (PN) |
+| CPA distance | d_cpa = R²·\|λ̇\| / \|v\| | Closest-approach distance written in terms of LOS rate |
+| TCPA | −(r·v) / \|v\|² | Time remaining to closest approach |
+| ZEM | R²·\|λ̇\| / Vc | PN zero-effort miss (reference value) |
+| Collision cone | ∠(−v, r) < asin(R_safe/R) | Relative velocity lies inside the collision cone |
+| VO slowdown | Largest k such that scaling speed by k leaves the cone | Forklift `speed_scale` command |
 
-지게차는 IMU yaw rate로 **CTRV** 예측을 하고, 회전은 다음 통로 방향(90° 격자)까지만 이어진다고 봅니다.
+The forklift uses IMU yaw rate for **CTRV** prediction, and turns are assumed to continue only up to the next aisle direction (90° grid).
 
-| 단계 | 조건 (기본값) | 동작 |
+| Level | Condition (default) | Action |
 |---|---|---|
-| DANGER | 예측 최소거리 < 1.5 m, 1.5 s 이내 | 진동 + 감속(VO) |
-| WARNING | < 1.8 m, 3 s 이내 | 진동 + 경광등 |
-| CAUTION | < 2.5 m, 5 s 이내 | 대시보드 표시만 |
+| DANGER | Predicted minimum distance < 1.5 m, within 1.5 s | Vibration + slowdown (VO) |
+| WARNING | < 1.8 m, within 3 s | Vibration + beacon light |
+| CAUTION | < 2.5 m, within 5 s | Dashboard display only |
 
-## 비교 실험 (시뮬레이션)
+## Comparison experiment (simulation)
 
 `python -m sim.evaluate --n 250` → `results/evaluation.json`, `python sim/plot_results.py` → `results/evaluation.png`
 
-8개 시나리오 × 250회 = 2,000회, UWB 잡음 0.15 m, 모든 방식에 동일한 0.3 s 디바운스 적용.
-"적시 감지" = 접촉(1.5 m 이내) 1초 전 이상 경보.
+8 scenarios × 250 runs = 2,000 runs, UWB noise 0.15 m, the same 0.3 s debounce applied to every method.
+"Timely detection" = alert at least 1 s before contact (within 1.5 m).
 
-| 방식 | 적시 감지 | 오경보율 | 리드타임(중앙값) |
+| Method | Timely detection | False alarm rate | Lead time (median) |
 |---|---|---|---|
-| 근접 3 m | 0.0% | 66.7% | 0.4 s |
-| 근접 5 m | 76.3% | 84.8% | 1.2 s |
+| Proximity 3 m | 0.0% | 66.7% | 0.4 s |
+| Proximity 5 m | 76.3% | 84.8% | 1.2 s |
 | TTC < 3 s | 100.0% | 72.6% | 2.1 s |
-| 가이던스 (CPA/LOS) | 100.0% | 31.6% | 2.1 s |
-| 가이던스 + CTRV | 100.0% | 33.8% | 2.4 s |
-| **가이던스 + CTRV + LSTM** | **100.0%** | **29.8%** | **2.4 s** |
+| Guidance (CPA/LOS) | 100.0% | 31.6% | 2.1 s |
+| Guidance + CTRV | 100.0% | 33.8% | 2.4 s |
+| **Guidance + CTRV + LSTM** | **100.0%** | **29.8%** | **2.4 s** |
 
-- v0.5에서 "차로 안에 서 있는 작업자" 규칙(아래 온라인 시뮬레이션 참고)을 넣으면서 리드타임이 2.2 → 2.4 s로 늘고,
-  오경보는 CTRV 28.6 → 33.8%, LSTM 24.9 → 30.0%로 늘었습니다. 대부분 `turn_away`(지게차가 서 있는 작업자 쪽으로 오다가 꺾는 경우)입니다.
-  폐루프에서 충돌을 막는 데 필요한 규칙이라 이 비용을 받아들였습니다.
-- LSTM은 잡음 섞인 위치에서 정지한 작업자를 걷는 것으로 오인하는 문제를 줄여, `roadside_picker` 오경보를 52 → 15건으로 줄였습니다.
-- 남은 오경보의 대부분은 `worker_yields`(충돌 경로로 오다가 2~3 m 앞에서 감속·정지하는 작업자)입니다.
-  감속을 시작하기 전에 이미 충돌 코스이므로, 3초 전 경보는 어떤 방식으로도 피하기 어렵습니다.
-- 직접 만든 시나리오에서의 결과이므로, W6에 RC카 실측으로 다시 검증합니다.
+- Adding the "worker standing in the lane" rule in v0.5 (see the online simulation below) increased lead time from 2.2 → 2.4 s,
+  and false alarms rose from 28.6 → 33.8% for CTRV and 24.9 → 30.0% for LSTM. Most are `turn_away` (a forklift heading towards a standing worker and then turning).
+  We accepted this cost because the rule is needed to prevent collisions in the closed loop.
+- The LSTM reduces misreading a stationary worker as walking from noisy positions, cutting `roadside_picker` false alarms from 52 → 15.
+- Most remaining false alarms are `worker_yields` (a worker on a collision path who slows down and stops 2–3 m short).
+  They are already on a collision course before they start slowing, so an alert 3 s ahead is hard to avoid with any method.
+- These results come from hand-built scenarios, so they will be re-validated with RC-car measurements in W6.
 
-### LSTM 궤적 예측
+### LSTM trajectory prediction
 
-`python -m sim.train_lstm --n 400 --epochs 15` (CPU 약 2.5분) → `models/worker_lstm.pt`
+`python -m sim.train_lstm --n 400 --epochs 15` (about 2.5 min on CPU) → `models/worker_lstm.pt`
 
-입력: 작업자 위치 20개(최근 1.9 s를 10 Hz로 재표본) + 지게차 상대 위치·속도 / 출력: 0.1~3.0 s 미래 위치 30개.
-학습과 평가는 서로 다른 시드의 에피소드를 씁니다.
+Input: 20 worker positions (last 1.9 s resampled at 10 Hz) + forklift relative position and velocity / Output: 30 future positions from 0.1 to 3.0 s.
+Training and evaluation use episodes from different seeds.
 
-v2는 기본 8종에 달리기·지그재그·후진 지게차를 더해 학습했습니다. 같은 검증 묶음으로 비교 (3 s 예측 오차 ADE / FDE):
+v2 was trained on the 8 base scenarios plus running, zigzag and reversing forklifts. Comparison on the same validation set (3 s prediction error ADE / FDE):
 
-| 모델 | 기본 시나리오 | 이상 행동 (달리기·지그재그·후진) |
+| Model | Base scenarios | Abnormal behaviour (running · zigzag · reversing) |
 |---|---|---|
-| 등속 칼만 | 0.31 / 0.54 m | 0.73 / 1.19 m |
-| LSTM v1 | **0.175 / 0.29 m** | 0.94 / 1.58 m (등속보다 나쁨) |
-| **LSTM v2 (채택)** | 0.184 / 0.31 m | **0.50 / 0.77 m** |
+| Constant-velocity Kalman | 0.31 / 0.54 m | 0.73 / 1.19 m |
+| LSTM v1 | **0.175 / 0.29 m** | 0.94 / 1.58 m (worse than constant velocity) |
+| **LSTM v2 (adopted)** | 0.184 / 0.31 m | **0.50 / 0.77 m** |
 
-**폐루프에서는 CTRV가 기본값입니다.** 학습된 정책으로 같은 330개 조우를 돌리면 충돌이 CTRV 15건, LSTM 23건이었고,
-정책을 LSTM에 맞춰 다시 학습해도 최선이 22건이었습니다 (`results/closed_loop_ctrv_vs_lstm.json`, `results/policy_training_lstm.json`).
-예측 오차가 작아도 경보 타이밍이 정책과 맞지 않으면 안전 성능이 더 낫지 않았기 때문에, LSTM은 선택 옵션으로 둡니다.
+**CTRV is the default in the closed loop.** Running the learned policy on the same 330 encounters gave 15 collisions with CTRV and 23 with LSTM,
+and even after retraining the policy for LSTM the best was 22 (`results/closed_loop_ctrv_vs_lstm.json`, `results/policy_training_lstm.json`).
+Lower prediction error did not yield better safety when the alert timing did not match the policy, so LSTM remains an option.
 
-**불규칙한 샘플 (v0.8)**: 망에서는 샘플이 빠지거나 흔들리고, 적응형 보고 주기는 먼 작업자를 2 Hz로 보냅니다. v0.7은 마지막 20개 샘플을
-0.1 s 간격으로 보고 넣었기 때문에 5 Hz에서 속도를 2배로 읽었습니다. 이제 `edgeguard.learned.resample()`이 최근 1.9 s를 **시간 기준으로
-10 Hz 격자에 보간**해 넣고, 0.8 s보다 긴 공백이 있으면 등속 예측으로 돌아갑니다 (`sim/lstm_irregular.py`, 처음 보는 조우 3,080개, ADE / FDE m):
+**Irregular samples (v0.8)**: on the network, samples drop out or jitter, and adaptive reporting sends distant workers at 2 Hz. v0.7 fed in the last 20 samples
+assuming 0.1 s spacing, so at 5 Hz it read speeds as double. Now `edgeguard.learned.resample()` **interpolates the last 1.9 s onto a 10 Hz grid by time**,
+and falls back to constant-velocity prediction if there is a gap longer than 0.8 s (`sim/lstm_irregular.py`, 3,080 unseen encounters, ADE / FDE m):
 
-| 샘플 조건 | v0.7 (순서 기준) | v0.8 (시간 기준) | 등속 칼만 |
+| Sampling condition | v0.7 (index-based) | v0.8 (time-based) | Constant-velocity Kalman |
 |---|---|---|---|
 | regular 10 Hz | 0.26 / 0.40 | **0.26 / 0.40** | 0.41 / 0.68 |
 | jitter +-40 ms | 0.26 / 0.42 | **0.26 / 0.42** | 0.42 / 0.71 |
@@ -168,99 +168,99 @@ v2는 기본 8종에 달리기·지그재그·후진 지게차를 더해 학습�
 | 5 Hz | 1.05 / 1.96 | **0.29 / 0.45** | 0.49 / 0.82 |
 | adaptive 2 Hz -> 10 Hz | 0.69 / 1.17 | **0.28 / 0.44** | 0.42 / 0.69 |
 
-v0.8은 모든 조건에서 등속보다 낫고, 손실 · 저주기에서 v0.7 대비 오차가 1/2~1/4입니다. 공백 기준은 0.35 / 0.55 / 0.8 s를 비교해 골랐습니다
-(`results/lstm_irregular.json`). 재학습은 하지 않았습니다(모델 입력이 다시 10 Hz 격자가 되므로).
+v0.8 beats constant velocity in every condition, and under loss or low rates its error is 1/2 to 1/4 of v0.7's. The gap threshold was chosen by comparing 0.35 / 0.55 / 0.8 s
+(`results/lstm_irregular.json`). No retraining was needed (the model input is again a 10 Hz grid).
 
-PyTorch가 필요하므로 `pip install -r requirements-ml.txt` 후 `mec.method: guidance_lstm`으로 켭니다.
-기본값은 PyTorch 없이 도는 `guidance_ctrv`입니다.
+PyTorch is required: run `pip install -r requirements-ml.txt`, then enable with `mec.method: guidance_lstm`.
+The default is `guidance_ctrv`, which runs without PyTorch.
 
-## 온라인 폐루프 시뮬레이션 (현장 실측 대체)
+## Online closed-loop simulation (in place of site measurements)
 
 `python -m sim.online_sim --cases all` → `results/online_sim.json`, `python sim/plot_online.py` → `results/online_sim.png`
 
 ![online simulation](../results/online_sim.png)
 
-RC카 실측 대신, 실제 스택(Mobius → MEC 앱 → 경보) 전체를 실시간으로 돌리는 시뮬레이션입니다.
-가상 기기는 경보에 **실제로 반응**합니다: 지게차는 받은 속도 제한까지 감속(액추에이터 지연 0.2 s, 감속 2.5 m/s²),
-작업자는 진동을 받으면 0.8 s 뒤 멈춥니다(2 s). 케이스마다 작업자·지게차 8쌍을 동시에 3라운드(24회) 돌리고,
-통신·센서 결함을 주입합니다. "충돌" = 중심 거리 1.0 m 미만.
+Instead of RC-car measurements, this simulation runs the entire real stack (Mobius → MEC app → alert) in real time.
+Virtual devices **actually react** to alerts: forklifts slow to the received speed limit (actuator delay 0.2 s, deceleration 2.5 m/s²),
+and workers stop 0.8 s after feeling the vibration (for 2 s). Each case runs 8 worker–forklift pairs simultaneously for 3 rounds (24 runs),
+with injected communication and sensor faults. "Collision" = centre distance below 1.0 m.
 
-| 케이스 | 주입한 조건 | 충돌 (시스템 없음 → 있음) | 적시 감지 | 리드타임 | 경보 지연 p95 | 지게차 손실 시간 |
+| Case | Injected condition | Collisions (no system → with system) | Timely detection | Lead time | Alert latency p95 | Forklift lost time |
 |---|---|---|---|---|---|---|
-| 기준 | UWB 잡음 0.15 m, 10 Hz | 6 → **0** | 100% | 2.5 s | 115 ms | 2.0 s |
-| 센서 잡음 | UWB 0.35 m | 8 → **0** | 100% | 2.5 s | 94 ms | 2.9 s |
-| 상향 손실 10% | 센서 샘플 유실 | 8 → 1 | 100% | 2.4 s | 89 ms | 3.1 s |
-| 상향 손실 30% | 센서 샘플 유실 | 6 → **0** | 100% | 2.5 s | 86 ms | 2.6 s |
-| 경보 손실 20% | 하향 경보 유실 | 7 → **0** | 57% | 2.4 s | 114 ms | 2.4 s |
-| Wi-Fi 지연 | 양방향 60±30 ms | 10 → 1 | 100% | 2.5 s | 263 ms | 3.7 s |
-| 샘플링 5 Hz | 전송 주기 절반 | 9 → 1 | 100% | 2.4 s | 110 ms | 3.1 s |
-| 시계 오차 | 기기별 ±300 ms | 6 → **0** | 100% | 2.9 s | – | 2.3 s |
-| UWB 음영 | 작업자 태그 3 s 끊김 | 8 → 1 | 100% | 2.6 s | 93 ms | 3.1 s |
-| 이상 행동 | 달리기·지그재그·후진 지게차 | 24 → 5 | 100% | 2.4 s | 144 ms | 6.2 s |
-| 밀집 통로 | 6+6대가 한 구역 공유 | 10 → **0** | 62%* | 2.5 s | 87 ms | 4.9 s |
-| 최악 복합 | 잡음+손실+지연+시계오차+음영 | 8 → 3 | 100% | 2.9 s | – | 2.7 s |
-| 근접 5 m 방식 (비교) | 기존 근접 경보, 감속 30% | 14 → 11 | 0% | 0.5 s | 98 ms | 4.3 s |
+| Baseline | UWB noise 0.15 m, 10 Hz | 6 → **0** | 100% | 2.5 s | 115 ms | 2.0 s |
+| Sensor noise | UWB 0.35 m | 8 → **0** | 100% | 2.5 s | 94 ms | 2.9 s |
+| Uplink loss 10% | Sensor samples dropped | 8 → 1 | 100% | 2.4 s | 89 ms | 3.1 s |
+| Uplink loss 30% | Sensor samples dropped | 6 → **0** | 100% | 2.5 s | 86 ms | 2.6 s |
+| Alert loss 20% | Downlink alerts dropped | 7 → **0** | 57% | 2.4 s | 114 ms | 2.4 s |
+| Wi-Fi latency | 60±30 ms both ways | 10 → 1 | 100% | 2.5 s | 263 ms | 3.7 s |
+| 5 Hz sampling | Half the transmit rate | 9 → 1 | 100% | 2.4 s | 110 ms | 3.1 s |
+| Clock skew | ±300 ms per device | 6 → **0** | 100% | 2.9 s | – | 2.3 s |
+| UWB dead zone | Worker tag lost for 3 s | 8 → 1 | 100% | 2.6 s | 93 ms | 3.1 s |
+| Abnormal behaviour | Running · zigzag · reversing forklift | 24 → 5 | 100% | 2.4 s | 144 ms | 6.2 s |
+| Crowded aisle | 6+6 sharing one zone | 10 → **0** | 62%* | 2.5 s | 87 ms | 4.9 s |
+| Worst-case combined | Noise + loss + latency + clock skew + dead zone | 8 → 3 | 100% | 2.9 s | – | 2.7 s |
+| Proximity 5 m method (comparison) | Conventional proximity alert, 30% slowdown | 14 → 11 | 0% | 0.5 s | 98 ms | 4.3 s |
 
-- EdgeGuard 12개 케이스 합계 **충돌 110 → 12건 (89% 감소)**. 같은 조건의 근접 5 m 방식은 14 → 11건(21%)이고 지게차 손실 시간도 더 깁니다.
-- *밀집 통로의 적시 감지 62%는 과소 평가입니다. 다른 쌍 때문에 이미 멈춘 작업자·지게차는 원래(무반응) 시간표의 충돌이 일어나지 않는데,
-  감지는 원래 시간표 기준으로 재기 때문입니다. 이 케이스의 실제 충돌은 0건입니다.
-- 경보 손실 20%에서 적시 감지가 떨어져도 충돌이 0인 것은 1초마다 다시 보내는 경보가 유실을 메우기 때문입니다.
-- 남은 약점: **지그재그로 걷는 작업자**(예측이 흔들림)와 **후진 지게차**에 다가가는 작업자. 이상 행동 케이스 24건 중 5건이 충돌했습니다.
+- Across the 12 EdgeGuard cases, **collisions fell from 110 → 12 (89% reduction)**. The proximity 5 m method under the same conditions went from 14 → 11 (21%), with longer forklift lost time.
+- *The 62% timely detection in the crowded aisle is an underestimate. Workers and forklifts already stopped because of another pair do not hit the collisions of the original (non-reacting) timeline,
+  while detection is measured against that original timeline. The actual number of collisions in this case is 0.
+- Collisions stay at 0 with 20% alert loss even though timely detection drops, because alerts resent every second make up for the losses.
+- Remaining weaknesses: **workers walking in a zigzag** (prediction wobbles) and workers approaching a **reversing forklift**. 5 of 24 runs in the abnormal-behaviour case ended in collision.
 
-시뮬레이션이 찾아낸 제어 문제와 v0.5에서 고친 내용:
-1. **감속 후 해제 → 재가속 충돌**: 지게차가 느려지면 예측상 위험이 사라져 경보가 풀리고, 다시 빨라진 뒤 충돌.
-   → 차로 안에 서 있는 작업자는 시간과 무관하게 경보 유지, 경보 해제 대기 2 s, 지게차는 해제 신호(또는 5 s 무응답)까지 제한 유지.
-2. **비율 명령의 함정**: "현재 속도의 ×0.6"은 이미 느려진 속도 기준이라 다시 빨라질 수 있음 → 경보에 **절대 속도 제한(m/s)** 추가.
-3. **작업자 정지와 감속 계획의 충돌**: 진동을 받은 작업자가 차로 한가운데에서 멈추면 "조금만 감속" 명령으로는 부딪힘
-   → 감속량을 "반응 시간 뒤 멈추는 작업자" 기준과 정지거리 기준 중 엄격한 쪽으로 계산.
-4. **진동 남발**: 1초마다 진동하면 작업자가 계속 멈춤 → 새 경보·DANGER·아직 걸어 들어오는 작업자에게만 진동.
-5. **MEC 과부하**: 16대 × 10 Hz에서 샘플마다 모든 쌍을 계산해 경보 지연이 1.1 s까지 증가
-   → 새 샘플이 온 기기와 관련된 쌍만, 도달 불가능한 쌍은 예측 생략. 경보 지연 p50 60~80 ms로 회복.
-6. **후진 지게차**: IMU 방향(앞)과 실제 진행 방향(뒤)이 반대 → 움직이는 중에는 속도 벡터 방향으로 예측.
+Control problems found by the simulation and fixed in v0.5:
+1. **Release after slowing → re-acceleration collision**: once the forklift slowed, the predicted risk disappeared, the alert cleared, and the forklift sped up again and collided.
+   → Keep the alert for a worker standing in the lane regardless of time, wait 2 s before clearing, and keep the forklift limited until a release signal (or 5 s without response).
+2. **The ratio-command trap**: "×0.6 of current speed" is relative to an already reduced speed, so the forklift could speed up again → add an **absolute speed limit (m/s)** to alerts.
+3. **Worker stop vs. slowdown plan**: if a worker stops in the middle of the lane after the vibration, a "slow down a little" command still hits them
+   → compute the slowdown as the stricter of the "worker stops after reaction time" criterion and the stopping-distance criterion.
+4. **Vibration overuse**: vibrating every second made workers keep stopping → vibrate only for new alerts, DANGER, or workers still walking in.
+5. **MEC overload**: at 16 devices × 10 Hz, computing every pair on each sample pushed alert latency up to 1.1 s
+   → compute only pairs involving the device that sent a new sample, and skip prediction for unreachable pairs. Alert latency p50 recovered to 60–80 ms.
+6. **Reversing forklifts**: the IMU heading (forward) is opposite to the actual direction of travel (backward) → while moving, predict along the velocity vector.
 
-## 정책 학습 (보상함수 + 평가함수)
+## Policy learning (reward function + evaluation function)
 
 `python -m sim.train_policy` → `results/policy_training.json`, `config/policy_trained.yaml`, `python sim/plot_policy.py`
 
 ![policy training](../results/policy_training.png)
 
-경보·감속 정책의 파라미터 10개(경보 시점 `t_warn`·`t_danger`, 여유 거리, 작업자 반응 가정, 제동 감속도·여유,
-차로 확인 거리, 통과 속도, 해제 대기, 정지 판정 속도)를 학습했습니다. 정책 코드(`edgeguard/alerting.py`)는 MEC 앱과
-시뮬레이터가 같이 쓰므로, 학습한 것이 그대로 현장에서 돕니다.
+We learned 10 parameters of the alert and slowdown policy (alert timing `t_warn` · `t_danger`, safety margin, assumed worker reaction, braking deceleration and margin,
+lane check distance, pass-through speed, release wait, stationary speed threshold). The policy code (`edgeguard/alerting.py`) is shared by the MEC app and
+the simulator, so what is learned runs unchanged on site.
 
-- **학습기**: Cross-Entropy Method (기울기 없는 정책 탐색), 후보 14개 × 10회, 후보끼리 같은 조우로 비교.
-  학습용 고속 폐루프 시뮬레이터 `sim/closed_loop.py`(실시간 온라인 시뮬과 같은 로직, 초당 약 23회).
-- **조건 무작위화**: 조우마다 UWB 잡음 0.1~0.35 m, 지연 40~220 ms, 상향 손실 0~20%, 경보 손실 0~10%, 11개 시나리오(이상 행동 포함).
-- **보상함수** (조우당, 최대화):
+- **Learner**: Cross-Entropy Method (gradient-free policy search), 14 candidates × 10 iterations, candidates compared on the same encounters.
+  Fast closed-loop training simulator `sim/closed_loop.py` (same logic as the real-time online simulation, about 23 runs per second).
+- **Domain randomisation**: per encounter, UWB noise 0.1–0.35 m, latency 40–220 ms, uplink loss 0–20%, alert loss 0–10%, 11 scenarios (including abnormal behaviour).
+- **Reward function** (per encounter, maximised):
 
-  `r = − C · 충돌 − 지게차 손실 시간(s) − 0.5 · 불필요 경보`
+  `r = − C · collisions − forklift lost time (s) − 0.5 · unnecessary alerts`
 
-  C는 "충돌 1건을 지게차 몇 초와 바꿀 것인가"이므로 5, 20, 50, 100으로 바꿔 각각 학습했습니다.
-- **평가함수** (학습에 안 쓴 330개 조우, 무작위 조건):
-  - Precision = 실제 충돌 위험에 울린 경보 / 전체 경보, Recall = 접촉 1초 전 이상 경보한 위험 / 전체 위험
-  - **F-β, β = 2**: 사고 놓침(Recall)을 불필요 경보(Precision)보다 무겁게
-  - 처리량 = 실제 지게차 주행 거리 / 감속 없이 갔을 거리
-  - **선택 규칙**: 안전 우선(충돌 수가 가장 안전한 후보의 10%+1건 이내)인 후보 중 `F2 × 처리량 / 기존 처리량`이 최대인 것
+  C means "how many forklift-seconds one collision is worth", so we trained separately with C = 5, 20, 50 and 100.
+- **Evaluation function** (330 encounters not used in training, randomised conditions):
+  - Precision = alerts raised for a real collision risk / all alerts; Recall = risks alerted at least 1 s before contact / all risks
+  - **F-β, β = 2**: missed accidents (Recall) weigh more than unnecessary alerts (Precision)
+  - Throughput = actual forklift distance travelled / distance it would have travelled without slowing
+  - **Selection rule**: among safety-first candidates (collisions within 10% + 1 of the safest candidate), pick the one maximising `F2 × throughput / baseline throughput`
 
-| 정책 | 충돌 | Recall | Precision | F2 | 처리량 | 조우당 손실 | 점수 |
+| Policy | Collisions | Recall | Precision | F2 | Throughput | Loss per encounter | Score |
 |---|---|---|---|---|---|---|---|
-| 기존 (수동 설정) | 32/180 | 0.944 | 0.694 | 0.881 | 0.689 | 3.8 s | 탈락 |
-| C = 5 | 21/180 | 0.950 | 0.676 | 0.879 | 0.781 | 2.7 s | 탈락 |
-| C = 20 | 25/180 | 0.933 | 0.641 | 0.855 | 0.773 | 2.8 s | 탈락 |
-| **C = 50 (채택)** | **15/180** | 0.950 | 0.653 | 0.871 | **0.784** | **2.7 s** | **0.991** |
+| Baseline (hand-tuned) | 32/180 | 0.944 | 0.694 | 0.881 | 0.689 | 3.8 s | Rejected |
+| C = 5 | 21/180 | 0.950 | 0.676 | 0.879 | 0.781 | 2.7 s | Rejected |
+| C = 20 | 25/180 | 0.933 | 0.641 | 0.855 | 0.773 | 2.8 s | Rejected |
+| **C = 50 (adopted)** | **15/180** | 0.950 | 0.653 | 0.871 | **0.784** | **2.7 s** | **0.991** |
 | C = 100 | 14/180 | 0.978 | 0.759 | 0.924 | 0.659 | 4.1 s | 0.884 |
 
-- C가 너무 작으면(5, 20) 처리량은 오르지만 충돌이 남고, 너무 크면(100) 충돌은 가장 적지만 지게차가 자주 서서 처리량이 기존보다도 떨어집니다.
-  **C = 50**이 충돌을 기존의 절반 이하(32 → 15)로 줄이면서 처리량을 14% 올린 지점입니다.
-- 학습된 정책은 경보를 더 일찍(3.0 → 4.1 s) 주고, 감속은 덜 급하게 하되 통과 속도를 높여(1.0 → 1.7 m/s) 멈춰 서는 시간을 줄입니다.
+- If C is too small (5, 20), throughput rises but collisions remain; if too large (100), collisions are lowest but forklifts stop so often that throughput falls below the baseline.
+  **C = 50** is the point that more than halves collisions versus the baseline (32 → 15) while raising throughput by 14%.
+- The learned policy alerts earlier (3.0 → 4.1 s) and slows down less sharply, but with a higher pass-through speed (1.0 → 1.7 m/s), reducing time spent stopped.
 
-**실시간 온라인 시뮬레이션 검증** (같은 4개 케이스, `results/online_policy_*.json`):
+**Real-time online simulation validation** (same 4 cases, `results/online_policy_*.json`):
 
-| 정책 | 충돌 (기준·이상 행동·Wi-Fi 지연·최악 복합 합계) | 리드타임 | 지게차 손실 시간 | 오경보율 |
+| Policy | Collisions (sum of baseline · abnormal behaviour · Wi-Fi latency · worst-case combined) | Lead time | Forklift lost time | False alarm rate |
 |---|---|---|---|---|
-| 기존 | 48 → 8 | 2.5 s | 3.4 s | 25~56% |
-| **학습** | **48 → 3** | **3.5 s** | **2.4 s (−27%)** | 67~77% |
+| Baseline | 48 → 8 | 2.5 s | 3.4 s | 25–56% |
+| **Learned** | **48 → 3** | **3.5 s** | **2.4 s (−27%)** | 67–77% |
 
-- 사고는 더 줄고 지게차 손실 시간도 줄었습니다. 대가로 오경보율이 올랐는데, β = 2로 Recall을 우선하도록 설계한 결과입니다.
-  경보는 늘었지만 멈춰 서는 시간은 오히려 짧아져 업무 처리 속도는 유지·향상되었습니다.
-- `config/site.yaml`에 학습된 정책을 반영했습니다. 위 "온라인 폐루프 시뮬레이션" 표는 반영 전(기존 정책) 결과입니다.
+- Accidents fell further and forklift lost time also dropped. The price is a higher false alarm rate, which is the intended result of prioritising Recall with β = 2.
+  Although there are more alerts, time spent stopped actually got shorter, so work throughput was maintained or improved.
+- The learned policy has been applied to `config/site.yaml`. The "Online closed-loop simulation" table above shows results before it was applied (baseline policy).

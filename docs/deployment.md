@@ -1,147 +1,149 @@
-# 배포
+# Deployment
 
-Docker Compose 스택, 로컬 데모, 배포 구조 결정(측정), oneM2M 리소스 트리, 펌웨어 · CI.
+Docker Compose stack, local demo, deployment architecture decision (measured), oneM2M resource tree, firmware and CI.
 
-[← README](../README.md)
+[← README](../README.md) · [한국어](ko/deployment.md)
 
-## MEC 호스트 배포 (Docker Compose)
+## MEC host deployment (Docker Compose)
 
-MariaDB + Mobius(oneM2M IN-CSE) + MEC 앱을 한 번에 띄웁니다. 경보 정책 · 적응형 주기 · 접근제어는 `config/site.yaml` 그대로이고,
-주소만 `deploy/compose-overrides.yaml`로 덮습니다 (`EDGEGUARD_OVERRIDES`, 깊은 병합).
+Brings up MariaDB + Mobius (oneM2M IN-CSE) + the MEC app in one go. Alert policy, adaptive reporting rates and access control come straight from `config/site.yaml`;
+only addresses are overridden by `deploy/compose-overrides.yaml` (`EDGEGUARD_OVERRIDES`, deep merge).
 
 ```bash
 cd deploy
-docker compose up -d                    # MEC 호스트 스택 (빌드 포함)
-docker compose --profile demo up        # + oneM2M 리소스 셋업 + 가상 디바이스 (조우 4회)
+docker compose up -d                    # MEC host stack (includes build)
+docker compose --profile demo up        # + oneM2M resource setup + virtual devices (4 encounters)
 python3 check_demo.py out/devices.json http://localhost:9090/health
-# 대시보드 http://localhost:9090/ · 실기 디바이스는 http://<호스트>:7579/Mobius 로 접속
+# Dashboard at http://localhost:9090/ · physical devices connect to http://<host>:7579/Mobius
 ```
 
-미리 빌드된 이미지 (저장소가 비공개라 토큰으로 로그인 필요: `read:packages` 권한의 PAT):
+Prebuilt images (the repository is private, so log in with a token: a PAT with `read:packages` scope):
 ```bash
-echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub 아이디> --password-stdin
-export EDGEGUARD_IMAGE_TAG=latest EDGEGUARD_PULL_POLICY=always   # Windows cmd: set 로 각각 지정
+echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub username> --password-stdin
+export EDGEGUARD_IMAGE_TAG=latest EDGEGUARD_PULL_POLICY=always   # Windows cmd: set each with `set`
 docker compose up -d
 ```
 
-| 구성 요소 | 이미지 | 비고 |
+| Component | Image | Notes |
 |---|---|---|
-| MariaDB | `mariadb:11.4` | 데이터는 `db-data` 볼륨 |
-| Mobius | `ghcr.io/ljw22112/edgeguard-mobius` | 커밋 고정 + 의존성 잠금. 시작 시 `conf.json` 작성 · 봉인 · 스키마 1회 가져오기 |
-| MEC 앱 | `ghcr.io/ljw22112/edgeguard-mec` | 비루트 실행, `/health` 상태 검사. 같은 이미지로 셋업 · 가상 디바이스 실행 |
+| MariaDB | `mariadb:11.4` | Data in the `db-data` volume |
+| Mobius | `ghcr.io/ljw22112/edgeguard-mobius` | Pinned commit + locked dependencies. On start: writes `conf.json`, seals it, imports the schema once |
+| MEC app | `ghcr.io/ljw22112/edgeguard-mec` | Runs as non-root, `/health` health check. The same image runs setup and the virtual devices |
 
-- Mobius는 DB를 `localhost:3306`으로 고정해 접속하므로 MariaDB 컨테이너의 네트워크를 공유하고, 다른 서비스는 별칭 `mobius`로 찾습니다.
-- `.github/workflows/docker.yml`: 푸시마다 공식 베이스 이미지로 빌드 → 스택 기동 → 데모 조우 4회 경보 확인
-  (`deploy/check_demo.py`: 4회 모두 1 s 이상 전에 경보, 쓰기 실패 0) → DB를 유지한 채 재시작해 다시 확인 → main이면 GHCR 게시
-  (`latest`, `sha-<커밋>`).
-- 시험 결과 (이 환경, 4회 × 반복 3번): 리드타임 3.6~3.9 s, 경보 지연 중앙값 25~31 ms, 쓰기 실패 0.
-- 팀 노트북 실측 (갤럭시 북2 프로 · RAM 8GB, Windows 11 + Docker Desktop/WSL2, `results/deploy_windows_pc.json`): 조우 4회 모두 경보, 리드타임 3.83 / 3.54 / 3.62 / 3.51 s,
-  경보 지연 중앙값 58 ms (p95 82 ms), 경보 30건, 쓰기 실패 0.
-- 배포 시험에서 버그 하나를 찾아 고쳤습니다: 조우 사이에 추적이 끊기면 짝의 경보 상태가 WARNING으로 남아,
-  다음 조우의 첫 경보가 진동이 안 날 수 있는 "refresh"로 나갔습니다. 이제 2 s 이상 평가되지 않은 짝은 새 조우로 시작합니다
-  (반복 실행 리드타임 1.1 / 0.8 / 3.7 / 1.3 s → 3.9 / 3.6 / 3.7 / 3.6 s).
+- Mobius connects to the DB at a hard-coded `localhost:3306`, so it shares the MariaDB container's network; other services reach it via the alias `mobius`.
+- `.github/workflows/docker.yml`: on every push, build from official base images → start the stack → verify alerts for the 4 demo encounters
+  (`deploy/check_demo.py`: all 4 alerted at least 1 s ahead, 0 write failures) → restart with the DB kept and verify again → on main, publish to GHCR
+  (`latest`, `sha-<commit>`).
+- Test results (this environment, 4 encounters × 3 runs): lead time 3.6–3.9 s, median alert latency 25–31 ms, 0 write failures.
+- Measured on a team laptop (Galaxy Book2 Pro · 8 GB RAM, Windows 11 + Docker Desktop/WSL2, `results/deploy_windows_pc.json`): all 4 encounters alerted, lead times 3.83 / 3.54 / 3.62 / 3.51 s,
+  median alert latency 58 ms (p95 82 ms), 30 alerts, 0 write failures.
+- Deployment testing found and fixed one bug: if tracking dropped between encounters, the pair's alert state stayed at WARNING,
+  so the first alert of the next encounter went out as a "refresh", which may not trigger vibration. Now a pair not evaluated for 2 s or more starts as a new encounter
+  (repeat-run lead times 1.1 / 0.8 / 3.7 / 1.3 s → 3.9 / 3.6 / 3.7 / 3.6 s).
 
-## 로컬 데모 (하드웨어 없이)
+## Local demo (no hardware)
 
 ```bash
 pip install -r requirements.txt
 scripts/run_local_demo.sh crossing_conflict
 ```
-ACME CSE(오픈소스 oneM2M)를 받아 실행하고, MEC 앱과 가상 디바이스를 띄운 뒤 리소스를 만듭니다.
-시나리오: `crossing_conflict crossing_clear head_on adjacent_aisle roadside_picker turn_into_worker turn_away worker_yields`
+Downloads and runs ACME CSE (open-source oneM2M), starts the MEC app and virtual devices, then creates the resources.
+Scenarios: `crossing_conflict crossing_clear head_on adjacent_aisle roadside_picker turn_into_worker turn_away worker_yields`
 
-로컬 실행 시 센서 샘플 → CSE → MEC → CSE → 디바이스 경보까지 중앙값 약 25~35 ms였습니다
-(한 대의 PC 안에서 측정, 실제 네트워크 지연 미포함).
+Running locally, the median from sensor sample → CSE → MEC → CSE → device alert was about 25–35 ms
+(measured within a single PC, excluding real network latency).
 
-## 배포 구조 (측정으로 결정)
+## Deployment architecture (decided by measurement)
 
-![구성도](architecture.png)
+![Architecture diagram](architecture.png)
 
-**결정: 엣지 Mobius(MEC 호스트) + 클라우드 Mobius, MEC 앱이 클라우드로 동기화** — `config/site.yaml`
+**Decision: edge Mobius (MEC host) + cloud Mobius, with the MEC app syncing to the cloud** — `config/site.yaml`
 
-후보 4개를 한 대의 PC에서 띄우고, 현장↔클라우드 구간은 `tools/wan_proxy.py`로 단방향 25±5 ms(왕복 약 50 ms)를 걸어 측정했습니다.
-충돌 시나리오 6회씩, `python tools/topology_bench.py` → `results/topology_25ms.json`.
+All 4 candidates were run on one PC, with `tools/wan_proxy.py` adding 25±5 ms one-way (about 50 ms round trip) on the site↔cloud link.
+6 runs of the collision scenario each, `python tools/topology_bench.py` → `results/topology_25ms.json`.
 
-| 구성 | 경보 지연 중앙값 / p95 | WAN 단절 시 현장 경보 | 클라우드 사본 | 엣지 CSE 처리량 |
+| Configuration | Median / p95 alert latency | On-site alerts during WAN outage | Cloud copy | Edge CSE throughput |
 |---|---|---|---|---|
-| ① 클라우드 Mobius만 | 85 / 133 ms | ❌ 0건 (전부 중단) | 해당 없음 | — |
-| ② 엣지 Mobius만 | 23.5 / 29 ms | ✅ | ❌ 없음 | 250 writes/s 여유 |
-| **③ 엣지 Mobius + 클라우드 동기화** | **25 / 52 ms** | **✅ 26/26건 유지** | **✅** | **250 writes/s 여유** |
-| ④ 엣지 ACME MN ↔ 클라우드 Mobius (Mcc) | 33 / 43 ms | ✅ 26/26건 유지 | ✅ (MN 재지정) | ❌ 약 110 writes/s에서 포화 |
+| ① Cloud Mobius only | 85 / 133 ms | ❌ 0 (all stopped) | N/A | — |
+| ② Edge Mobius only | 23.5 / 29 ms | ✅ | ❌ None | Headroom at 250 writes/s |
+| **③ Edge Mobius + cloud sync** | **25 / 52 ms** | **✅ 26/26 kept** | **✅** | **Headroom at 250 writes/s** |
+| ④ Edge ACME MN ↔ cloud Mobius (Mcc) | 33 / 43 ms | ✅ 26/26 kept | ✅ (via MN retargeting) | ❌ Saturates at ~110 writes/s |
 
-엣지 CSE 부하 시험 (`tools/cse_load_bench.py`, 디바이스마다 10 Hz, 모든 컨테이너에 구독):
+Edge CSE load test (`tools/cse_load_bench.py`, 10 Hz per device, subscriptions on every container):
 
-| 디바이스 수 (요청/s) | Mobius 쓰기 p95 | Mobius 알림 p95 | ACME 처리량 | ACME 쓰기 p95 |
+| Devices (requests/s) | Mobius write p95 | Mobius notify p95 | ACME throughput | ACME write p95 |
 |---|---|---|---|---|
 | 10 (100) | 10 ms | 12 ms | 100.7/s | 32 ms |
-| 25 (250) | 63 ms | 71 ms | **109/s (포화)** | 323 ms |
+| 25 (250) | 63 ms | 71 ms | **109/s (saturated)** | 323 ms |
 | 50 (500) | 205 ms (355/s) | 237 ms | 112/s | 642 ms |
 
-판단 근거
-- **가용성이 결정적입니다.** ①은 클라우드 연결이 끊기면 경보가 하나도 나가지 않습니다. 안전 시스템으로 쓸 수 없습니다.
-  지연 차이(약 60 ms)는 예측 리드타임 2초에 비하면 작지만, 단절 시 동작 차이는 0과 100%입니다.
-- **규모에서 ④가 탈락했습니다.** 작업자 20명 + 지게차 5대(10 Hz)면 초당 250건인데, ACME는 약 110건에서 포화되어 지연이 수백 ms로 늘어납니다.
-  Mobius는 같은 조건에서 p95 63 ms입니다 (부하 생성기와 같은 2코어 PC에서 측정한 보수적인 값).
-- **③이 ②의 성능을 그대로 유지하면서 클라우드 사본을 얻습니다.** 동기화는 별도 큐에서 돌기 때문에 WAN이 느리거나 끊겨도 현장 경보에 영향이 없습니다 (단절 시 실패 74건은 `/health`에 집계).
-- 한계: Mobius 3은 IN-CSE 전용이라 엣지와 클라우드 Mobius 사이는 oneM2M Mcc 등록이 아니라 MEC 앱의 동기화입니다.
-  표준 Mcc 연동은 ④ 구성(ACME MN → Mobius IN)으로 별도 검증했으며, 저속 게이트웨이(카메라 노드 등)를 붙이는 용도로 남겨 둡니다.
+Rationale
+- **Availability is decisive.** With ①, no alerts go out at all when the cloud link drops. It cannot be used as a safety system.
+  The latency gap (about 60 ms) is small next to the 2 s prediction lead time, but the behaviour during an outage differs as 0 vs 100%.
+- **④ fails on scale.** 20 workers + 5 forklifts (10 Hz) is 250 requests/s, but ACME saturates at about 110/s and latency climbs to hundreds of ms.
+  Mobius gives p95 63 ms under the same conditions (a conservative figure, measured on the same 2-core PC as the load generator).
+- **③ keeps ②'s performance and adds a cloud copy.** Sync runs on a separate queue, so a slow or broken WAN does not affect on-site alerts (the 74 failures during the outage are counted in `/health`).
+- Limitation: Mobius 3 is IN-CSE only, so edge and cloud Mobius are linked by MEC app sync, not oneM2M Mcc registration.
+  Standard Mcc interworking was validated separately with configuration ④ (ACME MN → Mobius IN) and is kept for attaching low-rate gateways (camera nodes, etc.).
 
-실행 (엣지 서버에 Mobius가 떠 있다고 가정):
+Run (assuming Mobius is already running on the edge server):
 ```bash
-export EDGEGUARD_CONFIG=config/site.yaml      # cloud_sync.base_url만 클라우드 주소로 수정
+export EDGEGUARD_CONFIG=config/site.yaml      # change only cloud_sync.base_url to the cloud address
 scripts/mec.sh start
 python devices/device_sim.py --config config/site.yaml --start-delay 4 &
 python tools/setup_resources.py --config config/site.yaml --reset
 ```
-Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
+The Mobius 3.x CSEBase has `srv: ["1","2","2a"]`, so we use `rvi: "2a"`.
 
-상호운용성 시험에서 찾은 문제와 해결은 [docs/interop-notes.md](interop-notes.md)에 정리했습니다.
+Issues found in interoperability testing and their fixes are documented in [docs/interop-notes.md](interop-notes.md).
 
-## oneM2M 리소스 트리
+## oneM2M resource tree
 
-디바이스마다 **자기 AE**를 등록합니다(originator = 그 디바이스). MEC 앱은 자기 AE에 판단 결과를 씁니다.
+Each device registers **its own AE** (originator = that device). The MEC app writes its decisions to its own AE.
 
 ```
 /Mobius (CSEBase)
-├── worker_01 (AE, originator SWorker01)        작업자 태그가 부팅 시 스스로 등록
+├── worker_01 (AE, originator SWorker01)        worker tag registers itself at boot
 │   ├── location (CNT)                          → CIN {id, kind:"worker", ts, x, y}
-│   ├── relay (CNT)                             음영에 들어간 이웃의 위치를 대신 올림 (D2D 중계) {id: 이웃, relay: worker_01, ...}
-│   └── acp_worker_01 (ACP)                     태그: 전부 · MEC 앱/MEC-IPE: 조회 · 구독 · 쓰기 · 다른 단말: 없음
+│   ├── relay (CNT)                             uploads positions of neighbours in a coverage hole on their behalf (D2D relay) {id: neighbour, relay: worker_01, ...}
+│   ├── status (CNT)                            the device's own action acknowledgements {id, kind:"ack", hw, state, ts} → dashboard HW ✓ / FW ✓
+│   └── acp_worker_01 (ACP)                     tag: all · MEC app/MEC-IPE: retrieve · subscribe · write · other devices: none
 ├── forklift_01 (AE, originator SForklift01)
 │   ├── motion (CNT)                            → CIN {id, kind:"forklift", ts, x, y, speed, heading, yaw_rate, route?}
 │   ├── relay (CNT)
+│   ├── status (CNT)
 │   └── acp_forklift_01 (ACP)
 ├── camera_01 (AE, originator SCamera01)
 │   ├── detect (CNT)                            → CIN {kind:"camera", ts, persons:[{x, y}, ...]}
 │   └── acp_camera_01 (ACP)
-└── EdgeGuard (AE, originator SEdgeGuard = MEC 앱)
-    ├── risk (CNT)                              쌍별 위험도 요약 {pairs:[{level, range, tcpa, dcpa, ttc, d_min, speed_scale, reason}]}
-    ├── alert (CNT)                             경보 {event, level, worker, forklift, actions, reason, src_ts, mec_tx_ts}
-    │                                            event: raise · refresh · clear (지게차 + 작업자), wait · release · aside (작업자만)
-    ├── control (CNT)                           하트비트 1 s + 보고 주기 명령 {ts, hb, rates}
-    ├── nearmiss (CNT, mni 2000)                아차사고 기록 {worker, forklift, d_min, x, y, alerted}
-    ├── mec_lease (CNT, mni 20)                 MEC 앱 이중화 임대 {id, seq, ts}
-    └── acp_risk · acp_alert · acp_control · acp_nearmiss (ACP)   MEC 앱만 쓰기, 디바이스는 읽기
+└── EdgeGuard (AE, originator SEdgeGuard = MEC app)
+    ├── risk (CNT)                              per-pair risk summary {pairs:[{level, range, tcpa, dcpa, ttc, d_min, speed_scale, reason}]}
+    ├── alert (CNT)                             alerts {event, level, worker, forklift, actions, reason, src_ts, mec_tx_ts}
+    │                                            event: raise · refresh · clear (forklift + worker), wait · release · aside (worker only)
+    ├── control (CNT)                           1 s heartbeat + reporting-rate commands {ts, hb, rates}
+    ├── nearmiss (CNT, mni 2000)                near-miss records {worker, forklift, d_min, x, y, alerted}
+    ├── mec_lease (CNT, mni 20)                 MEC app HA lease {id, seq, ts}
+    └── acp_risk · acp_alert · acp_control · acp_nearmiss (ACP)   only the MEC app writes, devices read
 ```
 
-| 구독 (SUB) | 대상 | 알림 받는 곳 |
+| Subscription (SUB) | Target | Notified endpoint |
 |---|---|---|
-| `sub_mec` (이중화 시 `sub_mec_mec2` 추가) | 각 디바이스 AE의 `location` · `motion` · `detect` · `relay` | MEC 앱 `/notify` |
-| `sub_devices`, `sub_hw<N>` | `EdgeGuard/alert`, `EdgeGuard/control` | 가상 디바이스 · 실기 단말 (`poa` = `http://<단말>/alert`) |
+| `sub_mec` (plus `sub_mec_mec2` with HA) | `location` · `motion` · `detect` · `relay` of each device AE | MEC app `/notify` |
+| `sub_devices`, `sub_hw<N>` | `EdgeGuard/alert`, `EdgeGuard/control` | Virtual devices · physical devices (`poa` = `http://<device>/alert`) |
 
-- **등록**: 펌웨어가 부팅할 때 `registerAE()`로 AE와 컨테이너를 만듭니다(이미 있으면 409, 그대로 진행).
-  `tools/setup_resources.py`는 같은 등록을 디바이스 originator로 대신 하고 ACP를 붙입니다(현장 설치 시 1회).
-- **접근제어**: 어떤 디바이스도 다른 디바이스의 AE에 쓸 수 없습니다. MEC 앱은 읽고 구독하며, 판단 결과는 MEC 앱만 씁니다.
-  CI가 매 커밋 Mobius에서 위조 쓰기가 막히는지 확인합니다(`deploy/check_acl.py`).
-- **D2D 중계**: 음영 속 이웃의 위치는 중계하는 단말이 **자기 AE**의 `relay`에 올립니다. 중계 프레임은 D2D 구간에서 HMAC으로 인증됩니다.
-- 이전 구조(AE 하나 아래 디바이스 컨테이너)는 `layout: single_ae`로 계속 쓸 수 있습니다.
+- **Registration**: at boot, the firmware creates its AE and containers with `registerAE()` (409 if they already exist; it carries on).
+  `tools/setup_resources.py` performs the same registration on the devices' behalf using their originators and attaches the ACPs (once, at site installation).
+- **Access control**: no device can write to another device's AE. The MEC app reads and subscribes, and only the MEC app writes decisions.
+  CI checks on every commit that forged writes are blocked on Mobius (`deploy/check_acl.py`).
+- **D2D relay**: a relaying device uploads a neighbour's position from a coverage hole to the `relay` container of **its own AE**. Relay frames are authenticated with HMAC over the D2D link.
+- The previous layout (device containers under a single AE) is still available via `layout: single_ae`.
 
-## 펌웨어
-- 작업자 태그: DW1000 양방향 거리 측정 → `firmware/common/uwb_position.h`(선형화 최소제곱 + 가우스-뉴턴, 앵커 1개 NLOS 배제).
-  Python 쌍둥이 `edgeguard/uwb.py`와 같은 결과인지 테스트합니다 (잡음 0.1 m에서 평균 오차 < 0.15 m, NLOS 앵커 +1.5 m 배제).
-- 두 스케치 모두 `<ae>/control`의 주기 명령과 하트비트를 처리하고, 지게차는 위 페일세이프 규칙으로 PWM을 제한합니다.
-- `tests/test_firmware_build.py`: 실제 ArduinoJson + ESP32 API 스텁으로 두 스케치를 `-Wall -Wextra -Werror` 타입 검사합니다 (CI에서도 실행).
+## Firmware
+- Worker tag: DW1000 two-way ranging → `firmware/common/uwb_position.h` (linearised least squares + Gauss–Newton, rejection of one NLOS anchor).
+  Tested to match its Python twin `edgeguard/uwb.py` (mean error < 0.15 m at 0.1 m noise, rejects an NLOS anchor at +1.5 m).
+- Both sketches handle the rate commands and heartbeat in `<ae>/control`; the forklift limits PWM according to the fail-safe rules above.
+- `tests/test_firmware_build.py`: type-checks both sketches with `-Wall -Wextra -Werror` against the real ArduinoJson + ESP32 API stubs (also runs in CI).
 
-## 설치 · CI
-- `scripts/setup_mobius.sh` — Mobius 3 + MariaDB 설치 · 시작 (`install | start | stop | status`). 스키마의 MySQL 8 정렬 규칙을 MariaDB용으로 바꾸고, 대화형 비밀값 설정도 자동으로 처리합니다.
-- `.github/workflows/ci.yml` — 푸시마다 Python 3.11에서 전체 테스트 (LSTM 포함, CPU torch) + 펌웨어 타입 검사.
+## Installation and CI
+- `scripts/setup_mobius.sh` — installs and starts Mobius 3 + MariaDB (`install | start | stop | status`). Converts the schema's MySQL 8 collations for MariaDB and automates the interactive secret setup.
+- `.github/workflows/ci.yml` — full test suite on Python 3.11 on every push (including LSTM, CPU torch) + firmware type checks.

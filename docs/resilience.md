@@ -1,49 +1,49 @@
-# 신뢰성: 망 장애 · 이중화 · 규모
+# Resilience: network failures, high availability and scale
 
-통신이 끊기거나 서버가 죽어도 안전 기능이 유지되도록 한 설계와 측정 결과 (v0.7 → v1.0).
+How the safety function keeps working when the network drops or a server dies, with measured results (v0.7 → v1.0).
 
-[← README](../README.md)
+[← README](../README.md) · [한국어](ko/resilience.md)
 
-## v1.0: MEC 앱 이중화 (active-standby)
-두 MEC 앱 인스턴스가 각자 구독으로 같은 샘플을 받아 추적 상태를 따뜻하게 유지하고, **리더만** 경보·하트비트·위험도를 씁니다.
-리더십은 CSE의 `<AE>/mec_lease` 임대(0.2 s마다 갱신, 0.6 s 끊기면 대기 인스턴스가 인수)로 정하고, 새 리더는 즉시
-하트비트를 보냅니다(`edgeguard/ha.py`). 장치 시계가 달라도 되도록 임대 만료는 각자 단조 시계로 판단합니다.
+## v1.0: MEC app high availability (active-standby)
+Two MEC app instances each receive the same samples through their own subscriptions and keep their tracking state warm, but **only the leader** writes alerts, heartbeats and risk summaries.
+Leadership is decided by a lease at `<AE>/mec_lease` on the CSE (renewed every 0.2 s; if renewal stops for 0.6 s, the standby takes over), and the new leader sends a
+heartbeat immediately (`edgeguard/ha.py`). Each instance judges lease expiry on its own monotonic clock, so device clocks do not need to agree.
 ```
 MEC_HA=1 docker compose --profile ha up -d        # mec(9090) + mec2(9092)
-python3 deploy/check_ha.py                        # 리더를 강제 종료하고 인수 시간 · 하트비트 공백 측정
+python3 deploy/check_ha.py                        # kill the leader; measure takeover time and heartbeat gap
 ```
-CI가 매번 리더를 kill 해서 하트비트 공백이 지게차 로컬 규칙 전환 기준(2 s) 미만인지 확인합니다.
-CI 측정(GitHub 러너): **인수 0.73 s, 최대 하트비트 공백 1.0 s**(평소 주기와 같음) — 리더가 죽어도 장치는 MEC 끊김을 느끼지 못합니다.
+On every run, CI kills the leader and checks that the heartbeat gap stays below the forklift's threshold for switching to local rules (2 s).
+CI measurement (GitHub runner): **takeover 0.73 s, maximum heartbeat gap 1.0 s** (the same as the normal period) — when the leader dies, devices never notice a loss of MEC.
 
-## v0.9: 단말 간 협력 (D2D) — 터널 속 자율주행차처럼
+## v0.9: device-to-device cooperation (D2D) — like autonomous cars in a tunnel
 
-터널에 들어간 자율주행차가 서로 통신하듯, 망이 끊기거나 일부 단말이 전파 음영(금속 랙 뒤)에 들어가도 단말끼리 직접 주고받습니다.
+Just as autonomous cars in a tunnel talk to each other, devices exchange data directly when the network drops or some of them enter a radio coverage hole (behind metal racks).
 
-1. **상태 방송**: 모든 단말이 보고 주기마다 자기 상태 `{x, y, vx, vy, mecOk}`를 ESP-NOW로 직접 방송합니다(공유기 불필요, 수 ms).
-   위치는 UWB 앵커가 망과 무관하게 계속 주므로 망이 끊겨도 방송은 계속됩니다. 실제 5G 현장에서는 같은 프레임을 사이드링크(PC5)에 싣습니다.
-2. **로컬 2차원 예측**: MEC가 2 s 넘게 조용하면, 상대 상태가 신선한(0.5 s 이내) 경우 v0.8의 거리 · 접근속도 대신
-   **등속 최근접점(CPA)** 으로 판단합니다. 나란히 걷는 작업자는 멈출 이유가 아니고, 교차해 올 작업자만 멈춥니다. 상태가 끊기면 v0.8 규칙으로 돌아갑니다.
-3. **중계 (부분 장애)**: MEC를 아직 듣는 단말이, `mecOk = 0`을 알린 이웃에게 MEC 경보 · 하트비트를 대신 전달하고(1홉, 3번 반복),
-   이웃의 위치를 대신 CSE에 올립니다. 음영 속 단말이 연결된 것처럼 동작합니다.
+1. **State broadcast**: every device broadcasts its own state `{x, y, vx, vy, mecOk}` directly over ESP-NOW at each reporting interval (no access point needed, a few ms).
+   Position keeps coming from the UWB anchors independently of the network, so broadcasting continues when the network is down. On a real 5G site the same frame goes over sidelink (PC5).
+2. **Local 2D prediction**: when MEC has been silent for more than 2 s and the peer's state is fresh (within 0.5 s), the device decides using
+   the **constant-velocity closest point of approach (CPA)** instead of v0.8's distance and closing speed. A worker walking alongside is no reason to stop; only a worker on a crossing path is. If peer state stops arriving, the device falls back to the v0.8 rules.
+3. **Relay (partial failure)**: a device that can still hear MEC forwards MEC alerts and heartbeats to a neighbour that has announced `mecOk = 0` (1 hop, repeated 3 times),
+   and uploads that neighbour's position to the CSE on its behalf. A device in a coverage hole behaves as if it were connected.
 
-`sim/failsafe_eval.py` (실충돌 180, 단말별 링크 · 음영 조건 추가, `results/failsafe_eval.json`, 그림 `results/failsafe_eval.png`):
+`sim/failsafe_eval.py` (180 true collisions, with per-device link and coverage-hole conditions added; `results/failsafe_eval.json`, figure `results/failsafe_eval.png`):
 
-| 장애 시 동작 (충돌 · 처리량) | 정상 | MEC 8 s 다운 | 망 단절 | 지게차 음영 8 s | 작업자 음영 8 s |
+| Behaviour under failure (collisions · throughput) | Normal | MEC down 8 s | Network cut | Forklift in dead zone 8 s | Worker in dead zone 8 s |
 |---|---|---|---|---|---|
-| v0.7: 유지 → 정지 | 20 / 77 % | 85 / 68 % | 180 / 100 % | 52 / 68 % | 66 / 83 % |
-| 참고: 모든 지게차 정지 | 10 / 67 % | 25 / 42 % | 2 / 18 % | 5 / 43 % | 52 / 72 % |
-| v0.8: 로컬 UWB | 19 / 77 % | 40 / 59 % | 3 / 54 % | 34 / 60 % | 51 / 82 % |
-| D2D 상태 교환만 (중계 없음) | 23 / 76 % | 35 / 59 % | 2 / 57 % | 39 / 60 % | 38 / 81 % |
-| **v0.9: D2D + 중계 (채택)** | **23 / 76 % | 35 / 59 % | 2 / 57 % | 19 / 76 % | 16 / 76 %** |
+| v0.7: hold → stop | 20 / 77 % | 85 / 68 % | 180 / 100 % | 52 / 68 % | 66 / 83 % |
+| Reference: stop all forklifts | 10 / 67 % | 25 / 42 % | 2 / 18 % | 5 / 43 % | 52 / 72 % |
+| v0.8: local UWB | 19 / 77 % | 40 / 59 % | 3 / 54 % | 34 / 60 % | 51 / 82 % |
+| D2D state exchange only (no relay) | 23 / 76 % | 35 / 59 % | 2 / 57 % | 39 / 60 % | 38 / 81 % |
+| **v0.9: D2D + relay (adopted)** | **23 / 76 % | 35 / 59 % | 2 / 57 % | 19 / 76 % | 16 / 76 %** |
 
-- **v1.1(작업자 WAIT/GO)** 을 더하면 같은 조우에서 정상 23 → 0, MEC 8 s 다운 36 → 11, 지게차 · 작업자 음영 17 · 16 → 1 · 1
-  ([위험도 엔진과 성능 평가](risk-and-evaluation.md) "v1.1", `results/failsafe_eval_hold.json`). 아래 표는 v1.0까지의 결과입니다.
-- **음영 지역에서 가장 큰 차이**: 작업자 음영 66 → 16, 지게차 음영 52 → 19이면서 처리량은 정상과 같은 76 %(모든 지게차 정지는 43 %).
-  중계가 없으면(상태 교환만) 38 · 39건이라, 효과의 대부분은 중계에서 나옵니다.
-- 망 전체 단절 · MEC 다운에서는 v0.8과 비슷하거나 조금 낫습니다(2 대 3, 35 대 40). 정상 · 짧은 재시작 차이는 표본 오차 수준입니다.
-- **D2D 링크가 나빠져도** (`sim/d2d_sensitivity.py`, `results/d2d_sensitivity.json`, 충돌 / 180):
+- Adding **v1.1 (worker WAIT/GO)** on the same encounters gives normal 23 → 0, MEC down 8 s 36 → 11, forklift / worker dead zone 17 · 16 → 1 · 1
+  ([Risk engine and evaluation](risk-and-evaluation.md), "v1.1", `results/failsafe_eval_hold.json`). The table below shows results up to v1.0.
+- **Biggest difference in dead zones**: worker dead zone 66 → 16 and forklift dead zone 52 → 19, while throughput stays at 76 %, the same as normal (stopping all forklifts gives 43 %).
+  Without the relay (state exchange only) the counts are 38 and 39, so most of the gain comes from the relay.
+- Under a full network cut or MEC outage it is similar to or slightly better than v0.8 (2 vs 3, 35 vs 40). Differences under normal conditions and short restarts are within sampling error.
+- **When the D2D link degrades** (`sim/d2d_sensitivity.py`, `results/d2d_sensitivity.json`, collisions / 180):
 
-| D2D 조건 | 지게차 음영 | 작업자 음영 | MEC 8 s 다운 | 망 단절 |
+| D2D condition | Forklift dead zone | Worker dead zone | MEC down 8 s | Network cut |
 |---|---|---|---|---|
 | assumed (10 % loss, 40 m) | 19 | 16 | 35 | 2 |
 | 30 % frame loss | 21 | 19 | 34 | 2 |
@@ -51,48 +51,48 @@ CI 측정(GitHub 러너): **인수 0.73 s, 최대 하트비트 공백 1.0 s**(�
 | range 15 m | 19 | 20 | 36 | 2 |
 | 60 % loss + 15 m | 24 | 17 | 36 | 4 |
 
-  처음엔 중계 프레임을 1번만 보냈더니 프레임 손실 60 %에서 지게차 음영 48건으로 **중계가 없을 때(34)보다 나빴습니다**
-  (드문드문 오는 하트비트 때문에 로컬 판단이 꺼진 채 경보는 빠짐). 중계 프레임을 3번 반복해 26건으로 고쳤습니다.
-- 규칙은 `edgeguard/device_policy.py`와 `firmware/common/device_policy.h`(`cpaCap`)에 같이 있고 교차 테스트 · 변이 테스트로 확인합니다.
-  프레임 형식과 중계 장부는 `firmware/common/d2d.h`(크기 ≤ 250 B, 수신은 Wi-Fi 태스크에서 큐로 넘김),
-  두 스케치에 ESP-NOW 송수신 · 중계가 들어 있습니다(PC 타입 검사 통과). 음영 속 단말은 HTTP가 루프를 막지 않도록 2 s마다만 직접 전송을 시도합니다.
-- 한계: ESP-NOW는 AP와 같은 채널을 써야 하고, 실제 전파 손실 · 거리는 실기에서 확인해야 합니다. 메시지 인증(가짜 프레임으로 정지 유발)은 다루지 않았습니다.
+  At first, relay frames were sent only once, and at 60 % frame loss the forklift dead zone gave 48 collisions — **worse than with no relay at all (34)**
+  (sporadic heartbeats kept local decisions switched off while alerts were missed). Repeating relay frames 3 times fixed it (26).
+- The rules live in both `edgeguard/device_policy.py` and `firmware/common/device_policy.h` (`cpaCap`) and are checked with cross-implementation and mutation tests.
+  The frame format and relay bookkeeping are in `firmware/common/d2d.h` (size ≤ 250 B; reception is handed off to a queue from the Wi-Fi task),
+  and both sketches include ESP-NOW send/receive and relay (they pass PC type checks). A device in a coverage hole attempts direct transmission only every 2 s so that HTTP does not block the loop.
+- Limitations: ESP-NOW must use the same channel as the AP, and real radio loss and range must be verified on hardware. Message authentication (forged frames triggering stops) is not addressed.
 
-## v0.8: 망 장애 대안 — 단계적 강등 (MEC 예측 → 로컬 UWB → 정지)
+## v0.8: fallback for network failure — graceful degradation (MEC prediction → local UWB → stop)
 
-v0.7의 페일세이프는 MEC가 **이미 경보를 낸 쌍**만 지켰습니다. MEC·망이 끊긴 동안 새로 나타난 작업자는 아무도 보지 못해,
-망이 조우 전체 동안 끊기면 실충돌 180건이 모두 충돌로 이어졌습니다. v0.8은 장애 시 판단을 지게차로 내립니다.
+The v0.7 failsafe only protected pairs **MEC had already alerted on**. A worker who appeared while MEC or the network was down was seen by no one,
+so if the network was down for the whole encounter, all 180 true collisions happened. v0.8 moves the decision down to the forklift during failures.
 
-1. **정상: MEC 예측** — 현장 전체를 보고 충돌 시점을 예측 (오경보가 적고 리드타임이 김).
-2. **MEC 침묵 2 s 이상: 로컬 UWB** — 지게차 모듈이 작업자 태그와 직접 UWB 거리 측정(앵커와 하는 DW1000 양방향 측정을 태그 상대로)을 하고,
-   거리와 **접근 속도(거리 변화율)로 계산한 TTC**로 판단합니다: 3 m 이내 또는 TTC 2 s 미만이면 정지, 6 m 이내 또는 TTC 4 s 미만이면 1 m/s.
-   양방향 측정은 양쪽 모두 거리를 알게 되므로, **작업자 태그도 같은 규칙으로 진동**해 작업자가 멈춥니다.
-3. **제한 중인데 MEC가 계속 침묵: 정지** (v0.7 규칙 유지). MEC가 다시 들리면 바로 MEC 예측으로 돌아갑니다.
+1. **Normal: MEC prediction** — sees the whole site and predicts when a collision will happen (few false alarms, long lead time).
+2. **MEC silent for 2 s or more: local UWB** — the forklift module ranges directly to the worker tag over UWB (the DW1000 two-way ranging it does with anchors, now aimed at the tag),
+   and decides using distance and **TTC computed from closing speed (rate of change of distance)**: stop if within 3 m or TTC below 2 s; 1 m/s if within 6 m or TTC below 4 s.
+   Two-way ranging gives both sides the distance, so **the worker tag also vibrates under the same rule** and the worker stops.
+3. **Restricted and MEC still silent: stop** (v0.7 rule kept). As soon as MEC is heard again, control returns to MEC prediction.
 
-`sim/failsafe_eval.py`, 고속 폐루프 330개 조우(실충돌 180), 같은 조우·같은 망 조건 (`results/failsafe_eval.json`, 그림 `results/failsafe_eval.png`; v0.9 시뮬레이터로 다시 잰 값):
+`sim/failsafe_eval.py`, 330 high-speed closed-loop encounters (180 true collisions), same encounters and same network conditions (`results/failsafe_eval.json`, figure `results/failsafe_eval.png`; re-measured with the v0.9 simulator):
 
-| 침묵 시 동작 (충돌 · 처리량) | 정상 | 재시작 1.7 s | 재시작 + 손실 20 % | MEC 8 s 다운 | 망 단절 (조우 전체) |
+| Behaviour when silent (collisions · throughput) | Normal | Restart 1.7 s | Restart + 20 % loss | MEC down 8 s | Network cut (whole encounter) |
 |---|---|---|---|---|---|
-| v0.7: 유지 → 2 s 뒤 제한 중이면 정지 | 20 / 77 % | 40 / 75 % | 41 / 74 % | 85 / 68 % | 180 / 100 % |
-| 참고: 침묵 2 s면 모든 지게차 정지 | 10 / 67 % | 28 / 66 % | 31 / 64 % | 25 / 42 % | 2 / 18 % |
-| 로컬 거리 구역만 | 20 / 77 % | 43 / 75 % | 43 / 73 % | 62 / 60 % | 37 / 62 % |
-| 로컬 거리 + 접근속도(TTC) | 19 / 77 % | 43 / 74 % | 41 / 72 % | 60 / 59 % | 30 / 60 % |
-| **v0.8: 로컬 TTC + 태그 진동** | **19 / 77 % | 43 / 74 % | 43 / 72 % | 40 / 59 % | 3 / 54 %** |
+| v0.7: hold → stop after 2 s if restricted | 20 / 77 % | 40 / 75 % | 41 / 74 % | 85 / 68 % | 180 / 100 % |
+| Reference: stop all forklifts after 2 s of silence | 10 / 67 % | 28 / 66 % | 31 / 64 % | 25 / 42 % | 2 / 18 % |
+| Local distance zones only | 20 / 77 % | 43 / 75 % | 43 / 73 % | 62 / 60 % | 37 / 62 % |
+| Local distance + closing speed (TTC) | 19 / 77 % | 43 / 74 % | 41 / 72 % | 60 / 59 % | 30 / 60 % |
+| **v0.8: local TTC + tag vibration** | **19 / 77 % | 43 / 74 % | 43 / 72 % | 40 / 59 % | 3 / 54 %** |
 
-- **망이 완전히 끊겨도 충돌 180 → 3**, 지게차는 54 %로 계속 일합니다(MEC 8 s 다운 85 → 40). "모든 지게차 정지"는 충돌 2건이지만 처리량이 18 %로 떨어집니다.
-- 정상 · 짧은 재시작에서는 v0.7과 차이가 표본 오차 수준입니다(로컬 규칙은 MEC가 2 s 넘게 침묵할 때만 켜짐).
-  켜지는 시점 1.3 / 2.0 / 3.0 s를 훑어 2.0 s를 골랐습니다.
-- 거리만 보는 구역(상용 UWB 방식)보다 접근 속도를 쓰는 쪽이, 지게차만 멈추는 것보다 작업자 태그까지 진동하는 쪽이 매번 나았습니다.
-- 규칙은 `edgeguard/device_policy.py`와 `firmware/common/device_policy.h`(`LocalGuard`)에 같이 들어 있고, 무작위 거리·하트비트 열로
-  두 구현을 비교하는 테스트가 있습니다(상수 변경을 잡는지 변이 테스트로 확인).
-- **추가 프로토콜 없이 직접 측정**: 지게차 모듈의 DW1000을 *움직이는 앵커*(짧은 주소 `0x20NN`)로 띄웁니다. 작업자 태그는 원래 하던
-  앵커 측정 라운드에서 지게차 앵커와도 거리를 재게 되고, 양방향 측정이라 지게차도 같은 거리를 압니다
-  (`firmware/forklift_module` `onPeerRange`, `firmware/worker_tag` `onNewRange`). 태그는 이 거리를 위치 계산에 쓰지 않고 로컬 규칙에만 씁니다.
-  arduino-dw1000은 기본 4개 장치까지만 재므로 `MAX_DEVICES`를 8로 올립니다(고정 앵커 4 + 지게차 4). 지게차 위치는 별도 태그 보드가 맡습니다
-  (DW1000 하나가 앵커와 태그를 동시에 할 수 없음).
-- **가정이 나빠져도 견디는지** (`sim/peer_ranging_sensitivity.py`, `results/peer_ranging_sensitivity.json`, 충돌 / 실충돌 180, v0.7은 75 / 180):
+- **Even with the network completely cut, collisions drop 180 → 3**, and forklifts keep working at 54 % (MEC down 8 s: 85 → 40). "Stop all forklifts" gives 2 collisions but throughput falls to 18 %.
+- Under normal conditions and short restarts the difference from v0.7 is within sampling error (local rules only engage when MEC has been silent for more than 2 s).
+  We swept the engagement time over 1.3 / 2.0 / 3.0 s and chose 2.0 s.
+- Using closing speed always beat distance-only zones (the commercial UWB approach), and vibrating the worker tag as well always beat stopping only the forklift.
+- The rules live in both `edgeguard/device_policy.py` and `firmware/common/device_policy.h` (`LocalGuard`), and a test compares the two implementations
+  on random distance and heartbeat sequences (mutation tests confirm it catches constant changes).
+- **Direct ranging with no extra protocol**: the forklift module's DW1000 is brought up as a *moving anchor* (short address `0x20NN`). In its usual
+  anchor ranging round, the worker tag also ranges to the forklift anchor, and because the ranging is two-way the forklift learns the same distance
+  (`firmware/forklift_module` `onPeerRange`, `firmware/worker_tag` `onNewRange`). The tag does not use this distance for positioning, only for the local rules.
+  arduino-dw1000 ranges to at most 4 devices by default, so `MAX_DEVICES` is raised to 8 (4 fixed anchors + 4 forklifts). The forklift's own position comes from a separate tag board
+  (one DW1000 cannot act as anchor and tag at the same time).
+- **Robustness when assumptions get worse** (`sim/peer_ranging_sensitivity.py`, `results/peer_ranging_sensitivity.json`, collisions / 180 true collisions; v0.7 gives 75 / 180):
 
-| 직접 측정 조건 | MEC 8 s 다운 | 망 단절 |
+| Direct ranging condition | MEC down 8 s | Network cut |
 |---|---|---|
 | assumed (10 Hz, 10 % miss, 0.1 m, 30 m) | 31 | 3 |
 | 5 Hz (crowded channel) | 31 | 4 |
@@ -103,72 +103,72 @@ v0.7의 페일세이프는 MEC가 **이미 경보를 낸 쌍**만 지켰습니�
 | max range 12 m | 28 | 3 |
 | all bad (5 Hz, 40 %, 0.3 m, +0.5 m, 12 m) | 47 | 23 |
 
-  측정 주기가 2 Hz로 떨어져도(태그가 몰려 채널이 붐빔) 쓸 수 있도록 접근속도 창을 1.5 s, 측정 유효 시간을 1.2 s로 정했습니다
-  (0.6 / 0.5 s일 때 2 Hz에서 망 단절 충돌 41 → 7). 모든 조건이 동시에 나빠도 v0.7(180)보다 훨씬 적습니다(23).
-- 남은 한계: 무선 측정 자체는 실기에서 확인해야 합니다(측정 주기 · 다중 태그 충돌 · 금속 랙 NLOS).
+  To stay usable even when the ranging rate drops to 2 Hz (many tags crowding the channel), the closing-speed window is set to 1.5 s and range validity to 1.2 s
+  (with 0.6 / 0.5 s, network-cut collisions at 2 Hz were 41 → 7). Even with every condition bad at once, collisions are far fewer than v0.7 (180): 23.
+- Remaining limitation: the radio ranging itself must be verified on hardware (ranging rate, multi-tag collisions, NLOS from metal racks).
 
-## v0.7: 신뢰성 · 규모 확장
+## v0.7: resilience and scale
 
-### 규모: 적응형 보고 주기
-모든 샘플은 CSE에서 쓰기 1회 + MEC 앱 알림 1회가 되므로, 현장 전체 샘플 수가 규모의 한계입니다.
-`edgeguard/rate_control.py`: 주변에 상대가 가깝거나 다가오는 기기만 10 Hz, 나머지는 2 Hz.
-판정은 `d < 8 m + 2 s × (두 속도 합 + 0.5)` 또는 `실제 접근 속도로 5 s 안에 도달`이고, 느려지는 쪽에만 3 s 유지 · 20 % 여유를 둡니다.
-명령은 `<ae>/control`로 보내고 1 s마다 전체 표를 다시 보내므로, 명령이 유실돼도 스스로 복구됩니다. 기기는 6 s 동안 명령이 없으면 10 Hz로 돌아갑니다.
+### Scale: adaptive reporting rate
+Every sample costs one write on the CSE plus one notification to the MEC app, so the total sample count across the site is what limits scale.
+`edgeguard/rate_control.py`: only devices with a peer nearby or approaching report at 10 Hz; the rest report at 2 Hz.
+The test is `d < 8 m + 2 s × (sum of both speeds + 0.5)` or `reaches within 5 s at the actual closing speed`, with a 3 s hold and 20 % margin applied only when slowing down.
+Commands go to `<ae>/control` and the full table is resent every 1 s, so lost commands self-heal. A device returns to 10 Hz if it receives no command for 6 s.
 
-온라인 시뮬레이션 (`results/online_robustness.json`, 2코어 PC 한 대에 디바이스·Mobius·DB·MEC 앱을 모두 올린 보수적 조건):
+Online simulation (`results/online_robustness.json`, conservative setup with devices, Mobius, DB and MEC app all on one 2-core PC):
 
-| 케이스 | 기기 | 충돌 (없음 → 있음) | 적시 감지 | 경보 지연 p50 / p95 | 보낸 샘플 |
+| Case | Devices | Collisions (without → with) | Timely detection | Alert latency p50 / p95 | Samples sent |
 |---|---|---|---|---|---|
-| 기준 | 16 | 8 → 0 | 100 % | 58 / 79 ms | 5,744 |
-| 기준 + 적응형 | 16 | 8 → 1 | 100 % | 57 / 78 ms | 5,750 |
-| 설계 부하 | 24 | 8 → 0 | 100 % | 74 / 95 ms | 5,760 |
-| 40대 (모두 조우) | 40 | 13 → 3 | 100 % | 352 / 1,044 ms | 8,979 |
-| 40대 (절반은 떨어져 작업) | 40 | 11 → 2 | 100 % | 459 / 1,642 ms | 13,292 |
-| **같은 조건 + 적응형** | 40 | 11 → 1 | 100 % | **94 / 256 ms** | **11,573 (−13 %)** |
+| Baseline | 16 | 8 → 0 | 100 % | 58 / 79 ms | 5,744 |
+| Baseline + adaptive | 16 | 8 → 1 | 100 % | 57 / 78 ms | 5,750 |
+| Design load | 24 | 8 → 0 | 100 % | 74 / 95 ms | 5,760 |
+| 40 devices (all in encounters) | 40 | 13 → 3 | 100 % | 352 / 1,044 ms | 8,979 |
+| 40 devices (half working apart) | 40 | 11 → 2 | 100 % | 459 / 1,642 ms | 13,292 |
+| **Same + adaptive** | 40 | 11 → 1 | 100 % | **94 / 256 ms** | **11,573 (−13 %)** |
 
-40대 시험은 PC 부하에 민감합니다. 세 번의 측정에서 적응형 없이는 지연 p95 0.46~3.4 s · 충돌 11 → 1~9건, 적응형을 켜면 매번 0.21~1.1 s · 11 → 1건이었습니다 (위 표는 경보 상태 버그 수정 후 최신 측정).
-기본 부하에서는 아무 기기도 느려지지 않아 결과가 같습니다. 그래서 `rate_control.enabled: true`가 기본값입니다.
-MEC 앱의 출력 큐는 우선순위(경보 > 제어 > 위험도 요약)라 경보가 다른 쓰기 뒤에 밀리지 않습니다.
+The 40-device test is sensitive to PC load. Across three runs, without adaptive rate the p95 latency was 0.46–3.4 s and collisions 11 → 1–9; with adaptive rate it was 0.21–1.1 s and 11 → 1 every time (the table shows the latest run, after an alert-state bug fix).
+Under baseline load no device is slowed down, so results are identical. That is why `rate_control.enabled: true` is the default.
+The MEC app's output queue is prioritised (alert > control > risk summary), so alerts never wait behind other writes.
 
-### MEC 앱 재시작 · 지게차 페일세이프
-MEC 앱을 조우 도중 강제 종료 · 재시작해도 1.2~2.2 s 만에 경보가 다시 나갑니다 (`mec_restart` 케이스: 충돌 5 → 0~1, 적시 감지 100 %).
-MEC가 조용할 때 지게차가 할 일은 측정으로 정했습니다 (`sim/failsafe_eval.py`, 고속 폐루프 330개 조우, 같은 조우·같은 망 조건):
+### MEC app restart and forklift failsafe
+Even if the MEC app is killed and restarted mid-encounter, alerts resume within 1.2–2.2 s (`mec_restart` case: collisions 5 → 0–1, timely detection 100 %).
+What the forklift should do while MEC is silent was decided by measurement (`sim/failsafe_eval.py`, 330 high-speed closed-loop encounters, same encounters and same network conditions):
 
-| 침묵 시 동작 (충돌 / 실충돌 180건) | 정상 | 재시작 1.7 s | 재시작 + 경보 손실 20 % | MEC 8 s 다운 |
+| Behaviour when silent (collisions / 180 true collisions) | Normal | Restart 1.7 s | Restart + 20 % alert loss | MEC down 8 s |
 |---|---|---|---|---|
-| v0.6: 마지막 제한 유지, 5 s 뒤 해제 | 19 | 30 | 43 | 93 |
-| 침묵하면 즉시 서행 (0.5 m/s) | 20 | 42 | 60 | 94 |
-| 침묵하면 즉시 정지 | 20 | 34 | 52 | 60 |
-| **유지 → 침묵 2 s 넘으면 정지 (채택)** | **19** | **27** | **42** | **78** |
+| v0.6: hold last restriction, release after 5 s | 19 | 30 | 43 | 93 |
+| Slow down immediately on silence (0.5 m/s) | 20 | 42 | 60 | 94 |
+| Stop immediately on silence | 20 | 34 | 52 | 60 |
+| **Hold → stop if silent for more than 2 s (adopted)** | **19** | **27** | **42** | **78** |
 
-- 짧은 침묵에 서행 · 정지하면 오히려 충돌이 늘었습니다. 감속 계획은 지게차가 교차점을 먼저 지나가거나 그 앞에서 서도록 짜여 있는데,
-  서행하는 지게차는 충돌 구역에 더 오래 머물기 때문입니다. MEC가 계속 없을 때는 정지가 확실히 낫습니다.
-- 정지 기준 1.3~3.0 s를 훑어 2.0 s를 골랐습니다 (`results/failsafe_stop_sweep.json`). 모든 조건에서 v0.6보다 같거나 낫습니다.
-- MEC는 1 s마다 `<ae>/control`에 하트비트를 보냅니다. 경보보다 우선순위가 낮으므로, 하트비트가 도착했다는 것은 밀린 경보가 없다는 뜻이기도 합니다.
-  MEC가 살아 있는데 5 s 동안 갱신이 없으면 "해제" 경보가 유실된 것으로 보고 제한을 풉니다. 침묵만으로는 제한을 절대 풀지 않습니다.
-- 규칙은 `edgeguard/device_policy.py`(기준 구현)와 `firmware/common/device_policy.h`(펌웨어)에 똑같이 들어 있고,
-  무작위 이벤트 열을 양쪽에 넣어 결과가 같은지 테스트로 확인합니다.
+- Slowing or stopping on short silences actually increased collisions. The deceleration plan is built so the forklift either clears the crossing point first or stops before it,
+  and a slowed forklift stays in the conflict zone longer. When MEC stays absent, stopping is clearly better.
+- We swept the stop threshold over 1.3–3.0 s and chose 2.0 s (`results/failsafe_stop_sweep.json`). It is equal to or better than v0.6 under every condition.
+- MEC sends a heartbeat to `<ae>/control` every 1 s. Heartbeats have lower priority than alerts, so a heartbeat arriving also means no alerts are backed up.
+  If MEC is alive but there has been no update for 5 s, the "clear" alert is assumed lost and the restriction is released. Silence alone never releases a restriction.
+- The rules are identical in `edgeguard/device_policy.py` (reference implementation) and `firmware/common/device_policy.h` (firmware),
+  and a test feeds random event sequences to both and checks that the results match.
 
-### 서버 안정화 (v0.9)
+### Server hardening (v0.9)
 
-코드 점검에서 찾은 문제와 조치 (`tests/test_server_hardening.py`):
+Issues found in code review and the fixes (`tests/test_server_hardening.py`):
 
-| 문제 | 영향 | 조치 |
+| Issue | Impact | Fix |
 |---|---|---|
-| **늦게 도착한 샘플이 트랙을 초기화** — 망 지터로 순서가 바뀌면 "기기 재시작"으로 보고 속도를 버림 | 지터 50 ms: 300 s 동안 178번 초기화, 속도 오차 0.26 m/s (지터 80 ms: 420번, 0.45 m/s) | 1 s 이내로 늦은 샘플은 버리고 트랙 유지 → 초기화 0번, 오차 0.08 m/s |
-| **밀린 하트비트가 늦게 배달** — CSE가 느려지면 출력 큐에 쌓였다가 나중에 "MEC 살아 있음"을 알림 | 지게차가 장애를 늦게 알아챔 | 큐 항목에 유효 시간: 경보 1.5 s, 하트비트·위험 요약 1 s 지나면 버림(경보는 1 s마다 갱신됨) |
-| **트랙·쌍 표가 계속 커짐** — 카메라의 `untagged_N`, 떠난 기기 | 장시간 운영 시 메모리·평가 비용 증가 | 30 s 동안 조용한 트랙과 그 쌍을 정리(10 s마다) |
-| **잘못된 알림에 500 응답** — 깨진 JSON·숫자가 아닌 좌표 | CSE가 실패가 반복된 구독을 지울 수 있음 | 항상 2000으로 응답, 잘못된 입력은 세기만 함 |
-| **위험 평가가 이벤트 루프를 막음** | 동시 알림 처리 지연 | 평가를 스레드 풀에서 실행 |
-| **기기 시계가 틀어지면 시간축이 꼬임** (NTP 실패) | 트랙 초기화·지연 계산 오류 | 수신 시각과 5 s 넘게 차이 나면 수신 시각 사용 |
-| **구독이 사라지면 조용히 입력이 끊김** (DB 없이 복구된 CSE 등) | 경보 중단을 아무도 모름 | 60 s마다 기기 컨테이너 구독을 확인·복구 |
-| **상태를 밖에서 볼 수 없음** | 운영 중 장애 파악 어려움 | `/health`에 `degraded`(5 s 넘게 CSE 쓰기 실패)·출력 큐·입력 오류, `/metrics`(Prometheus 형식) 추가 |
+| **Late samples reset the track** — when network jitter reorders samples, it is treated as a "device restart" and velocity is discarded | 50 ms jitter: 178 resets in 300 s, velocity error 0.26 m/s (80 ms jitter: 420 resets, 0.45 m/s) | Drop samples up to 1 s late and keep the track → 0 resets, error 0.08 m/s |
+| **Backed-up heartbeats delivered late** — when the CSE slows down, they pile up in the output queue and later report "MEC alive" | Forklift notices the failure late | Queue items expire: alerts after 1.5 s, heartbeats and risk summaries after 1 s (alerts are refreshed every 1 s) |
+| **Track and pair tables grow forever** — camera `untagged_N` tracks, departed devices | Memory and evaluation cost grow in long-running operation | Prune tracks silent for 30 s and their pairs (every 10 s) |
+| **500 responses to bad notifications** — broken JSON, non-numeric coordinates | The CSE may delete a subscription after repeated failures | Always respond 2000; just count bad input |
+| **Risk evaluation blocks the event loop** | Delays in handling concurrent notifications | Run evaluation in a thread pool |
+| **Device clock drift breaks the timeline** (NTP failure) | Track resets, wrong latency calculation | Use receive time if it differs by more than 5 s |
+| **Input stops silently if a subscription disappears** (e.g. a CSE restored without its DB) | No one notices that alerts have stopped | Check and restore subscriptions on device containers every 60 s |
+| **State not visible from outside** | Hard to diagnose failures in operation | Added `degraded` (CSE writes failing for more than 5 s), output queue and input errors to `/health`, plus `/metrics` (Prometheus format) |
 
-### 클라우드 사본: 저장 후 전송
-`edgeguard/cloud_sync.py`: 클라우드로 보낼 경보 · 위험도 요약을 순서 있는 큐에 쌓고, 실패하면 지수 백오프로 재시도합니다.
-큐가 차면 위험도 요약부터 버리고 경보는 끝까지 남깁니다. 현장 경보는 별도 경로라 영향이 없습니다.
-`python tools/outage_replay_test.py` — 운행 도중 WAN 프록시를 25 s 끊었다가 복구 (`results/outage_replay.json`):
+### Cloud copy: store and forward
+`edgeguard/cloud_sync.py`: alerts and risk summaries bound for the cloud are queued in order and retried with exponential backoff on failure.
+When the queue fills, risk summaries are dropped first and alerts are kept to the end. On-site alerts take a separate path and are unaffected.
+`python tools/outage_replay_test.py` — cuts the WAN proxy for 25 s mid-run, then restores it (`results/outage_replay.json`):
 
-| MEC가 낸 경보 | 단절 중 쌓인 최대 대기열 | 복구 후 클라우드의 경보 | 중복 | 버린 항목 |
+| Alerts issued by MEC | Max queue during outage | Alerts in cloud after recovery | Duplicates | Dropped |
 |---|---|---|---|---|
-| 56 | 43 | **56 (전부)** | 0 | 0 |
+| 56 | 43 | **56 (all)** | 0 | 0 |

@@ -1,4 +1,4 @@
-# Recommended site deployment (see docs/deployment.md "배포 구조")
+# Recommended site deployment (see docs/deployment.md "Deployment architecture")
 #   edge : Mobius IN-CSE on the MEC host  -> real-time loop never leaves the site
 #   cloud: second Mobius IN-CSE           -> risk summaries + alerts copied by the MEC app
 # Use: EDGEGUARD_CONFIG=config/site.yaml
@@ -104,7 +104,7 @@ risk:
   t_caution: 5.0
   m_caution: 1.0
   horizon: 5.0
-  # trained policy (sim/train_policy.py, C=50) - see docs/risk-and-evaluation.md "정책 학습"
+  # trained policy (sim/train_policy.py, C=50) - see docs/risk-and-evaluation.md "Policy learning"
   t_warn: 4.108
   t_danger: 1.669
   m_warn: 0.246
