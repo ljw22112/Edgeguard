@@ -1,6 +1,7 @@
 # Status (updated 2026-10-10, v1.2)
 
 The final presentation is deliberately not being prepared yet; development comes first.
+Contest rubric self-assessment: docs/SCORECARD.md - update it with every change (user request, 2026-10-10).
 README is the short overview; details live in docs/ (risk-and-evaluation, resilience, site-features, deployment, mec-sandbox, adoption).
 
 ## Done in v1.2 (docs/risk-and-evaluation.md "v1.2")

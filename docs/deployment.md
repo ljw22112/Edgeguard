@@ -100,17 +100,28 @@ Mobius 3.x의 CSEBase는 `srv: ["1","2","2a"]`라서 `rvi: "2a"`를 씁니다.
 ## oneM2M 리소스 트리
 
 ```
-/<CSE>/EdgeGuard (AE)
-   worker_01/location   {id, kind:"worker", ts, x, y}
-   forklift_01/motion   {id, kind:"forklift", ts, x, y, speed, heading, yaw_rate}
-   camera_01/detect     (W5: YOLO 결과)
-   risk                 {ts, pairs:[{level, range, los_rate, tcpa, dcpa, ttc, d_min, t_min, speed_scale, reason}]}
-   alert                {event: raise|refresh|clear, level, worker, forklift,
-                         actions:{worker_01:{vibrate}, forklift_01:{beacon, speed_scale}},
-                         reason, src_ts, mec_rx_ts, mec_tx_ts}
+/Mobius (CSEBase)
+└── EdgeGuard (AE)                          originator SEdgeGuard (MEC 앱)
+    ├── worker_01 (CNT) / location (CNT)    작업자 태그 → CIN {id, kind:"worker", ts, x, y}
+    ├── forklift_01 (CNT) / motion (CNT)    지게차 모듈 → CIN {id, kind:"forklift", ts, x, y, speed, heading, yaw_rate, route?}
+    ├── camera_01 (CNT) / detect (CNT)      카메라 노드 → CIN {kind:"camera", ts, persons:[{x, y}, ...]}
+    ├── risk (CNT)                          MEC → 쌍별 위험도 요약 {pairs:[{level, range, tcpa, dcpa, ttc, d_min, speed_scale, reason}]}
+    ├── alert (CNT)                         MEC → 경보 {event, level, worker, forklift, actions, reason, src_ts, mec_tx_ts}
+    │                                        event: raise · refresh · clear (지게차 + 작업자), wait · release · aside (작업자만)
+    ├── control (CNT)                       MEC → 하트비트 1 s + 보고 주기 명령 {ts, hb, rates}
+    ├── nearmiss (CNT, mni 2000)            MEC → 아차사고 기록 {worker, forklift, d_min, x, y, alerted}
+    ├── mec_lease (CNT, mni 20)             MEC 앱 이중화 임대 {id, seq, ts}
+    └── acp_<device> · acp_risk · acp_alert · acp_control · acp_nearmiss (ACP)
 ```
-구독: 각 location/motion/detect → MEC 앱 `/notify`, alert → 디바이스 `/alert`.
-지금은 AE 하나에 모든 컨테이너를 두는 단순 구조입니다. 디바이스별 AE와 ACP 분리는 W5 작업입니다.
+
+| 구독 (SUB) | 대상 | 알림 받는 곳 |
+|---|---|---|
+| `sub_mec` (이중화 시 `sub_mec_mec2` 추가) | 각 `location` · `motion` · `detect` | MEC 앱 `/notify` |
+| `sub_devices`, `sub_hw<N>` | `alert`, `control` | 가상 디바이스 · 실기 단말 |
+
+- 접근제어: 디바이스 컨테이너는 그 디바이스와 MEC 앱만 쓸 수 있고, `risk` · `alert` · `control`은 MEC 앱만 쓰고 디바이스는 읽기만 합니다
+  ([현장 기능](site-features.md) "접근제어"). Mobius에서 위조 쓰기 차단을 확인했습니다.
+- 현재는 AE 하나 아래에 디바이스별 컨테이너를 두고, 디바이스별 ACP로 쓰기 권한을 나눕니다.
 
 ## 펌웨어
 - 작업자 태그: DW1000 양방향 거리 측정 → `firmware/common/uwb_position.h`(선형화 최소제곱 + 가우스-뉴턴, 앵커 1개 NLOS 배제).

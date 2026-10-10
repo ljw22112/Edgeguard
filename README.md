@@ -126,6 +126,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [ETSI MEC 연동 · Sandbox](docs/mec-sandbox.md) | MEC API 연동, 공개 Sandbox 실연동, 자체 설치 Sandbox ([설치 절차](deploy/sandbox-host/README.md)) |
 | [도입 장벽과 대응](docs/adoption.md) | 유사 시스템이 현장에 퍼지지 못한 이유와 대응 |
 | [상호운용성 노트](docs/interop-notes.md) | CSE 간 시험에서 찾은 문제와 해결 |
+| [대회 채점표 자체 평가](docs/SCORECARD.md) | 평가 항목별 현재 점수 · 근거 · 점수를 올릴 작업 (업데이트마다 갱신) |
 
 ## 폴더
 
@@ -167,3 +168,7 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 - 규모 시험은 2코어 PC 한 대에서 부하 생성기까지 함께 돌린 값이라 PC 성능에 따라 달라집니다. 클라우드 경로는 지연 주입으로만 비교했습니다.
 - D2D 키는 사이트 공용 사전 공유 키입니다(장치별 키 · 자동 교체 없음).
 - 이중화는 같은 CSE를 쓰는 MEC 앱 2개까지이며, CSE 자체 장애는 단말 로컬 규칙 · D2D가 맡습니다.
+
+## 라이선스
+
+EdgeGuard 코드는 [MIT](LICENSE) 라이선스입니다. 사용한 오픈소스(Mobius, ACME, AdvantEDGE, YOLOv8 등)의 라이선스는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 정리했습니다.
