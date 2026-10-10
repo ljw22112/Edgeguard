@@ -56,6 +56,9 @@ jobs:
           python tools/handover_demo.py
           python tools/handover_demo.py --failover --out results/handover_failover.json
 
+      - name: AI safety agent over MCP servers (oneM2M IN + zone MN-CSEs, ETSI MEC)
+        run: python tools/agent_demo.py
+
       - name: Federated learning through oneM2M (TR-0084 roles, dropout, late join)
         run: python tools/fl_demo.py
 

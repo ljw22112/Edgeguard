@@ -1,0 +1,347 @@
+{
+ "run1": {
+  "generated_ms": 1791675943567,
+  "status": "complete",
+  "near_misses_new": 25,
+  "near_misses_total": 25,
+  "unalerted": 0,
+  "devices": 4,
+  "hotspots": [
+   {
+    "x": 12.0,
+    "y": 4.0,
+    "count": 9,
+    "advice": "blind_corner",
+    "text": "Blind corner: add the rack to the site map / install a convex mirror",
+    "forklifts": [
+     "forklift_01"
+    ],
+    "people_now": 3,
+    "radio_load_pct": 62
+   },
+   {
+    "x": -7.0,
+    "y": 0.0,
+    "count": 6,
+    "advice": "speed",
+    "text": "Fast forklift traffic: declare a speed-limited zone",
+    "forklifts": [
+     "forklift_02"
+    ],
+    "people_now": 1,
+    "radio_load_pct": 62
+   },
+   {
+    "x": 3.0,
+    "y": -9.0,
+    "count": 4,
+    "advice": "crossing",
+    "text": "Frequent crossing point: separate the walkway or mark a crossing",
+    "forklifts": [
+     "forklift_02"
+    ],
+    "people_now": 0,
+    "radio_load_pct": 62
+   },
+   {
+    "x": -5.0,
+    "y": 3.0,
+    "count": 1,
+    "advice": "crossing",
+    "text": "Frequent crossing point: separate the walkway or mark a crossing",
+    "forklifts": [
+     "forklift_02"
+    ],
+    "people_now": 1,
+    "radio_load_pct": 62
+   },
+   {
+    "x": -18.0,
+    "y": 5.0,
+    "count": 1,
+    "advice": "crossing",
+    "text": "Frequent crossing point: separate the walkway or mark a crossing",
+    "forklifts": [
+     "forklift_02"
+    ],
+    "people_now": 0,
+    "radio_load_pct": 62
+   }
+  ],
+  "forklifts": {
+   "forklift_01": {
+    "server": "mn-b",
+    "zone": "B",
+    "status": "ok",
+    "speed_limit": 1.5,
+    "max_speed": 2.5
+   },
+   "forklift_02": {
+    "server": "in",
+    "zone": null,
+    "status": "ok",
+    "speed_limit": null,
+    "max_speed": 2.5
+   }
+  },
+  "recommendations": [
+   "(12, 4) m, 9 near misses: Blind corner: add the rack to the site map / install a convex mirror - 3 people within 6 m right now",
+   "(-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit - 1 people within 6 m right now",
+   "(3, -9) m, 4 near misses: Frequent crossing point: separate the walkway or mark a crossing",
+   "(-5, 3) m, 1 near misses: Frequent crossing point: separate the walkway or mark a crossing - 1 people within 6 m right now",
+   "(-18, 5) m, 1 near misses: Frequent crossing point: separate the walkway or mark a crossing"
+  ],
+  "validation": {
+   "hotspot counts within total": true,
+   "snapshot unchanged during the run": true,
+   "every forklift in a hotspot resolved": true
+  },
+  "errors": []
+ },
+ "run2": {
+  "generated_ms": 1791675946522,
+  "status": "partial",
+  "near_misses_new": 5,
+  "near_misses_total": 30,
+  "unalerted": 0,
+  "devices": 3,
+  "hotspots": [
+   {
+    "x": 12.0,
+    "y": 4.0,
+    "count": 5,
+    "advice": "blind_corner",
+    "text": "Blind corner: add the rack to the site map / install a convex mirror",
+    "forklifts": [
+     "forklift_01"
+    ],
+    "people_now": 3,
+    "radio_load_pct": 62
+   }
+  ],
+  "forklifts": {
+   "forklift_01": {
+    "server": "mn-b",
+    "zone": "B",
+    "speed_limit": null,
+    "status": "unreachable"
+   }
+  },
+  "recommendations": [
+   "(12, 4) m, 5 near misses: Blind corner: add the rack to the site map / install a convex mirror - 3 people within 6 m right now"
+  ],
+  "validation": {
+   "hotspot counts within total": true,
+   "snapshot unchanged during the run": true,
+   "every forklift in a hotspot resolved": true
+  },
+  "errors": [
+   {
+    "step": "inventory",
+    "server": "mn-b",
+    "error": "tool error",
+    "detail": "Error executing tool find_devices: 1 validation error for find_devicesOutput\nresult\n  Input should be a valid list [type=list_type, input_value={'error': 'ConnectionErro...e+%3B+egs%3Aresource+%\"}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/list_type"
+   },
+   {
+    "step": "context",
+    "device": "forklift_01",
+    "server": "mn-b",
+    "error": "ConnectionError",
+    "detail": "HTTPConnectionPool(host='127.0.0.1', port=8082): Max retries exceeded with url: /cse-mn-b/forklift_01/module/speedLimit (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=8082): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+   }
+  ]
+ },
+ "tools": {
+  "in": [
+   "cse_info",
+   "discover",
+   "retrieve",
+   "latest",
+   "history",
+   "find_devices",
+   "semantic_query",
+   "serving_cse",
+   "write_content"
+  ],
+  "mn-a": [
+   "cse_info",
+   "discover",
+   "retrieve",
+   "latest",
+   "history",
+   "find_devices",
+   "semantic_query",
+   "serving_cse",
+   "write_content"
+  ],
+  "mn-b": [
+   "cse_info",
+   "discover",
+   "retrieve",
+   "latest",
+   "history",
+   "find_devices",
+   "semantic_query",
+   "serving_cse",
+   "write_content"
+  ],
+  "mec": [
+   "ue_location",
+   "all_ue_locations",
+   "cell_load"
+  ]
+ },
+ "tool_calls_run1": [
+  {
+   "server": "in",
+   "tool": "latest",
+   "args": {
+    "container": "EdgeGuardAgent/state"
+   },
+   "ms": 9.0,
+   "error": "oneM2M 404"
+  },
+  {
+   "server": "in",
+   "tool": "find_devices",
+   "args": {},
+   "ms": 25.2,
+   "error": null
+  },
+  {
+   "server": "mn-a",
+   "tool": "find_devices",
+   "args": {},
+   "ms": 16.9,
+   "error": null
+  },
+  {
+   "server": "mn-b",
+   "tool": "find_devices",
+   "args": {},
+   "ms": 136.3,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "history",
+   "args": {
+    "container": "EdgeGuard/nearmiss",
+    "n": 2000
+   },
+   "ms": 59.3,
+   "error": null
+  },
+  {
+   "server": "mec",
+   "tool": "all_ue_locations",
+   "args": {},
+   "ms": 7.8,
+   "error": null
+  },
+  {
+   "server": "mec",
+   "tool": "cell_load",
+   "args": {},
+   "ms": 7.7,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "serving_cse",
+   "args": {
+    "device": "forklift_01"
+   },
+   "ms": 8.2,
+   "error": null
+  },
+  {
+   "server": "mn-b",
+   "tool": "retrieve",
+   "args": {
+    "path": "forklift_01/module/speedLimit"
+   },
+   "ms": 7.2,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "serving_cse",
+   "args": {
+    "device": "forklift_02"
+   },
+   "ms": 5.5,
+   "error": "oneM2M 404"
+  },
+  {
+   "server": "in",
+   "tool": "retrieve",
+   "args": {
+    "path": "forklift_02/module/speedLimit"
+   },
+   "ms": 5.6,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "history",
+   "args": {
+    "container": "EdgeGuard/nearmiss",
+    "n": 2000
+   },
+   "ms": 50.6,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "write_content",
+   "args": {
+    "container": "EdgeGuardAgent/reports",
+    "content": "{\"generated_ms\": 1791675943567, \"status\": \"complete\", \"near_misses_new\": 25, \"near_misses_total\": 25, \"unalerted\": 0, \"devices\": 4, \"hotspots\": [{\"x\": 12.0, \"y\": 4.0, \"count\": 9, \"advice\": \"blind_corner\", \"text\": \"Blind corner: add the rack to the site map / install a convex mirror\", \"forklifts\": [\"forklift_01\"], \"people_now\": 3, \"radio_load_pct\": 62}, {\"x\": -7.0, \"y\": 0.0, \"count\": 6, \"advice\": \"speed\", \"text\": \"Fast forklift traffic: declare a speed-limited zone\", \"forklifts\": [\"forklift_02\"], \"people_now\": 1, \"radio_load_pct\": 62}, {\"x\": 3.0, \"y\": -9.0, \"count\": 4, \"advice\": \"crossing\", \"text\": \"Frequent crossing point: separate the walkway or mark a crossing\", \"forklifts\": [\"forklift_02\"], \"people_now\": 0, \"radio_load_pct\": 62}, {\"x\": -5.0, \"y\": 3.0, \"count\": 1, \"advice\": \"crossing\", \"text\": \"Frequent crossing point: separate the walkway or mark a crossing\", \"forklifts\": [\"forklift_02\"], \"people_now\": 1, \"radio_load_pct\": 62}, {\"x\": -18.0, \"y\": 5.0, \"count\": 1, \"advice\": \"crossing\", \"text\": \"Frequent crossing point: separate the walkway or mark a crossing\", \"forklifts\": [\"forklift_02\"], \"people_now\": 0, \"radio_load_pct\": 62}], \"forklifts\": {\"forklift_01\": {\"server\": \"mn-b\", \"zone\": \"B\", \"status\": \"ok\", \"speed_limit\": 1.5, \"max_speed\": 2.5}, \"forklift_02\": {\"server\": \"in\", \"zone\": null, \"status\": \"ok\", \"speed_limit\": null, \"max_speed\": 2.5}}, \"recommendations\": [\"(12, 4) m, 9 near misses: Blind corner: add the rack to the site map / install a convex mirror - 3 people within 6 m right now\", \"(-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit - 1 people within 6 m right now\", \"(3, -9) m, 4 near misses: Frequent crossing point: separate the walkway or mark a crossing\", \"(-5, 3) m, 1 near misses: Frequent crossing point: separate the walkway or mark a crossing - 1 people within 6 m right now\", \"(-18, 5) m, 1 near misses: Frequent crossing point: separate the walkway or mark a crossing\"], \"validation\": {\"hotspot counts within total\": true, \"snapshot unchanged during the run\": true, \"every forklift in a hotspot resolved\": true}, \"errors\": []}"
+   },
+   "ms": 7.3,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "write_content",
+   "args": {
+    "container": "EdgeGuardAgent/state",
+    "content": "{\"cursor\": \"20261010T234540,982782\", \"runs\": 1, \"last_run_ms\": 1791675943567}"
+   },
+   "ms": 5.9,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "write_content",
+   "args": {
+    "container": "EdgeGuardAgent/runs",
+    "content": "{\"steps\": [{\"step\": \"state\", \"t\": 1791675943.237, \"cursor\": \"\", \"runs\": 0}, {\"step\": \"inventory\", \"t\": 1791675943.416, \"devices\": 4}, {\"step\": \"near misses\", \"t\": 1791675943.475, \"total\": 25, \"new\": 25}, {\"step\": \"hotspots\", \"t\": 1791675943.475, \"n\": 5}, {\"step\": \"context\", \"t\": 1791675943.517, \"forklifts\": 2, \"people\": true, \"rnis\": true}, {\"step\": \"validate\", \"t\": 1791675943.568, \"hotspot counts within total\": true, \"snapshot unchanged during the run\": true, \"every forklift in a hotspot resolved\": true}], \"tool_calls\": 14, \"errors\": 0, \"duration_ms\": 353}"
+   },
+   "ms": 6.6,
+   "error": null
+  },
+  {
+   "server": "in",
+   "tool": "write_content",
+   "args": {
+    "container": "EdgeGuard/nearmiss",
+    "content": "{}"
+   },
+   "ms": 1.3,
+   "error": "forbidden"
+  }
+ ],
+ "checks": {
+  "tools discovered on 4 MCP servers (IN, zone A, zone B, ETSI MEC)": true,
+  "multi-step workflow: every step ran and validated": true,
+  "routing: forklift_01 queried on zone B's server (found through its home record)": true,
+  "blind corner found as the top hotspot (12, 4)": true,
+  "fast-traffic hotspot names the forklift without a speed limit": true,
+  "MEC context: people near the blind corner (Location) and radio load (RNIS)": true,
+  "persistent state: run 2 read only the 5 new near misses": true,
+  "error handling: zone B down -> partial report, error recorded, still saved": true,
+  "guardrail: the agent cannot write outside its own AE": true
+ }
+}
