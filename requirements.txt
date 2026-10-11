@@ -3,4 +3,4 @@ requests>=2.31
 PyYAML>=6.0
 fastapi>=0.110
 uvicorn>=0.29
-mcp>=1.10          # MCP servers and client for the AI safety agent (agent/)
+mcp>=1.10,<2       # MCP servers and client for the AI safety agent (agent/); mcp 2.x renamed FastMCP
