@@ -84,10 +84,12 @@ jobs:
 
       - name: Secured transport (devices on MQTT/TLS, apps on HTTPS, attacks refused)
         run: |
-          sudo apt-get install -y -q mosquitto > /dev/null
-          bash scripts/mqtt.sh start
-          bash scripts/acme.sh start sec
-          python tools/secure_transport_demo.py
+          diag() { echo "::error title=secure $1::$(tail -c 1500 "$2" 2>/dev/null | tr '\n' '|')"; }
+          (sudo apt-get install -y -q mosquitto > /tmp/apt.log 2>&1 || (sudo apt-get update -q && sudo apt-get install -y -q mosquitto)) > /tmp/apt.log 2>&1 \
+            || { diag apt /tmp/apt.log; exit 1; }
+          bash scripts/mqtt.sh start || { diag broker .mqtt/mosquitto.log; exit 1; }
+          bash scripts/acme.sh start sec || { diag acme .acme/sec/acme.out; exit 1; }
+          python tools/secure_transport_demo.py || { diag broker .mqtt/mosquitto.log; diag acme .acme/sec/acme.out; exit 1; }
 
       - name: SIL logs on failure
         if: failure()
