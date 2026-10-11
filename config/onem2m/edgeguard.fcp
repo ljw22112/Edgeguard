@@ -117,5 +117,104 @@
             { "sname" : "mdlVr", "lname" : "modelVersion", "type" : "integer", "car" : "01" },
             { "sname" : "prtSt", "lname" : "participantStatus", "type" : "string", "car" : "01" }
         ]
+    },
+    // ---- ETSI MEC data as oneM2M resources, written by the MEC-IPE (docs/mobility.md) ----
+
+    // ModuleClass: mecUserLocation (MEC 013 UserInfo of one UE)
+    {
+        "type"      : "egs:ueLoc",
+        "lname"     : "mecUserLocation",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.mecUserLocation",
+        "attributes": [
+            { "sname" : "lat",   "lname" : "latitude", "type" : "float", "car" : "1" },
+            { "sname" : "lon",   "lname" : "longitude", "type" : "float", "car" : "1" },
+            { "sname" : "accy",  "lname" : "accuracy", "type" : "float", "car" : "01" },
+            { "sname" : "zonId", "lname" : "zoneId", "type" : "string", "car" : "01" },
+            { "sname" : "apId",  "lname" : "accessPointId", "type" : "string", "car" : "01" },
+            { "sname" : "locTs", "lname" : "locationTime", "type" : "integer", "car" : "01" }
+        ]
+    },
+
+    // ModuleClass: mecRadioLink (MEC 012 MeasRepUe: serving and strongest neighbour cell)
+    {
+        "type"      : "egs:rdLnk",
+        "lname"     : "mecRadioLink",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.mecRadioLink",
+        "attributes": [
+            { "sname" : "srvCl", "lname" : "servingCell", "type" : "string", "car" : "1" },
+            { "sname" : "rsrp",  "lname" : "rsrp", "type" : "integer", "car" : "01" },
+            { "sname" : "rsrq",  "lname" : "rsrq", "type" : "integer", "car" : "01" },
+            { "sname" : "nbCl",  "lname" : "neighbourCell", "type" : "string", "car" : "01" },
+            { "sname" : "nbRp",  "lname" : "neighbourRsrp", "type" : "integer", "car" : "01" },
+            { "sname" : "msTs",  "lname" : "measurementTime", "type" : "integer", "car" : "01" }
+        ]
+    },
+
+    // DeviceClass: mecUserEquipment (a UE as the MEC platform sees it)
+    {
+        "type"      : "egs:mecUe",
+        "lname"     : "mecUserEquipment",
+        "sdttype"   : "device",
+        "cnd"       : "org.edgeguard.safety.device.mecUserEquipment",
+        "attributes": [
+            { "sname" : "addr",  "lname" : "address", "type" : "string", "car" : "1" }
+        ],
+        "children"  : [ "egs:ueLoc", "egs:rdLnk" ]
+    },
+
+    // ---- MEC application orchestration across hosts (docs/orchestration.md) ----
+
+    // ModuleClass: mecHost (a MEC host offering capacity for EdgeGuard applications)
+    {
+        "type"      : "egs:mecHs",
+        "lname"     : "mecHost",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.mecHost",
+        "attributes": [
+            { "sname" : "hstNm", "lname" : "hostName", "type" : "string", "car" : "1" },
+            { "sname" : "zone",  "lname" : "zone", "type" : "string", "car" : "01" },
+            { "sname" : "cpuFr", "lname" : "cpuFree", "type" : "float", "car" : "01" },
+            { "sname" : "memFr", "lname" : "memoryFreeMB", "type" : "integer", "car" : "01" },
+            { "sname" : "rttMs", "lname" : "rttToSiteMs", "type" : "float", "car" : "01" },
+            { "sname" : "lcmUr", "lname" : "lifecycleApiUrl", "type" : "string", "car" : "1" },
+            { "sname" : "hstSt", "lname" : "hostStatus", "type" : "string", "car" : "01" }
+        ]
+    },
+
+    // ModuleClass: deploymentIntent (what should run where, and its current placement)
+    {
+        "type"      : "egs:depIn",
+        "lname"     : "deploymentIntent",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.deploymentIntent",
+        "attributes": [
+            { "sname" : "appNm", "lname" : "appName", "type" : "string", "car" : "1" },
+            { "sname" : "appVr", "lname" : "appVersion", "type" : "string", "car" : "01" },
+            { "sname" : "zone",  "lname" : "zone", "type" : "string", "car" : "01" },
+            { "sname" : "cpuMn", "lname" : "cpuRequired", "type" : "float", "car" : "01" },
+            { "sname" : "memMn", "lname" : "memoryRequiredMB", "type" : "integer", "car" : "01" },
+            { "sname" : "maxLt", "lname" : "maxLatencyMs", "type" : "float", "car" : "01" },
+            { "sname" : "intSt", "lname" : "intentStatus", "type" : "string", "car" : "01" },
+            { "sname" : "plcmt", "lname" : "placement", "type" : "string", "car" : "01" },
+            { "sname" : "appAe", "lname" : "appEntity", "type" : "string", "car" : "01" }
+        ]
+    },
+
+    // ModuleClass: modelDeployment (a federated model delivered to a MEC app: canary, active, rolled back)
+    {
+        "type"      : "egs:mdlDp",
+        "lname"     : "modelDeployment",
+        "sdttype"   : "moduleclass",
+        "cnd"       : "org.edgeguard.safety.moduleclass.modelDeployment",
+        "attributes": [
+            { "sname" : "mdlVr", "lname" : "modelVersion", "type" : "integer", "car" : "01" },
+            { "sname" : "prvVr", "lname" : "previousVersion", "type" : "integer", "car" : "01" },
+            { "sname" : "dplSt", "lname" : "deploymentStatus", "type" : "string", "car" : "01" },
+            { "sname" : "cnyEr", "lname" : "canaryError", "type" : "float", "car" : "01" },
+            { "sname" : "bslEr", "lname" : "baselineError", "type" : "float", "car" : "01" },
+            { "sname" : "lvErr", "lname" : "liveError", "type" : "float", "car" : "01" }
+        ]
     }
 ]

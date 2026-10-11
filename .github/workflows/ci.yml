@@ -56,6 +56,12 @@ jobs:
           python tools/handover_demo.py
           python tools/handover_demo.py --failover --out results/handover_failover.json
 
+      - name: Mobility via ETSI MEC (zone events + RNIS into oneM2M, network-triggered handover)
+        run: |
+          scripts/acme.sh start mn-a mn-b
+          sleep 3
+          python tools/mobility_demo.py
+
       - name: AI safety agent over MCP servers (oneM2M IN + zone MN-CSEs, ETSI MEC)
         run: |
           bash scripts/mec.sh stop             # the MEC app of the data-model step would onboard the demo's devices

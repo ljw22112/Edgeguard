@@ -1,0 +1,113 @@
+version: 1.8.0
+name: edgeguard-two-zones
+description: 'EdgeGuard mobility: two warehouse zones, one 5G small cell (POA) and
+  one MN-CSE per zone; forklift_01 drives A -> B -> A at 4 m/s. Minimal AdvantEDGE
+  1.8.0 layout (only what the GIS engine uses).'
+deployment:
+  domains:
+  - name: warehouse
+    type: OPERATOR-CELLULAR
+    zones:
+    - name: zoneA
+      type: ZONE
+      networkLocations:
+      - name: poa-a
+        type: POA-5G
+        poa5GConfig:
+          cellId: cellA
+        geoData:
+          location:
+            type: Point
+            coordinates:
+            - 127.0278265
+            - 37.4980347
+          radius: 45
+        physicalLocations:
+        - name: forklift_01
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates:
+              - 127.0276566
+              - 37.4979898
+            path:
+              type: LineString
+              coordinates:
+              - - 127.0276566
+                - 37.4979898
+              - - 127.0284492
+                - 37.4979898
+            velocity: 4.0
+            eopMode: REVERSE
+          meta:
+            edgeguard.kind: forklift
+        - name: worker_01
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates:
+              - 127.0279397
+              - 37.4980078
+          meta:
+            edgeguard.kind: worker
+    - name: zoneB
+      type: ZONE
+      networkLocations:
+      - name: poa-b
+        type: POA-5G
+        poa5GConfig:
+          cellId: cellB
+        geoData:
+          location:
+            type: Point
+            coordinates:
+            - 127.0282794
+            - 37.4980347
+          radius: 45
+        physicalLocations:
+        - name: worker_02
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates:
+              - 127.0282227
+              - 37.4980797
+          meta:
+            edgeguard.kind: worker
+        - name: worker_03
+          type: UE
+          geoData:
+            location:
+              type: Point
+              coordinates:
+              - 127.028336
+              - 37.4979359
+            path:
+              type: LineString
+              coordinates:
+              - - 127.028336
+                - 37.4979359
+              - - 127.028336
+                - 37.4981336
+            velocity: 1.0
+            eopMode: REVERSE
+          meta:
+            edgeguard.kind: worker
+edgeguard:
+  frame:
+    lon0: 127.0276
+    lat0: 37.4979
+  zones_xy:
+    zoneA:
+    - 0
+    - 0
+    - 40
+    - 30
+    zoneB:
+    - 40
+    - 0
+    - 80
+    - 30

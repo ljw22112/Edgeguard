@@ -128,3 +128,31 @@ class ScenarioPlayer:
         return {c: {"dl_gbr_prb_usage_cell": 10 + 5 * k, "ul_gbr_prb_usage_cell": 5 + 3 * k,
                     "dl_nongbr_prb_usage_cell": 10 + 5 * k, "ul_nongbr_prb_usage_cell": 5 + 3 * k}
                 for c, k in n.items()}
+
+    def radio(self, t=None):
+        """address -> {cellId: RSRP dBm} for every POA (log-distance path loss, deterministic): what a UE
+        measures from its serving and neighbour cells (MEC 012 MeasRepUe)."""
+        tq = self._now(t)
+        out = {}
+        for name, u in self.ues.items():
+            x, y = u.pos(tq)
+            out[name] = {p["cell"]: rsrp_dbm(math.hypot(x - p["xy"][0], y - p["xy"][1])) for p in self.poas}
+        return out
+
+
+def rsrp_dbm(d):
+    """Indoor log-distance path loss for a small cell: -44 dBm at 1 m, exponent 3.5."""
+    return round(-44.0 - 35.0 * math.log10(max(d, 1.0)), 1)
+
+
+def rsrp_index(dbm):
+    """3GPP TS 36.133 reporting range: 0 (< -140 dBm) .. 97 (>= -44 dBm)."""
+    return max(0, min(97, int(math.floor(dbm + 141))))
+
+
+def rsrq_index(serving_dbm, others_dbm):
+    """RSRQ ~ serving / (serving + interference), reporting range 0 (-19.5 dB) .. 34 (-3 dB)."""
+    lin = lambda v: 10 ** (v / 10)                                       # noqa: E731
+    q = 10 * math.log10(lin(serving_dbm) / (lin(serving_dbm) + sum(lin(o) for o in others_dbm) + 1e-12)) - 3.0
+    return max(0, min(34, int(round((q + 19.5) * 2))))
+

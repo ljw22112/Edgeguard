@@ -74,7 +74,7 @@ class HandoverClient:
     """Device-side oneM2M presence that follows the device across zone MN-CSEs."""
 
     def __init__(self, cfg, dev, kind, origin, zones, home=None, readers=(), hysteresis=1.0,
-                 fail_limit=3, grace_s=0.5, rvi="3", timeout=1.0, log=print):
+                 fail_limit=3, grace_s=0.5, rvi="3", timeout=1.0, log=print, trigger="location"):
         self.cfg, self.dev, self.kind, self.origin = cfg, dev, kind, origin
         self.zones = {z.name: z for z in zones}
         self.home = home                      # OneM2MClient on the IN-CSE acting as the device
@@ -88,6 +88,9 @@ class HandoverClient:
         self.backoff: dict = {}               # zone -> no new attempt before (after a failed preparation)
         self.sent: list[tuple] = []           # (sample ts, zone, accepted)
         self.lock = threading.Lock()
+        # "location": the device decides from its own position; "network": the MEC platform decides
+        # (a MEC 013 zone event delivered through the MEC-IPE calls network_trigger, docs/mobility.md)
+        self.trigger = trigger
 
     # --- helpers -------------------------------------------------------------
     def client(self, zone):
@@ -130,7 +133,7 @@ class HandoverClient:
             p = self.pending
             if p is not None and p["ready"].is_set():          # switch: the target is prepared
                 self._switch(p)
-            elif p is None and self.serving is not None:
+            elif p is None and self.serving is not None and self.trigger == "location":
                 cur = self.zones[self.serving]
                 if not cur.contains(x, y, margin=-self.hyst):  # left the serving zone by > hysteresis
                     tgt = next((z.name for z in self.zones.values()
@@ -150,6 +153,16 @@ class HandoverClient:
             if self.failures >= self.fail_limit and self.pending is None:
                 self._failover(x, y, str(e))
             return None
+
+    def network_trigger(self, target, reason="network"):
+        """Network-side trigger: the MEC platform saw the UE attach to `target`'s access point.  Prepares
+        in the background; the next publish() switches.  Returns True if a preparation started."""
+        with self.lock:
+            if (self.pending is not None or target == self.serving or target not in self.zones
+                    or time.time() < self.backoff.get(target, 0.0)):
+                return False
+            self._prepare(target, reason)
+            return True
 
     def _failover(self, x, y, why):
         """Availability trigger: the serving CSE stopped answering - nearest zone whose CSE answers.
