@@ -74,6 +74,10 @@ Adding UWB boards (DW1000) makes positioning physical too, with the same firmwar
 
 ## Wiring
 
+![Wiring of the worker tag and the forklift module](img/wiring.png)
+
+The diagram is drawn from the firmware pin constants by `tools/draw_wiring.py`.
+
 | Board | Pin | Connection |
 |---|---|---|
 | Tag | GPIO 25 (`MOTOR_PIN`) | 1 kΩ → transistor base; vibration motor on the collector (other side to 3.3 V); diode across the motor |
