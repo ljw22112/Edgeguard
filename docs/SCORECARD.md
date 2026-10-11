@@ -13,7 +13,7 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 2 | Communication protocols | **4** | 단말 → CSE는 **oneM2M MQTT 바인딩 over TLS**, 앱 ↔ CSE는 **HTTPS**(알림 포함), 단말 간 ESP-NOW(망 없이 동작하는 이유 설명), 에이전트는 MCP ([보안 전송](ko/transport-security.md)) | ESP32 펌웨어도 MQTT로 (→ 5) |
 | 3 | Innovative scenarios | **5** | 여러 단말 → CSE → 여러 앱(MEC 앱 · AI 에이전트 · 연합학습 · 오케스트레이터 · 대시보드). 앱 로직 대신 oneM2M 기능(그룹 팬아웃 · 구독 · 탐색 · 시맨틱 · announcement)으로 경보 배포 · 등록 · 이동 · 스웜 조정 | — |
 | 4 | Quality of Article | 0 → **4 (게시 시)** | [hackster.io 기사 초안](hackster-article.md) 완료: 개요 · H/W · 리소스 설계 · 프로토콜 · 그림 · 측정값 · oneM2M 장점 · ESTIMED 7절 | 팀이 hackster.io에 게시 (영상 링크 포함) |
-| 5 | Quality of Video | **3** | 최종 영상 `results/edgeguard_final.mp4`(2분 34초, 자막): 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · TR-0077 · 결과 | 내레이션 녹음 + YouTube 게시, 실물 보드 장면 (→ 4) |
+| 5 | Quality of Video | **3** | 최종 영상 [YouTube 게시](https://youtu.be/P2JI5ZG6PIg) · `results/edgeguard_final.mp4`(2분 34초, 자막): 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · TR-0077 · 결과 | 내레이션 녹음, 실물 보드 장면 (→ 4) |
 | 6 | Quality of Github | **4** | 영문 README · 빌드/실행 · CI가 핵심 데모 12종(SIL · SDT · 핸드오버 · 모빌리티 · 에이전트 · 연합학습 · 모델 전달 · 스웜 · 오케스트레이션 · 구역 방송 · 보안 전송 · 스택/ACL/HA)을 자동 검증. **공개 저장소**(10/11), 최종 영상 · 내레이션 대본 포함 | 기사 링크 추가 (→ 5) |
 | 7 | Promotion of oneM2M | 3 | README 'Why oneM2M' · 기능 표 · 표준 링크, ESTIMED/TR-0077 매핑 문서, 기사 초안이 oneM2M 장점 정리 | 기사 · 영상 게시 (→ 4~5) |
 | 8 | Judge points | 0~1 | 공개 포럼 활동 미확인 | ACME 이슈(Content-Type, sqi=false 시맨틱 탐색 거부, MQTT 송신 요청 오류) 공개 보고 (팀) |
@@ -50,3 +50,4 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 2026-10-11 | 약 47~49 / 85 | 0점 항목 해결: SDT flexContainer · SAREF 데이터 모델(11: 0→5), CSE 핸드오버(12: 0→5), 연합학습(14: 0→4), MCP 에이전트(17: 0→4~5), hackster 기사 초안(4: 게시 시 4), announcement 사용(1: 2→4), 시나리오(3: 3→4) |
 | 2026-10-11 | 약 56~59 / 85 | ESTIMED/TR-0077 7절 반영: 구역 방송(group · pollingChannel, 1: 4→5), MQTT/TLS · HTTPS(2: 2→4, 10: 3→4), 스웜 · 오케스트레이션 시나리오(3: 4→5), 다중 호스트 오케스트레이션(13: 3→4), 모델 전달(14: 4→4~5), MEC 구역 이벤트 · 네트워크 트리거 핸드오버(15: 2→4), 양방향 MEC · RNIS SDT(16: 3→4), 모빌리티 지도 · 매핑 문서 |
 | 2026-10-11 | 약 58~61 / 85 | 저장소 공개(6: 3→4), 최종 영상 · 자막 · 내레이션 대본(5: 2→3), hackster · 포럼 게시 준비([publish-checklist.md](publish-checklist.md)) |
+| 2026-10-11 | 약 58~61 / 85 | 최종 영상 YouTube 게시(https://youtu.be/P2JI5ZG6PIg); README · 기사 · 체크리스트에 링크 반영 |

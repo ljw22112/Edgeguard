@@ -12,7 +12,7 @@
 2. (선택) Packages → `edgeguard-mobius`, `edgeguard-mec` → Package settings → **Change visibility → Public**: `docker compose`가 로그인 없이 이미지를 받을 수 있게 됩니다.
 3. 저장소 첫 화면 오른쪽 About 톱니바퀴: Description에 `Worker–forklift collision prediction on oneM2M + ETSI MEC (2026 oneM2M Hackathon)`, Topics에 `onem2m`, `etsi-mec`, `iot`, `edge-computing`, `safety`, `acme-cse`, `mobius` 입력
 
-## 2. 영상 업로드 · 루브릭 5
+## 2. 영상 업로드 · 루브릭 5: 완료 (10/11, https://youtu.be/P2JI5ZG6PIg)
 
 - 파일: `results/edgeguard_final.mp4`(2분 34초, 자막 `results/edgeguard_final.srt`)
 - 내레이션 녹음(선택): [video-script.md](video-script.md) 대본을 읽어 녹음한 뒤 문서의 ffmpeg 명령으로 합칩니다.

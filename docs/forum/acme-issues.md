@@ -67,4 +67,4 @@ It is `acmecse/plugins/bindings/MQTTClient.py`, line 600. The module no longer i
 > - **Federated learning:** TR-0084 roles as resources, plus model delivery with canary and rollback
 > - **Swarm:** forklift coordination through a `<group>`
 >
-> It also uses SDT flexContainers with SAREF semantics, `<group>` fan-out and `<pollingChannel>`, and the MQTT binding over TLS. Code: https://github.com/ljw22112/Edgeguard. Article: <hackster link>. Feedback on the resource design is very welcome!
+> It also uses SDT flexContainers with SAREF semantics, `<group>` fan-out and `<pollingChannel>`, and the MQTT binding over TLS. Code: https://github.com/ljw22112/Edgeguard. Video: https://youtu.be/P2JI5ZG6PIg · Article: <hackster link>. Feedback on the resource design is very welcome!

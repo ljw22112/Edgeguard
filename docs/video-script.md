@@ -2,7 +2,7 @@
 
 [← README](../README.md)
 
-`results/edgeguard_final.mp4` lasts 2 min 34 s, at 1920×1080. It has captions (`results/edgeguard_final.srt`) and **no audio track**, so the team can record the narration below over it. Rebuild with `python tools/mobility_map.py && python tools/make_final_video.py`. The cards and the timeline are in `tools/make_final_video.py`.
+On YouTube: https://youtu.be/P2JI5ZG6PIg. `results/edgeguard_final.mp4` lasts 2 min 34 s, at 1920×1080. It has captions (`results/edgeguard_final.srt`) and **no audio track**, so the team can record the narration below over it. Rebuild with `python tools/mobility_map.py && python tools/make_final_video.py`. The cards and the timeline are in `tools/make_final_video.py`.
 
 | Time | Picture | Narration (≈ 150 words per minute) |
 |---|---|---|
