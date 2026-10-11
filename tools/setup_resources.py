@@ -99,6 +99,11 @@ def create_twin(dc, cfg, p, dev, kind):
     zone = ((cfg.get("site") or {}).get("zones") or {}).get(dev) if isinstance(cfg.get("site"), dict) else None
     ipe = (cfg.get("mec_ipe") or {}).get("origin", "SMecIpe")
     sdt.build_twin(dc, cfg, dev, kind, [cfg["cse"]["origin"], ipe], zone=zone)
+    zb = (cfg.get("onem2m") or {}).get("zone_broadcast") or {}
+    if kind == "worker" and zb.get("zones"):
+        # alerts inbox the MEC app's zone <group> fans out to; polling channel for tags behind NAT
+        from edgeguard.zones import setup_tag_inbox
+        dc.with_retry(setup_tag_inbox, dc, p["device_ae"][dev], cfg["cse"]["origin"], zb.get("tag_polling", True))
 
 
 def device_acp(dc, cfg, p, dev, path, tp="m2m:cnt"):

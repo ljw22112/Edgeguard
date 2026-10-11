@@ -8,3 +8,8 @@ cse:
 # devices publish into flexContainer twins, labelled and described with SAREF (docs/data-model.md)
 onem2m:
   data_model: sdt
+  # one oneM2M <group> per zone; a DANGER alert reaches every tag in the forklift's zone with one
+  # request (group fan-out), tags behind NAT receive it through a pollingChannel (edgeguard/zones.py)
+  zone_broadcast:
+    zones: {west: [-200, -200, 0, 200], east: [0, -200, 200, 200]}
+    tag_polling: true

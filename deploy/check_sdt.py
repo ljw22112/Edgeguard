@@ -83,6 +83,22 @@ def main():
         except OneM2MError as e:
             check("another device cannot update a twin (ACP)", e.status == 403, f"HTTP {e.status}")
 
+    if (cfg.get("onem2m") or {}).get("zone_broadcast"):
+        workers = [d for d, k in kinds.items() if k == "worker"]
+        inbox = all(c.request("GET", f"{p['device_ae'][w]}/alerts") for w in workers)
+        t0, members = time.time(), {}
+        while time.time() - t0 < 15:
+            st = json.load(urllib.request.urlopen(f"{a.mec}/state", timeout=3))
+            members = (st["m2m"].get("zones") or {}).get("members") or {}
+            tracked = [w for w in workers if w in st.get("tracks", {})]
+            if tracked and all(any(w in m for m in members.values()) for w in tracked):
+                break
+            time.sleep(1.0)
+        grp = {z: c.request("GET", f"{p['ae']}/zone_{z}")["m2m:grp"].get("cnm") for z in members}
+        check("zone groups: every tracked tag is a member of its zone's <group> (alerts inbox)",
+              inbox and members and all(any(w in m for m in members.values()) for w in tracked)
+              and sum(grp.values()) == sum(len(m) for m in members.values()), f"{members}")
+
     if a.onboard:
         dev = "worker_99"
         dc = OneM2MClient(cfg["cse"]["base_url"], cfg["cse"]["cse_rn"], "SWorker99", str(cfg["cse"].get("rvi", "3")))

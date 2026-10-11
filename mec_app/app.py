@@ -463,6 +463,8 @@ def evaluate_and_alert(src_ts, rx, only=None):
                 state["worker_cues"][ev] += 1
                 continue
             to_cloud("alert", alert)
+            if r.level >= 3:
+                zone_alert(r.forklift, LEVELS[r.level], r.reason)
             state["alerts_sent"] += 1
             state["alert_log"].appendleft({k: alert[k] for k in
                                            ("event", "level", "worker", "forklift", "reason",
@@ -584,6 +586,82 @@ def _start_ha():
         lease = Lease(cl, PATHS["mec_lease"], INSTANCE, HA.get("lease_s", 0.6), HA.get("renew_s", 0.2),
                       on_change=lambda leader: leader and hb_now.set()).start()
         log.info("HA enabled: instance %s", INSTANCE)
+
+
+# --- zone broadcast: oneM2M <group> per zone, fan-out to the tags' alerts inboxes (edgeguard/zones.py) ---
+ZB = dict((CFG.get("onem2m") or {}).get("zone_broadcast") or {})
+state["zones"] = {"enabled": bool(ZB.get("zones")) and PATHS.get("data_model") == "sdt", "members": {},
+                  "broadcasts": 0, "delivered": 0, "errors": 0}
+zone_q: "queue.Queue[tuple[str, dict]]" = queue.Queue(maxsize=100)
+_zone_last: dict = {}
+
+
+def zone_alert(forklift: str, level: str, reason: str):
+    """Called on a DANGER event: every tag in the forklift's zone is told at once (one request);
+    at most one message per forklift every ZB.cooldown_s."""
+    if not state["zones"]["enabled"]:
+        return
+    now = time.time()
+    if now - _zone_last.get(forklift, 0) < ZB.get("cooldown_s", 3.0):
+        return
+    _zone_last[forklift] = now
+    try:
+        zone_q.put_nowait((forklift, {"kind": "forklift_danger", "forklift": forklift, "level": level,
+                                      "reason": reason, "ts": now_ms()}))
+    except queue.Full:
+        pass
+
+
+def zone_loop():
+    from edgeguard.zones import ZoneGroups
+    cl = config.client(CFG)
+    zg = ZoneGroups(cl, PATHS["ae"], {z: tuple(b) for z, b in ZB["zones"].items()})
+    checked, last, last_setup, ready = set(), 0.0, -1e9, False
+    while True:
+        try:
+            forklift, msg = zone_q.get(timeout=1.0)
+        except queue.Empty:
+            forklift, msg = None, None
+        try:
+            # (re)create the groups at start, after an error, and every 10 s (the AE may have been reset)
+            if not ready or time.monotonic() - last_setup >= 10.0:
+                last_setup = time.monotonic()
+                zg.setup()
+                ready = True
+            if time.monotonic() - last >= ZB.get("update_s", 1.0):
+                last = time.monotonic()
+                for w, path in list(PATHS["workers"].items()):        # tags that set up an alerts inbox
+                    if w not in checked:
+                        try:
+                            cl.request("GET", f"{PATHS['device_ae'].get(w, w)}/alerts")
+                            zg.register_tag(w, f"{PATHS['device_ae'].get(w, w)}/alerts")
+                            checked.add(w)
+                        except Exception:
+                            pass
+                with lock:
+                    pos = {k: tuple(t.pos[:2]) for k, t in engine.tracks.items()
+                           if t.kind == "worker" and t.x is not None}
+                zg.update(pos)
+                state["zones"]["members"] = {z: sorted(m) for z, m in zg.members.items()}
+            if forklift:
+                with lock:
+                    t = engine.tracks.get(forklift)
+                    xy = tuple(t.pos[:2]) if t is not None and t.x is not None else None
+                z = zg.zone_of(*xy) if xy else None
+                if z:
+                    msg["zone"] = z
+                    state["zones"]["delivered"] += zg.broadcast(z, msg)
+                    state["zones"]["broadcasts"] += 1
+        except Exception as e:
+            state["zones"]["errors"] += 1
+            ready = False
+            log.debug("zone broadcast: %s", e)
+
+
+@app.on_event("startup")
+def _start_zones():
+    if state["zones"]["enabled"]:
+        threading.Thread(target=zone_loop, daemon=True).start()
 
 
 @app.on_event("startup")
@@ -713,7 +791,8 @@ def snapshot():
                "mec": {"ae": PATHS["ae"], "out": {k: state["m2m"]["out"].get(PATHS[k], 0)
                                                   for k in ("alert", "control", "risk", "nearmiss")}},
                "cse": CFG["cse"]["cse_rn"], "data_model": PATHS.get("data_model", "cin"),
-               "onboarded": [o["device"] for o in state["onboarded"]]}
+               "onboarded": [o["device"] for o in state["onboarded"]],
+               "zones": {k: state["zones"][k] for k in ("enabled", "members", "broadcasts", "delivered")}}
         acks = {d: a for d, a in state["acks"].items() if time.time() - a["rx"] < 10}
         return {"tracks": tracks, "pairs": pairs, "alerts": list(state["alert_log"]), "cues": cues,
                 "m2m": m2m, "acks": acks,

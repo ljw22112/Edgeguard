@@ -1,0 +1,64 @@
+{
+ "zones": {
+  "A": [
+   0,
+   0,
+   20,
+   20
+  ],
+  "B": [
+   20,
+   0,
+   40,
+   20
+  ]
+ },
+ "first": {
+  "accepted": 3,
+  "delivered_ms": {
+   "zt2": 17.3,
+   "zt4": 24.0,
+   "zt1": 26.0
+  }
+ },
+ "after_move": {
+  "accepted": 2,
+  "delivered_ms": {
+   "zt2": 11.1,
+   "zt3": 11.8
+  }
+ },
+ "groups": {
+  "A": [
+   "zt1",
+   "zt4"
+  ],
+  "B": [
+   "zt2",
+   "zt3"
+  ]
+ },
+ "latency_ms": {
+  "n": 60,
+  "p50": 19.2,
+  "p95": 25.5,
+  "max": 28.6
+ },
+ "requests_per_zone_message": 1,
+ "acl": {
+  "another originator cannot write a tag's alerts": true,
+  "the MEC app cannot subscribe to a tag's alerts (contentInstances only)": true,
+  "the MEC app cannot read a tag's polling channel": true
+ },
+ "checks": {
+  "tags are not reachable from outside (rr=false), alerts arrive by polling": true,
+  "one request to zone A reached exactly its 3 tags": true,
+  "membership follows movement: zt2 moved from group A to group B": true,
+  "after the move, zone B message reached zt2 and zt3 only": true,
+  "all 60 latency-run deliveries arrived": true,
+  "median fan-out + polling delivery under 50 ms": true,
+  "ACL: another originator cannot write a tag's alerts": true,
+  "ACL: the MEC app cannot subscribe to a tag's alerts (contentInstances only)": true,
+  "ACL: the MEC app cannot read a tag's polling channel": true
+ }
+}
