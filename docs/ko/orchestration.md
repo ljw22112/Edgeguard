@@ -50,7 +50,7 @@ python tools/orchestration_demo.py      # 11개 검사 -> results/orchestration.
 
 **CI 측정:**
 - 의도 → 실행까지 ≈ 0.75 s
-- 장애 감지 ≈ 2.0–2.4 s
+- 장애 감지 ≈ 1.9–2.4 s
 - host-a2에서 재실행까지 ≈ 2.3–2.7 s
 - 새 인스턴스가 지게차의 실시간 데이터를 처리
 - 이전 인스턴스는 더 이상 읽지 못함(403)

@@ -50,7 +50,7 @@ python tools/orchestration_demo.py      # 11 checks -> results/orchestration.jso
 
 **Measured in CI:**
 - intent → running in ≈ 0.75 s
-- host crash → detected after ≈ 2.0–2.4 s
+- host crash → detected after ≈ 1.9–2.4 s
 - running again on host-a2 after ≈ 2.3–2.7 s
 - the new instance processes the forklift's live data
 - the old instance can no longer read it (403)

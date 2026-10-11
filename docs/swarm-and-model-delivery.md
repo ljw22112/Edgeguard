@@ -56,4 +56,4 @@ python tools/model_delivery_demo.py      # 8 checks -> results/model_delivery.js
 | v3 specialised on Busan | 0.400 m vs v1 0.468 m | **activated** |
 | layout change (narrow aisles, frequent stops) | live: v3 0.62 m vs shadow v1 0.47 m | **rolled back to v1** |
 
-Delivery from the coordinator's publish to the site's decision takes ≈ 15–30 ms. The demo trains its models directly; [`fl_demo.py`](../tools/fl_demo.py) runs the federated rounds.
+Delivery from the coordinator's publish to the site's decision takes ≈ 15–40 ms. The demo trains its models directly; [`fl_demo.py`](../tools/fl_demo.py) runs the federated rounds.
