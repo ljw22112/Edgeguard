@@ -11,7 +11,7 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ## At a glance
 
-| | v1.0 (vibration alert) | **Now (v1.4)** |
+| | v1.0 (vibration alert) | **Now (v1.5)** |
 |---|---|---|
 | Collisions, many-to-many site (8 workers · 4 forklifts, 750 conflict pairs) | 100 | **4 (−96 %)** |
 | Forklift throughput (many-to-many) | 61.7 % | **86.0 %** |
@@ -64,13 +64,14 @@ If the network or the server fails, the devices talk to each other directly (D2D
 | semanticDescriptor (SAREF) + semantic query | "forklifts that control their drive speed in zone A" → oneM2M paths | in use |
 | accessControlObjectDetails (chty) | the MEC app may create subscriptions only in a device's twin | in use |
 | announcement · CSE handover | device AE moves between zone MN-CSEs with state, ACP and subscriptions; AEAnnc at the IN-CSE ([handover](docs/handover.md)) | in use |
-| group (fanOutPoint) · pollingChannel | one alert to every tag in a zone · tags behind NAT | planned, Oct 31 |
+| group (fanOutPoint) · pollingChannel | one DANGER alert to every tag in a zone; tags behind NAT poll their channel ([zone broadcast](docs/transport-security.md)) · swarm context read in one request | in use |
+| MQTT binding · TLS | devices on MQTT over TLS (password + per-originator broker ACL), CSE and apps on HTTPS ([secured transport](docs/transport-security.md)) | in use |
 
-**ETSI MEC.** A MEC-IPE brings MEC 013 Location and MEC 012 RNIS into the CSE (`location/<ue>`, `rnis/<cell>`), so the MEC app consumes MEC services through oneM2M. Live on the public ETSI MEC Sandbox (try-mec.etsi.org); 70 alerts in a warehouse scenario on a self-hosted AdvantEDGE.
+**ETSI MEC.** A MEC-IPE brings MEC 013 Location and MEC 012 RNIS into the CSE, so the MEC app consumes MEC services through oneM2M. The event-driven IPE also turns MEC zone events and per-UE signal strength into oneM2M resources (SDT classes for MEC data). It lets oneM2M applications request MEC services, and its zone events trigger the CSE handover ([mobility](docs/mobility.md)). EdgeGuard follows ESTIMED deployment option C: the MN-CSE, MEC app and IPE share each zone's MEC host ([TR-0077 clause 7 mapping](docs/estimed-mapping.md)). Live on the public ETSI MEC Sandbox (try-mec.etsi.org); 70 alerts in a warehouse scenario on a self-hosted AdvantEDGE.
 
 **Learn more:** [oneM2M](https://www.onem2m.org) · [oneM2M specifications](https://www.onem2m.org/technical/published-specifications) (TS-0001 architecture, TS-0004 protocols) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
 
-## Beyond the edge: continuity, learning, an AI agent
+## Beyond the edge: ESTIMED / TR-0077 clause 7
 
 | | What | Measured (CI on every commit) |
 |---|---|---|
@@ -78,6 +79,11 @@ If the network or the server fails, the devices talk to each other directly (D2D
 | [Federated learning](docs/federated-learning.md) | sites train a worker-motion model on their own data; task, participants, rounds and model versions are oneM2M resources (TR-0084) | 2 s error 0.604 → **0.486 m**; dropout and late join handled |
 | [AI safety agent](docs/ai-agent.md) | shift safety reports through MCP servers for the IN-CSE, both zone MN-CSEs and ETSI MEC; state kept in oneM2M | 15 tool calls, validated; partial report when a zone is down |
 | [Data model](docs/data-model.md) | SDT flexContainer twins, labels, SAREF semantics | self-registered device onboarded in ≈ 9 s (CI run) |
+| [Mobility via MEC](docs/mobility.md) (7.1, 7.2) | MEC zone events and RNIS signal strength into oneM2M; MEC requests from oneM2M apps; handover triggered by the MEC network | A → B → A by zone events: **1.5–8 ms** interruption, **0** lost; event → oneM2M 15–45 ms |
+| [App orchestration](docs/orchestration.md) (7.1) | one intent resource → discover, select, deploy, register, provision across MEC hosts; re-placed on host crash | running in ≈ 0.75 s; host crash → running again in ≈ 2.3–2.7 s |
+| [Model delivery](docs/swarm-and-model-delivery.md) (7.3) | canary → activate in the risk engine → shadow monitoring → rollback | untrained and corrupted versions rejected, regression rolled back |
+| [Swarm](docs/swarm-and-model-delivery.md) (7.4) | forklifts share plans through a group; each computes the same conflict-free schedule | conflicts → 0; 14.5 s total delay vs 23.5 s reacting |
+| [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out to tags behind NAT; MQTT/TLS devices, HTTPS apps | one request to 3 tags, p50 8–19 ms; 6 attacks refused |
 
 ## Key results
 
@@ -191,6 +197,11 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [CSE handover](docs/handover.md) | zone MN-CSEs, make-before-break handover, failover, portable subscriptions, measurements |
 | [Federated learning](docs/federated-learning.md) | TR-0084 roles as oneM2M resources, selection, dropout, late join, results |
 | [AI safety agent](docs/ai-agent.md) | MCP servers (oneM2M per CSE, ETSI MEC), shift report workflow, routing, persistent state |
+| [ESTIMED / TR-0077 mapping](docs/estimed-mapping.md) | deployment continuum (option C), clause 7.1–7.4 → EdgeGuard features and demos, stand-ins |
+| [Mobility via MEC](docs/mobility.md) | event-driven bidirectional MEC-IPE, MEC SDT classes, network-triggered handover, mobility map |
+| [App orchestration](docs/orchestration.md) | host registration, deployment intents, lifecycle, provisioning, re-placement |
+| [Swarm and model delivery](docs/swarm-and-model-delivery.md) | group-based swarm coordination; canary, activation, monitoring and rollback of federated models |
+| [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out, pollingChannel, MQTT binding over TLS, HTTPS, broker ACL |
 | [hackster.io article (draft)](docs/hackster-article.md) | the project story for the hackathon article |
 | [Hardware demo](docs/hardware-demo.md) | firmware-in-the-loop (SIL, CI) · phone tag · ESP32 boards (parts · wiring · checklist) |
 | [User study](docs/user-study.md) | cue-response experiment with a phone tag, safety manager interviews, feeding results back into the simulation |
@@ -220,6 +231,7 @@ results/     evaluation results (JSON · figures) · devices/ mec_mock/ scenario
 | v1.1 | worker WAIT → GO cue (cause of the remaining accidents: workers walking on after the vibration) |
 | v1.2 | many-to-many validation · per-pair plans, standoff resolution, STEP ASIDE, fewer false alarms (stillness check · route sharing), WAIT/GO on the dashboard |
 | v1.4 | SDT flexContainer data model (labels, discovery onboarding, SAREF semantics, chty ACPs), CSE handover between zone MN-CSEs, federated learning through oneM2M, AI safety agent over MCP, hackster.io article draft |
+| v1.5 | ESTIMED / TR-0077 clause 7: event-driven bidirectional MEC-IPE with MEC SDT classes, network-triggered handover and mobility map; MEC app orchestration across hosts; forklift swarm; federated model delivery (canary, rollback) into the risk engine; zone broadcast via group + pollingChannel; MQTT/TLS devices and HTTPS |
 | v1.3 | per-device oneM2M AEs · ACPs (forged writes rejected, verified in CI), cost · market · business model, reactive live demo · new demo video, firmware-in-the-loop (SIL, CI) · phone tag, hardware demo kit (HIL), user study kit, English documentation |
 
 ## Roadmap to the final (Nov 20)
@@ -229,8 +241,8 @@ results/     evaluation results (JSON · figures) · devices/ mec_mock/ scenario
 | ~~Oct 20~~ done | flexContainer data model, labels, discovery, SAREF semantics | Data interoperability |
 | ~~Nov 10~~ done | CSE handover between zone MN-CSEs with failover | CSE handover |
 | ~~Nov 17~~ done | MCP servers and safety agent; federated learning | AI agents and MCP, federated learning |
-| Oct 31 | group, pollingChannel; MQTT for devices; TLS | Innovative use of oneM2M, protocols, security |
-| Nov 10 | MEC Location zone events → geofencing and handover trigger; bidirectional MEC–oneM2M; multi-host deployment | Geolocation, MEC services, deployment |
+| ~~Oct 31~~ done | group, pollingChannel; MQTT for devices; TLS | Innovative use of oneM2M, protocols, security |
+| ~~Nov 10~~ done | MEC zone events → handover trigger; bidirectional MEC–oneM2M; multi-host orchestration; swarm; model delivery | Geolocation, MEC services, deployment |
 | Nov 20 | ESP32 board demo, user study, hackster.io article published, final video, public repository | Article, video, GitHub, promotion |
 
 ## Validation scope and limitations
@@ -245,12 +257,12 @@ The firmware is compiled unmodified for a PC and exchanges real messages with a 
 - The site map is hand-entered rectangular obstacles, and blind-corner compensation raises false alarms in those areas (39 → 57 of 80).
 
 **Learning and agent**
-- Federated learning uses walking data from a per-site simulator, and the learned model is not yet used by the online risk engine.
+- Federated learning uses walking data from a per-site simulator. The delivered model drives the risk engine's worker prediction (`guidance_fl`) in the delivery demo; the live demo configuration still uses `guidance_ctrv`.
 - The agent's workflow is deterministic; Claude is used only for free questions (`ask`, needs an API key).
 
 **System**
 - Route sharing is an optional feature that needs a forklift fleet system (WMS) or driver tablet integration.
-- Real UWB error and firmware timing were replaced by simulation and sensitivity tests. The official MEC-IPE (TR-0086) is not yet public, so `tools/mec_ipe.py` plays that role.
+- Real UWB error and firmware timing were replaced by simulation and sensitivity tests. The official MEC-IPE (TR-0086) is not yet public, so `tools/mec_ipe.py` and `edgeguard/mobility.py` play that role. MEC zone events, RNIS reports and the host lifecycle API come from `mec_mock` and simulated hosts.
 - Scale tests ran on a single 2-core PC that also ran the load generator, so results vary with hardware. The cloud path was compared only by injecting latency.
 - The D2D key is a site-wide pre-shared key (no per-device keys, no automatic rotation).
 - HA covers up to two MEC apps sharing one CSE; a CSE failure is handled by the devices' local rules and D2D.

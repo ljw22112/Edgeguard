@@ -26,6 +26,7 @@
 - [oneM2M](https://www.onem2m.org) CSEs: [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) (IN-CSE and zone MN-CSEs) and [KETI Mobius](https://github.com/IoTKETI/Mobius)
 - [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing) Location (MEC 013) and RNIS (MEC 012) on the ETSI MEC Sandbox and a self-hosted AdvantEDGE
 - Python 3.11 (FastAPI, NumPy), Arduino IDE (ESP32 core 3.x, ArduinoJson), Docker Compose
+- [Eclipse Mosquitto](https://mosquitto.org) (oneM2M MQTT binding over TLS), OpenSSL (demo site CA)
 - Model Context Protocol (MCP) for the AI safety agent; Claude (optional) for free questions
 
 ---
@@ -112,6 +113,7 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 - **One ACP per device AE:** the device has full rights, the MEC app and the MEC-IPE may read, discover and subscribe, and every other device gets nothing.
 - **CREATE limited by child type:** with `accessControlObjectDetails` (`chty: [23]`), the MEC app may create **subscriptions only** and cannot write data into a device's twin.
 - **Checked on every commit:** CI runs 8 access checks against a real Mobius (a forged write from another device is refused) and checks on ACME that another device cannot update a twin (403).
+- **Encrypted, authenticated transport:** devices use MQTT over TLS, and applications use HTTPS. In CI, plaintext HTTP and MQTT, an untrusted certificate, a wrong password, a device sending as another device, and another device reading the forklift's data are all refused (10/10).
 - **Privacy by placement:** worker trajectories stay in the zone's edge CSE; only alerts, risk summaries and near-miss records (event positions, not trajectories) leave the site. Device-to-device frames are signed with an HMAC.
 
 ```json
@@ -124,8 +126,9 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 | Link | Protocol | Why |
 |---|---|---|
-| Device → CSE | oneM2M Mca over HTTP (MQTT binding planned) | standard REST; MQTT will keep one connection open for battery tags behind NAT |
-| MEC app ↔ CSE | Mca over HTTP, subscriptions / notifications | the CSE pushes every sample to the app |
+| Device → CSE | oneM2M **MQTT binding over TLS** (firmware today: Mca over HTTP) | one open connection, no inbound port; broker password and an ACL that lets a device speak only as itself |
+| MEC app ↔ CSE | Mca over **HTTPS**, subscriptions / notifications | the CSE pushes every sample to the app; the CSE certificate is checked against the site CA |
+| Tags behind NAT | `<pollingChannel>` | the tag long-polls; zone alerts reach it without an inbound connection |
 | Zone MN-CSE ↔ IN-CSE | **Mcc** | edge to cloud, announcement of device AEs |
 | Device ↔ device | ESP-NOW + HMAC, UWB ranging | works with no access point and no CSE: the fallback when the network fails |
 | MEC services | ETSI MEC REST (MEC 013, MEC 012) | brought into oneM2M by a MEC-IPE |
@@ -136,6 +139,8 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 - **MEC services through oneM2M:** a MEC Interworking Proxy Entity (MEC-IPE) polls the **Location** and **RNIS** APIs and writes new values as oneM2M resources (`location/<ue>`, `rnis/<cell>`). The MEC app subscribes to MEC data exactly as it subscribes to a device. Location supplies positions for people without a UWB fix, and RNIS cell load sets the reporting rate and the alert priority.
 - **Deployment:** the MEC app runs as a Docker container next to the CSE on the MEC host, as an active-standby pair (takeover in **0.73 s**). It ran live against the public **ETSI MEC Sandbox** (try-mec.etsi.org) and in a custom warehouse scenario on a self-hosted **AdvantEDGE** (70 alerts in 2 minutes).
+- **Event-driven and bidirectional:** a second MEC-IPE subscribes to MEC 013 **zone events** and MEC 012 **per-UE measurement reports** (RSRP / RSRQ). It writes them into oneM2M as SDT twins (`egs:mecUe` with `egs:ueLoc` and `egs:rdLnk`), and it executes MEC requests that oneM2M applications post into `MEC-IPE/requests` (zone_subscribe, radio_subscribe, location, unsubscribe). Zone event → oneM2M resource: median 15–45 ms.
+- **Zone broadcast:** one oneM2M `<group>` per zone. A DANGER alert is **one request** to `<group>/fopt`, and the CSE creates it in the inbox of every tag in that zone (p50 8–19 ms including the tag's polling channel).
 - **Latency:** the median alert latency on the edge is **25 ms**, against 85 ms for a cloud-only path (measured with an injected 25 ms one-way WAN delay).
 
 ---
@@ -162,6 +167,10 @@ A large warehouse has several zones, each with its own MEC host and MN-CSE. When
 | Availability: zone B's CSE killed → back to A | ≈ 80 ms after detection | ≈ 306 ms | 3 (the detection window) |
 
 The subscribed application never re-subscribed. It kept receiving notifications, now sent by zone B's CSE (`/id-mn-b`).
+
+**Triggered by the network.** In ESTIMED terms, the trigger authority can also be the MEC network. The MEC platform sees the forklift attach to zone B's small cell and emits `ENTERING_AREA_EVENT zoneB`. The MEC-IPE writes the event into oneM2M, and the forklift, subscribed to it, starts the handover. In the CI run (A → B → A at 4 m/s), interruption was 1.5–8 ms and no sample was lost. At the boundary, the RSRP of both cells crosses over at about −90 dBm.
+
+![Mobility map: zones, handover, signal strength](img/mobility_map.png)
 
 ---
 
@@ -192,7 +201,30 @@ In the CI run, Incheon's MEC host fails in the middle of round 3, and the round 
 | Each site training alone | 0.521 m |
 | **Federated global model** | **0.486 m** |
 
+**Aggregation is not delivery.** Each site's model manager subscribes to the model repository and handles every new version in three steps:
+1. **Canary:** the version is evaluated on the site's own held-out data and must beat the active model.
+2. **Activate:** it is activated in the risk engine (`guidance_fl`).
+3. **Monitor:** the previous version is shadow-evaluated on live windows, and the manager rolls back if it wins three times in a row.
+
+In CI, an untrained v0 and a corrupted v2 are rejected, and a Busan-specialised v3 is activated. After a layout change, v3 is rolled back to the global v1. Each step is recorded in `egs:mdlDp`.
+
 *The study ran on ACME. The design follows the ESTIMED proof of concept and is meant to run on the ESTIMED VM.*
+
+---
+
+## Swarm and orchestration (TR-0077 7.4 and 7.1)
+
+**Swarm.** Forklifts in a zone form a swarm: a `<group>` of their `plan` containers. Each forklift publishes its route through the intersections with arrival times and reads every member's plan with one request (`<group>/fopt/la`, ≈ 6 ms). It then computes the same conflict-free schedule as everyone else: loaded forklifts first, then the earliest arrival, then a 4 s headway at shared intersections. No coordinator is needed, and every participant keeps local authority. In the demo, conflicts drop from 4 to 0, at 14.5 s of total delay compared with 23.5 s for braking at each intersection.
+
+**Orchestration.** MEC hosts register themselves (`egs:mecHs`: zone, free CPU and memory, RTT, lifecycle API, a one-second heartbeat). An operator deploys EdgeGuard by creating a single `egs:depIn` intent, for example "risk engine, zone A, 2 CPU, ≤ 10 ms". The orchestrator then:
+1. discovers hosts by label and selects one against the constraints
+2. deploys through the host's lifecycle API
+3. waits for the instance to register its own AE
+4. provisions it by extending the device ACPs and writing its configuration
+
+The engine runs ≈ 0.75 s after the intent. When the zone A host crashes, the engine is running again on the second zone A host ≈ 2.3–2.7 s later, and the old instance's access is revoked.
+
+See [docs/estimed-mapping.md](estimed-mapping.md) for how each feature maps to TR-0077 clause 7 and the ESTIMED deployment continuum (EdgeGuard is option C per zone, with an IN-CSE in the cloud).
 
 ---
 
@@ -274,6 +306,11 @@ scripts/run_live_demo.sh                        # live demo, dashboard at http:/
 python tools/handover_demo.py --failover        # CSE handover between zones
 python tools/fl_demo.py                         # federated learning through oneM2M
 python tools/agent_demo.py                      # AI safety agent over MCP
+python tools/mobility_demo.py                   # MEC zone events -> network-triggered handover, signal strength
+python tools/orchestration_demo.py              # deploy by intent across MEC hosts
+python tools/swarm_demo.py                      # forklift swarm
+python tools/model_delivery_demo.py             # canary, activate, roll back federated models
+python tools/zone_demo.py                       # group fan-out + pollingChannel
 python tools/sil_run.py                         # firmware-in-the-loop
 ```
 
