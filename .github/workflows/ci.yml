@@ -76,6 +76,12 @@ jobs:
       - name: MEC app orchestration across hosts (intent -> discover, select, deploy, register, provision; host crash)
         run: python tools/orchestration_demo.py
 
+      - name: Forklift swarm coordination (group context, same schedule on every member)
+        run: python tools/swarm_demo.py
+
+      - name: Federated model delivery (canary, activate, monitor, roll back; risk engine guidance_fl)
+        run: python tools/model_delivery_demo.py
+
       - name: Secured transport (devices on MQTT/TLS, apps on HTTPS, attacks refused)
         run: |
           sudo apt-get install -y -q mosquitto > /dev/null

@@ -1,0 +1,89 @@
+{
+ "decisions": [
+  {
+   "t": 1791695602.922827,
+   "version": 0,
+   "decision": "rejected",
+   "canary_err": 1.262,
+   "baseline_err": 0.577
+  },
+  {
+   "t": 1791695602.941997,
+   "version": 1,
+   "decision": "active",
+   "canary_err": 0.468,
+   "baseline_err": 0.577
+  },
+  {
+   "t": 1791695602.960324,
+   "version": 2,
+   "decision": "rejected",
+   "canary_err": 3.783,
+   "baseline_err": 0.468
+  },
+  {
+   "t": 1791695602.9906583,
+   "version": 3,
+   "decision": "active",
+   "canary_err": 0.4,
+   "baseline_err": 0.468
+  },
+  {
+   "t": 1791695603.0380185,
+   "version": 3,
+   "decision": "rolled_back",
+   "live_err": 0.623,
+   "previous_err": 0.466,
+   "now_active": 1
+  }
+ ],
+ "delivery_ms": [
+  19.2,
+  18.4,
+  30.3
+ ],
+ "live_monitoring": [
+  {
+   "version": 3,
+   "live_err": 0.583,
+   "previous_err": 0.463,
+   "worse": 1
+  },
+  {
+   "version": 3,
+   "live_err": 0.628,
+   "previous_err": 0.47,
+   "worse": 2
+  },
+  {
+   "version": 3,
+   "live_err": 0.623,
+   "previous_err": 0.466,
+   "worse": 3,
+   "rolled_back": true
+  }
+ ],
+ "deployment": {
+  "mdlVr": 1,
+  "prvVr": 3,
+  "dplSt": "rolled_back",
+  "cnyEr": 0.3999,
+  "bslEr": 0.466,
+  "lvErr": 0.623
+ },
+ "risk_engine_sample": {
+  "level": "SAFE"
+ },
+ "history_entries": 12,
+ "runtime_s": 1.6,
+ "checks": {
+  "v0 (untrained) rejected by the canary": true,
+  "v1 (global) activated": true,
+  "v2 (corrupted) rejected, v1 kept": true,
+  "v3 (site-specialised) activated, better on the site's held-out data": true,
+  "risk engine predicted with the active federated model (guidance_fl)": true,
+  "after the layout change, monitoring rolled back to v1": true,
+  "deployment status in oneM2M (egs:mdlDp): rolled_back, now v1, previous v3": true,
+  "every step kept as history (flexContainerInstances)": true
+ }
+}

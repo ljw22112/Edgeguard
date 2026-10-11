@@ -7,6 +7,7 @@ Methods
 guidance       CV prediction, analytic CPA / LOS-rate geometry
 guidance_ctrv  worker CV + forklift CTRV (IMU yaw rate), sampled closest approach
 guidance_lstm  worker LSTM (learned) + forklift CTRV; falls back to CV until 2 s of history
+guidance_fl    worker motion from the federated model active at this site + forklift CTRV (CV fallback)
 distance       baseline proximity alarm (WARNING if R < threshold)
 ttc            baseline time-to-collision R / Vc
 """
@@ -213,11 +214,14 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
         reason = f"TTC {enc.ttc:.1f} s"
         scale = 0.3 if level else 1.0
     else:
-        if method in ("guidance_ctrv", "guidance_lstm"):
+        if method in ("guidance_ctrv", "guidance_lstm", "guidance_fl"):
             pw = None
             if method == "guidance_lstm":
                 from .learned import predictor_or_none
                 pw = predictor_or_none(worker, forklift)
+            elif method == "guidance_fl":       # the federated model the site activated (edgeguard/model_delivery.py)
+                from .model_delivery import predictor_or_none as fl_predictor
+                pw = fl_predictor(worker)
             # a worker standing still is predicted to stay put: at 0.1-0.35 m UWB noise the tracker's
             # velocity of a standing picker wanders by a few tenths of m/s, enough to "walk" him into
             # the lane within the warning horizon (most false alarms at pick faces)
@@ -235,7 +239,7 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
         if lane is not None and level < 2:
             level = 2
         if level >= 2 and moving:
-            if method in ("guidance_ctrv", "guidance_lstm"):
+            if method in ("guidance_ctrv", "guidance_lstm", "guidance_fl"):
                 # The alert also tells the worker to stop, so plan the forklift for a
                 # worker who walks on for the reaction time and then stops - possibly
                 # right in the lane.  Take the stricter of: velocity obstacle against
