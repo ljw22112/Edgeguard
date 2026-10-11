@@ -11,7 +11,7 @@
 
 ## 한눈에
 
-| | v1.0 (진동 경보) | **현재 (v1.3)** |
+| | v1.0 (진동 경보) | **현재 (v1.4)** |
 |---|---|---|
 | 다대다 현장 충돌 (작업자 8 · 지게차 4, 위험 750쌍) | 100건 | **4건 (−96 %)** |
 | 지게차 처리량 (다대다) | 61.7 % | **86.0 %** |
@@ -74,10 +74,10 @@
 
 | | 내용 | 측정 (CI, 매 커밋) |
 |---|---|---|
-| [CSE 핸드오버](docs/ko/handover.md) | 지게차의 oneM2M 존재가 구역 MN-CSE 사이를 따라 이동(make-before-break), 구역 CSE 고장 시 자동 전환 | 위치 기반: 서비스 중단 **3~9 ms**, 유실 **0** · 고장 전환 약 0.3초 |
+| [CSE 핸드오버](docs/ko/handover.md) | 지게차의 oneM2M 존재가 구역 MN-CSE 사이를 따라 이동(make-before-break), 구역 CSE 고장 시 자동 전환 | 위치 기반: 서비스 중단 **3~11 ms**, 유실 **0** · 고장 전환 약 0.3초 |
 | [연합학습](docs/ko/federated-learning.md) | 사이트마다 자기 데이터로 작업자 이동 모델 학습, 작업 · 참여자 · 라운드 · 모델 버전이 oneM2M 리소스(TR-0084) | 2초 예측 오차 0.604 → **0.486 m**, 이탈 · 늦은 참여 처리 |
-| [AI 안전 에이전트](docs/ko/ai-agent.md) | IN-CSE · 두 구역 MN-CSE · ETSI MEC의 MCP 서버로 교대 안전 리포트, 상태는 oneM2M에 저장 | 도구 호출 16회 · 검증 통과, 구역 고장 시 부분 리포트 |
-| [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨, SAREF 시맨틱 | 스스로 등록한 단말 약 9초 만에 자동 편입 |
+| [AI 안전 에이전트](docs/ko/ai-agent.md) | IN-CSE · 두 구역 MN-CSE · ETSI MEC의 MCP 서버로 교대 안전 리포트, 상태는 oneM2M에 저장 | 도구 호출 15회 · 검증 통과, 구역 고장 시 부분 리포트 |
+| [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨, SAREF 시맨틱 | 스스로 등록한 단말 약 9초 만에 자동 편입(CI 실행) |
 
 ## 핵심 결과
 

@@ -11,7 +11,7 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ## At a glance
 
-| | v1.0 (vibration alert) | **Now (v1.3)** |
+| | v1.0 (vibration alert) | **Now (v1.4)** |
 |---|---|---|
 | Collisions, many-to-many site (8 workers · 4 forklifts, 750 conflict pairs) | 100 | **4 (−96 %)** |
 | Forklift throughput (many-to-many) | 61.7 % | **86.0 %** |
@@ -74,10 +74,10 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 | | What | Measured (CI on every commit) |
 |---|---|---|
-| [CSE handover](docs/handover.md) | a forklift's oneM2M presence follows it between zone MN-CSEs, make-before-break; failover when a zone's CSE dies | location: **3–9 ms** interruption, **0** samples lost · failover ≈ 0.3 s |
+| [CSE handover](docs/handover.md) | a forklift's oneM2M presence follows it between zone MN-CSEs, make-before-break; failover when a zone's CSE dies | location: **3–11 ms** interruption, **0** samples lost · failover ≈ 0.3 s |
 | [Federated learning](docs/federated-learning.md) | sites train a worker-motion model on their own data; task, participants, rounds and model versions are oneM2M resources (TR-0084) | 2 s error 0.604 → **0.486 m**; dropout and late join handled |
-| [AI safety agent](docs/ai-agent.md) | shift safety reports through MCP servers for the IN-CSE, both zone MN-CSEs and ETSI MEC; state kept in oneM2M | 16 tool calls, validated; partial report when a zone is down |
-| [Data model](docs/data-model.md) | SDT flexContainer twins, labels, SAREF semantics | self-registered device onboarded in ≈ 9 s |
+| [AI safety agent](docs/ai-agent.md) | shift safety reports through MCP servers for the IN-CSE, both zone MN-CSEs and ETSI MEC; state kept in oneM2M | 15 tool calls, validated; partial report when a zone is down |
+| [Data model](docs/data-model.md) | SDT flexContainer twins, labels, SAREF semantics | self-registered device onboarded in ≈ 9 s (CI run) |
 
 ## Key results
 

@@ -4,10 +4,10 @@
    "reason": "location",
    "from": "A",
    "to": "B",
-   "prep_ms": 140.5,
+   "prep_ms": 157.2,
    "subscriptions": 1,
-   "interruption_ms": 4.2,
-   "max_gap_ms": 104.2,
+   "interruption_ms": 7.1,
+   "max_gap_ms": 107.1,
    "samples_in_window": 32,
    "samples_lost": 0
   }

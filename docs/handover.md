@@ -25,12 +25,12 @@ A target whose preparation failed is not retried for 5 s.
 ```bash
 scripts/acme.sh start in mn-a mn-b          # IN-CSE :8080, zone A :8081, zone B :8082
 python tools/handover_demo.py               # location: 10 checks
-python tools/handover_demo.py --failover    # + zone B's CSE killed: 8 checks
+python tools/handover_demo.py --failover    # + zone B's CSE killed: 8 checks (5 location + 3 availability)
 ```
 
 | Handover | Prepared in | Service interruption | Samples lost |
 |---|---|---|---|
-| Location A → B | 100–130 ms (in the background) | **3–9 ms** | **0** |
+| Location A → B | ≈ 115–140 ms (in the background) | **3–11 ms** | **0** |
 | Availability (zone B down) → A | ≈ 80 ms after detection | ≈ 306 ms | 3 (the detection window: 3 failed publishes) |
 
 Interruption is the largest gap between notifications at the subscribed application, minus the 100 ms sample period. Lost samples are those the device sent that never reached the application.
@@ -44,9 +44,9 @@ Interruption is the largest gap between notifications at the subscribed applicat
 - another device refused on the target (ACP)
 - announcement at the IN-CSE links to zone B
 - source AE deleted
-- the application kept receiving without re-subscribing
+- the application kept receiving, now from zone B (notification origin `/id-mn-b`), without re-subscribing
 - home record followed the device
-- with `--failover`: availability trigger B → A, notifications resume, home record shows the failover
+- the `--failover` run has 8 checks: 5 of the location checks, then availability trigger B → A, notifications resume, home record shows the failover
 
 Results: `results/handover.json`, `results/handover_failover.json`.
 

@@ -46,7 +46,7 @@ Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC
 
 ### How it works
 
-1. **Sense:** UWB worker tags and forklift modules update their own oneM2M device twin 10 times per second.
+1. **Sense:** UWB worker tags and forklift modules publish their position up to 10 times per second (2 Hz when nothing is near): as an UPDATE of their own SDT device twin on ACME, or as a contentInstance on any CSE (Mobius, and the ESP32 firmware today).
 2. **Notify:** the edge CSE notifies the EdgeGuard MEC app through subscriptions. No polling and no custom broker.
 3. **Predict:** Kalman tracking, a turning model for forklifts (CTRV), or the forklift's planned route when the fleet system shares it.
 4. **Decide:** a **collision-course test** borrowed from missile guidance. If the bearing stays constant while the range closes (line-of-sight rate ≈ 0) and the closest point of approach is inside the safety radius, the two will meet. A forklift that will pass by never raises an alert.
@@ -56,7 +56,7 @@ Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC
 
 ## oneM2M resource design
 
-Each device is **its own AE**, so the originator is the device. The MEC app's decisions are oneM2M resources too, which means any oneM2M application can subscribe to them.
+Each device is **its own AE**, so the originator is the device. The MEC app's decisions are oneM2M resources too, which means any oneM2M application can subscribe to them. The tree below shows the SDT data model on a zone MN-CSE (illustrative; the same tree runs on the IN-CSE in the single-CSE demos).
 
 ```
 /cse-mn-a (zone MN-CSE on the MEC host)
@@ -88,7 +88,7 @@ Instead of opaque JSON in contentInstances, device state uses **flexContainer sp
     { "sname": "smpTe", "lname": "sampleTime", "type": "integer", "car": "1" } ] }
 ```
 
-A position sample is a single UPDATE of the kinematics module. The CSE keeps the history (`fcied`, `mni`) and notifies the subscribers:
+With the SDT data model (ACME), a position sample is a single UPDATE of the kinematics module. The CSE keeps the history (`fcied`, `mni`) and notifies the subscribers. Mobius deployments and the current ESP32 firmware use plain contentInstances; the MEC app accepts both:
 
 ```http
 PUT /cse-mn-a/forklift_01/module/kinematics
@@ -111,8 +111,8 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 - **One ACP per device AE:** the device has full rights, the MEC app and the MEC-IPE may read, discover and subscribe, and every other device gets nothing.
 - **CREATE limited by child type:** with `accessControlObjectDetails` (`chty: [23]`), the MEC app may create **subscriptions only** and cannot write data into a device's twin.
-- **Checked on every commit:** CI runs against a real Mobius and ACME. A forged write from another device is rejected with 403 (8 of 8 access checks).
-- **Privacy by placement:** worker trajectories stay in the zone's edge CSE, and only alerts and near-miss records leave the site. Device-to-device frames are signed with an HMAC.
+- **Checked on every commit:** CI runs 8 access checks against a real Mobius (a forged write from another device is refused) and checks on ACME that another device cannot update a twin (403).
+- **Privacy by placement:** worker trajectories stay in the zone's edge CSE; only alerts, risk summaries and near-miss records (event positions, not trajectories) leave the site. Device-to-device frames are signed with an HMAC.
 
 ```json
 {"m2m:acp": {"rn": "acp_forklift_01", "pv": {"acr": [
@@ -136,7 +136,7 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 - **MEC services through oneM2M:** a MEC Interworking Proxy Entity (MEC-IPE) polls the **Location** and **RNIS** APIs and writes new values as oneM2M resources (`location/<ue>`, `rnis/<cell>`). The MEC app subscribes to MEC data exactly as it subscribes to a device. Location supplies positions for people without a UWB fix, and RNIS cell load sets the reporting rate and the alert priority.
 - **Deployment:** the MEC app runs as a Docker container next to the CSE on the MEC host, as an active-standby pair (takeover in **0.73 s**). It ran live against the public **ETSI MEC Sandbox** (try-mec.etsi.org) and in a custom warehouse scenario on a self-hosted **AdvantEDGE** (70 alerts in 2 minutes).
-- **Latency:** the median alert latency on the edge is **25 ms**, against 85 ms for a cloud-only path.
+- **Latency:** the median alert latency on the edge is **25 ms**, against 85 ms for a cloud-only path (measured with an injected 25 ms one-way WAN delay).
 
 ---
 
@@ -158,10 +158,10 @@ A large warehouse has several zones, each with its own MEC host and MN-CSE. When
 
 | Handover | Prepared in | Service interruption | Samples lost |
 |---|---|---|---|
-| Location A → B | 100–130 ms (in the background) | **3–9 ms** | **0** |
+| Location A → B | ≈ 115–140 ms (in the background) | **3–11 ms** | **0** |
 | Availability: zone B's CSE killed → back to A | ≈ 80 ms after detection | ≈ 306 ms | 3 (the detection window) |
 
-The subscribed application never re-subscribed. It kept receiving notifications, now from zone B.
+The subscribed application never re-subscribed. It kept receiving notifications, now sent by zone B's CSE (`/id-mn-b`).
 
 ---
 
@@ -171,7 +171,7 @@ If a device hears no heartbeat from the MEC app for 2 s, it switches to local de
 
 | Condition | Collisions | Forklift throughput |
 |---|---|---|
-| Total network outage (180 encounters) | **2** (vs 180 with no fallback) | 57 % (stop-everything approach: 18 %) |
+| Total network outage (180 encounters that would collide) | **2** (v0.7 hold-then-stop: 180) | 57 % (stop-everything approach: 18 %) |
 | Worker or forklift in a coverage hole | **0 / 0** (was 16 / 19) | — |
 
 ---
@@ -212,7 +212,7 @@ If a CSE is down, the agent writes a **partial** report, records the error, and 
 Sample recommendation from the CI run:
 
 > (12, 4) m, 9 near misses: Blind corner: add the rack to the site map / install a convex mirror - 3 people within 6 m right now
-> (-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit
+> (-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit - 1 person within 6 m right now
 
 ---
 
@@ -225,23 +225,30 @@ Sample recommendation from the CI run:
 | Forklift | GPIO 27 | motor driver PWM / EN; driver powered from a power bank |
 | Forklift | GPIO 26 | 220 Ω → LED → GND (beacon) |
 
-The firmware ([`firmware/`](../firmware/)) registers the device's own AE at boot and receives alerts as oneM2M notifications. It drives the outputs and writes confirmations to `<device>/status`, which appear on the dashboard as **HW ✓**. **Firmware-in-the-loop:** the same sketches compile unmodified for a PC, and CI runs them against a real CSE on every commit (6 of 6 checks). A phone can act as the tag: open `http://<MEC host>:9090/tag?worker=worker_01`.
+*Status: the board kit and wiring are ready and the board demo is scheduled before the final; the CI evidence today is firmware-in-the-loop.* The firmware ([`firmware/`](../firmware/)) registers the device's own AE at boot and receives alerts as oneM2M notifications. It drives the outputs and writes confirmations to `<device>/status`, which appear on the dashboard as **HW ✓**. **Firmware-in-the-loop:** the same sketches compile unmodified for a PC, and CI runs them against a real CSE on every commit (6 of 6 checks). A phone can act as the tag: open `http://<MEC host>:9090/tag?worker=worker_01`.
 
 ![Firmware-in-the-loop and a phone as the worker tag](img/sil_phone.png)
 
 ---
 
-## Results (closed-loop simulation, baseline = our v1.0 vibration-only alert)
+## Results (closed-loop simulation)
+
+**Against our own v1.0 (vibration-only alert, same simulator):**
 
 | | v1.0 | EdgeGuard |
 |---|---|---|
 | Collisions, many-to-many site (8 workers, 4 forklifts, 750 conflicts) | 100 | **4 (−96 %)** |
 | Forklift throughput on that site | 61.7 % | **86.0 %** |
 | Collisions in 1,207 one-to-one conflicts | 145 | **1** |
-| Detected ≥ 1 s before contact (vs 5 m alarm) | 76 % | **100 %**, median lead time 2.4 s |
-| False alarm rate (vs 5 m alarm) | 85 % | **30 %** |
 
-Worker behaviour is modelled, so we report sensitivity: even at 85 % WAIT compliance, collisions stay at 12 of 1,207.
+**Against a 5 m proximity alarm:**
+
+| | 5 m alarm | EdgeGuard |
+|---|---|---|
+| Detected ≥ 1 s before contact | 76 % | **100 %**, median lead time 2.4 s |
+| False alarm rate | 85 % | **30 %** |
+
+Worker behaviour is modelled, so we report sensitivity: at 85 / 70 / 50 % WAIT compliance, collisions are 12 / 27 / 42 of 1,207 (v1.0: 145).
 
 ---
 
@@ -250,7 +257,7 @@ Worker behaviour is modelled, so we report sensitivity: even at 85 % WAIT compli
 - **A hub, not a database:** subscriptions replaced the broker and polling code we would otherwise have written.
 - **Open by design:** alerts and near misses are standard resources. A WMS, a reporting tool or a camera vendor can subscribe without any integration work.
 - **Security comes built in:** per-device ACPs with child-type restrictions gave us least privilege without writing an authentication layer.
-- **One model from the device to the cloud:** SDT flexContainers, labels and SAREF semantics make devices discoverable, and the same code ran on Mobius and ACME.
+- **One model from the device to the cloud:** SDT flexContainers, labels and SAREF semantics make devices discoverable (on ACME), and the same application code runs on Mobius and ACME.
 - **Mobility as a service feature:** announcement, home records and portable subscriptions let a device change CSEs while applications keep receiving data.
 
 Along the way we found and documented **7 interoperability issues** between CSEs, including a Content-Type parsing fix for ACME ([interoperability notes](interop-notes.md)).

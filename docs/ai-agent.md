@@ -43,9 +43,9 @@ The demo seeds a shift:
 - 25 near misses with three hotspots
 - people and radio load in the MEC mock
 
-**Run 1:** complete, 16 tool calls.
+**Run 1:** complete, 15 tool calls.
 > (12, 4) m, 9 near misses: Blind corner: add the rack to the site map / install a convex mirror - 3 people within 6 m right now
-> (-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit
+> (-7, 0) m, 6 near misses: Fast forklift traffic: declare a speed-limited zone - forklift_02 currently without a speed limit - 1 person within 6 m right now
 
 **Run 2:** five new near misses arrive and zone B's MN-CSE goes down. The agent reads only the 5 new records and writes a partial report, recording that forklift_01 was unreachable.
 

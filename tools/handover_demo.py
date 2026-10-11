@@ -49,9 +49,9 @@ class Receiver:
                 self.send_header("X-M2M-RSC", "2000")
                 self.end_headers()
                 kind, p = parse_notification(body)
-                sur = (body.get("m2m:sgn") or {}).get("sur", "")
+                origin = self.headers.get("X-M2M-Origin", "")      # the notifying CSE (e.g. /id-mn-b)
                 if kind == "fcnt" and p.get("tp") == sdt.KIN_TP:
-                    rec.samples.append((time.time(), p.get("smpTe"), sur))
+                    rec.samples.append((time.time(), p.get("smpTe"), origin))
                 elif kind == "cin" and isinstance(p, dict) and p.get("zone"):
                     rec.serving.append((time.time(), p))
 
@@ -152,8 +152,8 @@ def main():
             except OneM2MError as err:
                 checks["source released (AE deleted on zone A)"] = err.status == 404
         after = [s for s in rx.samples if s[0] > e.t_switch + 0.3]
-        checks["application kept receiving from zone B without re-subscribing"] = any("id-mn-b" in s[2] or "cse-mn-b" in s[2]
-                                                                                     for s in after) or bool(after)
+        checks["application kept receiving from zone B without re-subscribing"] = bool(after) and all(
+            "id-mn-b" in s[2] for s in after[:20])
     else:
         checks["location trigger: handover A -> B when 1 m inside zone B"] = False
     home_zones = [p["zone"] for _, p in rx.serving]

@@ -44,7 +44,7 @@ Built by `edgeguard/sdt.py: build_twin()`, used by setup, self-registration and 
 ## Discovery: labels
 
 - `GET /<cse>?fu=1&ty=28&lbl=egs:module/kinematics` returns every kinematics module.
-- The MEC app runs this every 10 s (`discover_devices` in `mec_app/app.py`). A device that registered itself is subscribed to and tracked without being in any configuration. In CI it is onboarded in about 9 s.
+- The MEC app runs this every 10 s (`discover_devices` in `mec_app/app.py`). A device that registered itself is subscribed to and tracked without being in any configuration. In a CI run it was onboarded in about 9 s.
 
 ## Semantics: SAREF
 

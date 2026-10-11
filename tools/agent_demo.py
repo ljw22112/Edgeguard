@@ -114,8 +114,9 @@ def people_feed(stop):
 async def run_agent():
     async with MCPHub(default_servers()) as hub:
         rep = await SafetyAgent(hub).shift_report()
+        workflow_log = list(hub.log)                         # the report's own tool calls
         guard = await hub.call("in", "write_content", container="EdgeGuard/nearmiss", content="{}")
-        return rep, {s: [t.name for t in ts] for s, ts in hub.tools.items()}, list(hub.log), guard
+        return rep, {s: [t.name for t in ts] for s, ts in hub.tools.items()}, workflow_log, guard
 
 
 def smoke_test_servers():
@@ -144,7 +145,7 @@ def main():
             print("::error title=MCP server stderr::" + " | ".join(tail)[:1500])
         except OSError:
             pass
-    if bad or rep1.get("errors"):                     # diagnostics (CI annotations)
+    if any(c["tool"] == "connect" for c in bad) or rep1.get("errors"):     # diagnostics (CI annotations)
         print("::warning title=agent_demo run 1::" + json.dumps({"tools": {k: len(v) for k, v in tools.items()},
               "errors": rep1.get("errors"), "failed_calls": bad[:6]}, default=str)[:1500])
     # shift goes on: five more close passes at the blind corner; then zone B's MN-CSE fails

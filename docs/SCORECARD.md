@@ -14,13 +14,13 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 3 | Innovative scenarios | **4** | 여러 단말 → CSE → 여러 앱(MEC 앱 · AI 에이전트 · 연합학습 · 대시보드), 앱 로직 대신 oneM2M 기능(구독 · 탐색 · 시맨틱 · announcement)으로 등록 · 이동 처리 | group으로 경보 배포 (→ 5) |
 | 4 | Quality of Article | 0 → **4 (게시 시)** | [hackster.io 기사 초안](hackster-article.md) 완료: 개요 · H/W · 리소스 설계 · 프로토콜 · 그림 · 측정값 · oneM2M 장점 | 팀이 hackster.io에 게시 (영상 링크 포함) |
 | 5 | Quality of Video | 2 | 데모 영상 2편 | 최종 영상: 실물 보드 · 핸드오버 · 에이전트 (11/20 → 4) |
-| 6 | Quality of Github | 3 | 영문 README · 빌드/실행 · CI가 모든 데모 자동 검증. **비공개**, 기사 링크 없음 | 공개 전환 + 기사 링크 (→ 5) |
+| 6 | Quality of Github | 3 | 영문 README · 빌드/실행 · CI가 핵심 데모(SIL · SDT · 핸드오버 · 에이전트 · 연합학습 · 스택/ACL/HA) 자동 검증. **비공개**, 기사 링크 없음 | 공개 전환 + 기사 링크 (→ 5) |
 | 7 | Promotion of oneM2M | 3 | README 'Why oneM2M' · 기능 표 · 표준 링크, 기사 초안이 oneM2M 장점 정리 | 기사 · 영상 게시 (→ 4~5) |
 | 8 | Judge points | 0~1 | 공개 포럼 활동 미확인 | ACME 이슈(Content-Type, sqi=false 시맨틱 탐색 거부) 공개 보고 (팀) |
 | 9 | Interview points | (본선) | 리소스 트리 · 장점 · 통합 방법 설명 가능 | 예상 Q&A |
-| 10 | Security and Privacy | 3 | 디바이스 · 앱별 ACP, CREATE를 구독으로 한정(chty), 위조 쓰기 403 CI 검증, 위치 데이터는 현장 CSE에만, D2D HMAC | TLS + ACP (10/31 → 4~5) |
+| 10 | Security and Privacy | 3 | 디바이스 · 앱별 ACP, CREATE를 구독으로 한정(chty), 위조 쓰기 403 CI 검증, 작업자 궤적은 현장 CSE에만(클라우드로는 경보 · 위험 요약 · 아차사고 지점만), D2D HMAC | TLS + ACP (10/31 → 4~5) |
 | 11 | Data Interoperability | **5** | **SDT 데이터 모델(TS-0023 방식 자체 도메인 + 표준 cod:bat) + SAREF 시맨틱 쿼리**, 라벨 탐색으로 자동 등록 ([데이터 모델](ko/data-model.md)) | — |
-| 12 | CSE Handover | **5** | 위치 · 가용성 기반 자동 핸드오버, 상태 · 구독 · 보안 컨텍스트 복원, 서비스 중단(3~9 ms) · 유실(0) 측정 ([핸드오버](ko/handover.md)) | — |
+| 12 | CSE Handover | **5** | 위치 · 가용성 기반 자동 핸드오버, 상태 · 구독 · 보안 컨텍스트 복원, 서비스 중단(3~11 ms) · 유실(0) 측정 ([핸드오버](ko/handover.md)) | — |
 | 13 | oneM2M–MEC App/VM Deployment | 3 | AdvantEDGE 자체 창고 시나리오, 구역별 MEC 호스트(MN-CSE) 구성 문서화 | 여러 호스트 오케스트레이션 (11/10 → 4) |
 | 14 | Federated Learning (TR-0084) | **4** | 작업 · 참여자 · 라운드 · 모델 버전을 oneM2M 모델로, 동적 선택 · 이탈 · 늦은 참여, 데이터는 사이트에 ([연합학습](ko/federated-learning.md)) | ESTIMED VM에서 실행 (→ 5) |
 | 15 | Geolocation Services | 2 | MEC Location → MEC-IPE → oneM2M → 앱 | 위치 구역 이벤트로 지오펜싱 · 핸드오버 트리거 (11/10 → 4) |

@@ -218,7 +218,8 @@ class SafetyAgent:
                 if fl:
                     r += f" - {', '.join(fl)} currently without a speed limit"
             if h.get("people_now"):
-                r += f" - {h['people_now']} people within {self.radius:.0f} m right now"
+                n = h["people_now"]
+                r += f" - {n} {'person' if n == 1 else 'people'} within {self.radius:.0f} m right now"
             recs.append(r)
         report = {"generated_ms": int(time.time() * 1000), "status": "partial" if errors else "complete",
                   "near_misses_new": len(new), "near_misses_total": len(events),
