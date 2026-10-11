@@ -127,6 +127,10 @@ def main():
     mec, hc = seed(rng)
 
     rep1, tools, log1, guard = asyncio.run(run_agent())
+    bad = [c for c in log1 if c.get("error")]
+    if bad or rep1.get("errors"):                     # diagnostics (CI annotations)
+        print("::warning title=agent_demo run 1::" + json.dumps({"tools": {k: len(v) for k, v in tools.items()},
+              "errors": rep1.get("errors"), "failed_calls": bad[:6]}, default=str)[:1500])
     # shift goes on: five more close passes at the blind corner; then zone B's MN-CSE fails
     for i in range(5):
         mec.create_cin("EdgeGuard/nearmiss", near_miss(rng, 12, 4, "forklift_01", "worker_01", occluded=True))

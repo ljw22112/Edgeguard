@@ -62,7 +62,7 @@ class MCPHub:
                 self.sessions[name] = s
                 self.tools[name] = [t for t in (await s.list_tools()).tools]
             except Exception as e:
-                self.log.append({"server": name, "tool": "connect", "error": str(e)[:200]})
+                self.log.append({"server": name, "tool": "connect", "error": f"{type(e).__name__}: {str(e)[:200]}"})
         return self
 
     async def __aexit__(self, *exc):
