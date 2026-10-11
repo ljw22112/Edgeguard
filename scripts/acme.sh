@@ -41,9 +41,13 @@ case "$cmd" in
         cp "$ROOT/.certs/ca.crt" "$d/certs/ca.crt"
         . "$ROOT/.certs/mqtt.env"; export ACME_MQTT_SECURITY_USERNAME=cse ACME_MQTT_SECURITY_PASSWORD="$MQTT_CSE_PW"
       fi
-      (cd "$ACME_DIR" && nohup $ACME_PY -m acmecse --base-directory "$d" --config acme.ini \
-          </dev/null > "$d/acme.out" 2>&1 & echo $! > "$d/acme.pid")
-      for _ in $(seq 1 90); do up "$n" && break; sleep 0.5; done
+      for attempt in 1 2; do       # a CSE that dies while starting (port not yet free, plugin error) gets one retry
+        (cd "$ACME_DIR" && nohup $ACME_PY -m acmecse --base-directory "$d" --config acme.ini \
+            </dev/null > "$d/acme.out" 2>&1 & echo $! > "$d/acme.pid")
+        for _ in $(seq 1 90); do up "$n" && break; kill -0 "$(cat "$d/acme.pid")" 2>/dev/null || break; sleep 0.5; done
+        up "$n" && break
+        [ $attempt = 1 ] && { cp "$d/acme.out" "$d/acme.out.1"; kill "$(cat "$d/acme.pid")" 2>/dev/null; sleep 2; echo "ACME $n: retrying"; }
+      done
       up "$n" && echo "ACME $n up on :$(port_of "$n")" || { echo "ACME $n did not start, see $d/acme.out"; exit 1; }
     done ;;
   stop)

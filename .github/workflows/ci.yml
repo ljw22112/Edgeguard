@@ -97,4 +97,5 @@ jobs:
           echo "::error title=mec.log::$(tail -15 mec.log 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
           echo "::error title=acme.out::$(tail -15 .acme/in/acme.out 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
           for z in mn-a mn-b; do echo "::error title=acme $z::$(grep -v '^\s*$' .acme/$z/acme.out 2>/dev/null | tail -12 | tr '\n' '|' | cut -c1-1500)"; done
+          for z in mn-a mn-b sec; do echo "::error title=acme $z errors::$(grep -E 'Error|rror:|Exception|in use' .acme/$z/acme.out 2>/dev/null | tail -8 | tr '\n' '|' | cut -c1-1500)"; done
 
