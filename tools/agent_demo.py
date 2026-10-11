@@ -118,7 +118,17 @@ async def run_agent():
         return rep, {s: [t.name for t in ts] for s, ts in hub.tools.items()}, list(hub.log), guard
 
 
+def smoke_test_servers():
+    """The MCP servers must at least build; report why not (CI annotation) instead of a bare 'connection closed'."""
+    for mod, call in (("agent.onem2m_mcp", "m.build('in', 'http://127.0.0.1:8080', 'cse-in', 'SEdgeGuardAgent', ['EdgeGuardAgent'])"),
+                      ("agent.mec_mcp", "m.build('http://127.0.0.1:8085', 'location/v3', 'rni/v2', 37.55, 127.07)")):
+        r = subprocess.run([sys.executable, "-c", f"import {mod} as m; {call}"], cwd=ROOT, capture_output=True, text=True)
+        if r.returncode:
+            print(f"::error title=MCP server {mod}::" + " | ".join(r.stderr.strip().splitlines()[-6:])[:1500])
+
+
 def main():
+    smoke_test_servers()
     rng = random.Random(7)
     mock = ensure_mec_mock()
     stop = threading.Event()
