@@ -25,7 +25,7 @@
 2. 표지 이미지: `docs/img/demo_wait.png`(또는 `docs/img/mobility_map.png`)
 3. Title / Elevator pitch: [hackster-article.md](hackster-article.md) 맨 위 제목과 첫 문단
 4. Things used: 기사의 "Things used in this project" 목록
-5. Story: 기사 본문의 "## Story"부터 끝까지 붙여넣기. 이미지(`docs/img/*.png`)는 해당 위치에 업로드합니다. `../edgeguard/...` 같은 상대 링크는 `https://github.com/ljw22112/Edgeguard/blob/main/...`로 바꾸면 됩니다.
+5. Story: [`submissions/hackster_story.md`](submissions/hackster_story.md)의 "## Story"부터 끝까지 붙여넣기 (링크와 이미지가 이미 GitHub 절대 주소로 바뀌어 있음)
 6. Code: GitHub 저장소 링크 · Video: 2번에서 올린 YouTube 링크
 7. 팀원(김기환) 추가 → **Publish** → 게시된 링크를 README의 Links에 추가
 
