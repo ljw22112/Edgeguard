@@ -9,7 +9,7 @@
 전체 커밋 이력에서 비밀번호 · 토큰 · 키 파일 · 공인 IP · ssh 접속 정보를 검사했고 나온 것은 없습니다. 데모용 인증서와 비밀번호는 실행할 때 `.certs/`에 생성되며, 이 폴더는 커밋되지 않습니다.
 
 1. ~~Danger Zone → Make public~~ 완료
-2. (선택) Packages → `edgeguard-mobius`, `edgeguard-mec` → Package settings → **Change visibility → Public**: `docker compose`가 로그인 없이 이미지를 받을 수 있게 됩니다.
+2. ~~(선택) Packages → `edgeguard-mobius`, `edgeguard-mec` → Package settings → **Change visibility → Public**~~ 완료 (10/11): `docker compose`가 로그인 없이 이미지를 받을 수 있게 됩니다.
 3. ~~저장소 첫 화면 오른쪽 About 톱니바퀴~~ 완료 (10/11): Description에 `Worker–forklift collision prediction on oneM2M + ETSI MEC (2026 oneM2M Hackathon)`, Topics에 `onem2m`, `etsi-mec`, `iot`, `edge-computing`, `safety`, `acme-cse`, `mobius` 입력
 
 ## 2. 영상 업로드 · 루브릭 5: 완료 (10/11, https://youtu.be/P2JI5ZG6PIg)
@@ -34,7 +34,7 @@
 
 ## 4. 공개 포럼 활동 · 루브릭 8
 
-- ACME 버그 2건 이슈 등록: [forum/acme-issues.md](forum/acme-issues.md)의 초안을 https://github.com/ankraft/ACME-oneM2M-CSE/issues/new 에 붙여넣기
+- ~~ACME 버그 2건 이슈 등록~~ 완료 (10/11): [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) (HTTP Content-Type), [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) (MQTT NameError). 초안: [forum/acme-issues.md](forum/acme-issues.md)
 - oneM2M 개발자 커뮤니티(포럼/Discord)에 같은 문서 끝의 소개 글 게시(hackster 링크 포함)
 
 ## 5. 그 밖의 팀 작업

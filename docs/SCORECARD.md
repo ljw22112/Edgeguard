@@ -16,7 +16,7 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 5 | Quality of Video | **3** | 최종 영상 [YouTube 게시](https://youtu.be/P2JI5ZG6PIg) · `results/edgeguard_final.mp4`(2분 34초, 자막): 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · TR-0077 · 결과 | 내레이션 녹음, 실물 보드 장면 (→ 4) |
 | 6 | Quality of Github | **4** | 영문 README · 빌드/실행 · CI가 핵심 데모 12종(SIL · SDT · 핸드오버 · 모빌리티 · 에이전트 · 연합학습 · 모델 전달 · 스웜 · 오케스트레이션 · 구역 방송 · 보안 전송 · 스택/ACL/HA)을 자동 검증. **공개 저장소**(10/11), 최종 영상 · 내레이션 대본 포함 | 기사 링크 반영 완료(10/11), About 설명 · 토픽 설정 |
 | 7 | Promotion of oneM2M | 3 | README 'Why oneM2M' · 기능 표 · 표준 링크, ESTIMED/TR-0077 매핑 문서, 기사 초안이 oneM2M 장점 정리 | 기사 · 영상 게시 (→ 4~5) |
-| 8 | Judge points | 0~1 | 공개 포럼 활동 미확인 | ACME 이슈(Content-Type, sqi=false 시맨틱 탐색 거부, MQTT 송신 요청 오류) 공개 보고 (팀) |
+| 8 | Judge points | 1~2 | ACME CSE에 버그 2건 공개 보고(10/11): [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) Content-Type, [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) MQTT 송신 요청 오류 | sqi=false 시맨틱 탐색 거부 보고, oneM2M 커뮤니티에 소개 글 (→ 2~3) |
 | 9 | Interview points | (본선) | 리소스 트리 · 장점 · 통합 방법 · TR-0077 7절 매핑 설명 가능 | 예상 Q&A |
 | 10 | Security and Privacy | **4** | **TLS**(MQTT · HTTPS, 사이트 CA), 브로커 비밀번호 + 발신자별 ACL(다른 단말 사칭 차단), 디바이스 · 앱별 ACP, CREATE를 구독/CIN으로 한정(chty), 오케스트레이터가 재배치 시 권한 회수, 공격 6종 차단 CI 검증, 작업자 궤적은 현장에만, D2D HMAC | 단말별 인증서 · 키 순환 (→ 5) |
 | 11 | Data Interoperability | **5** | SDT 데이터 모델(TS-0023 방식 자체 도메인 + 표준 cod:bat, MEC 데이터 · 호스트 · 배포 의도 · 모델 배포 클래스까지) + SAREF 시맨틱 쿼리, 라벨 탐색으로 자동 등록 | — |
@@ -26,7 +26,7 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 15 | Geolocation Services | **4** | MEC 013 구역 이벤트(ENTERING/LEAVING) 구독 → oneM2M → 핸드오버 트리거, 위치 트윈(egs:ueLoc), 구역 그룹 지오펜싱 | 실제 ETSI Sandbox에서 구독 경로 실행 (→ 5) |
 | 16 | MEC Services | **4** | **양방향** MEC–oneM2M(oneM2M 앱이 IPE로 MEC 요청), RNIS 단말별 신호 세기를 SDT(egs:rdLnk)로, 에이전트가 MEC MCP 서버로 소비 | Sandbox에서 RNIS 구독 실행 (→ 5) |
 | 17 | AI Agents & MCP | **4~5** | MCP 서버 4개(IN · 구역 A · 구역 B · ETSI MEC) 오케스트레이션, 다단계 워크플로, 상태를 oneM2M에 저장, 서빙 CSE로 라우팅, 검증 · 오류 처리 ([AI 에이전트](ko/ai-agent.md)) | — |
-| | **합계** | **약 62~65 / 85** (인터뷰 제외) | hackster 기사 게시(10/11) | **기사 · 영상 게시 · 포럼 활동까지 약 66~70** |
+| | **합계** | **약 63~66 / 85** (인터뷰 제외) | hackster 기사 게시 · ACME 이슈 2건(10/11) | **기사 · 영상 게시 · 포럼 활동까지 약 66~70** |
 
 ## 개발 계획
 
@@ -52,3 +52,4 @@ Emerging 0~1 · Proficient 2~3 · Expert 4~5. 이전 기록(89/100)은 공개 �
 | 2026-10-11 | 약 58~61 / 85 | 저장소 공개(6: 3→4), 최종 영상 · 자막 · 내레이션 대본(5: 2→3), hackster · 포럼 게시 준비([publish-checklist.md](publish-checklist.md)) |
 | 2026-10-11 | 약 58~61 / 85 | 최종 영상 YouTube 게시(https://youtu.be/P2JI5ZG6PIg); README · 기사 · 체크리스트에 링크 반영 |
 | 2026-10-11 | 약 62~65 / 85 | hackster.io 기사 게시(https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309, 4: 게시 시 4 → 4); README · 기사 · 체크리스트 · 포럼 초안에 링크, 저장소 About 설명 · 토픽 |
+| 2026-10-11 | 약 63~66 / 85 | ACME 이슈 2건 공개 보고(#199, #200; 8: 0~1 → 1~2), 컨테이너 패키지 2개 공개 |

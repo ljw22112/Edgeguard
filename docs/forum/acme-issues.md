@@ -2,11 +2,13 @@
 
 [← publishing checklist](../publish-checklist.md)
 
-Two bugs we hit while building EdgeGuard. Both were checked on ACME master `a681a2f` (2026-10-08). Paste each one at https://github.com/ankraft/ACME-oneM2M-CSE/issues/new.
+Two bugs we hit while building EdgeGuard. Both were checked on ACME master `a681a2f` (2026-10-08). Filed on 2026-10-11 as [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) (HTTP Content-Type) and [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) (MQTT NameError); both bugs were still present on ACME master that day.
 
 ---
 
 ## 1. HTTP binding: response `Content-Type` with media-type parameters is not recognised
+
+Filed: [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199)
 
 **Title:** HTTP client fails on responses with `Content-Type: application/json; charset=utf-8`
 
@@ -33,6 +35,8 @@ resp.ct = ContentSerializationType.getType(r.headers.get('Content-Type', ct).spl
 ---
 
 ## 2. MQTT binding: outgoing requests fail with `NameError: name 'CSE' is not defined`
+
+Filed: [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)
 
 **Title:** MQTTClient.sendMqttRequest: `NameError: name 'CSE' is not defined`
 
