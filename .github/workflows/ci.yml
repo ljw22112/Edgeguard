@@ -73,6 +73,9 @@ jobs:
       - name: Zone broadcast (group fan-out to tags behind NAT via pollingChannel)
         run: python tools/zone_demo.py
 
+      - name: MEC app orchestration across hosts (intent -> discover, select, deploy, register, provision; host crash)
+        run: python tools/orchestration_demo.py
+
       - name: Secured transport (devices on MQTT/TLS, apps on HTTPS, attacks refused)
         run: |
           sudo apt-get install -y -q mosquitto > /dev/null

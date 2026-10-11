@@ -1,0 +1,172 @@
+{
+ "placement": {
+  "risk": "host-a1",
+  "analytics": "host-cloud"
+ },
+ "time_to_running_s": {
+  "intent_analytics": 0.74,
+  "intent_risk": 0.76
+ },
+ "recovery": {
+  "detect_s": 2.39,
+  "running_again_s": 2.73,
+  "new_host": "host-a2"
+ },
+ "processed": {
+  "before_crash": 14,
+  "after_recovery": 13
+ },
+ "events": [
+  {
+   "t": 0.355,
+   "intent": "intent_risk",
+   "step": "accepted",
+   "app": "edgeguard-risk"
+  },
+  {
+   "t": 0.369,
+   "intent": "intent_analytics",
+   "step": "accepted",
+   "app": "site-analytics"
+  },
+  {
+   "t": 0.384,
+   "intent": "intent_huge",
+   "step": "accepted",
+   "app": "edgeguard-risk-xl"
+  },
+  {
+   "t": 0.418,
+   "intent": "intent_risk",
+   "step": "selected",
+   "host": "host-a1",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.424,
+   "intent": "intent_analytics",
+   "step": "selected",
+   "host": "host-cloud",
+   "rtt": 25.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.445,
+   "intent": "intent_risk",
+   "step": "deployed",
+   "host": "host-a1",
+   "instance": "edgeguardriskhosta11"
+  },
+  {
+   "t": 0.447,
+   "intent": "intent_analytics",
+   "step": "deployed",
+   "host": "host-cloud",
+   "instance": "siteanalyticshostcloud2"
+  },
+  {
+   "t": 0.46,
+   "intent": "intent_huge",
+   "step": "unschedulable",
+   "reason": "new"
+  },
+  {
+   "t": 0.522,
+   "intent": "intent_analytics",
+   "step": "registered",
+   "app_ae": "app-siteanalyticshostcloud2"
+  },
+  {
+   "t": 0.522,
+   "intent": "intent_risk",
+   "step": "registered",
+   "app_ae": "app-edgeguardriskhosta11"
+  },
+  {
+   "t": 0.528,
+   "intent": "intent_analytics",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 0.541,
+   "intent": "intent_risk",
+   "step": "provisioned",
+   "grants": 1,
+   "revoked": false
+  },
+  {
+   "t": 0.743,
+   "intent": "intent_analytics",
+   "step": "running",
+   "host": "host-cloud",
+   "ms": 374.3,
+   "reason": "new"
+  },
+  {
+   "t": 0.755,
+   "intent": "intent_risk",
+   "step": "running",
+   "host": "host-a1",
+   "ms": 400.3,
+   "reason": "new"
+  },
+  {
+   "t": 5.715,
+   "intent": "intent_risk",
+   "step": "host_lost",
+   "host": "host-a1"
+  },
+  {
+   "t": 5.752,
+   "intent": "intent_risk",
+   "step": "selected",
+   "host": "host-a2",
+   "rtt": 4.0,
+   "reason": "host_lost"
+  },
+  {
+   "t": 5.764,
+   "intent": "intent_risk",
+   "step": "deployed",
+   "host": "host-a2",
+   "instance": "edgeguardriskhosta23"
+  },
+  {
+   "t": 5.826,
+   "intent": "intent_risk",
+   "step": "registered",
+   "app_ae": "app-edgeguardriskhosta23"
+  },
+  {
+   "t": 5.836,
+   "intent": "intent_risk",
+   "step": "provisioned",
+   "grants": 1,
+   "revoked": true
+  },
+  {
+   "t": 6.054,
+   "intent": "intent_risk",
+   "step": "running",
+   "host": "host-a2",
+   "ms": 332.2,
+   "reason": "host_lost"
+  }
+ ],
+ "checks": {
+  "hosts registered themselves in oneM2M and were found by label discovery": true,
+  "risk engine (zone A, <= 10 ms) placed on the zone A edge host": true,
+  "analytics (8 CPU, <= 100 ms) placed on the cloud host": true,
+  "impossible intent reported unschedulable, nothing deployed": true,
+  "full lifecycle recorded: selected -> deployed -> registered -> provisioned -> running": true,
+  "intent resource shows status, placement and the instance's AE": true,
+  "deployed risk engine processes the forklift's live data (provisioned subscription)": true,
+  "host crash detected and the risk engine re-placed on host-a2": true,
+  "re-placed instance processes live data again": true,
+  "old instance's access revoked from the device ACP": true,
+  "only operators may submit intents (ACP)": true
+ }
+}
