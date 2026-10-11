@@ -38,25 +38,27 @@ AGENT_AE = "EdgeGuardAgent"
 
 def default_servers(origin="SEdgeGuardAgent", mec_url="http://127.0.0.1:8085"):
     py = sys.executable
-    one = lambda n, url, rn: StdioServerParameters(command=py, cwd=ROOT, args=[      # noqa: E731
+    env = dict(os.environ)          # the MCP default environment is minimal; keep the interpreter's own settings
+    one = lambda n, url, rn: StdioServerParameters(command=py, cwd=ROOT, env=env, args=[      # noqa: E731
         "-m", "agent.onem2m_mcp", "--name", n, "--base-url", url, "--cse-rn", rn, "--origin", origin])
     return {"in": one("in", "http://127.0.0.1:8080", "cse-in"),
             "mn-a": one("mn-a", "http://127.0.0.1:8081", "cse-mn-a"),
             "mn-b": one("mn-b", "http://127.0.0.1:8082", "cse-mn-b"),
-            "mec": StdioServerParameters(command=py, cwd=ROOT, args=["-m", "agent.mec_mcp", "--mec-url", mec_url])}
+            "mec": StdioServerParameters(command=py, cwd=ROOT, env=env, args=["-m", "agent.mec_mcp", "--mec-url", mec_url])}
 
 
 class MCPHub:
     """Several MCP servers behind one call(server, tool, **args), with the tool catalogue and a call log."""
 
-    def __init__(self, servers: dict):
+    def __init__(self, servers: dict, errlog=None):
         self.params, self.sessions, self.tools, self.log = servers, {}, {}, []
         self.stack = AsyncExitStack()
+        self.errlog = errlog or open(os.path.join(ROOT, "results", "mcp_servers.log"), "a")   # servers' stderr
 
     async def __aenter__(self):
         for name, p in self.params.items():
             try:
-                read, write = await self.stack.enter_async_context(stdio_client(p))
+                read, write = await self.stack.enter_async_context(stdio_client(p, errlog=self.errlog))
                 s = await self.stack.enter_async_context(ClientSession(read, write))
                 await s.initialize()
                 self.sessions[name] = s

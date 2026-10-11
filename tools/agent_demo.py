@@ -138,6 +138,12 @@ def main():
 
     rep1, tools, log1, guard = asyncio.run(run_agent())
     bad = [c for c in log1 if c.get("error")]
+    if bad and any(c["tool"] == "connect" for c in bad):
+        try:
+            tail = open(os.path.join(ROOT, "results", "mcp_servers.log")).read().strip().splitlines()[-8:]
+            print("::error title=MCP server stderr::" + " | ".join(tail)[:1500])
+        except OSError:
+            pass
     if bad or rep1.get("errors"):                     # diagnostics (CI annotations)
         print("::warning title=agent_demo run 1::" + json.dumps({"tools": {k: len(v) for k, v in tools.items()},
               "errors": rep1.get("errors"), "failed_calls": bad[:6]}, default=str)[:1500])

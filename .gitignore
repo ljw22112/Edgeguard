@@ -6,3 +6,4 @@ __pycache__/
 .mec.pid
 mec.log
 deploy/out/
+results/mcp_servers.log

@@ -190,4 +190,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception:                        # visible in CI annotations
+        import traceback
+        print("::error title=handover_demo::" + " | ".join(traceback.format_exc().strip().splitlines()[-6:])[:1500])
+        raise
