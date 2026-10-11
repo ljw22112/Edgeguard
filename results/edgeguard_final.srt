@@ -1,0 +1,56 @@
+1
+00:00:00,000 --> 00:00:04,000
+EdgeGuard: stop forklift accidents before they happen, with oneM2M and ETSI MEC.
+
+2
+00:00:04,000 --> 00:00:10,000
+People and forklifts share aisles; proximity alarms are mostly false and do not say what to do.
+
+3
+00:00:10,000 --> 00:00:16,000
+EdgeGuard predicts the collision 1 to 3 seconds ahead and tells each worker WAIT, STEP ASIDE or GO.
+
+4
+00:00:16,000 --> 00:00:23,000
+Each zone has a MEC host with an MN-CSE and the EdgeGuard MEC app; an IN-CSE in the cloud ties them together.
+
+5
+00:00:23,000 --> 00:00:25,500
+Live demo.
+
+6
+00:00:25,500 --> 00:01:25,500
+Crossing, a worker in the lane, and two forklifts: the tag says WAIT, STEP ASIDE, then GO.
+
+7
+00:01:25,500 --> 00:01:28,000
+Firmware in the loop.
+
+8
+00:01:28,000 --> 00:01:44,667
+The ESP32 firmware runs unmodified against a real oneM2M CSE; a phone is the worker tag.
+
+9
+00:01:44,667 --> 00:01:47,167
+Mobility via ETSI MEC.
+
+10
+00:01:47,167 --> 00:02:03,667
+A MEC zone event moves the forklift's twin to zone B's MN-CSE: 1.5 to 8 ms interruption, no sample lost; RSRP of both cells cross at the boundary.
+
+11
+00:02:03,667 --> 00:02:13,667
+All four TR-0077 clause 7 gaps run as EdgeGuard features, measured in CI on every commit.
+
+12
+00:02:13,667 --> 00:02:21,667
+oneM2M does the work: SDT twins, group fan-out, pollingChannel, access control with TLS, announcement, and an AI agent over MCP.
+
+13
+00:02:21,667 --> 00:02:28,667
+In simulation: collisions 100 to 4, throughput 61.7 to 86 percent, and 180 to 2 collisions during a network outage.
+
+14
+00:02:28,667 --> 00:02:33,667
+EdgeGuard. Thank you.
+

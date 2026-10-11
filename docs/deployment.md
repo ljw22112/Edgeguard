@@ -17,7 +17,7 @@ python3 check_demo.py out/devices.json http://localhost:9090/health
 # Dashboard at http://localhost:9090/ · physical devices connect to http://<host>:7579/Mobius
 ```
 
-Prebuilt images (the repository is private, so log in with a token: a PAT with `read:packages` scope):
+Prebuilt images (public once the packages are set to public on GitHub; until then log in with a PAT that has `read:packages`):
 ```bash
 echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub username> --password-stdin
 export EDGEGUARD_IMAGE_TAG=latest EDGEGUARD_PULL_POLICY=always   # Windows cmd: set each with `set`

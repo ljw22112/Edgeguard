@@ -19,7 +19,7 @@ If the network or the server fails, the devices talk to each other directly (D2D
 | Collisions inside coverage holes (worker / forklift, 180 runs) | 16 / 19 | **0 / 0** |
 
 > The figures come from simulation. Device behaviour is tested on every commit by running **the board firmware unmodified on a PC** against a real oneM2M CSE (CI, 6/6 checks), and a phone serves as the worker tag ([hardware demo](docs/hardware-demo.md)).
-> Demo videos: `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
+> Demo videos: **`results/edgeguard_final.mp4`** (final, 2 min 34 s, captions; [storyboard](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
 
 ![Live demo: worker tag on WAIT, oneM2M resource panel](docs/img/demo_wait.png)
 
@@ -203,6 +203,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [Swarm and model delivery](docs/swarm-and-model-delivery.md) | group-based swarm coordination; canary, activation, monitoring and rollback of federated models |
 | [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out, pollingChannel, MQTT binding over TLS, HTTPS, broker ACL |
 | [hackster.io article (draft)](docs/hackster-article.md) | the project story for the hackathon article |
+| [Final video storyboard](docs/video-script.md) | timeline and narration of `results/edgeguard_final.mp4` |
 | [Hardware demo](docs/hardware-demo.md) | firmware-in-the-loop (SIL, CI) · phone tag · ESP32 boards (parts · wiring · checklist) |
 | [User study](docs/user-study.md) | cue-response experiment with a phone tag, safety manager interviews, feeding results back into the simulation |
 

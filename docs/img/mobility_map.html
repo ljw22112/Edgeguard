@@ -106,4 +106,11 @@ document.getElementById("play").onclick = e => {
 };
 const start = new URLSearchParams(location.search).get("t");
 const i0 = start ? TL.findIndex(r => r.t >= +start) : 0; slider.value = Math.max(0, i0); show(+slider.value);
+const q = new URLSearchParams(location.search);
+if (q.get("autoplay")) {                 // ?autoplay=1&step=50 : play once (video recording)
+  const step = +(q.get("step") || 100);
+  document.getElementById("play").textContent = "Pause";
+  timer = setInterval(() => { if (+slider.value >= TL.length - 1) { clearInterval(timer); return; }
+    slider.value = +slider.value + 1; show(+slider.value); }, step);
+}
 </script></body></html>

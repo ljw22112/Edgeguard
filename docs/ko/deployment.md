@@ -17,7 +17,7 @@ python3 check_demo.py out/devices.json http://localhost:9090/health
 # 대시보드 http://localhost:9090/ · 실기 디바이스는 http://<호스트>:7579/Mobius 로 접속
 ```
 
-미리 빌드된 이미지 (저장소가 비공개라 토큰으로 로그인 필요: `read:packages` 권한의 PAT):
+미리 빌드된 이미지 (GitHub에서 패키지를 공개로 바꾸면 로그인 불필요, 그 전에는 `read:packages` 권한의 PAT로 로그인):
 ```bash
 echo $GHCR_TOKEN | docker login ghcr.io -u <GitHub 아이디> --password-stdin
 export EDGEGUARD_IMAGE_TAG=latest EDGEGUARD_PULL_POLICY=always   # Windows cmd: set 로 각각 지정
