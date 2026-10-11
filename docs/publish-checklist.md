@@ -10,7 +10,7 @@
 
 1. ~~Danger Zone → Make public~~ 완료
 2. (선택) Packages → `edgeguard-mobius`, `edgeguard-mec` → Package settings → **Change visibility → Public**: `docker compose`가 로그인 없이 이미지를 받을 수 있게 됩니다.
-3. 저장소 첫 화면 오른쪽 About 톱니바퀴: Description에 `Worker–forklift collision prediction on oneM2M + ETSI MEC (2026 oneM2M Hackathon)`, Topics에 `onem2m`, `etsi-mec`, `iot`, `edge-computing`, `safety`, `acme-cse`, `mobius` 입력
+3. ~~저장소 첫 화면 오른쪽 About 톱니바퀴~~ 완료 (10/11): Description에 `Worker–forklift collision prediction on oneM2M + ETSI MEC (2026 oneM2M Hackathon)`, Topics에 `onem2m`, `etsi-mec`, `iot`, `edge-computing`, `safety`, `acme-cse`, `mobius` 입력
 
 ## 2. 영상 업로드 · 루브릭 5: 완료 (10/11, https://youtu.be/P2JI5ZG6PIg)
 
@@ -19,7 +19,10 @@
 - YouTube 업로드: 공개 또는 일부 공개, 자막 파일(.srt)도 함께 올립니다.
 - 제목 예시: `EdgeGuard – Forklift collision prediction with oneM2M and ETSI MEC (2026 oneM2M Hackathon)`
 
-## 3. hackster.io 기사 게시 · 루브릭 4, 7
+## 3. hackster.io 기사 게시 · 루브릭 4, 7: 완료 (10/11, https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)
+
+표가 hackster 편집기에서 지원되지 않아 본문의 표 4개는 목록으로 옮겼습니다. 팀원(김기환) 추가와 회로도(Schematics)는 남아 있습니다.
+
 
 1. hackster.io 로그인 → **New project**
 2. 표지 이미지: `docs/img/demo_wait.png`(또는 `docs/img/mobility_map.png`)

@@ -318,6 +318,7 @@ Full Docker stack with Mobius: `cd deploy && docker compose --profile demo up -d
 
 ## Links
 
+- Article on hackster.io: https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309
 - Code: https://github.com/ljw22112/Edgeguard
 - Video (2 min 34 s): https://youtu.be/P2JI5ZG6PIg
 - Demo videos in the repository: `results/edgeguard_final.mp4`, `results/edgeguard_demo_v1.3.mp4`, `results/edgeguard_firmware_in_the_loop.mp4`

@@ -19,7 +19,7 @@
 | 통신 음영 속 충돌 (작업자 / 지게차, 180회) | 16 / 19건 | **0 / 0건** |
 
 > 수치는 시뮬레이션 결과입니다. 단말 동작은 **보드용 펌웨어를 그대로 PC에서 돌려** 실제 oneM2M CSE와 매 커밋 시험하고(CI 6/6), 휴대폰을 작업자 태그로 씁니다([실물 시연](docs/ko/hardware-demo.md)).
-> **최종 영상: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2분 34초) · 데모 영상: **`results/edgeguard_final.mp4`** (최종, 2분 34초, 자막 · [스토리보드](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (라이브 데모 3장면, 약 1분 50초) · `results/edgeguard_firmware_in_the_loop.mp4` (펌웨어 + 휴대폰 태그, 약 30초).
+> **기사: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **최종 영상: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2분 34초) · 데모 영상: **`results/edgeguard_final.mp4`** (최종, 2분 34초, 자막 · [스토리보드](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (라이브 데모 3장면, 약 1분 50초) · `results/edgeguard_firmware_in_the_loop.mp4` (펌웨어 + 휴대폰 태그, 약 30초).
 
 ![라이브 데모: 작업자 태그 WAIT, oneM2M 리소스 패널](docs/img/demo_wait.png)
 
@@ -202,7 +202,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [앱 오케스트레이션](docs/ko/orchestration.md) | 호스트 등록, 배포 의도, 수명주기, 프로비저닝, 재배치 |
 | [스웜과 모델 전달](docs/ko/swarm-and-model-delivery.md) | 그룹 기반 스웜 조정, 연합 모델의 카나리 · 활성화 · 감시 · 롤백 |
 | [구역 방송 · 보안 전송](docs/ko/transport-security.md) | 그룹 팬아웃, pollingChannel, MQTT 바인딩 over TLS, HTTPS, 브로커 ACL |
-| [hackster.io 기사 초안 (영문)](docs/hackster-article.md) | 대회 기사용 프로젝트 이야기 |
+| [hackster.io 기사 (영문)](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309) ([원고](docs/hackster-article.md)) | hackster.io에 게시한 프로젝트 이야기 |
 | [실물 시연](docs/ko/hardware-demo.md) | 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그 · ESP32 보드(준비물 · 배선 · 체크리스트) |
 | [사용자 검증](docs/ko/user-study.md) | 휴대폰 태그로 신호 반응 실험, 안전관리자 인터뷰, 결과를 시뮬레이션에 반영 |
 | [공개 · 게시 체크리스트](docs/publish-checklist.md) | 저장소 공개, 영상 업로드, hackster 기사 게시, ACME 이슈 · 포럼 글 초안 |
