@@ -1,0 +1,30 @@
+{
+ "samples": 50,
+ "device_mqtt_to_app_https_ms": {
+  "n": 50,
+  "p50": 36.4,
+  "p95": 49.5,
+  "max": 54.0
+ },
+ "https_retrieve_ms": 19.5,
+ "attacks": {
+  "plain_http": true,
+  "untrusted_cert": true,
+  "plain_mqtt": "refused (None)",
+  "wrong_password": "refused (Not authorized)",
+  "impersonation": "no response (4008)",
+  "acp": true
+ },
+ "checks": {
+  "forklift registered and published 50 samples over MQTT/TLS": true,
+  "MEC app received all 50 as oneM2M notifications on its HTTPS endpoint": true,
+  "median device -> CSE -> app delivery under 50 ms": true,
+  "application reads over HTTPS, server verified against the site CA": true,
+  "plaintext HTTP to the CSE port fails": true,
+  "a certificate not from the site CA is rejected by the client": true,
+  "plaintext MQTT to the broker is refused": true,
+  "a wrong broker password is refused": true,
+  "a device cannot send requests under another device's originator (broker ACL)": true,
+  "another authenticated device cannot read the forklift's data (oneM2M ACP)": true
+ }
+}

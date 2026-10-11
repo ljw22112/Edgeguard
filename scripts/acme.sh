@@ -7,6 +7,7 @@
 #   in    IN-CSE  cse-in      :8080   (scripts/acme.ini)
 #   mn-a  MN-CSE  zone A      :8081   (scripts/acme-mn-a.ini, registers with the IN-CSE)
 #   mn-b  MN-CSE  zone B      :8082   (scripts/acme-mn-b.ini)
+#   sec   IN-CSE  cse-sec     :8443   HTTPS + MQTT over TLS (scripts/acme-sec.ini; needs scripts/mqtt.sh start)
 #
 # Every start copies config/onem2m/edgeguard.fcp (flexContainer specializations, docs/data-model.md)
 # next to ACME's own .fcp files, so the CSE knows the egs:* device and module classes.
@@ -17,10 +18,12 @@ ACME_PY="${ACME_PYTHON:-python3}"
 cmd="${1:-start}"; shift || true
 names="${*:-in}"
 
-port_of() { case "$1" in in) echo 8080;; mn-a) echo 8081;; mn-b) echo 8082;; *) echo "unknown CSE $1" >&2; exit 2;; esac; }
+port_of() { case "$1" in in) echo 8080;; mn-a) echo 8081;; mn-b) echo 8082;; sec) echo 8443;; *) echo "unknown CSE $1" >&2; exit 2;; esac; }
 ini_of() { case "$1" in in) echo acme.ini;; *) echo "acme-$1.ini";; esac; }
-rn_of() { case "$1" in in) echo cse-in;; mn-a) echo cse-mn-a;; mn-b) echo cse-mn-b;; esac; }
-up() { curl -sf -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" "localhost:$(port_of "$1")/$(rn_of "$1")" >/dev/null; }
+rn_of() { case "$1" in in) echo cse-in;; mn-a) echo cse-mn-a;; mn-b) echo cse-mn-b;; sec) echo cse-sec;; esac; }
+up() {
+  if [ "$1" = sec ]; then u="https://localhost:8443"; tls=(--cacert "$ROOT/.certs/ca.crt"); else u="http://localhost:$(port_of "$1")"; tls=(); fi
+  curl -sf "${tls[@]}" -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" "$u/$(rn_of "$1")" >/dev/null; }
 
 case "$cmd" in
   start)
@@ -32,6 +35,12 @@ case "$cmd" in
     for n in $names; do
       if up "$n"; then echo "ACME $n already up on :$(port_of "$n")"; continue; fi
       d="$ROOT/.acme/$n"; mkdir -p "$d"; cp "$ROOT/scripts/$(ini_of "$n")" "$d/acme.ini"
+      if [ "$n" = sec ]; then
+        bash "$ROOT/scripts/certs.sh" >/dev/null; mkdir -p "$d/certs"
+        cp "$ROOT/.certs/server.crt" "$d/certs/acme_cert.pem"; cp "$ROOT/.certs/server.key" "$d/certs/acme_key.pem"
+        cp "$ROOT/.certs/ca.crt" "$d/certs/ca.crt"
+        . "$ROOT/.certs/mqtt.env"; export ACME_MQTT_SECURITY_USERNAME=cse ACME_MQTT_SECURITY_PASSWORD="$MQTT_CSE_PW"
+      fi
       (cd "$ACME_DIR" && nohup $ACME_PY -m acmecse --base-directory "$d" --config acme.ini \
           </dev/null > "$d/acme.out" 2>&1 & echo $! > "$d/acme.pid")
       for _ in $(seq 1 90); do up "$n" && break; sleep 0.5; done
@@ -44,5 +53,5 @@ case "$cmd" in
       for p in $(ps -eo pid,args | grep "[a]cmecse --base-directory $ROOT/.acme/$n " | awk '{print $1}'); do kill "$p" 2>/dev/null || true; done
       for _ in $(seq 1 40); do up "$n" || break; sleep 0.25; done
     done ;;
-  *) echo "usage: $0 start|stop [in|mn-a|mn-b ...]"; exit 2 ;;
+  *) echo "usage: $0 start|stop [in|mn-a|mn-b|sec ...]"; exit 2 ;;
 esac

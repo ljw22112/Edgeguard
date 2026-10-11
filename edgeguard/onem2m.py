@@ -29,13 +29,14 @@ class OneM2MClient:
     """`base_url` is the CSE's HTTP root (e.g. http://localhost:8080),
     `cse_rn` its resource name (`cse-in` for ACME, `Mobius` for Mobius)."""
 
-    def __init__(self, base_url, cse_rn, origin, rvi="3", timeout=3.0):
+    def __init__(self, base_url, cse_rn, origin, rvi="3", timeout=3.0, verify=None):
         self.base = base_url.rstrip("/")
         self.cse_rn = cse_rn
         self.origin = origin
         self.rvi = rvi
         self.timeout = timeout
         self.s = requests.Session()
+        self.verify = verify            # HTTPS: CA bundle of the site PKI (docs/transport-security.md)
 
     # --- low level -------------------------------------------------------
     def url(self, path=""):
@@ -47,7 +48,8 @@ class OneM2MClient:
              "X-M2M-RVI": self.rvi, "Accept": "application/json"}
         if body is not None:
             h["Content-Type"] = "application/json" + (f";ty={ty}" if ty else "")
-        r = self.s.request(method, self.url(path), headers=h, params=params,
+        kw = {} if self.verify is None else {"verify": self.verify}   # per request: env CA bundles win over Session.verify
+        r = self.s.request(method, self.url(path), headers=h, params=params, **kw,
                            data=None if body is None else json.dumps(body),
                            timeout=self.timeout)
         rsc = r.headers.get("X-M2M-RSC")

@@ -7,3 +7,5 @@ __pycache__/
 mec.log
 deploy/out/
 results/mcp_servers.log
+.certs/
+.mqtt/

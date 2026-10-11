@@ -4,3 +4,4 @@ PyYAML>=6.0
 fastapi>=0.110
 uvicorn>=0.29
 mcp>=1.10,<2       # MCP servers and client for the AI safety agent (agent/); mcp 2.x renamed FastMCP
+paho-mqtt>=2.0,<3        # devices on the oneM2M MQTT binding (edgeguard/mqtt_binding.py)
