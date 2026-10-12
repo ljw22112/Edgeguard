@@ -74,7 +74,8 @@ def main():
 
     def status(rn):
         return orch.intents.get(f"intent_{rn}", {}).get("status")
-    wait(lambda: status("risk") == "running" and status("analytics") == "running" and status("huge") == "unschedulable", 15)
+    ran = lambda rn: any(e["intent"] == rn and e["step"] == "running" for e in orch.events)   # noqa: E731
+    wait(lambda: ran("intent_risk") and ran("intent_analytics") and status("huge") == "unschedulable", 15)
     t_running = {e["intent"]: e["t"] - t_submit for e in orch.events if e["step"] == "running"}
     placed1 = {rn: orch.intents.get(f"intent_{rn}", {}).get("host") for rn in ("risk", "analytics")}
     risk_ae1 = orch.intents["intent_risk"].get("app_ae")
@@ -86,7 +87,9 @@ def main():
     # --- the zone A edge host crashes --------------------------------------------------------------------
     t_crash = time.time()
     hosts["host-a1"].crash()
-    wait(lambda: status("risk") == "running" and orch.intents["intent_risk"].get("host") == "host-a2", 15)
+    # wait for the "running" event itself: the intent's status is written just before the event is recorded
+    wait(lambda: any(e["intent"] == "intent_risk" and e["step"] == "running" and e.get("reason") == "host_lost"
+                     for e in orch.events), 20)
     rec = next((e for e in orch.events if e["intent"] == "intent_risk" and e["step"] == "running" and e.get("reason") == "host_lost"), None)
     detect = next((e for e in orch.events if e["step"] == "host_lost"), None)
     time.sleep(2.5)
