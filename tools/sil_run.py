@@ -41,14 +41,21 @@ def mqtt_settings():
 def build(out_dir, cse_url, transport="http"):
     os.makedirs(out_dir, exist_ok=True)
     extra, libs = [], []
-    if transport == "mqtt":                          # oneM2M MQTT binding over TLS (firmware/common/m2m_mqtt.h)
-        pw, ca = mqtt_settings()
-        hdr = os.path.join(out_dir, "sil_mqtt.h")
-        open(hdr, "w").write("#define MQTT_CA_PEM " + json.dumps(ca) + "\n")
-        extra = ["-DM2M_MQTT=1", "-DSIL_MQTT", '-DSIL_MQTT_HOST="127.0.0.1"', f'-DSIL_MQTT_PASS="{pw}"', "-include", hdr]
-        libs = ["-lmosquitto"]
-    for sketch, (_, port) in DEVICES.items():
+    for sketch, (dev, port) in DEVICES.items():
         d = os.path.join(ROOT, "firmware", sketch)
+        if transport in ("mqtt", "mqtt-mtls"):       # oneM2M MQTT binding over TLS (firmware/common/m2m_mqtt.h)
+            pw, ca = mqtt_settings()
+            hdr = os.path.join(out_dir, f"sil_mqtt_{sketch}.h")
+            lines = ["#define MQTT_CA_PEM " + json.dumps(ca)]
+            if transport == "mqtt-mtls":             # the device's own certificate (scripts/device_cert.sh)
+                origin = {"worker_01": "SWorker01", "forklift_01": "SForklift01"}[dev]
+                dd = os.path.join(ROOT, ".certs", "devices")
+                lines += ["#define MQTT_CLIENT_CERT " + json.dumps(open(os.path.join(dd, f"{origin}.crt")).read()),
+                          "#define MQTT_CLIENT_KEY " + json.dumps(open(os.path.join(dd, f"{origin}.key")).read())]
+                pw = ""
+            open(hdr, "w").write("\n".join(lines) + "\n")
+            extra = ["-DM2M_MQTT=1", "-DSIL_MQTT", '-DSIL_MQTT_HOST="127.0.0.1"', f'-DSIL_MQTT_PASS="{pw}"', "-include", hdr]
+            libs = ["-lmosquitto"]
         subprocess.run(["g++", "-std=c++17", "-O1", "-w", "-DHIL_MODE=1", f"-DHTTP_PORT={port}",
                         f'-DSIL_CSE_URL="{cse_url}"', *extra, "-I", os.path.join(ROOT, "tests", "firmware", "stubs"),
                         "-I", AJ, "-I", d, "-x", "c++", "-include", "Arduino.h", os.path.join(d, f"{sketch}.ino"),
@@ -100,7 +107,7 @@ def main():
     ap.add_argument("--out", default="results/sil_run.json")
     ap.add_argument("--build-dir", default="/tmp/edgeguard_sil")
     ap.add_argument("--record", help="also record the dashboard + a phone tag side by side to this .mp4")
-    ap.add_argument("--transport", choices=("http", "mqtt"), default="http",
+    ap.add_argument("--transport", choices=("http", "mqtt", "mqtt-mtls"), default="http",
                     help="device -> CSE: HTTP, or the oneM2M MQTT binding over TLS (needs scripts/mqtt.sh and "
                          "ACME_MQTT=1 scripts/acme.sh start in)")
     a = ap.parse_args()
@@ -108,7 +115,7 @@ def main():
         sys.exit("::error title=sil_run::needs g++ and ArduinoJson (ARDUINOJSON_SRC)")
     build(a.build_dir, a.cse, a.transport)
     broker_log = os.path.join(ROOT, ".mqtt", "mosquitto.log")
-    log_start = os.path.getsize(broker_log) if a.transport == "mqtt" and os.path.exists(broker_log) else 0
+    log_start = os.path.getsize(broker_log) if a.transport != "http" and os.path.exists(broker_log) else 0
     env = dict(os.environ, EDGEGUARD_CONFIG="config/site.yaml",
                EDGEGUARD_OVERRIDES="config/local-acme.yaml,config/live-demo.yaml,config/sil.yaml")
     subprocess.run(["bash", "scripts/mec.sh", "restart"], cwd=ROOT, env=env, check=True, stdout=subprocess.DEVNULL)
@@ -182,12 +189,13 @@ def main():
             any(d == "worker_01" and st in ("WAIT", "STEP ASIDE") for d, st, _ in seen)
             and any(d == "forklift_01" and st.startswith("limit") for d, st, _ in seen),
     }
-    if a.transport == "mqtt":
+    if a.transport != "http":
         # the firmware's requests went over the broker: its TLS sessions as SWorker01 / SForklift01 in the broker
         # log, and every resource it created exists in the CSE (registration was over MQTT)
         log = open(broker_log).read()[log_start:] if os.path.exists(broker_log) else ""
         users = {u: log.count(f"u'{u}'") for u in ("SWorker01", "SForklift01")}
-        checks["firmware connected to the broker over TLS as its own originator (both devices)"] = all(users.values())
+        what = "with its own certificate (mutual TLS, no password)" if a.transport == "mqtt-mtls" else "over TLS"
+        checks[f"firmware connected to the broker {what} as its own originator (both devices)"] = all(users.values())
         try:
             from edgeguard.onem2m import OneM2MClient
             c = OneM2MClient(a.cse.rsplit("/", 1)[0], a.cse.rsplit("/", 1)[1], "CAdmin")

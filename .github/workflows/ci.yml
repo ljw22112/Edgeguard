@@ -107,6 +107,12 @@ jobs:
           bash scripts/acme.sh stop in
           ACME_MQTT=1 bash scripts/acme.sh start in
           python tools/sil_run.py --transport mqtt --out results/sil_run_mqtt.json
+          bash scripts/device_cert.sh issue SWorker01 && bash scripts/device_cert.sh issue SForklift01
+          bash scripts/mqtt.sh reload
+          python tools/sil_run.py --transport mqtt-mtls --out results/sil_run_mtls.json   # device certificates
+
+      - name: Device identity by certificate (mutual TLS, rotation, revocation)
+        run: python tools/device_identity_demo.py
 
       - name: SIL logs on failure
         if: failure()

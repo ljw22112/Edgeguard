@@ -66,7 +66,11 @@ const char* MQTT_PASS = SIL_MQTT_PASS;
 const char* MQTT_HOST = "192.168.0.10";                         // site broker (scripts/mqtt.sh), TLS on 8883
 const char* MQTT_PASS = "CHANGE-ME";                            // this device's broker password
 #endif
+#ifdef MQTT_CLIENT_CERT                                         // mutual TLS: this device's certificate (CN =
+const uint16_t MQTT_PORT = 8884;                                // originator) is its identity, no password
+#else
 const uint16_t MQTT_PORT = 8883;
+#endif
 const char* CSE_ID    = "id-in";                                // the CSE's ID and name (ACME IN-CSE defaults)
 const char* CSE_RN    = "cse-in";
 #ifndef MQTT_CA_PEM                                             // the site CA (scripts/certs.sh, .certs/ca.crt)
@@ -353,6 +357,10 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) { delay(250); Serial.print("."); }
 #if M2M_MQTT
   tlsNet.setCACert(MQTT_CA_PEM);
+#ifdef MQTT_CLIENT_CERT                                           // scripts/device_cert.sh issue <originator>
+  tlsNet.setCertificate(MQTT_CLIENT_CERT);
+  tlsNet.setPrivateKey(MQTT_CLIENT_KEY);
+#endif
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   m2mLink.begin(mqttClient, ORIGIN, CSE_ID, CSE_RN, ORIGIN, MQTT_PASS);   // broker user = originator
 #endif

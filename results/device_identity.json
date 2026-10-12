@@ -1,0 +1,21 @@
+{
+ "create_ms": {
+  "p50": 44.0,
+  "p95": 48.0
+ },
+ "refusals": {
+  "no_cert": "refused (MQTT connect refused: None)",
+  "foreign_ca": "refused (MQTT connect refused: None)",
+  "impersonation": "no response (4008)",
+  "revoked": "refused (MQTT connect refused: None)"
+ },
+ "checks": {
+  "device registered and published 20 samples with its certificate only (no password)": true,
+  "no client certificate: refused by the broker": true,
+  "certificate from another CA (same CN): refused": true,
+  "a device's certificate cannot speak under another originator (ACL on the CN)": true,
+  "rotation: the revoked old certificate is refused": true,
+  "rotation: the new certificate works": true,
+  "create over mutual TLS: median under 50 ms": true
+ }
+}

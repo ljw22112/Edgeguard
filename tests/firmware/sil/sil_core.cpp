@@ -193,12 +193,19 @@ bool PubSubClient::connect(const char* id, const char* user, const char* pass) {
   impl = m;
   g_ps = this;
   g_conn = -1;
-  mosquitto_username_pw_set(m, user, pass);
+  if (pass && *pass) mosquitto_username_pw_set(m, user, pass);       // with a client certificate: no password
   // the firmware hands over the CA as PEM text (as on the ESP32); libmosquitto wants a file
-  char path[] = "/tmp/egsil_caXXXXXX";
-  int fd = mkstemp(path);
-  if (fd >= 0) { if (write(fd, net->ca, std::strlen(net->ca)) < 0) {} close(fd); }
-  if (mosquitto_tls_set(m, path, nullptr, nullptr, nullptr, nullptr) != MOSQ_ERR_SUCCESS) return false;
+  auto tmpfile = [](const char* pem, std::string& out) {
+    char path[] = "/tmp/egsil_pemXXXXXX";
+    int fd = mkstemp(path);
+    if (fd >= 0) { if (write(fd, pem, std::strlen(pem)) < 0) {} close(fd); }
+    out = path;
+  };
+  std::string ca, cert, key;
+  tmpfile(net->ca, ca);
+  if (net->cert && net->key) { tmpfile(net->cert, cert); tmpfile(net->key, key); }   // mutual TLS
+  if (mosquitto_tls_set(m, ca.c_str(), nullptr, cert.empty() ? nullptr : cert.c_str(),
+                        key.empty() ? nullptr : key.c_str(), nullptr) != MOSQ_ERR_SUCCESS) return false;
   mosquitto_connect_callback_set(m, on_connect);
   mosquitto_disconnect_callback_set(m, on_disconnect);
   mosquitto_message_callback_set(m, on_message);

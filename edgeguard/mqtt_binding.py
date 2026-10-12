@@ -29,7 +29,9 @@ _rqi = itertools.count(1)
 
 class MqttOneM2MClient(OneM2MClient):
     def __init__(self, host, port, cse_id, cse_rn, origin, username=None, password=None, ca=None,
-                 rvi="3", timeout=5.0, on_notify=None, tls=True):
+                 rvi="3", timeout=5.0, on_notify=None, tls=True, certfile=None, keyfile=None):
+        """certfile / keyfile: a device certificate for the broker's mutual-TLS listener (scripts/device_cert.sh);
+        its CN is the originator and the broker's username, so no password is needed."""
         super().__init__(f"mqtts://{host}:{port}", cse_rn, origin, rvi, timeout)
         self.cse_id = cse_id.strip("/")
         self.on_notify = on_notify
@@ -39,7 +41,8 @@ class MqttOneM2MClient(OneM2MClient):
         if username:
             self.m.username_pw_set(username, password)
         if tls:
-            self.m.tls_set(ca_certs=ca, cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS_CLIENT)
+            self.m.tls_set(ca_certs=ca, certfile=certfile, keyfile=keyfile, cert_reqs=ssl.CERT_REQUIRED,
+                           tls_version=ssl.PROTOCOL_TLS_CLIENT)
         self.m.on_message = self._on_message
         self.connected = threading.Event()
         self.connect_rc = None
@@ -51,7 +54,10 @@ class MqttOneM2MClient(OneM2MClient):
                              (f"/oneM2M/req/{self.cse_id}/{self.origin}/json", 1)])
             self.connected.set()
         self.m.on_connect = on_connect
-        self.m.connect(host, port, keepalive=30)
+        try:
+            self.m.connect(host, port, keepalive=30)
+        except (ssl.SSLError, OSError) as e:          # handshake refused (no / revoked / foreign certificate)
+            raise ConnectionRefusedError(f"TLS handshake refused: {e}") from e
         self.m.loop_start()
         if not self.connected.wait(timeout) or self.connect_rc is None or self.connect_rc.is_failure:
             self.close()

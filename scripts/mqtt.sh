@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Mosquitto broker for the oneM2M MQTT binding (TS-0010): TLS only (:8883), passwords, per-originator ACL.
-#   scripts/mqtt.sh start|stop
+#   scripts/mqtt.sh start|stop|reload
+# Listeners: 8883 TLS + password, 8884 mutual TLS (device certificate, CN = originator, CRL).
 # Users: "cse" (the CSE, all oneM2M topics) and the device originators listed in MQTT_DEVICES; a device
 # may only send requests as itself and only read responses / notifications addressed to itself.
 set -e
@@ -10,6 +11,7 @@ DEVICES="${MQTT_DEVICES:-Cforklift01 Cworker01 SEdgeGuardSec SWorker01 SForklift
 case "${1:-start}" in
   start)
     bash "$ROOT/scripts/certs.sh" >/dev/null
+    bash "$ROOT/scripts/device_cert.sh" crl >/dev/null
     . "$C/mqtt.env"
     mkdir -p "$D"; rm -f "$D/passwd"; touch "$D/passwd"; chmod 600 "$D/passwd"
     mosquitto_passwd -b "$D/passwd" cse "$MQTT_CSE_PW"
@@ -40,11 +42,24 @@ cafile $C/ca.crt
 certfile $C/server.crt
 keyfile $C/server.key
 tls_version tlsv1.2
+
+# mutual TLS: devices present a certificate from the site CA (scripts/device_cert.sh), its CN (the
+# originator) is the username for the ACL, revoked certificates are refused (CRL)
+listener 8884 127.0.0.1
+cafile $C/ca.crt
+certfile $C/server.crt
+keyfile $C/server.key
+require_certificate true
+use_identity_as_username true
+crlfile $C/crl.pem
+tls_version tlsv1.2
 CONF
     "$0" stop >/dev/null 2>&1 || true
     mosquitto -c "$D/mosquitto.conf" -d
     for _ in $(seq 1 40); do (exec 3<>/dev/tcp/127.0.0.1/8883) 2>/dev/null && { echo "MQTT broker up on :8883 (TLS)"; exit 0; }; sleep 0.25; done
     echo "broker did not start, see $D/mosquitto.log"; exit 1 ;;
+  reload)                      # new CRL / ACL without dropping the CSE's connection
+    kill -HUP "$(cat "$D/mosquitto.pid")" ;;
   stop)
     [ -f "$D/mosquitto.pid" ] && kill "$(cat "$D/mosquitto.pid")" 2>/dev/null || true
     rm -f "$D/mosquitto.pid"
