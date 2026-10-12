@@ -11,6 +11,7 @@
 #define PI 3.14159265358979f
 #define OUTPUT 1
 #define INPUT 0
+typedef uint8_t byte;
 template <class T, class L, class H> T constrain(T v, L lo, H hi) { return v < lo ? lo : (v > hi ? hi : v); }
 uint32_t millis();
 uint32_t micros();
@@ -36,6 +37,8 @@ class String : public std::string {
   String operator+(int v) const { return *this + String(v); }
   String operator+(unsigned v) const { return *this + String(v); }
   String operator+(unsigned long v) const { return *this + String(v); }
+  int indexOf(const String& s) const { size_t p = find(s); return p == npos ? -1 : (int)p; }
+  int indexOf(const char* s) const { size_t p = find(s); return p == npos ? -1 : (int)p; }
   // lets ArduinoJson serialise into it (the real core uses String::concat)
   size_t write(uint8_t c) { push_back((char)c); return 1; }
   size_t write(const uint8_t* s, size_t n) { append((const char*)s, n); return n; }

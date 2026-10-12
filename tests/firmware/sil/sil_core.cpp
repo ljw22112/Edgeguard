@@ -174,6 +174,51 @@ void WebServer::handleClient() {
   close(c);
 }
 
+// ---------------- MQTT client over TLS (PubSubClient API on libmosquitto), for M2M_MQTT builds
+#ifdef SIL_MQTT
+#include "PubSubClient.h"
+#include <mosquitto.h>
+static PubSubClient* g_ps = nullptr;
+static volatile int g_conn = -1;                       // -1 pending, 0 connected, >0 refused / lost
+static void on_connect(mosquitto*, void*, int rc) { g_conn = rc; }
+static void on_disconnect(mosquitto*, void*, int rc) { g_conn = rc ? rc : 99; }
+static void on_message(mosquitto*, void*, const mosquitto_message* m) {
+  if (g_ps && g_ps->callback) g_ps->callback(m->topic, (uint8_t*)m->payload, (unsigned)m->payloadlen);
+}
+bool PubSubClient::connect(const char* id, const char* user, const char* pass) {
+  static bool init = false;
+  if (!init) { mosquitto_lib_init(); init = true; }
+  if (impl) { mosquitto_destroy((mosquitto*)impl); impl = nullptr; }
+  mosquitto* m = mosquitto_new(id, true, nullptr);
+  impl = m;
+  g_ps = this;
+  g_conn = -1;
+  mosquitto_username_pw_set(m, user, pass);
+  // the firmware hands over the CA as PEM text (as on the ESP32); libmosquitto wants a file
+  char path[] = "/tmp/egsil_caXXXXXX";
+  int fd = mkstemp(path);
+  if (fd >= 0) { if (write(fd, net->ca, std::strlen(net->ca)) < 0) {} close(fd); }
+  if (mosquitto_tls_set(m, path, nullptr, nullptr, nullptr, nullptr) != MOSQ_ERR_SUCCESS) return false;
+  mosquitto_connect_callback_set(m, on_connect);
+  mosquitto_disconnect_callback_set(m, on_disconnect);
+  mosquitto_message_callback_set(m, on_message);
+  if (mosquitto_connect(m, host, port, 30) != MOSQ_ERR_SUCCESS) return false;
+  for (int i = 0; i < 300 && g_conn == -1; i++) mosquitto_loop(m, 10, 1);
+  std::fprintf(stderr, "[mqtt] connect %s -> %d\n", id, g_conn);
+  return g_conn == 0;
+}
+bool PubSubClient::connected() { return impl && g_conn == 0; }
+bool PubSubClient::publish(const char* topic, const char* payload) {
+  return mosquitto_publish((mosquitto*)impl, nullptr, topic, (int)std::strlen(payload), payload, 1, false) == MOSQ_ERR_SUCCESS;
+}
+bool PubSubClient::subscribe(const char* topic) {
+  if (mosquitto_subscribe((mosquitto*)impl, nullptr, topic, 1) != MOSQ_ERR_SUCCESS) return false;
+  for (int i = 0; i < 20; i++) mosquitto_loop((mosquitto*)impl, 5, 1);    // SUBACK before the first request
+  return true;
+}
+bool PubSubClient::loop() { return impl && mosquitto_loop((mosquitto*)impl, 0, 1) == MOSQ_ERR_SUCCESS; }
+#endif
+
 // ---------------- the sketch
 void setup();
 void loop();

@@ -31,6 +31,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
+#ifndef M2M_MQTT
+#define M2M_MQTT 0                       // 1: oneM2M MQTT binding over TLS to the site broker (m2m_mqtt.h)
+#endif
+#if M2M_MQTT
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include "m2m_mqtt.h"       // copy of firmware/common/m2m_mqtt.h (kept identical by tests)
+#endif
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <DW1000Ranging.h>
@@ -51,6 +59,24 @@ const char* CSE_URL   = SIL_CSE_URL;                            // software-in-t
 const char* CSE_URL   = "http://192.168.0.10:7579/Mobius";     // Mobius; ACME: http://<host>:8080/cse-in
 #endif
 const char* RVI       = "2a";            // oneM2M release both Mobius 3 and ACME accept (docs/interop-notes.md #5)
+#if M2M_MQTT
+#ifdef SIL_MQTT_HOST
+const char* MQTT_HOST = SIL_MQTT_HOST;                          // software-in-the-loop build (tools/sil_run.py)
+const char* MQTT_PASS = SIL_MQTT_PASS;
+#else
+const char* MQTT_HOST = "192.168.0.10";                         // site broker (scripts/mqtt.sh), TLS on 8883
+const char* MQTT_PASS = "CHANGE-ME";                            // this device's broker password
+#endif
+const uint16_t MQTT_PORT = 8883;
+const char* CSE_ID    = "id-in";                                // the CSE's ID and name (ACME IN-CSE defaults)
+const char* CSE_RN    = "cse-in";
+#ifndef MQTT_CA_PEM                                             // the site CA (scripts/certs.sh, .certs/ca.crt)
+#define MQTT_CA_PEM "-----BEGIN CERTIFICATE-----\n...site CA...\n-----END CERTIFICATE-----\n"
+#endif
+WiFiClientSecure tlsNet;
+PubSubClient mqttClient(tlsNet);
+m2m::MqttLink m2mLink;
+#endif
 #ifndef HTTP_PORT
 #define HTTP_PORT 80                     // alert listener (the AE's poa)
 #endif
@@ -96,6 +122,26 @@ cue::WaitCue waitCue;                // WAIT until GO for MEC alerts (worker_cue
 bool asideCue = false;               // the current WAIT started with STEP ASIDE
 uint32_t lastPublish = 0;
 uint32_t rqi = 0;
+
+// One oneM2M CREATE (POST with ty) into the CSE, over HTTP or the MQTT binding (M2M_MQTT).  Returns an
+// HTTP-like status: 201 created, 409 already there, otherwise an error.
+int m2mPost(const String& path, int ty, const String& body, const char* tag) {
+#if M2M_MQTT
+  (void)tag;
+  return m2mLink.create(path, ty, body, RVI);
+#else
+  HTTPClient http;
+  http.begin(String(CSE_URL) + path);
+  http.addHeader("X-M2M-Origin", ORIGIN);
+  http.addHeader("X-M2M-RI", String(tag) + (rqi++));
+  http.addHeader("X-M2M-RVI", RVI);
+  http.addHeader("Content-Type", String("application/json;ty=") + ty);
+  http.addHeader("Accept", "application/json");
+  int code = http.POST(body);
+  http.end();
+  return code;
+#endif
+}
 
 int64_t epochMs() {
   struct timeval tv;
@@ -172,14 +218,7 @@ void relayUp(const d2d::Frame& f) {
   con["relay"] = DEVICE_ID;
   String body;
   serializeJson(doc, body);
-  HTTPClient http;
-  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/relay");   // into this device's own AE
-  http.addHeader("X-M2M-Origin", ORIGIN);
-  http.addHeader("X-M2M-RI", String("rl") + (rqi++));
-  http.addHeader("X-M2M-RVI", RVI);
-  http.addHeader("Content-Type", "application/json;ty=4");
-  http.POST(body);
-  http.end();
+  m2mPost(String("/") + DEVICE_ID + "/relay", 4, body, "rl");
 }
 
 void handleD2D() {
@@ -218,16 +257,8 @@ void publishLocation(float x, float y) {
   String body;
   serializeJson(doc, body);
 
-  HTTPClient http;
-  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/location");
-  http.addHeader("X-M2M-Origin", ORIGIN);
-  http.addHeader("X-M2M-RI", String("tag") + (rqi++));
-  http.addHeader("X-M2M-RVI", RVI);
-  http.addHeader("Content-Type", "application/json;ty=4");
-  http.addHeader("Accept", "application/json");
-  int code = http.POST(body);
+  int code = m2mPost(String("/") + DEVICE_ID + "/location", 4, body, "tag");
   if (code != 201) Serial.printf("publish failed: %d\n", code);
-  http.end();
 }
 
 // oneM2M notification: {"m2m:sgn": {"nev": {"rep": {"m2m:cin": {"con": {...alert...}}}}}}
@@ -297,28 +328,13 @@ void postAck(const String& st) {
   con["ts"] = epochMs();
   String body;
   serializeJson(doc, body);
-  HTTPClient http;
-  http.begin(String(CSE_URL) + "/" + DEVICE_ID + "/status");
-  http.addHeader("X-M2M-Origin", ORIGIN);
-  http.addHeader("X-M2M-RI", String("ack") + (rqi++));
-  http.addHeader("X-M2M-RVI", RVI);
-  http.addHeader("Content-Type", "application/json;ty=4");
-  http.POST(body);
-  http.end();
+  m2mPost(String("/") + DEVICE_ID + "/status", 4, body, "ack");
 }
 
 // oneM2M registration: this device is its own AE (<CSE>/{DEVICE_ID}) with its data container
 // under it.  Idempotent (409 = already registered); tools/setup_resources.py adds the ACP.
 bool m2mCreate(const String& path, int ty, const String& body) {
-  HTTPClient http;
-  http.begin(String(CSE_URL) + path);
-  http.addHeader("X-M2M-Origin", ORIGIN);
-  http.addHeader("X-M2M-RI", String("reg") + (rqi++));
-  http.addHeader("X-M2M-RVI", RVI);
-  http.addHeader("Content-Type", String("application/json;ty=") + ty);
-  http.addHeader("Accept", "application/json");
-  int code = http.POST(body);
-  http.end();
+  int code = m2mPost(path, ty, body, "reg");
   return code == 201 || code == 409;
 }
 
@@ -338,6 +354,11 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) { delay(250); Serial.print("."); }
+#if M2M_MQTT
+  tlsNet.setCACert(MQTT_CA_PEM);
+  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  m2mLink.begin(mqttClient, ORIGIN, CSE_ID, CSE_RN, ORIGIN, MQTT_PASS);   // broker user = originator
+#endif
   registerAE();
   Serial.printf("\nIP %s\n", WiFi.localIP().toString().c_str());
   configTime(9 * 3600, 0, "pool.ntp.org");                        // timestamps for latency
@@ -360,6 +381,9 @@ void loop() {
   DW1000Ranging.loop();
 #endif
   server.handleClient();
+#if M2M_MQTT
+  m2mLink.loop();
+#endif
   handleD2D();
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
   float tc = nowS();

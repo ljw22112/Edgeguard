@@ -95,6 +95,17 @@ jobs:
           fi
           python tools/secure_transport_demo.py || { diag broker .mqtt/mosquitto.log; diag acme .acme/sec/acme.out; exit 1; }
 
+      - name: Firmware in the loop over the oneM2M MQTT binding (TLS, broker ACL)
+        env:
+          ARDUINOJSON_SRC: /tmp/arduinojson/src
+        run: |
+          sudo apt-get install -y -q libmosquitto-dev > /dev/null
+          bash scripts/mec.sh stop
+          bash scripts/mqtt.sh start                   # restarts the broker with the device users
+          bash scripts/acme.sh stop in
+          ACME_MQTT=1 bash scripts/acme.sh start in
+          python tools/sil_run.py --transport mqtt --out results/sil_run_mqtt.json
+
       - name: SIL logs on failure
         if: failure()
         run: |

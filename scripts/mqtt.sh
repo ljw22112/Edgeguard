@@ -6,7 +6,7 @@
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$ROOT/.mqtt"; C="$ROOT/.certs"
-DEVICES="${MQTT_DEVICES:-Cforklift01 Cworker01 SEdgeGuardSec}"
+DEVICES="${MQTT_DEVICES:-Cforklift01 Cworker01 SEdgeGuardSec SWorker01 SForklift01}"
 case "${1:-start}" in
   start)
     bash "$ROOT/scripts/certs.sh" >/dev/null

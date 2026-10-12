@@ -8,6 +8,7 @@
 #   mn-a  MN-CSE  zone A      :8081   (scripts/acme-mn-a.ini, registers with the IN-CSE)
 #   mn-b  MN-CSE  zone B      :8082   (scripts/acme-mn-b.ini)
 #   sec   IN-CSE  cse-sec     :8443   HTTPS + MQTT over TLS (scripts/acme-sec.ini; needs scripts/mqtt.sh start)
+#   ACME_MQTT=1 scripts/acme.sh start in    adds the MQTT binding (TLS, site broker) to a CSE
 #
 # Every start copies config/onem2m/edgeguard.fcp (flexContainer specializations, docs/data-model.md)
 # next to ACME's own .fcp files, so the CSE knows the egs:* device and module classes.
@@ -35,6 +36,12 @@ case "$cmd" in
     for n in $names; do
       if up "$n"; then echo "ACME $n already up on :$(port_of "$n")"; continue; fi
       d="$ROOT/.acme/$n"; mkdir -p "$d"; cp "$ROOT/scripts/$(ini_of "$n")" "$d/acme.ini"
+      if [ "$n" != sec ] && [ "${ACME_MQTT:-0}" = 1 ]; then   # + oneM2M MQTT binding over TLS (scripts/mqtt.sh)
+        bash "$ROOT/scripts/certs.sh" >/dev/null
+        printf "\n[mqtt]\nenable=true\naddress=127.0.0.1\nport=8883\n\n[mqtt.security]\nuseTLS=true\nverifyCertificate=true\ncaCertificateFile=%s\n" \
+          "$ROOT/.certs/ca.crt" >> "$d/acme.ini"
+        . "$ROOT/.certs/mqtt.env"; export ACME_MQTT_SECURITY_USERNAME=cse ACME_MQTT_SECURITY_PASSWORD="$MQTT_CSE_PW"
+      fi
       if [ "$n" = sec ]; then
         bash "$ROOT/scripts/certs.sh" >/dev/null; mkdir -p "$d/certs"
         cp "$ROOT/.certs/server.crt" "$d/certs/acme_cert.pem"; cp "$ROOT/.certs/server.key" "$d/certs/acme_key.pem"
@@ -44,7 +51,12 @@ case "$cmd" in
       for attempt in 1 2; do       # a CSE that dies while starting (port not yet free, plugin error) gets one retry
         (cd "$ACME_DIR" && nohup $ACME_PY -m acmecse --base-directory "$d" --config acme.ini \
             </dev/null > "$d/acme.out" 2>&1 & echo $! > "$d/acme.pid")
-        for _ in $(seq 1 90); do up "$n" && break; kill -0 "$(cat "$d/acme.pid")" 2>/dev/null || break; sleep 0.5; done
+        # probe only after ACME logs "CSE started": a request that reaches its Flask app while the plugins
+        # are still registering routes aborts the startup ("add_url_rule can no longer be called")
+        for _ in $(seq 1 120); do
+          grep -q "CSE started" "$d/acme.out" 2>/dev/null && up "$n" && break
+          kill -0 "$(cat "$d/acme.pid")" 2>/dev/null || break; sleep 0.5
+        done
         up "$n" && break
         [ $attempt = 1 ] && { cp "$d/acme.out" "$d/acme.out.1"; kill "$(cat "$d/acme.pid")" 2>/dev/null; sleep 2; echo "ACME $n: retrying"; }
       done

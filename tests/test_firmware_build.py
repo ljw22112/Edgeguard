@@ -16,7 +16,7 @@ AJ = os.environ.get("ARDUINOJSON_SRC", "/tmp/claude-0/arduinojson/src")
 
 def test_d2d_header_copies_in_sync():
     for sk in ("worker_tag", "forklift_module"):
-        for h in ("d2d.h", "d2d_auth.h"):
+        for h in ("d2d.h", "d2d_auth.h", "m2m_mqtt.h"):
             assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", h),
                                os.path.join(ROOT, "firmware", sk, h), shallow=False)
     assert filecmp.cmp(os.path.join(ROOT, "firmware", "common", "worker_cue.h"),
@@ -61,9 +61,11 @@ def test_uwb_header_copy_in_sync():
 @pytest.mark.skipif(shutil.which("g++") is None or not os.path.isdir(AJ), reason="needs g++ and ArduinoJson")
 @pytest.mark.parametrize("sketch", ["worker_tag", "forklift_module"])
 @pytest.mark.parametrize("hil", ["0", "1"])
-def test_sketch_type_checks(sketch, hil):
+@pytest.mark.parametrize("mqtt", ["0", "1"])                 # HTTP or the oneM2M MQTT binding (m2m_mqtt.h)
+def test_sketch_type_checks(sketch, hil, mqtt):
     d = os.path.join(ROOT, "firmware", sketch)
-    r = subprocess.run(["g++", "-std=c++17", "-fsyntax-only", "-Wall", "-Wextra", "-Werror", f"-DHIL_MODE={hil}", "-x", "c++",
+    r = subprocess.run(["g++", "-std=c++17", "-fsyntax-only", "-Wall", "-Wextra", "-Werror", f"-DHIL_MODE={hil}",
+                        f"-DM2M_MQTT={mqtt}", "-x", "c++",
                         "-include", "Arduino.h", "-I", os.path.join(ROOT, "tests", "firmware", "stubs"),
                         "-I", AJ, "-I", d, os.path.join(d, f"{sketch}.ino")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-3000:]
