@@ -16,16 +16,16 @@
  "first": {
   "accepted": 3,
   "delivered_ms": {
-   "zt2": 17.3,
-   "zt4": 24.0,
-   "zt1": 26.0
+   "zt1": 17.5,
+   "zt2": 29.5,
+   "zt4": 32.2
   }
  },
  "after_move": {
   "accepted": 2,
   "delivered_ms": {
-   "zt2": 11.1,
-   "zt3": 11.8
+   "zt2": 12.5,
+   "zt3": 67.6
   }
  },
  "groups": {
@@ -40,9 +40,9 @@
  },
  "latency_ms": {
   "n": 60,
-  "p50": 19.2,
-  "p95": 25.5,
-  "max": 28.6
+  "p50": 20.7,
+  "p95": 27.6,
+  "max": 29.0
  },
  "requests_per_zone_message": 1,
  "acl": {
