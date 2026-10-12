@@ -21,6 +21,8 @@ from __future__ import annotations
 import datetime as dt
 import itertools
 import json
+import os
+import subprocess
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -94,6 +96,12 @@ class EdgeApp:
             c.set_acpi(f"{self.ae}/{cnt}", f"{self.ae}/acp_app", acp.get("ri"))
         c.create_subscription(f"{self.ae}/config", "sub_self", [f"http://127.0.0.1:{self.port}/config"])
         threading.Thread(target=self._heartbeat, daemon=True).start()
+        try:                                     # configuration written before the subscription existed
+            cfg = c.latest(f"{self.ae}/config")
+            if isinstance(cfg, dict) and not self.provisioned.is_set():
+                self.provision(cfg)
+        except OneM2MError:
+            pass
 
     def provision(self, cfg):
         for path in cfg.get("subscribe", []):
@@ -117,6 +125,37 @@ class EdgeApp:
             self.srv.server_close()
 
 
+class ContainerInstance:
+    """The same application instance as a container on the MEC host (image deploy/edge-app/Dockerfile).  The
+    container registers its own AE exactly like the in-process EdgeApp; the host agent only runs and stops it."""
+
+    def __init__(self, image, cse: tuple, name, instance, host, port, orchestrator, cpu=1.0, mem_mb=256):
+        self.image, self.cse, self.name, self.instance, self.host = image, cse, name, instance, host
+        self.port, self.orch, self.cpu, self.mem = port, orchestrator, cpu, mem_mb
+        self.origin, self.ae, self.cname = f"S{instance}", f"app-{instance}", f"eg-{instance}"
+        self.c = OneM2MClient(cse[0], cse[1], self.origin, timeout=2.0)
+        self.container_id = None
+
+    def start(self):
+        cpus = max(0.1, min(float(self.cpu or 1.0), float(os.cpu_count() or 1)))
+        base = ["docker", "run", "-d", "--rm", "--network", "host", "--name", self.cname,
+                "--label", f"edgeguard.host={self.host}", "--label", f"edgeguard.instance={self.instance}",
+                "--label", f"edgeguard.app={self.name}"]
+        args = [self.image, "--cse", f"{self.cse[0]}/{self.cse[1]}", "--name", self.name, "--instance", self.instance,
+                "--host", self.host, "--port", str(self.port), "--orchestrator", self.orch]
+        limits = ["--cpus", f"{cpus:g}", "--memory", f"{max(64, int(self.mem or 256))}m"]
+        r = subprocess.run(base + limits + args, capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:                          # a daemon without cgroup limits: run unconstrained
+            r = subprocess.run(base + args, capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            raise RuntimeError(f"docker run failed: {r.stderr.strip()[:200]}")
+        self.container_id = r.stdout.strip()
+        return self
+
+    def terminate(self):
+        subprocess.run(["docker", "rm", "-f", self.cname], capture_output=True, timeout=30)
+
+
 # --- a MEC host -----------------------------------------------------------------------------------------
 class MecHostAgent:
     """A MEC host: lifecycle API for app instances (instantiate / query / terminate) and self-registration
@@ -124,8 +163,11 @@ class MecHostAgent:
 
     _ids = itertools.count(1)
 
-    def __init__(self, cse: tuple, name, zone, cpu, mem_mb, rtt_ms, port, app_ports):
+    def __init__(self, cse: tuple, name, zone, cpu, mem_mb, rtt_ms, port, app_ports, runtime="thread",
+                 image="edgeguard/edge-app:1.0"):
+        """runtime: "thread" (instance in this process) or "docker" (one container per instance, `image`)."""
         self.cse, self.name, self.zone, self.cpu, self.mem, self.rtt = cse, name, zone, cpu, mem_mb, rtt_ms
+        self.runtime, self.image = runtime, image
         self.port, self.app_ports = port, iter(app_ports)
         self.origin = f"S{name.replace('-', '')}"
         self.c = OneM2MClient(cse[0], cse[1], self.origin, timeout=2.0)
@@ -197,9 +239,18 @@ class MecHostAgent:
         if need["cpu"] > cpu or need["mem"] > mem:
             return 409, {"detail": "insufficient resources"}
         iid = f"{req['appName'].replace('-', '')}{self.name.replace('-', '')}{next(self._ids)}"
-        app = EdgeApp(self.cse, req["appName"], iid, self.name, next(self.app_ports), req["orchestrator"]).start()
+        port = next(self.app_ports)
+        try:
+            if self.runtime == "docker":
+                app = ContainerInstance(self.image, self.cse, req["appName"], iid, self.name, port, req["orchestrator"],
+                                        need["cpu"], need["mem"]).start()
+            else:
+                app = EdgeApp(self.cse, req["appName"], iid, self.name, port, req["orchestrator"]).start()
+        except Exception as e:
+            return 500, {"detail": str(e)[:200]}
         self.instances[iid] = (app, need)
-        return 201, {"appInstanceId": iid, "appAe": app.ae, "appOrigin": app.origin,
+        return 201, {"appInstanceId": iid, "appAe": app.ae, "appOrigin": app.origin, "runtime": self.runtime,
+                     "containerId": getattr(app, "container_id", None),
                      "_links": {"self": {"href": f"/app_lcm/v2/app_instances/{iid}"}}}
 
     def terminate(self, iid):
@@ -329,13 +380,15 @@ class Orchestrator:
         self._ev(rn, "unschedulable", reason=reason)
         return None
 
-    def _wait_registered(self, ae, timeout=5.0):
+    def _wait_registered(self, ae, timeout=10.0):
         end = time.time() + timeout
         while time.time() < end:
-            try:
-                self.c.request("GET", f"{ae}/config")
+            try:                                 # registered = its config subscription exists (readable
+                self.c.request("GET", f"{ae}/config/sub_self")   # only by the instance: 403 also means it exists)
                 return True
-            except OneM2MError:
+            except OneM2MError as e:
+                if e.status == 403:
+                    return True
                 time.sleep(0.05)
         return False
 

@@ -1,7 +1,8 @@
 """MEC application orchestration through oneM2M (edgeguard/orchestration.py), on an ACME CSE.
 
     scripts/acme.sh start in
-    python tools/orchestration_demo.py
+    python tools/orchestration_demo.py                     # instances in-process
+    python tools/orchestration_demo.py --runtime docker    # one container per instance (deploy/edge-app)
 
 Three MEC hosts register themselves (zone A edge host, a smaller second zone A host, a regional cloud
 host 25 ms away).  An operator submits three deployment intents as oneM2M resources: the EdgeGuard risk
@@ -13,9 +14,13 @@ and keeps processing.  Result: results/orchestration.json
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 
@@ -29,7 +34,35 @@ ORCH, OPERATOR, DEV_ORIGIN = "SEGOrch", "COperator", "Cfkorch"
 HOSTS = [("host-a1", "A", 4, 4096, 2.0, 9401), ("host-a2", "A", 2, 2048, 4.0, 9402), ("host-cloud", "", 16, 32768, 25.0, 9403)]
 
 
+def build_image(image, base):
+    """deploy/edge-app/Dockerfile with only the package files the instance needs as context."""
+    ctx = tempfile.mkdtemp(prefix="egapp")
+    os.makedirs(os.path.join(ctx, "edgeguard"))
+    for f in ("__init__.py", "onem2m.py", "orchestration.py", "edge_app.py"):
+        shutil.copy(os.path.join(ROOT, "edgeguard", f), os.path.join(ctx, "edgeguard", f))
+    shutil.copy(os.path.join(ROOT, "deploy", "edge-app", "Dockerfile"), os.path.join(ctx, "Dockerfile"))
+    r = subprocess.run(["docker", "build", "-q", "-t", image, "--build-arg", f"BASE={base}", ctx], capture_output=True, text=True)
+    shutil.rmtree(ctx, ignore_errors=True)
+    if r.returncode != 0:
+        raise SystemExit(f"::error title=orchestration::docker build failed: {r.stderr.strip()[-400:]}")
+
+
+def containers(app):
+    """host label of every running container of `app`."""
+    r = subprocess.run(["docker", "ps", "--filter", f"label=edgeguard.app={app}", "--format", '{{.Label "edgeguard.host"}}'],
+                       capture_output=True, text=True)
+    return sorted(x for x in r.stdout.split() if x)
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--runtime", choices=("thread", "docker"), default="thread")
+    ap.add_argument("--image", default="edgeguard/edge-app:1.0")
+    ap.add_argument("--base", default="python:3.11-slim", help="base image of the instance container")
+    a = ap.parse_args()
+    if a.runtime == "docker":
+        subprocess.run(["bash", "-c", "docker rm -f $(docker ps -aq --filter label=edgeguard.app) 2>/dev/null"], capture_output=True)
+        build_image(a.image, a.base)
     admin = OneM2MClient(*CSE, "CAdmin")
     for rn in [ORCH_AE, "fk_orch"] + [h[0] for h in HOSTS] + [a for a in (admin.discover_label("egs:app/edgeguard-risk", ty=2)
                                                                           + admin.discover_label("egs:app/site-analytics", ty=2))]:
@@ -55,7 +88,8 @@ def main():
 
     hosts = {}
     for i, (name, zone, cpu, mem, rtt, port) in enumerate(HOSTS):
-        hosts[name] = MecHostAgent(CSE, name, zone, cpu, mem, rtt, port, range(9410 + 10 * i, 9420 + 10 * i)).start(readers=[ORCH])
+        hosts[name] = MecHostAgent(CSE, name, zone, cpu, mem, rtt, port, range(9410 + 10 * i, 9420 + 10 * i),
+                                   runtime=a.runtime, image=a.image).start(readers=[ORCH])
     orch = Orchestrator(CSE, ORCH, operators=[OPERATOR], log=(print if os.environ.get("ORCH_DEBUG") else lambda *a: None),
                         bindings={"edgeguard-risk": [{"path": "fk_orch/motion", "acp": "fk_orch/acp_fk"}]}).setup()
     time.sleep(1.2)
@@ -80,7 +114,14 @@ def main():
     placed1 = {rn: orch.intents.get(f"intent_{rn}", {}).get("host") for rn in ("risk", "analytics")}
     risk_ae1 = orch.intents["intent_risk"].get("app_ae")
     time.sleep(2.5)
-    proc1 = hosts["host-a1"].instances and max(a.processed for a, _ in hosts["host-a1"].instances.values())
+    def processed(ae):                    # the instance's own heartbeat in oneM2M (same for threads and containers)
+        try:
+            con = admin.request("GET", f"{ae}/status/la")["m2m:cin"]["con"]
+            return (json.loads(con) if isinstance(con, str) else con).get("processed", 0)
+        except (OneM2MError, TypeError, ValueError):
+            return 0
+    proc1 = processed(risk_ae1)
+    ctr_before = containers("edgeguard-risk") if a.runtime == "docker" else None
     intent_res = op.request("GET", f"{ORCH_AE}/intent_risk")[INTENT_TP]
     old_origin = orch.intents["intent_risk"].get("app_origin")
 
@@ -93,8 +134,8 @@ def main():
     rec = next((e for e in orch.events if e["intent"] == "intent_risk" and e["step"] == "running" and e.get("reason") == "host_lost"), None)
     detect = next((e for e in orch.events if e["step"] == "host_lost"), None)
     time.sleep(2.5)
-    a2 = [a for a, _ in hosts["host-a2"].instances.values() if a.name == "edgeguard-risk"]
-    proc2 = a2[0].processed if a2 else 0
+    proc2 = processed(orch.intents["intent_risk"].get("app_ae"))
+    ctr_after = containers("edgeguard-risk") if a.runtime == "docker" else None
     acp_after = admin.request("GET", "fk_orch/acp_fk")["m2m:acp"]["pv"]["acr"]
     revoked = not any(old_origin in r["acor"] for r in acp_after)
     try:
@@ -126,14 +167,19 @@ def main():
         "old instance's access revoked from the device ACP": revoked and old_blocked,
         "only operators may submit intents (ACP)": intruder_blocked,
     }
-    report = {"placement": placed1, "time_to_running_s": {k: round(v, 2) for k, v in t_running.items()},
+    if a.runtime == "docker":
+        checks["each instance ran as its own container on its host (host-a1, then only host-a2 after the crash)"] = (
+            ctr_before == ["host-a1"] and ctr_after == ["host-a2"])
+    report = {"runtime": a.runtime, "containers": {"before_crash": ctr_before, "after_recovery": ctr_after},
+              "placement": placed1, "time_to_running_s": {k: round(v, 2) for k, v in t_running.items()},
               "recovery": {"detect_s": round(detect["t"] - t_crash, 2) if detect else None,
                            "running_again_s": round(rec["t"] - t_crash, 2) if rec else None,
                            "new_host": orch.intents["intent_risk"].get("host")},
               "processed": {"before_crash": proc1, "after_recovery": proc2},
               "events": [{**e, "t": round(e["t"] - t_submit, 3)} for e in orch.events], "checks": checks}
     os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
-    json.dump(report, open(os.path.join(ROOT, "results", "orchestration.json"), "w"), indent=1, default=str)
+    out = "orchestration.json" if a.runtime == "thread" else "orchestration_docker.json"
+    json.dump(report, open(os.path.join(ROOT, "results", out), "w"), indent=1, default=str)
     print(f"placement {placed1}; running after {report['time_to_running_s']} s; host crash -> running again on "
           f"{report['recovery']['new_host']} after {report['recovery']['running_again_s']} s")
     for k, v in checks.items():
@@ -142,7 +188,7 @@ def main():
         if h.name != "host-a1":
             h.crash()
     ok = all(checks.values())
-    print(("::notice" if ok else "::error") + " title=orchestration::" + json.dumps(
+    print(("::notice" if ok else "::error") + f" title=orchestration ({a.runtime})::" + json.dumps(
         {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "placement": placed1, "recovery": report["recovery"]}))
     return 0 if ok else 1
 

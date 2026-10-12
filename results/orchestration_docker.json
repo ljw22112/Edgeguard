@@ -1,0 +1,182 @@
+{
+ "runtime": "docker",
+ "containers": {
+  "before_crash": [
+   "host-a1"
+  ],
+  "after_recovery": [
+   "host-a2"
+  ]
+ },
+ "placement": {
+  "risk": "host-a1",
+  "analytics": "host-cloud"
+ },
+ "time_to_running_s": {
+  "intent_analytics": 2.05,
+  "intent_risk": 2.12
+ },
+ "recovery": {
+  "detect_s": 1.82,
+  "running_again_s": 2.98,
+  "new_host": "host-a2"
+ },
+ "processed": {
+  "before_crash": 10,
+  "after_recovery": 10
+ },
+ "events": [
+  {
+   "t": 0.481,
+   "intent": "intent_risk",
+   "step": "accepted",
+   "app": "edgeguard-risk"
+  },
+  {
+   "t": 0.502,
+   "intent": "intent_analytics",
+   "step": "accepted",
+   "app": "site-analytics"
+  },
+  {
+   "t": 0.548,
+   "intent": "intent_huge",
+   "step": "accepted",
+   "app": "edgeguard-risk-xl"
+  },
+  {
+   "t": 0.721,
+   "intent": "intent_analytics",
+   "step": "selected",
+   "host": "host-cloud",
+   "rtt": 25.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.73,
+   "intent": "intent_risk",
+   "step": "selected",
+   "host": "host-a1",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.744,
+   "intent": "intent_huge",
+   "step": "unschedulable",
+   "reason": "new"
+  },
+  {
+   "t": 1.028,
+   "intent": "intent_risk",
+   "step": "deployed",
+   "host": "host-a1",
+   "instance": "edgeguardriskhosta12"
+  },
+  {
+   "t": 1.047,
+   "intent": "intent_analytics",
+   "step": "deployed",
+   "host": "host-cloud",
+   "instance": "siteanalyticshostcloud1"
+  },
+  {
+   "t": 1.815,
+   "intent": "intent_analytics",
+   "step": "registered",
+   "app_ae": "app-siteanalyticshostcloud1"
+  },
+  {
+   "t": 1.826,
+   "intent": "intent_analytics",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 1.841,
+   "intent": "intent_risk",
+   "step": "registered",
+   "app_ae": "app-edgeguardriskhosta12"
+  },
+  {
+   "t": 1.9,
+   "intent": "intent_risk",
+   "step": "provisioned",
+   "grants": 1,
+   "revoked": false
+  },
+  {
+   "t": 2.051,
+   "intent": "intent_analytics",
+   "step": "running",
+   "host": "host-cloud",
+   "ms": 1548.0,
+   "reason": "new"
+  },
+  {
+   "t": 2.122,
+   "intent": "intent_risk",
+   "step": "running",
+   "host": "host-a1",
+   "ms": 1641.0,
+   "reason": "new"
+  },
+  {
+   "t": 6.489,
+   "intent": "intent_risk",
+   "step": "host_lost",
+   "host": "host-a1"
+  },
+  {
+   "t": 6.551,
+   "intent": "intent_risk",
+   "step": "selected",
+   "host": "host-a2",
+   "rtt": 4.0,
+   "reason": "host_lost"
+  },
+  {
+   "t": 6.727,
+   "intent": "intent_risk",
+   "step": "deployed",
+   "host": "host-a2",
+   "instance": "edgeguardriskhosta23"
+  },
+  {
+   "t": 7.373,
+   "intent": "intent_risk",
+   "step": "registered",
+   "app_ae": "app-edgeguardriskhosta23"
+  },
+  {
+   "t": 7.388,
+   "intent": "intent_risk",
+   "step": "provisioned",
+   "grants": 1,
+   "revoked": true
+  },
+  {
+   "t": 7.652,
+   "intent": "intent_risk",
+   "step": "running",
+   "host": "host-a2",
+   "ms": 1154.6,
+   "reason": "host_lost"
+  }
+ ],
+ "checks": {
+  "hosts registered themselves in oneM2M and were found by label discovery": true,
+  "risk engine (zone A, <= 10 ms) placed on the zone A edge host": true,
+  "analytics (8 CPU, <= 100 ms) placed on the cloud host": true,
+  "impossible intent reported unschedulable, nothing deployed": true,
+  "full lifecycle recorded: selected -> deployed -> registered -> provisioned -> running": true,
+  "intent resource shows status, placement and the instance's AE": true,
+  "deployed risk engine processes the forklift's live data (provisioned subscription)": true,
+  "host crash detected and the risk engine re-placed on host-a2": true,
+  "re-placed instance processes live data again": true,
+  "old instance's access revoked from the device ACP": true,
+  "only operators may submit intents (ACP)": true,
+  "each instance ran as its own container on its host (host-a1, then only host-a2 after the crash)": true
+ }
+}

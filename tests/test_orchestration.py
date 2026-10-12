@@ -39,3 +39,28 @@ def test_lt_age():
     now = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=3)
     lt = now.strftime("%Y%m%dT%H%M%S") + ",%06d" % now.microsecond
     assert 2.5 < lt_age(lt) < 4.0
+
+
+def test_container_instance_runs_one_container_with_limits(monkeypatch):
+    from edgeguard import orchestration as o
+    calls = []
+
+    class R:
+        def __init__(self, rc, out=""):
+            self.returncode, self.stdout, self.stderr = rc, out, ""
+
+    def run(cmd, **kw):
+        calls.append(cmd)
+        return R(0, "abc123\n")
+    monkeypatch.setattr(o.subprocess, "run", run)
+    c = o.ContainerInstance("img:1", ("http://127.0.0.1:8080", "cse-in"), "edgeguard-risk", "r1", "host-a1", 9411,
+                            "SEGOrch", cpu=2, mem_mb=512).start()
+    cmd = calls[0]
+    assert cmd[:3] == ["docker", "run", "-d"] and "--network" in cmd and "host" in cmd
+    assert "edgeguard.host=host-a1" in cmd and "--memory" in cmd and "512m" in cmd
+    assert cmd[cmd.index("img:1") + 1:] == ["--cse", "http://127.0.0.1:8080/cse-in", "--name", "edgeguard-risk",
+                                            "--instance", "r1", "--host", "host-a1", "--port", "9411",
+                                            "--orchestrator", "SEGOrch"]
+    assert c.container_id == "abc123" and c.ae == "app-r1" and c.origin == "Sr1"
+    c.terminate()
+    assert calls[-1] == ["docker", "rm", "-f", "eg-r1"]

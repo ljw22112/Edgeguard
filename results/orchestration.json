@@ -1,57 +1,47 @@
 {
+ "runtime": "thread",
+ "containers": {
+  "before_crash": null,
+  "after_recovery": null
+ },
  "placement": {
   "risk": "host-a1",
   "analytics": "host-cloud"
  },
  "time_to_running_s": {
-  "intent_analytics": 0.71,
-  "intent_risk": 0.72
+  "intent_analytics": 1.06,
+  "intent_risk": 1.07
  },
  "recovery": {
-  "detect_s": 2.42,
-  "running_again_s": 2.73,
+  "detect_s": 2.13,
+  "running_again_s": 2.5,
   "new_host": "host-a2"
  },
  "processed": {
-  "before_crash": 13,
-  "after_recovery": 13
+  "before_crash": 11,
+  "after_recovery": 10
  },
  "events": [
   {
-   "t": 0.343,
+   "t": 0.429,
    "intent": "intent_risk",
    "step": "accepted",
    "app": "edgeguard-risk"
   },
   {
-   "t": 0.352,
+   "t": 0.437,
    "intent": "intent_analytics",
    "step": "accepted",
    "app": "site-analytics"
   },
   {
-   "t": 0.358,
+   "t": 0.45,
    "intent": "intent_huge",
    "step": "accepted",
    "app": "edgeguard-risk-xl"
   },
   {
-   "t": 0.365,
-   "intent": "intent_risk",
-   "step": "selected",
-   "host": "host-a1",
-   "rtt": 2.0,
-   "reason": "new"
-  },
-  {
-   "t": 0.393,
-   "intent": "intent_risk",
-   "step": "deployed",
-   "host": "host-a1",
-   "instance": "edgeguardriskhosta11"
-  },
-  {
-   "t": 0.396,
+   "t": 0.675,
    "intent": "intent_analytics",
    "step": "selected",
    "host": "host-cloud",
@@ -59,68 +49,83 @@
    "reason": "new"
   },
   {
-   "t": 0.421,
+   "t": 0.689,
    "intent": "intent_analytics",
    "step": "deployed",
    "host": "host-cloud",
-   "instance": "siteanalyticshostcloud2"
+   "instance": "siteanalyticshostcloud1"
   },
   {
-   "t": 0.439,
+   "t": 0.691,
+   "intent": "intent_risk",
+   "step": "selected",
+   "host": "host-a1",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.713,
+   "intent": "intent_risk",
+   "step": "deployed",
+   "host": "host-a1",
+   "instance": "edgeguardriskhosta12"
+  },
+  {
+   "t": 0.741,
    "intent": "intent_huge",
    "step": "unschedulable",
    "reason": "new"
   },
   {
-   "t": 0.479,
-   "intent": "intent_risk",
-   "step": "registered",
-   "app_ae": "app-edgeguardriskhosta11"
-  },
-  {
-   "t": 0.485,
+   "t": 0.771,
    "intent": "intent_analytics",
    "step": "registered",
-   "app_ae": "app-siteanalyticshostcloud2"
+   "app_ae": "app-siteanalyticshostcloud1"
   },
   {
-   "t": 0.492,
+   "t": 0.787,
    "intent": "intent_analytics",
    "step": "provisioned",
    "grants": 0,
    "revoked": false
   },
   {
-   "t": 0.503,
+   "t": 0.796,
+   "intent": "intent_risk",
+   "step": "registered",
+   "app_ae": "app-edgeguardriskhosta12"
+  },
+  {
+   "t": 0.813,
    "intent": "intent_risk",
    "step": "provisioned",
    "grants": 1,
    "revoked": false
   },
   {
-   "t": 0.714,
+   "t": 1.062,
    "intent": "intent_analytics",
    "step": "running",
    "host": "host-cloud",
-   "ms": 361.1,
+   "ms": 624.8,
    "reason": "new"
   },
   {
-   "t": 0.718,
+   "t": 1.067,
    "intent": "intent_risk",
    "step": "running",
    "host": "host-a1",
-   "ms": 375.0,
+   "ms": 638.4,
    "reason": "new"
   },
   {
-   "t": 5.645,
+   "t": 5.776,
    "intent": "intent_risk",
    "step": "host_lost",
    "host": "host-a1"
   },
   {
-   "t": 5.663,
+   "t": 5.831,
    "intent": "intent_risk",
    "step": "selected",
    "host": "host-a2",
@@ -128,31 +133,31 @@
    "reason": "host_lost"
   },
   {
-   "t": 5.675,
+   "t": 5.843,
    "intent": "intent_risk",
    "step": "deployed",
    "host": "host-a2",
    "instance": "edgeguardriskhosta23"
   },
   {
-   "t": 5.734,
+   "t": 5.912,
    "intent": "intent_risk",
    "step": "registered",
    "app_ae": "app-edgeguardriskhosta23"
   },
   {
-   "t": 5.745,
+   "t": 5.929,
    "intent": "intent_risk",
    "step": "provisioned",
    "grants": 1,
    "revoked": true
   },
   {
-   "t": 5.958,
+   "t": 6.149,
    "intent": "intent_risk",
    "step": "running",
    "host": "host-a2",
-   "ms": 308.3,
+   "ms": 365.0,
    "reason": "host_lost"
   }
  ],

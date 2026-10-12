@@ -74,7 +74,9 @@ jobs:
         run: python tools/zone_demo.py
 
       - name: MEC app orchestration across hosts (intent -> discover, select, deploy, register, provision; host crash)
-        run: python tools/orchestration_demo.py
+        run: |
+          python tools/orchestration_demo.py
+          python tools/orchestration_demo.py --runtime docker     # one container per instance (deploy/edge-app)
 
       - name: Forklift swarm coordination (group context, same schedule on every member)
         run: python tools/swarm_demo.py
