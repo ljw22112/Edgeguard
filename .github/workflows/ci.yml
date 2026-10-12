@@ -88,7 +88,11 @@ jobs:
           (sudo apt-get install -y -q mosquitto > /tmp/apt.log 2>&1 || (sudo apt-get update -q && sudo apt-get install -y -q mosquitto)) > /tmp/apt.log 2>&1 \
             || { diag apt /tmp/apt.log; exit 1; }
           bash scripts/mqtt.sh start || { diag broker .mqtt/mosquitto.log; exit 1; }
-          bash scripts/acme.sh start sec || { diag acme .acme/sec/acme.out; exit 1; }
+          if ! bash scripts/acme.sh start sec; then          # seen once: startup error on a fresh runner; restart the broker and retry
+            echo "::warning title=secure acme retry::$(grep -A3 'Error during startup' .acme/sec/acme.out | tr -s ' ' | tr '\n' '|' | cut -c1-900)"
+            bash scripts/acme.sh stop sec; bash scripts/mqtt.sh start
+            bash scripts/acme.sh start sec || { diag acme .acme/sec/acme.out; exit 1; }
+          fi
           python tools/secure_transport_demo.py || { diag broker .mqtt/mosquitto.log; diag acme .acme/sec/acme.out; exit 1; }
 
       - name: SIL logs on failure
