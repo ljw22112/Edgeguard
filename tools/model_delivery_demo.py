@@ -141,7 +141,7 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=model_delivery::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks),
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v],
          "decisions": [(h["version"], h["decision"]) for h in mgr.history], "delivery_ms": delivery_ms}))
     return 0 if ok else 1
 

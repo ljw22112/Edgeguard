@@ -143,7 +143,7 @@ def main():
             h.crash()
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=orchestration::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "placement": placed1, "recovery": report["recovery"]}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "placement": placed1, "recovery": report["recovery"]}))
     return 0 if ok else 1
 
 

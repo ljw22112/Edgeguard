@@ -182,7 +182,7 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=secure_transport::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "p50_ms": p50, "attacks": report["attacks"]}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "p50_ms": p50, "attacks": report["attacks"]}))
     sys.exit(0 if ok else 1)
 
 

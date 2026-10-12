@@ -244,7 +244,7 @@ def run(frame):
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=mobility::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks),
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v],
          "handovers": [(h["from"], h["to"], h["interruption_ms"], h["samples_lost"]) for h in hos],
          "event_ms": report["zone_event_to_onem2m_ms"]["median"]}))
     return 0 if ok else 1

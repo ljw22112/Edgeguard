@@ -192,7 +192,7 @@ def main():
         mock.terminate()
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=agent::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "tool_calls": len(log1)}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "tool_calls": len(log1)}))
     sys.exit(0 if ok else 1)
 
 

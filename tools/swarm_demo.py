@@ -88,7 +88,7 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=swarm::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks),
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v],
          "delay_vs_reactive": [(r["total_delay_s"], r["reactive_total_delay_s"]) for r in (r1, r2, r3)],
          "context_ms": report["context_read_ms"]}))
     return 0 if ok else 1

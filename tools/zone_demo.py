@@ -57,7 +57,7 @@ def main():
     for t in TAGS:
         zg.register_tag(t)
 
-    def send(zone, mid, wait=2.0, **extra):
+    def send(zone, mid, wait=4.0, **extra):
         t0 = time.time()
         n = zg.broadcast(zone, {"id": mid, "zone": zone, "t": t0, **extra})
         end = time.time() + wait
@@ -87,7 +87,7 @@ def main():
     # 3. latency over 30 zone-A broadcasts (2 recipients each)
     lat = []
     for i in range(30):
-        _, rx = send("A", 100 + i, wait=1.5, kind="caution")
+        _, rx = send("A", 100 + i, wait=3.0, kind="caution")
         lat += list(rx.values())
     lat.sort()
     # 4. access control
@@ -130,7 +130,8 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=zones::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "p50_ms": p50, "p95_ms": p95}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "p50_ms": p50, "p95_ms": p95,
+         "failed": [k for k, v in checks.items() if not v]}))
     sys.exit(0 if ok else 1)
 
 

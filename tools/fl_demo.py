@@ -132,7 +132,7 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=fl::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "ade": report["mean_ade_2s_m"]}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "ade": report["mean_ade_2s_m"]}))
     sys.exit(0 if ok else 1)
 
 

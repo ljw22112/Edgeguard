@@ -184,7 +184,7 @@ def main():
         print(("PASS " if v else "FAIL ") + k)
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=handover::" +
-          json.dumps({"passed": sum(map(bool, checks.values())), "total": len(checks),
+          json.dumps({"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v],
                       "events": [(e["reason"], e["interruption_ms"], e["samples_lost"]) for e in report["events"]]}))
     sys.exit(0 if ok else 1)
 
