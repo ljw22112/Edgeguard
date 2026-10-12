@@ -44,11 +44,13 @@ def rsrp_dbm(index):
 
 class MecIpe:
     def __init__(self, cse: OneM2MClient, mec_url: str, listen=("127.0.0.1", 9330), root="MEC-IPE",
-                 readers=(), location_api="location/v3", rnis_api="rni/v2", log=print):
+                 readers=(), location_api="location/v3", rnis_api="rni/v2", log=print, callback=None):
+        """callback: the address the MEC platform reaches this IPE at (default http://<listen>), e.g. the
+        host's LAN address when the platform is a self-hosted AdvantEDGE."""
         self.c, self.mec, self.root, self.readers = cse, mec_url.rstrip("/"), root, list(readers)
         self.loc_api, self.rnis_api, self.log = location_api, rnis_api, log
         self.listen = listen
-        self.cb = f"http://{listen[0]}:{listen[1]}"
+        self.cb = (callback or f"http://{listen[0]}:{listen[1]}").rstrip("/")
         self.mec_subs: dict[str, str] = {}          # MEC subscription id -> its resource URL
         self.ues: set = set()
         self.stats = {"zone_events": 0, "radio_reports": 0, "requests": 0, "errors": 0, "location_updates": 0}
@@ -122,6 +124,7 @@ class MecIpe:
                 ids = []
                 for z in con.get("zones") or []:
                     body = {"zoneLocationEventSubscription": {
+                        "subscriptionType": "ZoneLocationEventSubscription",
                         "callbackReference": {"notifyURL": f"{self.cb}/mec/zone"}, "zoneId": z,
                         "locationEventCriteria": con.get("events") or ["ENTERING_AREA_EVENT", "LEAVING_AREA_EVENT"],
                         **({"addressList": con["addresses"]} if con.get("addresses") else {})}}
