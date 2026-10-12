@@ -111,12 +111,30 @@ def people_feed(stop):
         time.sleep(0.5)
 
 
-async def run_agent():
+QUESTIONS = [   # free questions for Claude over the same MCP servers; answers checked against the seeded site
+    ("Which CSE currently serves forklift_01, and what speed limit is it enforcing? Use the tools.",
+     lambda a: ("mn-b" in a.lower() or "zone b" in a.lower()) and "1.5" in a),
+    ("Where is the near-miss hotspot with the most events, and how many people are near it right now? Use the tools.",
+     lambda a: "12" in a and "4" in a),
+]
+
+
+async def run_agent(questions=False):
     async with MCPHub(default_servers()) as hub:
         rep = await SafetyAgent(hub).shift_report()
         workflow_log = list(hub.log)                         # the report's own tool calls
         guard = await hub.call("in", "write_content", container="EdgeGuard/nearmiss", content="{}")
-        return rep, {s: [t.name for t in ts] for s, ts in hub.tools.items()}, workflow_log, guard
+        answers = []
+        if questions:                                        # needs ANTHROPIC_API_KEY (CI: repository secret)
+            from agent.safety_agent import ask
+            for q, ok in QUESTIONS:
+                n0 = len(hub.log)
+                try:
+                    a = await ask(hub, q)
+                except Exception as e:                       # noqa: BLE001
+                    a = f"(error: {e})"
+                answers.append({"question": q, "answer": a[:1500], "tool_calls": len(hub.log) - n0, "correct": ok(a)})
+        return rep, {s: [t.name for t in ts] for s, ts in hub.tools.items()}, workflow_log, guard, answers
 
 
 def smoke_test_servers():
@@ -137,7 +155,8 @@ def main():
     time.sleep(1.0)
     mec, hc = seed(rng)
 
-    rep1, tools, log1, guard = asyncio.run(run_agent())
+    use_claude = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    rep1, tools, log1, guard, answers = asyncio.run(run_agent(questions=use_claude))
     bad = [c for c in log1 if c.get("error")]
     if bad and any(c["tool"] == "connect" for c in bad):
         try:
@@ -153,7 +172,7 @@ def main():
         mec.create_cin("EdgeGuard/nearmiss", near_miss(rng, 12, 4, "forklift_01", "worker_01", occluded=True))
     subprocess.run(["bash", os.path.join(ROOT, "scripts", "acme.sh"), "stop", "mn-b"], stdin=subprocess.DEVNULL,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
-    rep2, _, log2, _ = asyncio.run(run_agent())
+    rep2, _, log2, _, _ = asyncio.run(run_agent())
     subprocess.run(["bash", os.path.join(ROOT, "scripts", "acme.sh"), "start", "mn-b"], stdin=subprocess.DEVNULL,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     stop.set()
@@ -182,7 +201,11 @@ def main():
             and stored.get("status") == "partial",
         "guardrail: the agent cannot write outside its own AE": isinstance(guard, dict) and guard.get("error") == "forbidden",
     }
-    out = {"run1": rep1, "run2": rep2, "tools": tools, "tool_calls_run1": log1, "checks": checks}
+    if use_claude:            # Claude chooses the MCP tools itself; the answer must match the seeded site
+        for i, ans in enumerate(answers, 1):
+            checks[f"Claude question {i}: answered from tool calls and correct"] = ans["tool_calls"] >= 1 and ans["correct"]
+    out = {"run1": rep1, "run2": rep2, "tools": tools, "tool_calls_run1": log1, "claude_questions": answers or "skipped (no ANTHROPIC_API_KEY)",
+           "checks": checks}
     json.dump(out, open(os.path.join(ROOT, "results", "agent.json"), "w"), indent=1, default=str)
     print("run 1:", rep1["status"], "-", len(log1), "tool calls;", "; ".join(rep1["recommendations"][:3]))
     print("run 2:", rep2["status"], "-", rep2["near_misses_new"], "new;", [e.get("step") for e in rep2["errors"]])
@@ -192,7 +215,8 @@ def main():
         mock.terminate()
     ok = all(checks.values())
     print(("::notice" if ok else "::error") + " title=agent::" + json.dumps(
-        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "tool_calls": len(log1)}))
+        {"passed": sum(map(bool, checks.values())), "total": len(checks), "failed": [k for k, v in checks.items() if not v], "tool_calls": len(log1),
+         "claude": [(x["tool_calls"], x["correct"]) for x in answers] or "skipped"}))
     sys.exit(0 if ok else 1)
 
 

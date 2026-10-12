@@ -63,7 +63,10 @@ jobs:
           python tools/mobility_demo.py
 
       - name: AI safety agent over MCP servers (oneM2M IN + zone MN-CSEs, ETSI MEC)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: Claude answers free questions over the same tools
         run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then pip install -q anthropic; fi
           bash scripts/mec.sh stop             # the MEC app of the data-model step would onboard the demo's devices
           python tools/agent_demo.py
 
