@@ -31,6 +31,15 @@ python tools/zone_demo.py          # 9 checks -> results/zones.json
 
 `deploy/check_sdt.py` also checks, in the end-to-end SDT run, that every tracked tag is in its zone's group.
 
+## Firmware on MQTT, with a device certificate
+
+The ESP32 firmware speaks the oneM2M MQTT binding too: build with `M2M_MQTT=1` ([`firmware/common/m2m_mqtt.h`](../firmware/common/m2m_mqtt.h), PubSubClient + WiFiClientSecure). Registration, samples and confirmations go out as request primitives over one TLS connection. With `MQTT_CLIENT_CERT` / `MQTT_CLIENT_KEY`, the device connects to the broker's **mutual-TLS listener (:8884)** with its own certificate and needs no password.
+
+- **Certificates:** [`scripts/device_cert.sh`](../scripts/device_cert.sh) issues each device's key and certificate from the site CA (CN = originator), revokes old serials and regenerates the CRL. The broker takes the CN as the username, so the per-originator ACL applies, and it refuses revoked certificates.
+- **CI, firmware in the loop:** the unmodified firmware, compiled for a PC, runs over HTTP, over MQTT/TLS with a password, and over mutual TLS with its certificate. All three runs pass 8/8 (`sil_run.py --transport mqtt | mqtt-mtls`).
+- **CI, [`tools/device_identity_demo.py`](../tools/device_identity_demo.py), 7/7:** a device registers and publishes with its certificate only. Refused: no certificate, a certificate from another CA, impersonation, and a revoked certificate after rotation. The new certificate works.
+- Alerts still reach the devices as HTTP notifications, because ACME cannot yet send requests over MQTT ([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)).
+
 ## Secured transport ([`edgeguard/mqtt_binding.py`](../edgeguard/mqtt_binding.py))
 
 | Path | Transport | Authentication |

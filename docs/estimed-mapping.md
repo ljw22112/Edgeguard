@@ -55,5 +55,5 @@ The PoC asks for a slide that shows mobility: moving around the map, the handove
 ## What is still a stand-in
 
 - The MEC platform here is `mec_mock`. It serves the MEC 013 / 012 data models EdgeGuard uses, plus subscriptions, and plays AdvantEDGE scenarios. The polling path was verified against the ETSI MEC Sandbox ([mec-sandbox.md](mec-sandbox.md)); the subscription path has not been run on the Sandbox yet.
-- MEC host lifecycle: a simplified MEC 010-2-style API (instantiate, query, terminate) on simulated hosts. Deployed instances are real oneM2M applications that register, are provisioned and process live data, but they run as threads, not containers.
+- MEC host lifecycle: a simplified MEC 010-2-style API (instantiate, query, terminate) on simulated hosts. Deployed instances are real oneM2M applications that register, are provisioned and process live data, and run as containers (one per instance, `--runtime docker`).
 - Notifications to MQTT-registered AEs: ACME's current MQTT binding fails on outgoing requests, so applications receive notifications over HTTPS ([transport-security.md](transport-security.md)).

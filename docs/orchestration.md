@@ -67,4 +67,6 @@ python tools/orchestration_demo.py      # 11 checks -> results/orchestration.jso
 - old grants revoked
 - only operators may submit intents
 
-**Limits.** Hosts and the lifecycle API are simulated. Instances are real oneM2M applications (AE, subscriptions, ACP, heartbeat), but they run as threads, not container images pulled from a repository.
+**Containers.** With `--runtime docker` (also in CI), every instance is its own container, run from the image [`deploy/edge-app/Dockerfile`](../deploy/edge-app/Dockerfile) with `docker run --network host --cpus/--memory` from the intent. The container registers its own AE, is provisioned and processes live data. When the host crashes, its containers are gone and the replacement starts as a new container on host-a2. The demo has 12 checks, one of them verifying the containers with `docker ps`: host-a1, then only host-a2.
+
+**Limits.** The hosts and their lifecycle API are simulated, and the three hosts share one Docker daemon.

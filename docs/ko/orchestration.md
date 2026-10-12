@@ -55,4 +55,6 @@ python tools/orchestration_demo.py      # 11개 검사 -> results/orchestration.
 - 새 인스턴스가 지게차의 실시간 데이터를 처리
 - 이전 인스턴스는 더 이상 읽지 못함(403)
 
-**한계.** 호스트와 수명주기 API는 시뮬레이션입니다. 인스턴스는 실제 oneM2M 앱(AE, 구독, ACP, 하트비트)이지만, 저장소에서 받은 컨테이너 이미지가 아니라 스레드로 실행됩니다.
+**컨테이너.** `--runtime docker`(CI에서도 실행)로 돌리면 인스턴스마다 [`deploy/edge-app/Dockerfile`](../../deploy/edge-app/Dockerfile) 이미지로 컨테이너 하나를 띄웁니다. 의도에 적힌 값으로 `docker run --network host --cpus/--memory`를 실행합니다. 컨테이너가 스스로 AE를 등록하고, 프로비저닝을 받아 실시간 데이터를 처리합니다. 호스트가 죽으면 그 컨테이너도 함께 사라지고, 대체 인스턴스가 host-a2에 새 컨테이너로 시작합니다. 데모는 12개 검사이고, 그중 하나가 `docker ps`로 컨테이너를 확인합니다(host-a1, 이후에는 host-a2만).
+
+**한계.** 호스트와 수명주기 API는 시뮬레이션이며, 호스트 세 개가 Docker 데몬 하나를 함께 씁니다.

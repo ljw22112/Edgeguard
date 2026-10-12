@@ -80,10 +80,10 @@
 | [AI 안전 에이전트](docs/ko/ai-agent.md) | IN-CSE · 두 구역 MN-CSE · ETSI MEC의 MCP 서버로 교대 안전 리포트, 상태는 oneM2M에 저장 | 도구 호출 15회 · 검증 통과, 구역 고장 시 부분 리포트 |
 | [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨, SAREF 시맨틱 | 스스로 등록한 단말 약 9초 만에 자동 편입(CI 실행) |
 | [MEC 모빌리티](docs/ko/mobility.md) (7.1, 7.2) | MEC 구역 이벤트 · RNIS 신호 세기를 oneM2M으로, oneM2M 앱의 MEC 요청, MEC 네트워크가 트리거하는 핸드오버 | 구역 이벤트로 A → B → A: 중단 **1.5~8 ms**, 유실 **0**, 이벤트 → oneM2M 15~45 ms |
-| [앱 오케스트레이션](docs/ko/orchestration.md) (7.1) | 의도 리소스 하나 → MEC 호스트 간 탐색 · 선택 · 배포 · 등록 · 프로비저닝, 호스트 장애 시 재배치 | 약 0.75초 만에 실행, 호스트 장애 → 약 2.3~2.7초 만에 재실행 |
+| [앱 오케스트레이션](docs/ko/orchestration.md) (7.1) | 의도 리소스 하나 → MEC 호스트 간 탐색 · 선택 · 배포 · 등록 · 프로비저닝, 인스턴스마다 컨테이너, 호스트 장애 시 재배치 | 호스트 장애 → 새 컨테이너로 약 2~3초 만에 재실행 |
 | [모델 전달](docs/ko/swarm-and-model-delivery.md) (7.3) | 카나리 → 위험 엔진에서 활성화 → 섀도 감시 → 롤백 | 미학습 · 손상 버전 거부, 성능 저하 시 롤백 |
 | [스웜](docs/ko/swarm-and-model-delivery.md) (7.4) | 지게차가 그룹으로 계획을 공유하고 각자 같은 충돌 없는 일정 계산 | 충돌 → 0, 총 지연 14.5초 vs 대응 방식 23.5초 |
-| [구역 방송 · 보안 전송](docs/ko/transport-security.md) | NAT 뒤 태그로 그룹 팬아웃, MQTT/TLS 단말 · HTTPS 앱 | 요청 1회로 태그 3개, p50 8~19 ms, 공격 6종 차단 |
+| [구역 방송 · 보안 전송](docs/ko/transport-security.md) | NAT 뒤 태그로 그룹 팬아웃, 펌웨어까지 MQTT/TLS · 단말별 인증서(상호 TLS, CRL), HTTPS 앱 | 요청 1회로 태그 3개, p50 8~19 ms, 원본 펌웨어가 HTTP · MQTT · 상호 TLS 모두 통과, 폐기 · 다른 CA · 인증서 없음 거부 |
 
 ## 핵심 결과
 
@@ -205,6 +205,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [hackster.io 기사 (영문)](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309) ([원고](docs/hackster-article.md)) | hackster.io에 게시한 프로젝트 이야기 |
 | [실물 시연](docs/ko/hardware-demo.md) | 펌웨어 그대로 실행(SIL, CI) · 휴대폰 태그 · ESP32 보드(준비물 · 배선 · 체크리스트) |
 | [사용자 검증](docs/ko/user-study.md) | 휴대폰 태그로 신호 반응 실험, 안전관리자 인터뷰, 결과를 시뮬레이션에 반영 |
+| [인터뷰 예상 질문](docs/interview-qa.md) | 예상 질문 16개와 답변 · 근거 (영문) |
 | [공개 · 게시 체크리스트](docs/publish-checklist.md) | 저장소 공개, 영상 업로드, hackster 기사 게시, ACME 이슈 · 포럼 글 초안 |
 | [대회 채점표 자체 평가](docs/SCORECARD.md) | 평가 항목별 현재 점수 · 근거 · 점수를 올릴 작업 (업데이트마다 갱신) |
 

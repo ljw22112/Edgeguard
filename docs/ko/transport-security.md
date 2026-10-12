@@ -29,6 +29,15 @@ python tools/zone_demo.py          # 9개 검사 -> results/zones.json
 - MEC 앱이 태그 경보를 구독하는 것
 - MEC 앱이 태그 폴링 채널을 읽는 것
 
+## 펌웨어도 MQTT로, 단말 인증서로
+
+ESP32 펌웨어도 oneM2M MQTT 바인딩을 씁니다. `M2M_MQTT=1`로 빌드하면 됩니다([`firmware/common/m2m_mqtt.h`](../../firmware/common/m2m_mqtt.h), PubSubClient + WiFiClientSecure). 등록, 샘플, 확인 메시지가 TLS 연결 하나로 요청 프리미티브가 되어 나갑니다. `MQTT_CLIENT_CERT`와 `MQTT_CLIENT_KEY`를 넣으면 브로커의 **상호 TLS 리스너(:8884)**에 자기 인증서로 접속하고, 비밀번호가 필요 없습니다.
+
+- **인증서:** [`scripts/device_cert.sh`](../../scripts/device_cert.sh)가 사이트 CA로 단말별 키와 인증서(CN = 발신자)를 발급하고, 이전 시리얼을 폐기하고, CRL을 다시 만듭니다. 브로커는 CN을 사용자 이름으로 써서 발신자별 ACL을 적용하고, 폐기된 인증서는 거부합니다.
+- **CI, 펌웨어 그대로 실행:** PC용으로 컴파일한 원본 펌웨어를 HTTP, 비밀번호를 쓰는 MQTT/TLS, 자기 인증서를 쓰는 상호 TLS로 각각 돌립니다. 세 경우 모두 8/8입니다(`sil_run.py --transport mqtt | mqtt-mtls`).
+- **CI, [`tools/device_identity_demo.py`](../../tools/device_identity_demo.py), 7/7:** 단말이 인증서만으로 등록하고 게시합니다. 거부되는 것: 인증서 없음, 다른 CA의 인증서, 사칭, 교체 후 폐기된 인증서. 새 인증서는 정상 동작합니다.
+- 경보는 여전히 HTTP 알림으로 단말에 전달됩니다. ACME가 아직 MQTT로 요청을 보내지 못하기 때문입니다([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)).
+
 ## 보안 전송 ([`edgeguard/mqtt_binding.py`](../../edgeguard/mqtt_binding.py))
 
 | 경로 | 전송 | 인증 |

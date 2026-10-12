@@ -80,10 +80,10 @@ If the network or the server fails, the devices talk to each other directly (D2D
 | [AI safety agent](docs/ai-agent.md) | shift safety reports through MCP servers for the IN-CSE, both zone MN-CSEs and ETSI MEC; state kept in oneM2M | 15 tool calls, validated; partial report when a zone is down |
 | [Data model](docs/data-model.md) | SDT flexContainer twins, labels, SAREF semantics | self-registered device onboarded in ≈ 9 s (CI run) |
 | [Mobility via MEC](docs/mobility.md) (7.1, 7.2) | MEC zone events and RNIS signal strength into oneM2M; MEC requests from oneM2M apps; handover triggered by the MEC network | A → B → A by zone events: **1.5–8 ms** interruption, **0** lost; event → oneM2M 15–45 ms |
-| [App orchestration](docs/orchestration.md) (7.1) | one intent resource → discover, select, deploy, register, provision across MEC hosts; re-placed on host crash | running in ≈ 0.75 s; host crash → running again in ≈ 2.3–2.7 s |
+| [App orchestration](docs/orchestration.md) (7.1) | one intent resource → discover, select, deploy, register, provision across MEC hosts, one container per instance; re-placed on host crash | host crash → running again in a new container in ≈ 2–3 s |
 | [Model delivery](docs/swarm-and-model-delivery.md) (7.3) | canary → activate in the risk engine → shadow monitoring → rollback | untrained and corrupted versions rejected, regression rolled back |
 | [Swarm](docs/swarm-and-model-delivery.md) (7.4) | forklifts share plans through a group; each computes the same conflict-free schedule | conflicts → 0; 14.5 s total delay vs 23.5 s reacting |
-| [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out to tags behind NAT; MQTT/TLS devices, HTTPS apps | one request to 3 tags, p50 8–19 ms; 6 attacks refused |
+| [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out to tags behind NAT; firmware on MQTT/TLS with per-device certificates (mutual TLS, CRL), HTTPS apps | one request to 3 tags, p50 8–19 ms; unmodified firmware passes over HTTP, MQTT and mutual TLS; revoked / foreign / missing certificates refused |
 
 ## Key results
 
@@ -203,6 +203,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [Swarm and model delivery](docs/swarm-and-model-delivery.md) | group-based swarm coordination; canary, activation, monitoring and rollback of federated models |
 | [Zone broadcast · secured transport](docs/transport-security.md) | group fan-out, pollingChannel, MQTT binding over TLS, HTTPS, broker ACL |
 | [hackster.io article](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309) ([source](docs/hackster-article.md)) | the project story for the hackathon article, published on hackster.io |
+| [Interview Q&A](docs/interview-qa.md) | 16 expected questions with answers and their evidence |
 | [Final video storyboard](docs/video-script.md) | timeline and narration of `results/edgeguard_final.mp4` |
 | [Hardware demo](docs/hardware-demo.md) | firmware-in-the-loop (SIL, CI) · phone tag · ESP32 boards (parts · wiring · checklist) |
 | [User study](docs/user-study.md) | cue-response experiment with a phone tag, safety manager interviews, feeding results back into the simulation |

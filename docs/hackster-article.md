@@ -126,7 +126,7 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 | Link | Protocol | Why |
 |---|---|---|
-| Device → CSE | oneM2M **MQTT binding over TLS** (firmware today: Mca over HTTP) | one open connection, no inbound port; broker password and an ACL that lets a device speak only as itself |
+| Device → CSE | oneM2M **MQTT binding over TLS**, in the firmware too (`M2M_MQTT=1`; device certificate on the mutual-TLS listener) | one open connection, no inbound port; broker password and an ACL that lets a device speak only as itself |
 | MEC app ↔ CSE | Mca over **HTTPS**, subscriptions / notifications | the CSE pushes every sample to the app; the CSE certificate is checked against the site CA |
 | Tags behind NAT | `<pollingChannel>` | the tag long-polls; zone alerts reach it without an inbound connection |
 | Zone MN-CSE ↔ IN-CSE | **Mcc** | edge to cloud, announcement of device AEs |
