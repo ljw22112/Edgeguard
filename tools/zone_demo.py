@@ -90,6 +90,9 @@ def main():
         _, rx = send("A", 100 + i, wait=3.0, kind="caution")
         lat += list(rx.values())
     lat.sort()
+    time.sleep(2.0)                     # a notification may wait for the tag's next long poll: count late arrivals too
+    with lock:
+        delivered = {(c.get("id"), t) for t, c, _ in got if isinstance(c, dict) and 100 <= (c.get("id") or 0) < 130}
     # 4. access control
     intruder = OneM2MClient(*CSE, "CIntruder")
     def refused(fn):
@@ -116,12 +119,12 @@ def main():
         "membership follows movement: zt2 moved from group A to group B":
             sorted(changed) == ["A", "B"] and members("B") == {"zt2", "zt3"} and members("A") == {"zt1", "zt4"},
         "after the move, zone B message reached zt2 and zt3 only": n2 == 2 and sorted(rx2) == ["zt2", "zt3"],
-        "all 60 latency-run deliveries arrived": len(lat) == 60,
+        "all 60 latency-run deliveries arrived": len(delivered) == 60,
         "median fan-out + polling delivery under 50 ms": p50 is not None and p50 < 50,
         **{f"ACL: {k}": v for k, v in acl.items()},
     }
     report = {"zones": ZONES, "first": {"accepted": n1, "delivered_ms": rx1}, "after_move": {"accepted": n2, "delivered_ms": rx2},
-              "groups": {z: sorted(members(z)) for z in ZONES}, "latency_ms": {"n": len(lat), "p50": p50, "p95": p95,
+              "groups": {z: sorted(members(z)) for z in ZONES}, "latency_ms": {"n": len(lat), "late_over_3s": len(delivered) - len(lat), "p50": p50, "p95": p95,
               "max": lat[-1] if lat else None}, "requests_per_zone_message": 1, "acl": acl, "checks": checks}
     os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
     json.dump(report, open(os.path.join(ROOT, "results", "zones.json"), "w"), indent=1)
