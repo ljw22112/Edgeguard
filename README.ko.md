@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/ljw22112/Edgeguard/actions/workflows/ci.yml/badge.svg)](https://github.com/ljw22112/Edgeguard/actions/workflows/ci.yml)
 
-[English](README.md) | **한국어** · **[심사위원용 웹](site/index.html)** · [변경 기록](CHANGELOG.md) · [기여 안내](CONTRIBUTING.md) · [보안](SECURITY.md)
+[English](README.md) | **한국어** · **[심사위원용 웹](https://ljw22112.github.io/Edgeguard/)** · [변경 기록](CHANGELOG.md) · [기여 안내](CONTRIBUTING.md) · [보안](SECURITY.md)
 
 **MEC 기반 작업자–지게차 충돌 예측 AIoT 안전 서비스**
 2026 oneM2M International Hackathon · Team EdgeGuard (세종대학교)

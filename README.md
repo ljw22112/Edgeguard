@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/ljw22112/Edgeguard/actions/workflows/ci.yml/badge.svg)](https://github.com/ljw22112/Edgeguard/actions/workflows/ci.yml)
 
-**English** | [한국어](README.ko.md) · **[Judge site](site/index.html)** · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+**English** | [한국어](README.ko.md) · **[Judge site](https://ljw22112.github.io/Edgeguard/)** · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 **MEC-based AIoT safety service that predicts worker–forklift collisions**
 2026 oneM2M International Hackathon · Team EdgeGuard (Sejong University)
