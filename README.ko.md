@@ -67,7 +67,7 @@
 | group(fanOutPoint) · pollingChannel | 구역 내 모든 태그에 DANGER 경보 1회, NAT 뒤 태그는 폴링 채널로 수신 ([구역 방송](docs/ko/transport-security.md)) · 스웜 컨텍스트를 요청 한 번으로 읽기 | 사용 중 |
 | MQTT 바인딩 · TLS | 단말은 MQTT over TLS(비밀번호 + 발신자별 브로커 ACL), CSE와 앱은 HTTPS ([보안 전송](docs/ko/transport-security.md)) | 사용 중 |
 
-**ETSI MEC.** MEC-IPE가 MEC 013 Location · MEC 012 RNIS를 CSE에 넣어 MEC 앱이 oneM2M을 통해 MEC 서비스를 씁니다. 이벤트 기반 IPE는 MEC 구역 이벤트와 단말별 신호 세기도 oneM2M 리소스(MEC 데이터용 SDT 클래스)로 바꿉니다. oneM2M 앱이 MEC 서비스를 요청할 수 있고, 구역 이벤트가 CSE 핸드오버를 트리거합니다([모빌리티](docs/ko/mobility.md)). EdgeGuard는 ESTIMED 배포 옵션 C를 따라, 구역마다 MEC 호스트 하나에 MN-CSE · MEC 앱 · IPE를 함께 둡니다([TR-0077 7절 매핑](docs/ko/estimed-mapping.md)). 공개 ETSI MEC Sandbox(try-mec.etsi.org) 실연동, 자체 설치 AdvantEDGE 창고 시나리오에서 경보 70건.
+**ETSI MEC.** MEC-IPE가 MEC 013 Location · MEC 012 RNIS를 CSE에 넣어 MEC 앱이 oneM2M을 통해 MEC 서비스를 씁니다. 이벤트 기반 IPE는 MEC 구역 이벤트와 단말별 신호 세기도 oneM2M 리소스(MEC 데이터용 SDT 클래스)로 바꿉니다. oneM2M 앱이 MEC 서비스를 요청할 수 있고, 구역 이벤트가 CSE 핸드오버를 트리거합니다([모빌리티](docs/ko/mobility.md)). 플랫폼 쪽으로는 **MEC 011 Mp1**(서비스 등록 · 탐색), **MEC 021 AMS**(컨텍스트 전송을 동반한 앱 이동을 핸드오버 트리거로), **MEC 013 영역 · 거리** 구독을 씁니다([MEC 플랫폼](docs/ko/mec-platform.md)). EdgeGuard는 ESTIMED 배포 옵션 C를 따라, 구역마다 MEC 호스트 하나에 MN-CSE · MEC 앱 · IPE를 함께 둡니다([TR-0077 7절 매핑](docs/ko/estimed-mapping.md)). 공개 ETSI MEC Sandbox(try-mec.etsi.org) 실연동, 자체 설치 AdvantEDGE 창고 시나리오에서 경보 70건.
 
 **더 알아보기:** [oneM2M](https://www.onem2m.org) · [oneM2M 표준 문서](https://www.onem2m.org/technical/published-specifications) (TS-0001 구조, TS-0004 프로토콜) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
 
@@ -79,6 +79,7 @@
 | [연합학습](docs/ko/federated-learning.md) | 사이트마다 자기 데이터로 작업자 이동 모델 학습, 작업 · 참여자 · 라운드 · 모델 버전이 oneM2M 리소스(TR-0084) | 2초 예측 오차 0.604 → **0.486 m**, 이탈 · 늦은 참여 처리 |
 | [AI 안전 에이전트](docs/ko/ai-agent.md) | IN-CSE · 두 구역 MN-CSE · ETSI MEC의 MCP 서버로 교대 안전 리포트, 상태는 oneM2M에 저장 | 도구 호출 15회 · 검증 통과, 구역 고장 시 부분 리포트 |
 | [데이터 모델](docs/ko/data-model.md) | SDT flexContainer 트윈, 라벨, SAREF 시맨틱 | 스스로 등록한 단말 약 9초 만에 자동 편입(CI 실행) |
+| [MEC 플랫폼 API](docs/ko/mec-platform.md) (7.1, 7.2) | oneM2M 위치를 담은 Mp1 서비스 등록 · 탐색, AMS 이동 시 앱 컨텍스트와 oneM2M 트윈이 함께 이동, 네트워크가 계산하는 지오펜스 · 작업자-지게차 거리 | 10/10: AMS A → B → A, 컨텍스트 약 2~20 ms, 지오펜스 · 거리 이벤트 → oneM2M 약 10 ms |
 | [MEC 모빌리티](docs/ko/mobility.md) (7.1, 7.2) | MEC 구역 이벤트 · RNIS 신호 세기를 oneM2M으로, oneM2M 앱의 MEC 요청, MEC 네트워크가 트리거하는 핸드오버 | 구역 이벤트로 A → B → A: 중단 **1.5~8 ms**, 유실 **0**, 이벤트 → oneM2M 15~45 ms |
 | [앱 오케스트레이션](docs/ko/orchestration.md) (7.1) | 의도 리소스 하나 → MEC 호스트 간 탐색 · 선택 · 배포 · 등록 · 프로비저닝, 인스턴스마다 컨테이너, 호스트 장애 시 재배치 | 호스트 장애 → 새 컨테이너로 약 2~3초 만에 재실행 |
 | [모델 전달](docs/ko/swarm-and-model-delivery.md) (7.3) | 카나리 → 위험 엔진에서 활성화 → 섀도 감시 → 롤백 | 미학습 · 손상 버전 거부, 성능 저하 시 롤백 |
@@ -198,6 +199,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [연합학습](docs/ko/federated-learning.md) | TR-0084 역할을 oneM2M 리소스로, 참여자 선택 · 이탈 · 늦은 참여, 결과 |
 | [AI 안전 에이전트](docs/ko/ai-agent.md) | MCP 서버(CSE별 oneM2M, ETSI MEC), 교대 리포트 워크플로, 라우팅, 상태 저장 |
 | [ESTIMED / TR-0077 매핑](docs/ko/estimed-mapping.md) | 배포 연속체(옵션 C), 7.1~7.4절 → EdgeGuard 기능 · 데모, 대체물 |
+| [MEC 플랫폼 API](docs/ko/mec-platform.md) | MEC 011 Mp1, MEC 021 AMS 핸드오버 트리거, MEC 013 영역 · 거리 구독 |
 | [MEC 모빌리티](docs/ko/mobility.md) | 이벤트 기반 양방향 MEC-IPE, MEC SDT 클래스, 네트워크 트리거 핸드오버, 모빌리티 지도 |
 | [앱 오케스트레이션](docs/ko/orchestration.md) | 호스트 등록, 배포 의도, 수명주기, 프로비저닝, 재배치 |
 | [스웜과 모델 전달](docs/ko/swarm-and-model-delivery.md) | 그룹 기반 스웜 조정, 연합 모델의 카나리 · 활성화 · 감시 · 롤백 |

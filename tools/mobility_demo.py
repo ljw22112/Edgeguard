@@ -188,7 +188,7 @@ def run(frame):
     evs = [e for e in hc.events if not e.error]
     hos = [{"from": e.source, "to": e.target, "reason": e.reason, "t": round(e.t_start - t_start, 2),
             "prep_ms": round(e.prep_ms, 1), **gap_metrics(rx.kin, sent, e)} for e in evs]
-    lat = sorted(ev["written"] * 1000 - ev["mec_ts"] for ev in ipe.event_log if ev["ue"] == DEV)
+    lat = sorted(ev["written"] * 1000 - ev["mec_ts"] for ev in ipe.event_log if ev.get("ue") == DEV and "zone" in ev)
     trig_lat = [round((h_ev.t_start - tr["t"]) * 1000, 1) for h_ev in evs for tr in triggers
                 if tr["started"] and abs(h_ev.t_start - tr["t"]) < 0.5]
     radios = [p for _, p in rx.radio]

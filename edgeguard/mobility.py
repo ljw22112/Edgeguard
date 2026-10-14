@@ -63,12 +63,13 @@ class MecIpe:
         if self.srv is None:
             self._serve()                 # before subscribing: the CSE verifies the notification URL
         c.create_ae(r, api="Nmec-ipe", poa=[f"{self.cb}/onem2m"], lbl=["egs:mec/ipe"])
-        for cnt in ("requests", "responses", "zoneEvents"):
+        for cnt in ("requests", "responses", "zoneEvents", "geoEvents"):
             c.with_retry(c.create_container, r, cnt, 200)
         own = [c.origin]
         rd = c.create_acp(r, "acp_ipe_read", [(own, ALL_OPS), (self.readers, RETRIEVE | DISCOVERY | NOTIFY | CREATE, (23,))], own)
         rq = c.create_acp(r, "acp_ipe_req", [(own, ALL_OPS), (self.readers, CREATE | RETRIEVE, (4,))], own)
         for cnt, acp, ri in (("responses", "acp_ipe_read", rd.get("ri")), ("zoneEvents", "acp_ipe_read", rd.get("ri")),
+                             ("geoEvents", "acp_ipe_read", rd.get("ri")),
                              ("requests", "acp_ipe_req", rq.get("ri"))):
             c.set_acpi(f"{r}/{cnt}", f"{r}/{acp}", ri)
         self.acp_read = (f"{r}/acp_ipe_read", rd.get("ri"))
@@ -91,7 +92,9 @@ class MecIpe:
                     self.send_header("X-M2M-RSC", "2000")
                 self.end_headers()
                 try:
-                    if self.path.startswith("/mec/zone") or self.path.startswith("/mec/user"):
+                    if self.path.startswith("/mec/area") or self.path.startswith("/mec/distance"):
+                        ipe.on_geo_event(body, t_rx)
+                    elif self.path.startswith("/mec/zone") or self.path.startswith("/mec/user"):
                         ipe.on_location_event(body, t_rx)
                     elif self.path.startswith("/mec/rnis"):
                         ipe.on_meas_rep(body, t_rx)
@@ -136,6 +139,24 @@ class MecIpe:
                                                                    for u in con.get("ues") or []],
                                                    "trigger": ["PERIODICAL_REPORT_STRONGEST_CELLS"]}}
                 result = {"subscriptions": [self._subscribe(f"{self.rnis_api}/subscriptions", body)]}
+            elif op == "area_subscribe":         # circle geofence (MEC 013 UserAreaSubscription)
+                body = {"userAreaSubscription": {
+                    "subscriptionType": "UserAreaSubscription",
+                    "callbackReference": {"notifyURL": f"{self.cb}/mec/area/{con.get('name', 'area')}"},
+                    "addressList": con.get("addresses") or [],
+                    "areaDefine": {"shape": 1, "points": [{"latitude": con["lat"], "longitude": con["lon"]}],
+                                   "radius": con["radius"]},
+                    "locationEventCriteria": con.get("events") or ["ENTERING_AREA_EVENT", "LEAVING_AREA_EVENT"],
+                    "trackingAccuracy": con.get("accuracy", 1)}}
+                result = {"subscriptions": [self._subscribe(f"{self.loc_api}/subscriptions/area", body)]}
+            elif op == "distance_subscribe":     # two UEs closer than a distance (MEC 013 UserDistanceSubscription)
+                body = {"userDistanceSubscription": {
+                    "subscriptionType": "UserDistanceSubscription",
+                    "callbackReference": {"notifyURL": f"{self.cb}/mec/distance/{con.get('name', 'distance')}"},
+                    "monitoredAddress": con["addresses"], "distance": con["distance"],
+                    "criteria": "ALL_WITHIN_DISTANCE", "checkImmediate": True,
+                    "trackingAccuracy": con.get("accuracy", 1)}}
+                result = {"subscriptions": [self._subscribe(f"{self.loc_api}/subscriptions/distance", body)]}
             elif op == "location":
                 r = requests.get(f"{self.mec}/{self.loc_api}/queries/users", params={"address": con.get("ue")}, timeout=2)
                 users = (r.json().get("userList") or {}).get("user") or []
@@ -204,6 +225,21 @@ class MecIpe:
             self.stats["zone_events"] += 1
         if ev["event"] in ("ENTERING_AREA_EVENT", "TRANSFERRING_EVENT"):
             self.c.update_fcnt(f"{self._ue(addr)}/location", LOC_TP, {"zonId": ev["zone"], "apId": ev["poa"]})
+        self.event_log.append({**ev, "written": time.time()})
+
+    def on_geo_event(self, body, t_rx):
+        """Area / distance notification -> <MEC-IPE>/geoEvents: {kind, name, ue(s), event, mec_ts, ipe_ts}."""
+        n = body.get("userAreaNotification") or body.get("userDistanceNotification") or {}
+        ts = n.get("timeStamp") or {}
+        mec_t = int((ts.get("seconds", 0) + ts.get("nanoSeconds", 0) / 1e9) * 1000)
+        if "userAreaNotification" in body:
+            ev = {"kind": "area", "ue": n.get("address"), "event": n.get("userLocationEvent")}
+        else:
+            ev = {"kind": "distance", "ues": [u.get("address") for u in (n.get("monitoredUsers") or {}).get("user") or []],
+                  "event": n.get("distanceEvent")}
+        ev.update(mec_ts=mec_t, ipe_ts=int(t_rx * 1000))
+        self.c.create_cin(f"{self.root}/geoEvents", ev)
+        self.stats["geo_events"] = self.stats.get("geo_events", 0) + 1
         self.event_log.append({**ev, "written": time.time()})
 
     def on_meas_rep(self, n, t_rx):

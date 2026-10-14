@@ -62,6 +62,9 @@ jobs:
           sleep 3
           python tools/mobility_demo.py
 
+      - name: MEC platform APIs (MEC 011 Mp1, MEC 021 AMS as handover trigger, MEC 013 area/distance)
+        run: python tools/mec_platform_demo.py
+
       - name: AI safety agent over MCP servers (oneM2M IN + zone MN-CSEs, ETSI MEC)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: Claude answers free questions over the same tools

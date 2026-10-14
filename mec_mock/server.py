@@ -243,6 +243,12 @@ def _event_loop(period=0.2):
 
 threading.Thread(target=_event_loop, daemon=True).start()
 
+# MEC 011 (Mp1), MEC 021 (AMS), MEC 013 area / distance subscriptions (mec_mock/platform.py); zone -> MEC host
+# from the MEC_MOCK_HOSTS environment variable, e.g. "zoneA=mep-a,zoneB=mep-b"
+from mec_mock import platform as _platform   # noqa: E402
+_platform.init(_known_users, _post, dict(kv.split("=", 1) for kv in os.environ.get("MEC_MOCK_HOSTS", "").split(",") if "=" in kv))
+app.include_router(_platform.router)
+
 
 @app.get("/_mock/subscriptions")
 def subscriptions():
