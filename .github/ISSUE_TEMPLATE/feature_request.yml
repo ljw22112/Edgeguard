@@ -1,0 +1,18 @@
+name: Feature or standard integration
+description: A new capability, or another oneM2M / ETSI MEC feature to use
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What should EdgeGuard do, and for whom
+    validations: {required: true}
+  - type: textarea
+    id: standard
+    attributes:
+      label: Standard and clause
+      description: e.g. oneM2M TS-0001 §9.6.x, TR-0077 clause 7.x, ETSI GS MEC 0xx
+  - type: textarea
+    id: resources
+    attributes:
+      label: Proposed oneM2M resources or MEC API calls

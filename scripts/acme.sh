@@ -29,7 +29,7 @@ up() {
 case "$cmd" in
   start)
     if [ ! -d "$ACME_DIR" ]; then
-      git clone --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git "$ACME_DIR"
+      git init -q "$ACME_DIR" && git -C "$ACME_DIR" fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git "${ACME_REF:-a681a2f27744a11eadd67c392aa63a742d49dd2d}" && git -C "$ACME_DIR" checkout -q FETCH_HEAD
       $ACME_PY -m pip install -r "$ACME_DIR/requirements.txt"
     fi
     cp "$ROOT/config/onem2m/edgeguard.fcp" "$ACME_DIR/acmecse/init/"

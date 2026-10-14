@@ -30,7 +30,8 @@ jobs:
         env:
           ARDUINOJSON_SRC: /tmp/arduinojson/src
         run: |
-          git clone --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git /tmp/acme
+          # pinned: ACME 2026.05.x after a681a2f changed behaviour EdgeGuard's CI depends on (being checked)
+          git init -q /tmp/acme && git -C /tmp/acme fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git a681a2f27744a11eadd67c392aa63a742d49dd2d && git -C /tmp/acme checkout -q FETCH_HEAD
           python -m venv /tmp/acmevenv            # own venv: ACME pins packages the MEC app needs newer
           /tmp/acmevenv/bin/pip install -q -r /tmp/acme/requirements.txt
           ACME_DIR=/tmp/acme ACME_PYTHON=/tmp/acmevenv/bin/python scripts/acme.sh start in   # + EdgeGuard SDT domain

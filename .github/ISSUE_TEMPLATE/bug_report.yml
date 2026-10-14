@@ -1,0 +1,26 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Firmware / device, MEC app / risk engine, MEC-IPE / MEC APIs, CSE handover, Orchestration, Federated learning, Transport security, AI agent / MCP, Docs]
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations: {required: true}
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Commands, demo name, CSE (ACME version or Mobius), relevant output of the demo's PASS / FAIL lines
+      render: shell
+    validations: {required: true}
+  - type: input
+    id: version
+    attributes:
+      label: Commit or release
