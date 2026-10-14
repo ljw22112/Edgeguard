@@ -38,6 +38,9 @@ jobs:
           python tools/sil_run.py --scene crossing
           python tools/sil_run.py --scene head_on --out results/sil_run_head_on.json
 
+      - name: oneM2M tutorial (plain HTTP safety app, docs/tutorial-onem2m.md)
+        run: python tools/tutorial_safety_app.py
+
       - name: SDT data model (flexContainer twins, label discovery, SAREF semantic query, onboarding)
         env:
           EDGEGUARD_CONFIG: config/site.yaml

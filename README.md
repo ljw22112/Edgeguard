@@ -71,6 +71,8 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 **ETSI MEC.** A MEC-IPE brings MEC 013 Location and MEC 012 RNIS into the CSE, so the MEC app consumes MEC services through oneM2M. The event-driven IPE also turns MEC zone events and per-UE signal strength into oneM2M resources (SDT classes for MEC data). It lets oneM2M applications request MEC services, and its zone events trigger the CSE handover ([mobility](docs/mobility.md)). On the platform side, instances use **MEC 011 Mp1** (service registration and discovery), **MEC 021 AMS** (application mobility as a handover trigger, with context transfer) and **MEC 013 area / distance** subscriptions ([MEC platform](docs/mec-platform.md)). EdgeGuard follows ESTIMED deployment option C: the MN-CSE, MEC app and IPE share each zone's MEC host ([TR-0077 clause 7 mapping](docs/estimed-mapping.md)). Live on the public ETSI MEC Sandbox (try-mec.etsi.org); 70 alerts in a warehouse scenario on a self-hosted AdvantEDGE.
 
+**New to oneM2M?** [Tutorial: a oneM2M safety app in 10 minutes](docs/tutorial-onem2m.md), plain HTTP, run in CI.
+
 **Learn more:** [oneM2M](https://www.onem2m.org) · [oneM2M specifications](https://www.onem2m.org/technical/published-specifications) (TS-0001 architecture, TS-0004 protocols) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
 
 ## Beyond the edge: ESTIMED / TR-0077 clause 7

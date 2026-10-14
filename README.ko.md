@@ -71,6 +71,8 @@
 
 **ETSI MEC.** MEC-IPE가 MEC 013 Location · MEC 012 RNIS를 CSE에 넣어 MEC 앱이 oneM2M을 통해 MEC 서비스를 씁니다. 이벤트 기반 IPE는 MEC 구역 이벤트와 단말별 신호 세기도 oneM2M 리소스(MEC 데이터용 SDT 클래스)로 바꿉니다. oneM2M 앱이 MEC 서비스를 요청할 수 있고, 구역 이벤트가 CSE 핸드오버를 트리거합니다([모빌리티](docs/ko/mobility.md)). 플랫폼 쪽으로는 **MEC 011 Mp1**(서비스 등록 · 탐색), **MEC 021 AMS**(컨텍스트 전송을 동반한 앱 이동을 핸드오버 트리거로), **MEC 013 영역 · 거리** 구독을 씁니다([MEC 플랫폼](docs/ko/mec-platform.md)). EdgeGuard는 ESTIMED 배포 옵션 C를 따라, 구역마다 MEC 호스트 하나에 MN-CSE · MEC 앱 · IPE를 함께 둡니다([TR-0077 7절 매핑](docs/ko/estimed-mapping.md)). 공개 ETSI MEC Sandbox(try-mec.etsi.org) 실연동, 자체 설치 AdvantEDGE 창고 시나리오에서 경보 70건.
 
+**oneM2M이 처음이라면:** [튜토리얼: 10분 만에 만드는 oneM2M 안전 앱](docs/ko/tutorial-onem2m.md), HTTP 요청만 사용, CI에서 실행.
+
 **더 알아보기:** [oneM2M](https://www.onem2m.org) · [oneM2M 표준 문서](https://www.onem2m.org/technical/published-specifications) (TS-0001 구조, TS-0004 프로토콜) · [ACME CSE](https://github.com/ankraft/ACME-oneM2M-CSE) · [KETI Mobius](https://github.com/IoTKETI/Mobius) · [ETSI MEC](https://www.etsi.org/technologies/multi-access-edge-computing)
 
 ## 엣지 너머: ESTIMED / TR-0077 7절
