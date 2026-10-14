@@ -74,12 +74,28 @@ p{margin:0}
 .floor-head .tag{display:flex;align-items:center;gap:8px;font:600 .8rem/1 var(--mono)}
 .lamp{min-width:84px;text-align:center;font:800 1.05rem/1 var(--display);letter-spacing:.08em;padding:7px 10px;border-radius:3px;color:#fff;background:var(--go)}
 .lamp.wait{background:var(--wait)} .lamp.stop{background:var(--stop)}
-canvas{display:block;width:100%;height:auto;aspect-ratio:8/3.4;max-width:100%}
+canvas{display:block;width:100%;height:auto;aspect-ratio:8/3.4;max-width:100%;touch-action:pan-y}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:.82rem}
+.ctl{display:grid;gap:4px;min-width:0}
+.ctl > span{color:var(--muted)} .ctl b{color:var(--ink);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:min(140px,36vw);accent-color:var(--tape)}
+.ctl.chk{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ctl.chk input{accent-color:var(--tape);width:16px;height:16px}
+.seg{display:flex}
+.seg .btn{border-radius:0;font-size:.74rem;padding:7px 9px}
+.seg .btn:first-child{border-radius:3px 0 0 3px} .seg .btn:last-child{border-radius:0 3px 3px 0;border-left:0}
+.seg .btn[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg #m-d2d[aria-checked="true"]{background:var(--stop);border-color:var(--stop);color:#fff}
+.counters{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 12px;border-top:1px solid var(--line);font:500 .78rem/1.3 var(--mono);color:var(--muted)}
+.counters b{color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
+.counters .key{margin-left:auto;display:flex;align-items:center;gap:6px}
+.counters .key i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.floor.d2d{border-color:var(--stop)}
 .log{font:400 .76rem/1.55 var(--mono);height:154px;overflow:hidden;border-top:1px solid var(--line);padding:8px 12px;margin:0;list-style:none}
 .log li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .log li b{color:var(--ink);font-weight:500}
 .log li .op{display:inline-block;min-width:4.6em;color:var(--zone)}
-.log li.hot .op{color:var(--stop)} .log li.ho .op{color:var(--go)}
+.log li.hot .op{color:var(--stop)} .log li.ho .op{color:var(--go)} .log li.d2d .op{color:var(--wait)}
 .floor-foot{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted);flex-wrap:wrap}
 
 section{padding-block:56px}
@@ -211,17 +227,39 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
       </div>
     </div>
 
-    <figure class="floor" style="margin:0" aria-label="Animated warehouse floor">
+    <figure class="floor" style="margin:0" aria-label="Interactive warehouse floor simulation">
       <div class="floor-head">
         <span class="label"><span class="en">Live floor · two zones</span><span class="ko">현장 · 두 구역</span></span>
-        <span class="tag">worker_01 <span class="lamp" id="lamp">GO</span></span>
+        <span class="tag"><span class="en">Workers on hold</span><span class="ko">대기 중 작업자</span> <span class="lamp" id="lamp">GO</span></span>
         <button class="btn" id="play" type="button" aria-pressed="true"><span class="en">Pause</span><span class="ko">일시정지</span></button>
       </div>
-      <canvas id="floor" width="800" height="340" role="img" aria-label="Floor plan: forklift drives from zone A to zone B past a worker"></canvas>
+      <div class="controls" role="group" aria-label="Simulation settings">
+        <label class="ctl" for="n-fk"><span><span class="en">Forklifts</span><span class="ko">지게차</span> <b id="n-fk-v">2</b></span>
+          <input type="range" id="n-fk" min="1" max="4" step="1" value="2"></label>
+        <label class="ctl" for="n-wk"><span><span class="en">Workers</span><span class="ko">작업자</span> <b id="n-wk-v">4</b></span>
+          <input type="range" id="n-wk" min="1" max="8" step="1" value="4"></label>
+        <div class="ctl mode" role="radiogroup" aria-label="Communication mode">
+          <span><span class="en">Decided by</span><span class="ko">판단 주체</span></span>
+          <div class="seg">
+            <button type="button" class="btn" id="m-mec" role="radio" aria-checked="true">MEC · oneM2M</button>
+            <button type="button" class="btn" id="m-d2d" role="radio" aria-checked="false"><span class="en">Network down · D2D</span><span class="ko">망 장애 · D2D</span></button>
+          </div>
+        </div>
+        <label class="ctl chk" for="links"><input type="checkbox" id="links"> <span class="en">Show D2D links</span><span class="ko">D2D 링크 표시</span></label>
+      </div>
+      <canvas id="floor" width="800" height="340" role="img" aria-label="Floor plan with forklifts and workers; alert states shown as colours"></canvas>
+      <div class="counters" aria-live="off">
+        <span><b id="c-alerts">0</b> <span class="en">alerts</span><span class="ko">경보</span></span>
+        <span><b id="c-aside">0</b> STEP ASIDE</span>
+        <span><b id="c-ho">0</b> <span class="en">handovers</span><span class="ko">핸드오버</span></span>
+        <span><b id="c-d2d">–</b> <span class="en">D2D links</span><span class="ko">D2D 링크</span></span>
+        <span><b id="c-contact">0</b> <span class="en">contacts</span><span class="ko">접촉</span></span>
+        <span class="key"><i style="background:var(--go)"></i>GO <i style="background:var(--wait)"></i>WAIT <i style="background:var(--stop)"></i>STEP ASIDE</span>
+      </div>
       <ol class="log" id="log" aria-live="off"></ol>
       <figcaption class="floor-foot">
-        <span class="en">Illustration of the CI scenario <span class="mono">edgeguard-two-zones.yaml</span>; resource paths are the real ones.</span>
-        <span class="ko">CI 시나리오 <span class="mono">edgeguard-two-zones.yaml</span>를 그린 것이며, 리소스 경로는 실제와 같습니다.</span>
+        <span class="en">Interactive illustration of the alert logic (closest-point-of-approach test, WAIT / GO / STEP ASIDE, forklift slow-down, D2D fallback). Resource paths are the real ones; measured results are in the CI section.</span>
+        <span class="ko">경보 로직(최근접점 판정, WAIT / GO / STEP ASIDE, 지게차 감속, D2D 대체)을 보여 주는 대화형 그림입니다. 리소스 경로는 실제와 같고, 측정 결과는 CI 절에 있습니다.</span>
         <span class="mono" id="clock">t = 0.0 s</span>
       </figcaption>
     </figure>
@@ -563,95 +601,258 @@ python tools/fl_deploy_demo.py</pre>
     try{ navigator.clipboard.writeText(txt).then(done, fallback); }catch(e){ fallback(); }
   };
 
-  /* ---------- live floor ---------- */
+  /* ---------- live floor: configurable simulation ---------- */
   var cv=document.getElementById("floor"), ctx=cv.getContext("2d");
-  var W=80, H=30, PAD=20;            // metres -> px (800 x 340 incl. padding)
+  var W=80, H=30, PAD=20;
   function X(x){ return PAD+x*((cv.width-2*PAD)/W); } function Y(y){ return PAD+y*((cv.height-2*PAD)/H); }
+  var SC=(cv.width-2*PAD)/W;
   function css(v){ return getComputedStyle(root).getPropertyValue(v).trim(); }
   var logEl=document.getElementById("log"), lamp=document.getElementById("lamp"), clock=document.getElementById("clock");
-  var t=0, last=null, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches, fired={}, seq=0;
+  var RACKS=[[6,2,68,3],[6,15,28,3],[46,15,28,3],[6,25.5,28,3],[46,25.5,28,3]];
+  var A1=10, A2=21.75, BANDS=[[6.2,13.8],[19.2,24.6]];
+  var ROUTES=[[[4,A1],[76,A1]],[[76,A2],[4,A2]],[[8,A1],[40,A1],[40,A2],[72,A2]],[[72,A1],[40,A1],[40,A2],[8,A2]]];
+  var UWB_RANGE=20, cfg={fk:2, wk:4, mode:"mec", links:false};
+  var sim, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches, last=null;
+
+  function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function len(r){ var L=0; for(var i=1;i<r.length;i++) L+=Math.hypot(r[i][0]-r[i-1][0], r[i][1]-r[i-1][1]); return L; }
+  function at(r, s){ for(var i=1;i<r.length;i++){ var dx=r[i][0]-r[i-1][0], dy=r[i][1]-r[i-1][1], l=Math.hypot(dx,dy); if(s<=l||i===r.length-1){ var k=Math.max(0,Math.min(1,s/l)); return {x:r[i-1][0]+dx*k, y:r[i-1][1]+dy*k, ux:dx/l, uy:dy/l}; } s-=l; } }
+  function zoneOf(x){ return x<40 ? "A" : "B"; }
   function log(op, path, cls){
     var li=el("li", cls?{"class":cls}:null, '<span class="op">'+op+'</span> <b>'+path+'</b>');
     logEl.insertBefore(li, logEl.firstChild); while(logEl.children.length>9) logEl.removeChild(logEl.lastChild);
   }
-  function fk(t){ var x = t<17.5 ? 5+4*t : 75-4*(t-17.5); return {x:Math.max(5,Math.min(75,x)), y:10}; }
-  function wk(t){ // worker walks to the aisle edge at x=31, waits for the forklift, then crosses
-    var f=fk(t), y;
-    if(t<=4.5) y=19-1.1*t;
-    else if(f.x<33 && t<17.5) y=19-1.1*4.5;
-    else y=Math.max(5.5, 19-1.1*4.5-1.2*(t-7.2));
-    return {x:31, y:y};
+  function setCount(id, v){ document.getElementById(id).textContent=v; }
+
+  function newTarget(w){
+    var band=BANDS[Math.floor(sim.r()*2)], tx=6+sim.r()*68, ty=band[0]+sim.r()*(band[1]-band[0]);
+    var sameBand=(w.y<16)===(ty<16), pts=[];
+    if(!sameBand){ var cx = Math.abs(w.x-40)<Math.min(w.x,80-w.x) ? 40 : (w.x<40 ? 3 : 77); pts.push([cx,w.y],[cx,ty]); }
+    pts.push([tx,ty]); w.path=pts;
   }
-  function state(t){
-    var f=fk(t), w=wk(t);
-    if(t>4.2 && f.x<33) return f.x>26 ? "stop" : "wait";
-    return "go";
+  function reset(){
+    sim={t:0, r:rng(20261120), fks:[], wks:[], fired:{}, contacts:0, ho:0, alerts:0, asides:0, pairs:{}, nextPub:0, nextRange:0};
+    for(var i=0;i<cfg.fk;i++){
+      var R=ROUTES[i], L=len(R);
+      sim.fks.push({id:"forklift_0"+(i+1), tag:"F"+(i+1), R:R, L:L, s:L*(0.1+0.22*i), dir:1, vmax:3.2+0.3*i, v:3, x:0, y:0, ux:1, uy:0, zone:null});
+    }
+    sim.fks.forEach(placeFk);
+    sim.fks.forEach(function(f){ f.zone=zoneOf(f.x); });
+    for(var j=0;j<cfg.wk;j++){
+      var w={id:"worker_0"+(j+1), tag:"W"+(j+1), x:0, y:0, v:1.1+0.25*sim.r(), state:"go", clear:0, pause:0, path:[], aside:null, risk:null};
+      for(var k=0;k<30;k++){ var b=BANDS[Math.floor(sim.r()*2)]; w.x=8+sim.r()*64; w.y=b[0]+sim.r()*(b[1]-b[0]);
+        if(sim.fks.every(function(f){ return Math.hypot(f.x-w.x,f.y-w.y)>9; })) break; }
+      newTarget(w); sim.wks.push(w);
+    }
+    logEl.innerHTML="";
+    if(cfg.mode==="mec"){
+      sim.wks.concat(sim.fks).slice(0,4).forEach(function(d){ log("SUB","cse-mn-"+zoneOf(d.x).toLowerCase()+"/"+d.id+"/kin/sub_app → EdgeGuard"); });
+    } else {
+      log("D2D","MEC silent > 2 s → devices decide locally (UWB + ESP-NOW)","d2d");
+    }
   }
+  function placeFk(f){ var p=at(f.R, f.s); f.x=p.x; f.y=p.y; f.ux=p.ux*f.dir; f.uy=p.uy*f.dir; }
+
+  function wantVel(w){
+    if(w.pause>0 || !w.path.length) return [0,0];
+    var tg=w.path[0], dx=tg[0]-w.x, dy=tg[1]-w.y, d=Math.hypot(dx,dy)||1;
+    return [dx/d*w.v, dy/d*w.v];
+  }
+  function assess(w, f){
+    var px=w.x-f.x, py=w.y-f.y, dist=Math.hypot(px,py);
+    var wv=wantVel(w), vx=wv[0]-f.ux*f.v, vy=wv[1]-f.uy*f.v, vv=vx*vx+vy*vy;
+    var tc = vv>1e-6 ? Math.max(0, Math.min(3, -(px*vx+py*vy)/vv)) : 0;
+    var dmin=Math.hypot(px+vx*tc, py+vy*tc);
+    var ahead=px*f.ux+py*f.uy, perp=f.ux*py-f.uy*px;
+    var danger = dist<12 && ((dmin<2.0 && ahead>-1) || (dist<2.6 && ahead>0));
+    return {dist:dist, tc:tc, dmin:dmin, ahead:ahead, perp:perp, danger:danger};
+  }
+  function bandOf(y){ return y<16 ? BANDS[0] : BANDS[1]; }
+
+  function step(dt){
+    var d2d=cfg.mode==="d2d";
+    sim.t+=dt;
+    // decisions: MEC every step (subscription stream); D2D only within UWB range, every 0.2 s
+    var decide = !d2d || Math.floor(sim.t/0.2)!==Math.floor((sim.t-dt)/0.2);
+    sim.wks.forEach(function(w){
+      if(!decide) return;
+      var worst=null;
+      sim.fks.forEach(function(f){
+        var a=assess(w,f); a.f=f;
+        if(d2d && a.dist>UWB_RANGE) return;
+        if(a.danger && (!worst || a.tc<worst.tc)) worst=a;
+      });
+      var prev=w.state;
+      if(worst){
+        w.clear=0; w.risk=worst;
+        if(prev==="go"){
+          var inLane = Math.abs(worst.perp)<1.6 && worst.ahead>0;
+          if(inLane){
+            var b=bandOf(w.y), side=worst.perp>=0?1:-1, nx=-worst.f.uy*side, ny=worst.f.ux*side, need=2.7-Math.abs(worst.perp);
+            var tx=w.x+nx*need, ty=w.y+ny*need;
+            if(ty<b[0]||ty>b[1]){ tx=w.x-nx*(2.7+Math.abs(worst.perp)); ty=w.y-ny*(2.7+Math.abs(worst.perp)); }
+            w.aside=[Math.max(5,Math.min(75,tx)), Math.max(b[0],Math.min(b[1],ty))]; w.state="aside"; sim.asides++;
+          } else w.state="wait";
+          sim.alerts++;
+          var cue = w.state==="aside" ? "STEP ASIDE" : "WAIT";
+          if(d2d){ log("ESP-NOW", worst.f.id+" → "+w.id+"  d="+worst.dist.toFixed(1)+" m  "+cue+"  (HMAC ok)","d2d"); }
+          else {
+            log("NOTIFY","EdgeGuard ← "+w.id+" × "+worst.f.id+"  CPA "+worst.tc.toFixed(1)+" s","hot");
+            log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: "+cue+"}","hot");
+          }
+        }
+      } else if(prev!=="go"){
+        w.clear+=d2d?0.2:dt;
+        if(w.clear>0.4){ w.state="go"; w.risk=null; w.aside=null;
+          if(d2d) log("ESP-NOW","→ "+w.id+"  GO (forklift passed)","d2d"); else log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: GO}"); }
+      }
+    });
+    // forklifts: slow down for workers at risk, stop for someone still in the lane close ahead
+    sim.fks.forEach(function(f){
+      var target=f.vmax;
+      sim.wks.forEach(function(w){
+        if(w.state==="go") return;
+        var a=assess(w,f); if(d2d && a.dist>UWB_RANGE) return;
+        if(a.ahead<0 || a.dist>12) return;
+        if(Math.abs(a.perp)<1.5 && a.dist<5) target=0;
+        else if(a.dist<8) target=Math.min(target,1.2);
+        else target=Math.min(target,f.vmax*0.6);
+      });
+      // forklift-forklift: the swarm's shared plans give way by number (lower goes first)
+      sim.fks.forEach(function(g, gi){
+        if(g===f) return;
+        var px=g.x-f.x, py=g.y-f.y, d=Math.hypot(px,py), ahead=px*f.ux+py*f.uy;
+        if(d>7 || ahead<=0 || Math.abs(f.ux*py-f.uy*px)>2.2) return;
+        var fi=sim.fks.indexOf(f), headOn=(g.ux*f.ux+g.uy*f.uy)<0;
+        if(headOn && fi>gi && !(f.turnUntil>sim.t)){
+          f.dir*=-1; f.turnUntil=sim.t+3;
+          if(d2d) log("ESP-NOW", f.id+" yields to "+g.id+" (turns back)","d2d"); else log("GROUP","cse-in/EdgeGuard/swarm/fopt  "+f.id+" yields to "+g.id,"ho");
+        } else if(!headOn || fi>gi) target=Math.min(target, d<4.5 ? 0 : g.v);
+      });
+      f.braking = target<f.vmax*0.7;
+      f.v += Math.max(-3*dt, Math.min(1.5*dt, target-f.v));
+      f.s += f.dir*f.v*dt;
+      if(f.s>=f.L){ f.s=f.L; f.dir=-1; } if(f.s<=0){ f.s=0; f.dir=1; }
+      placeFk(f);
+      var z=zoneOf(f.x);
+      if(z!==f.zone){
+        if(!d2d){ sim.ho++;
+          log("AMS","edgeguard-"+f.zone.toLowerCase()+" ← MOVEOUT_TRIGGERED → edgeguard-"+z.toLowerCase()+"  ("+f.id+")","ho");
+          log("HANDOVER",f.id+" → cse-mn-"+z.toLowerCase()+"  make-before-break, 0 lost","ho"); }
+        f.zone=z;
+      }
+    });
+    // workers move
+    sim.wks.forEach(function(w){
+      if(w.state==="wait") return;
+      if(w.state==="aside"){ var dx=w.aside[0]-w.x, dy=w.aside[1]-w.y, d=Math.hypot(dx,dy); if(d>0.05){ var k=Math.min(1,1.5*dt/d); w.x+=dx*k; w.y+=dy*k; } return; }
+      if(w.pause>0){ w.pause-=dt; if(w.pause<=0) newTarget(w); return; }
+      var v=wantVel(w); w.x+=v[0]*dt; w.y+=v[1]*dt;
+      var tg=w.path[0]; if(tg && Math.hypot(tg[0]-w.x,tg[1]-w.y)<0.15){ w.path.shift(); if(!w.path.length) w.pause=1+sim.r()*2; }
+    });
+    // contacts (should stay 0)
+    sim.wks.forEach(function(w){ sim.fks.forEach(function(f){
+      var k=w.id+f.id, d=Math.hypot(w.x-f.x,w.y-f.y);
+      if(d<1.0 && !(sim.pairs[k]>sim.t)){ sim.contacts++; sim.pairs[k]=sim.t+3; log("CONTACT",w.id+" × "+f.id,"hot"); }
+    }); });
+    // periodic traffic
+    if(sim.t>=sim.nextPub){
+      sim.nextPub=sim.t+0.7;
+      var devs=sim.fks.concat(sim.wks), d=devs[Math.floor(sim.t/0.7)%devs.length];
+      if(d2d) log("UWB", d.id+" ranging  "+sim.fks.filter(function(f){ return f!==d && Math.hypot(f.x-d.x,f.y-d.y)<UWB_RANGE; }).length+" forklifts in range","d2d");
+      else log("CREATE","cse-mn-"+zoneOf(d.x).toLowerCase()+"/"+d.id+"/kin  x="+d.x.toFixed(1)+" y="+d.y.toFixed(1));
+    }
+  }
+
   function draw(){
-    var c={ink:css("--ink"),muted:css("--muted"),line:css("--line"),tape:css("--tape"),zone:css("--zone"),stop:css("--stop"),go:css("--go"),wait:css("--wait"),surf:css("--surface")};
+    var c={ink:css("--ink"),muted:css("--muted"),line:css("--line"),tape:css("--tape"),zone:css("--zone"),stop:css("--stop"),go:css("--go"),wait:css("--wait"),surf:css("--surface"),bg:css("--bg")};
+    var mono=css("--mono"), d2d=cfg.mode==="d2d";
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.fillStyle=c.surf; ctx.fillRect(0,0,cv.width,cv.height);
-    // grid every 5 m
     ctx.strokeStyle=c.line; ctx.lineWidth=1;
     for(var gx=0; gx<=W; gx+=5){ ctx.beginPath(); ctx.moveTo(X(gx),Y(0)); ctx.lineTo(X(gx),Y(H)); ctx.stroke(); }
     for(var gy=0; gy<=H; gy+=5){ ctx.beginPath(); ctx.moveTo(X(0),Y(gy)); ctx.lineTo(X(W),Y(gy)); ctx.stroke(); }
-    // racks
-    ctx.fillStyle=c.line;
-    [[8,16,14,3],[8,22,14,3],[46,16,22,3],[46,22,22,3],[8,2,60,2.5]].forEach(function(r){ ctx.fillRect(X(r[0]),Y(r[1]),X(r[0]+r[2])-X(r[0]),Y(r[1]+r[3])-Y(r[1])); });
-    // aisle tape
-    ctx.strokeStyle=c.tape; ctx.lineWidth=3; ctx.setLineDash([10,8]);
-    [7,13].forEach(function(yy){ ctx.beginPath(); ctx.moveTo(X(0),Y(yy)); ctx.lineTo(X(W),Y(yy)); ctx.stroke(); });
+    ctx.fillStyle=c.line; RACKS.forEach(function(r){ ctx.fillRect(X(r[0]),Y(r[1]),r[2]*SC,r[3]*SC); });
+    // forklift lanes (floor tape)
+    ctx.strokeStyle=c.tape; ctx.lineWidth=2.5; ctx.setLineDash([10,8]);
+    [[0,A1-1.6,80,A1-1.6],[0,A1+1.6,80,A1+1.6],[0,A2-1.6,80,A2-1.6],[0,A2+1.6,80,A2+1.6],[38.4,A1+1.6,38.4,A2-1.6],[41.6,A1+1.6,41.6,A2-1.6]].forEach(function(l){
+      ctx.beginPath(); ctx.moveTo(X(l[0]),Y(l[1])); ctx.lineTo(X(l[2]),Y(l[3])); ctx.stroke(); });
     ctx.setLineDash([]);
-    // zone boundary
+    // zones and cells
     ctx.strokeStyle=c.zone; ctx.lineWidth=2; ctx.setLineDash([4,5]); ctx.beginPath(); ctx.moveTo(X(40),Y(0)); ctx.lineTo(X(40),Y(H)); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle=c.zone; ctx.font="600 15px "+css("--mono");
-    ctx.fillText("ZONE A · cse-mn-a", X(1), Y(H)-6); ctx.fillText("ZONE B · cse-mn-b", X(41), Y(H)-6);
-    // cells
-    [[20,"cellA"],[60,"cellB"]].forEach(function(p){ ctx.beginPath(); ctx.arc(X(p[0]),Y(27.5),5,0,7); ctx.fill(); ctx.fillText(p[1], X(p[0])+9, Y(27.5)+5); });
-    var f=fk(t), w=wk(t), st=state(t), dir = t<17.5 ? 1 : -1;
-    // prediction cone 2 s ahead
-    if(st!=="go"){ ctx.fillStyle = st==="stop" ? c.stop : c.wait; ctx.globalAlpha=.18;
-      ctx.beginPath(); ctx.moveTo(X(f.x),Y(f.y)); ctx.lineTo(X(f.x+dir*8),Y(f.y-3)); ctx.lineTo(X(f.x+dir*8),Y(f.y+3)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; }
-    // forklift
-    ctx.save(); ctx.translate(X(f.x),Y(f.y)); if(dir<0) ctx.scale(-1,1);
-    ctx.fillStyle=c.tape; ctx.fillRect(-24,-14,38,28); ctx.strokeStyle=c.ink; ctx.lineWidth=2; ctx.strokeRect(-24,-14,38,28); ctx.fillStyle=c.ink; ctx.fillRect(14,-11,14,4); ctx.fillRect(14,7,14,4); ctx.fillRect(-18,-9,14,18);
-    ctx.restore();
-    ctx.fillStyle=c.ink; ctx.font="600 15px "+css("--mono"); ctx.fillText("forklift_01", X(f.x)-44, Y(f.y)-20);
-    // worker
-    var wc = st==="go" ? c.go : (st==="stop" ? c.stop : c.wait);
-    ctx.beginPath(); ctx.arc(X(w.x),Y(w.y),11,0,7); ctx.fillStyle=wc; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=c.ink; ctx.stroke();
-    ctx.fillStyle=c.ink; ctx.fillText("worker_01", X(w.x)+16, Y(w.y)+5);
-    lamp.textContent = st==="go" ? "GO" : (st==="stop" ? "WAIT !" : "WAIT"); lamp.className="lamp"+(st==="go"?"":" "+st);
-    clock.textContent="t = "+t.toFixed(1)+" s";
+    ctx.font="600 14px "+mono; ctx.fillStyle=c.zone;
+    ctx.fillText("ZONE A · cse-mn-a", X(1), Y(H)+14); ctx.fillText("ZONE B · cse-mn-b", X(41), Y(H)+14);
+    if(d2d){ ctx.fillStyle=c.stop; ctx.fillText("MEC / NETWORK DOWN → D2D", X(52), Y(0)-6); }
+    // D2D links
+    var nLinks=0;
+    if(d2d || cfg.links){
+      sim.wks.forEach(function(w){ sim.fks.forEach(function(f){
+        var d=Math.hypot(w.x-f.x,w.y-f.y); if(d>UWB_RANGE) return; nLinks++;
+        var hot = w.state!=="go" && w.risk && w.risk.f===f;
+        ctx.strokeStyle = hot ? (w.state==="aside"?c.stop:c.wait) : c.muted; ctx.globalAlpha = hot ? .95 : .35;
+        ctx.lineWidth = hot ? 2.5 : 1; ctx.setLineDash(hot?[]:[3,4]);
+        ctx.beginPath(); ctx.moveTo(X(f.x),Y(f.y)); ctx.lineTo(X(w.x),Y(w.y)); ctx.stroke();
+      }); });
+      ctx.setLineDash([]); ctx.globalAlpha=1;
+    }
+    setCount("c-d2d", (d2d||cfg.links) ? nLinks : "–");
+    // forklifts
+    sim.fks.forEach(function(f){
+      ctx.fillStyle = f.braking ? c.stop : c.tape; ctx.globalAlpha=.12;
+      ctx.beginPath(); ctx.moveTo(X(f.x),Y(f.y));
+      var ax=f.ux*f.v*2, ay=f.uy*f.v*2, nx=-f.uy*1.6, ny=f.ux*1.6;
+      ctx.lineTo(X(f.x+ax+nx),Y(f.y+ay+ny)); ctx.lineTo(X(f.x+ax-nx),Y(f.y+ay-ny)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+      ctx.save(); ctx.translate(X(f.x),Y(f.y)); ctx.rotate(Math.atan2(f.uy,f.ux));
+      ctx.fillStyle=c.tape; ctx.fillRect(-20,-11,30,22);
+      ctx.strokeStyle=f.braking?c.stop:c.ink; ctx.lineWidth=f.braking?3:2; ctx.strokeRect(-20,-11,30,22);
+      ctx.fillStyle=c.ink; ctx.fillRect(10,-9,11,3.5); ctx.fillRect(10,5.5,11,3.5); ctx.fillRect(-15,-7,11,14);
+      ctx.restore();
+      ctx.fillStyle=c.ink; ctx.font="700 14px "+mono; ctx.fillText(f.tag, X(f.x)-8, Y(f.y)-15);
+    });
+    // workers
+    var hold=0;
+    sim.wks.forEach(function(w){
+      var col = w.state==="go" ? c.go : (w.state==="aside" ? c.stop : c.wait);
+      if(w.state!=="go") hold++;
+      ctx.beginPath(); ctx.arc(X(w.x),Y(w.y),9,0,7); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=c.ink; ctx.stroke();
+      if(w.state==="aside" && w.aside){ ctx.strokeStyle=c.stop; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(X(w.x),Y(w.y)); ctx.lineTo(X(w.aside[0]),Y(w.aside[1])); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.fillStyle=c.ink; ctx.font="700 13px "+mono; ctx.fillText(w.tag, X(w.x)+12, Y(w.y)+5);
+    });
+    lamp.textContent = hold ? "WAIT "+hold : "GO";
+    lamp.className = "lamp" + (hold ? (sim.wks.some(function(w){ return w.state==="aside"; }) ? " stop" : " wait") : "");
+    setCount("c-alerts", sim.alerts); setCount("c-aside", sim.asides); setCount("c-ho", d2d ? "–" : sim.ho); setCount("c-contact", sim.contacts);
+    clock.textContent="t = "+sim.t.toFixed(1)+" s";
+    document.querySelector(".floor").classList.toggle("d2d", d2d);
   }
-  function events(t){
-    function once(k, fn){ if(!fired[k]){ fired[k]=1; fn(); } }
-    var n=Math.floor(t*2);           // twice a second: show the publish
-    once("p"+n, function(){ var f=fk(t); log("CREATE", (f.x<40?"cse-mn-a":"cse-mn-b")+"/forklift_01/kin  x="+f.x.toFixed(1)); });
-    if(t>4.2) once("danger", function(){ log("NOTIFY","EdgeGuard ← worker_01 × forklift_01  CPA 1.8 s","hot"); log("CREATE","cse-in/EdgeGuard/zone_A/fopt  {cue: WAIT}","hot"); });
-    if(t>4.4) once("pcu", function(){ log("POLL","cse-mn-a/worker_01/pch/pcu  ← WAIT","hot"); });
-    if(t>7.3) once("goev", function(){ log("CREATE","cse-in/EdgeGuard/zone_A/fopt  {cue: GO}"); });
-    if(t>8.6) once("ams", function(){ log("AMS","edgeguard-a ← MOVEOUT_TRIGGERED → edgeguard-b","ho"); });
-    if(t>8.8) once("ho", function(){ log("HANDOVER","forklift_01 → cse-mn-b  make-before-break, 0 lost","ho"); log("CREATE","cse-in/forklift_01Annc  (AEAnnc)","ho"); });
-    if(t>12.3) once("geo", function(){ log("MEC013","geoEvents  ENTERING dock-b (6 m)"); });
-    if(t>26.2) once("ho2", function(){ log("HANDOVER","forklift_01 → cse-mn-a  reason=ams","ho"); });
-  }
-  var CYCLE2=30;
   function frame(ts){
     if(last==null) last=ts;
     var dt=Math.min(0.1,(ts-last)/1000); last=ts;
-    if(playing){ t+=dt; if(t>CYCLE2){ t=0; fired={}; } events(t); }
+    if(playing){ var n=Math.ceil(dt/0.02); for(var i=0;i<n;i++) step(dt/n); }
     draw();
     requestAnimationFrame(frame);
   }
-  // resting frame: the WAIT moment, so a still capture shows the point
-  if(!playing){ t=5.6; events(5.6); }
+
+  /* controls */
+  function bindRange(id, key){
+    var inp=document.getElementById(id), out=document.getElementById(id+"-v");
+    var saved=parseInt(store("eg-"+key),10); if(saved>=+inp.min && saved<=+inp.max) inp.value=saved;
+    cfg[key]=+inp.value; out.textContent=inp.value;
+    inp.oninput=function(){ cfg[key]=+inp.value; out.textContent=inp.value; store("eg-"+key, inp.value); reset(); };
+  }
+  bindRange("n-fk","fk"); bindRange("n-wk","wk");
+  function setMode(m){
+    cfg.mode=m; document.getElementById("m-mec").setAttribute("aria-checked", m==="mec"); document.getElementById("m-d2d").setAttribute("aria-checked", m==="d2d");
+    if(sim){ if(m==="d2d") log("D2D","MEC silent > 2 s → devices decide locally (UWB + ESP-NOW)","d2d"); else log("SUB","MEC back: subscriptions resume, MEC app decides again"); }
+  }
+  document.getElementById("m-mec").onclick=function(){ setMode("mec"); };
+  document.getElementById("m-d2d").onclick=function(){ setMode("d2d"); };
+  var lk=document.getElementById("links"); lk.onchange=function(){ cfg.links=lk.checked; };
   var pb=document.getElementById("play");
   function syncPlay(){ pb.setAttribute("aria-pressed", playing); pb.innerHTML = playing ? L("Pause","일시정지") : L("Play","재생"); }
   pb.onclick=function(){ playing=!playing; syncPlay(); };
   syncPlay();
-  log("SUB","cse-mn-a/worker_01/kin/sub_app → EdgeGuard");
-  log("SUB","cse-mn-a/forklift_01/kin/sub_app → EdgeGuard");
+  reset();
+  if(!playing){ for(var i=0;i<400;i++) step(0.02); }      // a still frame with the floor in motion already
   requestAnimationFrame(frame);
 })();
 </script>
