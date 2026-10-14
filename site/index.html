@@ -610,7 +610,12 @@ python tools/fl_deploy_demo.py</pre>
     try{ navigator.clipboard.writeText(txt).then(done, fallback); }catch(e){ fallback(); }
   };
 
-  /* ---------- live floor: configurable simulation ---------- */
+  /* ---------- live floor: configurable simulation ----------
+     Layout like a real warehouse: forklifts run one way round a loop (east on aisle 1, west on aisle 2,
+     end aisles at x = 3 and 77); workers walk on walkways beside the lanes and cross them at right angles.
+     Rules: collision-course test -> WAIT at the lane edge, or STEP ASIDE if already in the lane; the forklift
+     slows, and stops for anyone in its lane ahead.  A stopped forklift is holding: the worker goes first
+     (standoff resolution), then the forklift continues.  Forklifts keep their distance on the loop. */
   var cv=document.getElementById("floor"), ctx=cv.getContext("2d");
   var W=80, H=30, PAD=20;
   function X(x){ return PAD+x*((cv.width-2*PAD)/W); } function Y(y){ return PAD+y*((cv.height-2*PAD)/H); }
@@ -618,73 +623,90 @@ python tools/fl_deploy_demo.py</pre>
   function css(v){ return getComputedStyle(root).getPropertyValue(v).trim(); }
   var logEl=document.getElementById("log"), lamp=document.getElementById("lamp"), clock=document.getElementById("clock");
   var RACKS=[[6,2,68,3],[6,15,28,3],[46,15,28,3],[6,25.5,28,3],[46,25.5,28,3]];
-  var A1=10, A2=21.75, BANDS=[[6.2,13.8],[19.2,24.6]];
-  var ROUTES=[[[4,A1],[76,A1]],[[76,A2],[4,A2]],[[8,A1],[40,A1],[40,A2],[72,A2]],[[72,A1],[40,A1],[40,A2],[8,A2]]];
+  var A1=10, A2=21.75, LANE=1.6;
+  var WALK=[7.0, 13.0, 18.75, 24.75];                       // walkways: both sides of each aisle
+  var LOOP=[[3,A1],[77,A1],[77,A2],[3,A2],[3,A1]];          // one-way: east on aisle 1, west on aisle 2
   var UWB_RANGE=20, cfg={fk:2, wk:4, mode:"mec", links:false};
   var sim, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches, last=null;
 
   function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
   function len(r){ var L=0; for(var i=1;i<r.length;i++) L+=Math.hypot(r[i][0]-r[i-1][0], r[i][1]-r[i-1][1]); return L; }
-  function at(r, s){ for(var i=1;i<r.length;i++){ var dx=r[i][0]-r[i-1][0], dy=r[i][1]-r[i-1][1], l=Math.hypot(dx,dy); if(s<=l||i===r.length-1){ var k=Math.max(0,Math.min(1,s/l)); return {x:r[i-1][0]+dx*k, y:r[i-1][1]+dy*k, ux:dx/l, uy:dy/l}; } s-=l; } }
+  var LOOP_L=len(LOOP);
+  function at(s){ s=((s%LOOP_L)+LOOP_L)%LOOP_L;
+    for(var i=1;i<LOOP.length;i++){ var dx=LOOP[i][0]-LOOP[i-1][0], dy=LOOP[i][1]-LOOP[i-1][1], l=Math.hypot(dx,dy);
+      if(s<=l){ return {x:LOOP[i-1][0]+dx*s/l, y:LOOP[i-1][1]+dy*s/l, ux:dx/l, uy:dy/l}; } s-=l; }
+    return {x:LOOP[0][0], y:LOOP[0][1], ux:1, uy:0}; }
   function zoneOf(x){ return x<40 ? "A" : "B"; }
   function log(op, path, cls){
     var li=el("li", cls?{"class":cls}:null, '<span class="op">'+op+'</span> <b>'+path+'</b>');
     logEl.insertBefore(li, logEl.firstChild); while(logEl.children.length>9) logEl.removeChild(logEl.lastChild);
   }
   function setCount(id, v){ document.getElementById(id).textContent=v; }
+  function nearestWalk(y){ return WALK.reduce(function(a,b){ return Math.abs(b-y)<Math.abs(a-y) ? b : a; }); }
+  function sideOf(y){ return y<16 ? 0 : 1; }               // aisle 1 or aisle 2 side of the floor
 
-  function newTarget(w){
-    var band=BANDS[Math.floor(sim.r()*2)], tx=6+sim.r()*68, ty=band[0]+sim.r()*(band[1]-band[0]);
-    var sameBand=(w.y<16)===(ty<16), pts=[];
-    if(!sameBand){ var cx = Math.abs(w.x-40)<Math.min(w.x,80-w.x) ? 40 : (w.x<40 ? 3 : 77); pts.push([cx,w.y],[cx,ty]); }
-    pts.push([tx,ty]); w.path=pts;
+  function plan(w, tx, ty){
+    // walk along the walkway, cross a lane only at right angles; change aisle through the cross aisle at x = 40
+    var pts=[], y0=nearestWalk(w.y);
+    if(Math.abs(w.y-y0)>0.05) pts.push([w.x,y0]);
+    if(sideOf(y0)===sideOf(ty)){ pts.push([tx,y0]); if(ty!==y0) pts.push([tx,ty]); }
+    else { pts.push([40,y0],[40,ty],[tx,ty]); }
+    w.path=pts; w.goal=[tx,ty];
   }
+  function detour(w, f){
+    var lane = Math.abs(w.y-A1)<Math.abs(w.y-A2) ? A1 : A2, back = w.y<lane ? lane-3 : lane+3;
+    var xb = Math.max(7, Math.min(73, f.x - f.ux*5)), goal=w.goal || [w.x, w.y];
+    var probe={x:xb, y:back}; plan(probe, goal[0], goal[1]);
+    w.path=[[w.x, back],[xb, back]].concat(probe.path); w.goal=goal;
+    if(Math.abs(w.y-back)<0.05) w.path.shift();
+  }
+  function newTarget(w){ plan(w, 7+sim.r()*66, WALK[Math.floor(sim.r()*4)]); }
+
   function reset(){
-    sim={t:0, r:rng(20261120), fks:[], wks:[], fired:{}, contacts:0, ho:0, alerts:0, asides:0, pairs:{}, nextPub:0, nextRange:0};
+    sim={t:0, r:rng(20261120), fks:[], wks:[], contacts:0, ho:0, alerts:0, asides:0, pairs:{}, nextPub:0};
     for(var i=0;i<cfg.fk;i++){
-      var R=ROUTES[i], L=len(R);
-      sim.fks.push({id:"forklift_0"+(i+1), tag:"F"+(i+1), R:R, L:L, s:L*(0.1+0.22*i), dir:1, vmax:3.2+0.3*i, v:3, x:0, y:0, ux:1, uy:0, zone:null});
+      sim.fks.push({id:"forklift_0"+(i+1), tag:"F"+(i+1), s:LOOP_L*i/cfg.fk+6, vmax:3.2, v:2.5, x:0, y:0, ux:1, uy:0, zone:null});
     }
     sim.fks.forEach(placeFk);
     sim.fks.forEach(function(f){ f.zone=zoneOf(f.x); });
     for(var j=0;j<cfg.wk;j++){
-      var w={id:"worker_0"+(j+1), tag:"W"+(j+1), x:0, y:0, v:1.1+0.25*sim.r(), state:"go", clear:0, pause:0, path:[], aside:null, risk:null};
-      for(var k=0;k<30;k++){ var b=BANDS[Math.floor(sim.r()*2)]; w.x=8+sim.r()*64; w.y=b[0]+sim.r()*(b[1]-b[0]);
-        if(sim.fks.every(function(f){ return Math.hypot(f.x-w.x,f.y-w.y)>9; })) break; }
+      var w={id:"worker_0"+(j+1), tag:"W"+(j+1), x:0, y:0, v:1.1+0.25*sim.r(), state:"go", clear:0, pause:0, path:[], goal:null, aside:null, risk:null};
+      for(var k=0;k<40;k++){ w.x=8+sim.r()*64; w.y=WALK[Math.floor(sim.r()*4)];
+        if(sim.fks.every(function(f){ return Math.hypot(f.x-w.x,f.y-w.y)>9; }) &&
+           sim.wks.every(function(o){ return Math.hypot(o.x-w.x,o.y-w.y)>3; })) break; }
       newTarget(w); sim.wks.push(w);
     }
     logEl.innerHTML="";
-    if(cfg.mode==="mec"){
-      sim.wks.concat(sim.fks).slice(0,4).forEach(function(d){ log("SUB","cse-mn-"+zoneOf(d.x).toLowerCase()+"/"+d.id+"/kin/sub_app → EdgeGuard"); });
-    } else {
-      log("D2D","MEC silent > 2 s → devices decide locally (UWB + ESP-NOW)","d2d");
-    }
+    if(cfg.mode==="mec") sim.fks.concat(sim.wks).slice(0,4).forEach(function(d){ log("SUB","cse-mn-"+zoneOf(d.x).toLowerCase()+"/"+d.id+"/kin/sub_app → EdgeGuard"); });
+    else log("D2D","MEC silent > 2 s → devices decide locally (UWB + ESP-NOW)","d2d");
   }
-  function placeFk(f){ var p=at(f.R, f.s); f.x=p.x; f.y=p.y; f.ux=p.ux*f.dir; f.uy=p.uy*f.dir; }
+  function placeFk(f){ var p=at(f.s); f.x=p.x; f.y=p.y; f.ux=p.ux; f.uy=p.uy; }
 
   function wantVel(w){
     if(w.pause>0 || !w.path.length) return [0,0];
     var tg=w.path[0], dx=tg[0]-w.x, dy=tg[1]-w.y, d=Math.hypot(dx,dy)||1;
     return [dx/d*w.v, dy/d*w.v];
   }
-  function assess(w, f){
-    var px=w.x-f.x, py=w.y-f.y, dist=Math.hypot(px,py);
-    var wv=wantVel(w), vx=wv[0]-f.ux*f.v, vy=wv[1]-f.uy*f.v, vv=vx*vx+vy*vy;
-    var tc = vv>1e-6 ? Math.max(0, Math.min(3, -(px*vx+py*vy)/vv)) : 0;
-    var dmin=Math.hypot(px+vx*tc, py+vy*tc);
-    var ahead=px*f.ux+py*f.uy, perp=f.ux*py-f.uy*px;
-    var danger = dist<12 && ((dmin<2.0 && ahead>-1) || (dist<2.6 && ahead>0));
-    return {dist:dist, tc:tc, dmin:dmin, ahead:ahead, perp:perp, danger:danger};
+  function geom(w, f){
+    var px=w.x-f.x, py=w.y-f.y;
+    return {px:px, py:py, dist:Math.hypot(px,py), ahead:px*f.ux+py*f.uy, perp:f.ux*py-f.uy*px};
   }
-  function bandOf(y){ return y<16 ? BANDS[0] : BANDS[1]; }
+  function assess(w, f){
+    var g=geom(w,f);
+    if(f.v<0.4) { g.danger=false; return g; }               // a stopped forklift is holding for people: not a threat
+    var wv=wantVel(w), vx=wv[0]-f.ux*f.v, vy=wv[1]-f.uy*f.v, vv=vx*vx+vy*vy;
+    g.tc = vv>1e-6 ? Math.max(0, Math.min(3, -(g.px*vx+g.py*vy)/vv)) : 0;
+    g.dmin=Math.hypot(g.px+vx*g.tc, g.py+vy*g.tc);
+    g.danger = g.dist<12 && g.ahead>-1.5 && (g.dmin<2.2 || (Math.abs(g.perp)<LANE+0.4 && g.ahead>0));
+    return g;
+  }
+  function inLane(w){ return Math.abs(w.y-A1)<LANE+0.3 || Math.abs(w.y-A2)<LANE+0.3; }
 
   function step(dt){
     var d2d=cfg.mode==="d2d";
     sim.t+=dt;
-    // decisions: MEC every step (subscription stream); D2D only within UWB range, every 0.2 s
-    var decide = !d2d || Math.floor(sim.t/0.2)!==Math.floor((sim.t-dt)/0.2);
-    sim.wks.forEach(function(w){
-      if(!decide) return;
+    var decide = !d2d || Math.floor(sim.t/0.2)!==Math.floor((sim.t-dt)/0.2);   // D2D: local decision every 0.2 s
+    if(decide) sim.wks.forEach(function(w){
       var worst=null;
       sim.fks.forEach(function(f){
         var a=assess(w,f); a.f=f;
@@ -695,53 +717,44 @@ python tools/fl_deploy_demo.py</pre>
       if(worst){
         w.clear=0; w.risk=worst;
         if(prev==="go"){
-          var inLane = Math.abs(worst.perp)<1.6 && worst.ahead>0;
-          if(inLane){
-            var b=bandOf(w.y), side=worst.perp>=0?1:-1, nx=-worst.f.uy*side, ny=worst.f.ux*side, need=2.7-Math.abs(worst.perp);
-            var tx=w.x+nx*need, ty=w.y+ny*need;
-            if(ty<b[0]||ty>b[1]){ tx=w.x-nx*(2.7+Math.abs(worst.perp)); ty=w.y-ny*(2.7+Math.abs(worst.perp)); }
-            w.aside=[Math.max(5,Math.min(75,tx)), Math.max(b[0],Math.min(b[1],ty))]; w.state="aside"; sim.asides++;
+          if(inLane(w) && Math.abs(worst.perp)<LANE+0.4){       // standing in the forklift's lane: get out, sideways
+            var lane = Math.abs(w.y-A1)<Math.abs(w.y-A2) ? A1 : A2;
+            w.aside=[w.x, w.y<lane ? lane-3 : lane+3]; w.state="aside"; sim.asides++;
           } else w.state="wait";
           sim.alerts++;
           var cue = w.state==="aside" ? "STEP ASIDE" : "WAIT";
-          if(d2d){ log("ESP-NOW", worst.f.id+" → "+w.id+"  d="+worst.dist.toFixed(1)+" m  "+cue+"  (HMAC ok)","d2d"); }
-          else {
-            log("NOTIFY","EdgeGuard ← "+w.id+" × "+worst.f.id+"  CPA "+worst.tc.toFixed(1)+" s","hot");
-            log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: "+cue+"}","hot");
-          }
+          if(d2d) log("ESP-NOW", worst.f.id+" → "+w.id+"  d="+worst.dist.toFixed(1)+" m  "+cue+"  (HMAC ok)","d2d");
+          else { log("NOTIFY","EdgeGuard ← "+w.id+" × "+worst.f.id+"  CPA "+worst.tc.toFixed(1)+" s","hot");
+                 log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: "+cue+"}","hot"); }
         }
       } else if(prev!=="go"){
         w.clear+=d2d?0.2:dt;
-        if(w.clear>0.4){ w.state="go"; w.risk=null; w.aside=null;
-          if(d2d) log("ESP-NOW","→ "+w.id+"  GO (forklift passed)","d2d"); else log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: GO}"); }
+        if(w.clear>0.4 && !(w.state==="aside" && inLane(w))){
+          w.state="go"; w.risk=null; w.aside=null;
+          if(w.goal) plan(w, w.goal[0], w.goal[1]);
+          if(d2d) log("ESP-NOW","→ "+w.id+"  GO","d2d"); else log("CREATE","cse-in/EdgeGuard/zone_"+zoneOf(w.x)+"/fopt  {cue: GO}");
+        }
       }
     });
-    // forklifts: slow down for workers at risk, stop for someone still in the lane close ahead
+    // forklifts: stop for anyone in the lane ahead, slow for people on hold near the lane, keep distance on the loop
     sim.fks.forEach(function(f){
-      var target=f.vmax;
+      var target=f.vmax, holding=null;
       sim.wks.forEach(function(w){
-        if(w.state==="go") return;
-        var a=assess(w,f); if(d2d && a.dist>UWB_RANGE) return;
-        if(a.ahead<0 || a.dist>12) return;
-        if(Math.abs(a.perp)<1.5 && a.dist<5) target=0;
-        else if(a.dist<8) target=Math.min(target,1.2);
-        else target=Math.min(target,f.vmax*0.6);
+        var g=geom(w,f); if(d2d && g.dist>UWB_RANGE) return;
+        if(g.ahead<0 || g.dist>12) return;
+        if(Math.abs(g.perp)<LANE+0.6 && g.ahead<6){ target=0; holding=w; }
+        else if(w.state!=="go" && Math.abs(g.perp)<4){ target=Math.min(target, g.dist<7 ? 1.2 : f.vmax*0.6); }
       });
-      // forklift-forklift: the swarm's shared plans give way by number (lower goes first)
-      sim.fks.forEach(function(g, gi){
-        if(g===f) return;
-        var px=g.x-f.x, py=g.y-f.y, d=Math.hypot(px,py), ahead=px*f.ux+py*f.uy;
-        if(d>7 || ahead<=0 || Math.abs(f.ux*py-f.uy*px)>2.2) return;
-        var fi=sim.fks.indexOf(f), headOn=(g.ux*f.ux+g.uy*f.uy)<0;
-        if(headOn && fi>gi && !(f.turnUntil>sim.t)){
-          f.dir*=-1; f.turnUntil=sim.t+3;
-          if(d2d) log("ESP-NOW", f.id+" yields to "+g.id+" (turns back)","d2d"); else log("GROUP","cse-in/EdgeGuard/swarm/fopt  "+f.id+" yields to "+g.id,"ho");
-        } else if(!headOn || fi>gi) target=Math.min(target, d<4.5 ? 0 : g.v);
+      sim.fks.forEach(function(o){
+        if(o===f) return;
+        var gap=((o.s-f.s)%LOOP_L+LOOP_L)%LOOP_L;            // distance along the loop to the forklift ahead
+        if(gap<9) target=Math.min(target, gap<5 ? 0 : o.v);
       });
+      if(holding && !f.holding){ if(d2d) log("ESP-NOW", f.id+" holds for "+holding.id+" (worker goes first)","d2d"); else log("NOTIFY","EdgeGuard: "+f.id+" holds, "+holding.id+" goes first"); }
+      f.holding=holding;
       f.braking = target<f.vmax*0.7;
-      f.v += Math.max(-3*dt, Math.min(1.5*dt, target-f.v));
-      f.s += f.dir*f.v*dt;
-      if(f.s>=f.L){ f.s=f.L; f.dir=-1; } if(f.s<=0){ f.s=0; f.dir=1; }
+      f.v += Math.max(-3.5*dt, Math.min(1.5*dt, target-f.v));
+      f.s += f.v*dt;
       placeFk(f);
       var z=zoneOf(f.x);
       if(z!==f.zone){
@@ -754,27 +767,29 @@ python tools/fl_deploy_demo.py</pre>
     // workers move
     sim.wks.forEach(function(w){
       if(w.state==="wait") return;
-      if(w.state==="aside"){ var dx=w.aside[0]-w.x, dy=w.aside[1]-w.y, d=Math.hypot(dx,dy); if(d>0.05){ var k=Math.min(1,1.5*dt/d); w.x+=dx*k; w.y+=dy*k; } return; }
+      if(w.state==="aside"){ var dx=w.aside[0]-w.x, dy=w.aside[1]-w.y, d=Math.hypot(dx,dy); if(d>0.05){ var k=Math.min(1,1.6*dt/d); w.x+=dx*k; w.y+=dy*k; } return; }
       if(w.pause>0){ w.pause-=dt; if(w.pause<=0) newTarget(w); return; }
-      var v=wantVel(w); w.x+=v[0]*dt; w.y+=v[1]*dt;
-      var tg=w.path[0]; if(tg && Math.hypot(tg[0]-w.x,tg[1]-w.y)<0.15){ w.path.shift(); if(!w.path.length) w.pause=1+sim.r()*2; }
+      var v=wantVel(w), nx=w.x+v[0]*dt, ny=w.y+v[1]*dt;
+      var block=sim.fks.find(function(f){ var d0=Math.hypot(w.x-f.x,w.y-f.y), d1=Math.hypot(nx-f.x,ny-f.y); return d1<2.2 && d1<d0; });
+      if(block){ detour(w, block); return; }                 // never walk into a forklift: go round behind it
+      w.x=nx; w.y=ny;
+      var tg=w.path[0]; if(tg && Math.hypot(tg[0]-w.x,tg[1]-w.y)<0.15){ w.x=tg[0]; w.y=tg[1]; w.path.shift(); if(!w.path.length) w.pause=1+sim.r()*2.5; }
     });
     // contacts (should stay 0)
     sim.wks.forEach(function(w){ sim.fks.forEach(function(f){
       var k=w.id+f.id, d=Math.hypot(w.x-f.x,w.y-f.y);
       if(d<1.0 && !(sim.pairs[k]>sim.t)){ sim.contacts++; sim.pairs[k]=sim.t+3; log("CONTACT",w.id+" × "+f.id,"hot"); }
     }); });
-    // periodic traffic
     if(sim.t>=sim.nextPub){
       sim.nextPub=sim.t+0.7;
-      var devs=sim.fks.concat(sim.wks), d=devs[Math.floor(sim.t/0.7)%devs.length];
-      if(d2d) log("UWB", d.id+" ranging  "+sim.fks.filter(function(f){ return f!==d && Math.hypot(f.x-d.x,f.y-d.y)<UWB_RANGE; }).length+" forklifts in range","d2d");
-      else log("CREATE","cse-mn-"+zoneOf(d.x).toLowerCase()+"/"+d.id+"/kin  x="+d.x.toFixed(1)+" y="+d.y.toFixed(1));
+      var devs=sim.fks.concat(sim.wks), dv=devs[Math.floor(sim.t/0.7)%devs.length];
+      if(d2d) log("UWB", dv.id+" ranging  "+sim.fks.filter(function(f){ return f!==dv && Math.hypot(f.x-dv.x,f.y-dv.y)<UWB_RANGE; }).length+" forklifts in range","d2d");
+      else log("CREATE","cse-mn-"+zoneOf(dv.x).toLowerCase()+"/"+dv.id+"/kin  x="+dv.x.toFixed(1)+" y="+dv.y.toFixed(1));
     }
   }
 
   function draw(){
-    var c={ink:css("--ink"),muted:css("--muted"),line:css("--line"),tape:css("--tape"),zone:css("--zone"),stop:css("--stop"),go:css("--go"),wait:css("--wait"),surf:css("--surface"),bg:css("--bg")};
+    var c={ink:css("--ink"),muted:css("--muted"),line:css("--line"),tape:css("--tape"),zone:css("--zone"),stop:css("--stop"),go:css("--go"),wait:css("--wait"),surf:css("--surface")};
     var mono=css("--mono"), d2d=cfg.mode==="d2d";
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.fillStyle=c.surf; ctx.fillRect(0,0,cv.width,cv.height);
@@ -782,12 +797,17 @@ python tools/fl_deploy_demo.py</pre>
     for(var gx=0; gx<=W; gx+=5){ ctx.beginPath(); ctx.moveTo(X(gx),Y(0)); ctx.lineTo(X(gx),Y(H)); ctx.stroke(); }
     for(var gy=0; gy<=H; gy+=5){ ctx.beginPath(); ctx.moveTo(X(0),Y(gy)); ctx.lineTo(X(W),Y(gy)); ctx.stroke(); }
     ctx.fillStyle=c.line; RACKS.forEach(function(r){ ctx.fillRect(X(r[0]),Y(r[1]),r[2]*SC,r[3]*SC); });
-    // forklift lanes (floor tape)
-    ctx.strokeStyle=c.tape; ctx.lineWidth=2.5; ctx.setLineDash([10,8]);
-    [[0,A1-1.6,80,A1-1.6],[0,A1+1.6,80,A1+1.6],[0,A2-1.6,80,A2-1.6],[0,A2+1.6,80,A2+1.6],[38.4,A1+1.6,38.4,A2-1.6],[41.6,A1+1.6,41.6,A2-1.6]].forEach(function(l){
+    // walkways (faint) and the forklift loop (floor tape) with direction chevrons
+    ctx.strokeStyle=c.muted; ctx.globalAlpha=.35; ctx.lineWidth=1; ctx.setLineDash([2,5]);
+    WALK.forEach(function(y){ ctx.beginPath(); ctx.moveTo(X(6),Y(y)); ctx.lineTo(X(74),Y(y)); ctx.stroke(); });
+    ctx.globalAlpha=1; ctx.strokeStyle=c.tape; ctx.lineWidth=2.5; ctx.setLineDash([10,8]);
+    [[3-LANE,A1-LANE,77+LANE,A1-LANE],[3+LANE,A1+LANE,77-LANE,A1+LANE],[3+LANE,A2-LANE,77-LANE,A2-LANE],[3-LANE,A2+LANE,77+LANE,A2+LANE],
+     [3-LANE,A1-LANE,3-LANE,A2+LANE],[3+LANE,A1+LANE,3+LANE,A2-LANE],[77+LANE,A1-LANE,77+LANE,A2+LANE],[77-LANE,A1+LANE,77-LANE,A2-LANE]].forEach(function(l){
       ctx.beginPath(); ctx.moveTo(X(l[0]),Y(l[1])); ctx.lineTo(X(l[2]),Y(l[3])); ctx.stroke(); });
-    ctx.setLineDash([]);
-    // zones and cells
+    ctx.setLineDash([]); ctx.fillStyle=c.tape;
+    [[20,A1,1],[60,A1,1],[20,A2,-1],[60,A2,-1]].forEach(function(a){
+      ctx.beginPath(); ctx.moveTo(X(a[0]+a[2]*1.2),Y(a[1])); ctx.lineTo(X(a[0]-a[2]*0.6),Y(a[1]-0.7)); ctx.lineTo(X(a[0]-a[2]*0.6),Y(a[1]+0.7)); ctx.closePath(); ctx.fill(); });
+    // zones
     ctx.strokeStyle=c.zone; ctx.lineWidth=2; ctx.setLineDash([4,5]); ctx.beginPath(); ctx.moveTo(X(40),Y(0)); ctx.lineTo(X(40),Y(H)); ctx.stroke(); ctx.setLineDash([]);
     ctx.font="600 14px "+mono; ctx.fillStyle=c.zone;
     ctx.fillText("ZONE A · cse-mn-a", X(1), Y(H)+14); ctx.fillText("ZONE B · cse-mn-b", X(41), Y(H)+14);
@@ -807,10 +827,9 @@ python tools/fl_deploy_demo.py</pre>
     setCount("c-d2d", (d2d||cfg.links) ? nLinks : "–");
     // forklifts
     sim.fks.forEach(function(f){
-      ctx.fillStyle = f.braking ? c.stop : c.tape; ctx.globalAlpha=.12;
-      ctx.beginPath(); ctx.moveTo(X(f.x),Y(f.y));
-      var ax=f.ux*f.v*2, ay=f.uy*f.v*2, nx=-f.uy*1.6, ny=f.ux*1.6;
-      ctx.lineTo(X(f.x+ax+nx),Y(f.y+ay+ny)); ctx.lineTo(X(f.x+ax-nx),Y(f.y+ay-ny)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+      if(f.v>0.3){ ctx.fillStyle = f.braking ? c.stop : c.tape; ctx.globalAlpha=.13;
+        var ax=f.ux*f.v*2, ay=f.uy*f.v*2, nx=-f.uy*1.6, ny=f.ux*1.6;
+        ctx.beginPath(); ctx.moveTo(X(f.x),Y(f.y)); ctx.lineTo(X(f.x+ax+nx),Y(f.y+ay+ny)); ctx.lineTo(X(f.x+ax-nx),Y(f.y+ay-ny)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; }
       ctx.save(); ctx.translate(X(f.x),Y(f.y)); ctx.rotate(Math.atan2(f.uy,f.ux));
       ctx.fillStyle=c.tape; ctx.fillRect(-20,-11,30,22);
       ctx.strokeStyle=f.braking?c.stop:c.ink; ctx.lineWidth=f.braking?3:2; ctx.strokeRect(-20,-11,30,22);
@@ -824,8 +843,7 @@ python tools/fl_deploy_demo.py</pre>
       var col = w.state==="go" ? c.go : (w.state==="aside" ? c.stop : c.wait);
       if(w.state!=="go") hold++;
       ctx.beginPath(); ctx.arc(X(w.x),Y(w.y),9,0,7); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=c.ink; ctx.stroke();
-      if(w.state==="aside" && w.aside){ ctx.strokeStyle=c.stop; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(X(w.x),Y(w.y)); ctx.lineTo(X(w.aside[0]),Y(w.aside[1])); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.fillStyle=c.ink; ctx.font="700 13px "+mono; ctx.fillText(w.tag, X(w.x)+12, Y(w.y)+5);
+      ctx.fillStyle=c.ink; ctx.font="700 13px "+mono; ctx.fillText(w.tag, X(w.x)+12, Y(w.y)-6);
     });
     lamp.textContent = hold ? "WAIT "+hold : "GO";
     lamp.className = "lamp" + (hold ? (sim.wks.some(function(w){ return w.state==="aside"; }) ? " stop" : " wait") : "");
@@ -861,7 +879,8 @@ python tools/fl_deploy_demo.py</pre>
   pb.onclick=function(){ playing=!playing; syncPlay(); };
   syncPlay();
   reset();
-  if(!playing){ for(var i=0;i<400;i++) step(0.02); }      // a still frame with the floor in motion already
+  if(!playing){ for(var i=0;i<400;i++) step(0.02); }
+  window.__egSim = {step:step, reset:reset, cfg:cfg, state:function(){ return sim; }};   // headless checks
   requestAnimationFrame(frame);
 })();
 </script>
