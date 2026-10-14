@@ -12,7 +12,7 @@ import argparse
 import signal
 import threading
 
-from .orchestration import EdgeApp
+from .orchestration import app_class
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     ap.add_argument("--port", type=int, required=True)
     a = ap.parse_args()
     base, rn = a.cse.rstrip("/").rsplit("/", 1)
-    app = EdgeApp((base, rn), a.name, a.instance, a.host, a.port, a.orchestrator).start()
+    app = app_class(a.name)((base, rn), a.name, a.instance, a.host, a.port, a.orchestrator).start()
     done = threading.Event()
 
     def stop(*_):

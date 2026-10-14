@@ -172,6 +172,15 @@ def unpack(b64):
     return out
 
 
+def _age(lt):
+    """Seconds since a oneM2M timestamp (UTC, 20261011T044702,905126); inf if missing."""
+    if not lt:
+        return float("inf")
+    import datetime as dt
+    t = dt.datetime.strptime(lt.split(",")[0], "%Y%m%dT%H%M%S").replace(tzinfo=dt.timezone.utc).timestamp()
+    return time.time() - t - (float("0." + lt.split(",")[1]) if "," in lt else 0.0)
+
+
 # --- oneM2M roles --------------------------------------------------------------------------------
 COORD = "EdgeGuardFL"
 TASK_CND = "org.edgeguard.safety.moduleclass.federatedLearningTask"
@@ -180,8 +189,10 @@ PRT_CND = "org.edgeguard.safety.moduleclass.federatedLearningParticipant"
 
 class Coordinator:
     def __init__(self, cse, notify_url, rounds=6, cpr=3, quorum=2, min_samples=500, local_epochs=8,
-                 lr=0.01, timeout=6.0, seed=0, log=print):
-        self.c, self.nu, self.log = cse, notify_url, log
+                 lr=0.01, timeout=6.0, seed=0, log=print, stale_s=None):
+        """stale_s: participants whose flPrt was not refreshed for this long are not selected (deployed
+        clients refresh it every second; a crashed MEC host stops doing so)."""
+        self.c, self.nu, self.log, self.stale_s = cse, notify_url, log, stale_s
         self.cfg = dict(rounds=rounds, cpr=cpr, quorum=quorum, min_samples=min_samples,
                         local_epochs=local_epochs, lr=lr, timeout=timeout)
         self.rng = random.Random(seed)
@@ -225,7 +236,8 @@ class Coordinator:
         return out
 
     def select(self, parts):
-        ok = [p for p in parts if p.get("avail") and p.get("smpCt", 0) >= self.cfg["min_samples"]]
+        ok = [p for p in parts if p.get("avail") and p.get("smpCt", 0) >= self.cfg["min_samples"]
+              and (self.stale_s is None or _age(p.get("lt")) <= self.stale_s)]
         ok.sort(key=lambda p: (-self.waited.get(p["ae"], 0), -p.get("cmpSc", 0.0), self.rng.random()))
         sel = [p["ae"] for p in ok[:self.cfg["cpr"]]]
         for p in ok:

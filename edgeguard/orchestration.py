@@ -75,6 +75,8 @@ class EdgeApp:
                     threading.Thread(target=app.provision, args=(con,), daemon=True).start()
                 elif self.path == "/data":
                     app.processed += 1
+                else:
+                    app.on_notify(self.path, con)
 
             def log_message(self, *a):
                 pass
@@ -107,14 +109,26 @@ class EdgeApp:
         for path in cfg.get("subscribe", []):
             self.c.with_retry(self.c.create_subscription, path, f"sub_{self.instance}",
                               [f"http://127.0.0.1:{self.port}/data"], acpi=cfg.get("sub_acpi"))
+        self.on_provision(cfg)
         self.provisioned.set()
+
+    # hooks for application kinds built on this lifecycle (edgeguard/fl_app.py)
+    def on_provision(self, cfg):
+        pass
+
+    def on_notify(self, path, con):
+        pass
+
+    def status_extra(self) -> dict:
+        return {}
 
     def _heartbeat(self):
         while not self.stop.wait(1.0 if self.provisioned.is_set() else 0.2):
             if self.provisioned.is_set():
                 try:
                     self.c.create_cin(f"{self.ae}/status", {"instance": self.instance, "host": self.host,
-                                                            "processed": self.processed, "ts": int(time.time() * 1000)})
+                                                            "processed": self.processed, "ts": int(time.time() * 1000),
+                                                            **self.status_extra()})
                 except Exception:
                     pass
 
@@ -123,6 +137,14 @@ class EdgeApp:
         if self.srv:
             self.srv.shutdown()
             self.srv.server_close()
+
+
+def app_class(name):
+    """Application kind by app name: the federated-learning client (needs numpy) or the generic edge app."""
+    if name == "edgeguard-fl":
+        from .fl_app import FlEdgeApp
+        return FlEdgeApp
+    return EdgeApp
 
 
 class ContainerInstance:
@@ -245,7 +267,7 @@ class MecHostAgent:
                 app = ContainerInstance(self.image, self.cse, req["appName"], iid, self.name, port, req["orchestrator"],
                                         need["cpu"], need["mem"]).start()
             else:
-                app = EdgeApp(self.cse, req["appName"], iid, self.name, port, req["orchestrator"]).start()
+                app = app_class(req["appName"])(self.cse, req["appName"], iid, self.name, port, req["orchestrator"]).start()
         except Exception as e:
             return 500, {"detail": str(e)[:200]}
         self.instances[iid] = (app, need)
@@ -369,7 +391,7 @@ class Orchestrator:
                 continue
             self._ev(rn, "registered", app_ae=inst["appAe"])
             old = it.get("app_origin")
-            self._provision(rn, inst, revoke=old)
+            self._provision(rn, inst, revoke=old, host=h)
             it.update(host=h["hstNm"], instance=inst["appInstanceId"], app_ae=inst["appAe"], app_origin=inst["appOrigin"],
                       lcm=h["lcmUr"], t_placed=time.time())
             if self._wait_running(inst["appAe"]):
@@ -402,7 +424,7 @@ class Orchestrator:
                 time.sleep(0.1)
         return False
 
-    def _provision(self, rn, inst, revoke=None):
+    def _provision(self, rn, inst, revoke=None, host=None):
         """Security context and configuration: the instance may read / subscribe to the device data of the
         intent (device ACPs list the orchestrator as an owner), then it is told what to subscribe to."""
         spec = self.intents[rn]["spec"]
@@ -414,8 +436,8 @@ class Orchestrator:
             rules.append({"acor": [inst["appOrigin"]], "acop": RETRIEVE | NOTIFY | CREATE, "acod": [{"chty": [23]}]})
             self.c.request("PUT", d["acp"], None, {"m2m:acp": {"pv": {"acr": rules}}})
             acpis.append(acp["ri"])
-        self.c.create_cin(f"{inst['appAe']}/config", {"subscribe": [d["path"] for d in devices],
-                                                      "intent": rn})
+        self.c.create_cin(f"{inst['appAe']}/config", {"subscribe": [d["path"] for d in devices], "intent": rn,
+                                                      "host": (host or {}).get("hstNm"), "zone": (host or {}).get("zone")})
         self._ev(rn, "provisioned", grants=len(devices), revoked=bool(revoke))
 
     # monitor

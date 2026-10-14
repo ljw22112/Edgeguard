@@ -84,6 +84,11 @@ jobs:
           python tools/orchestration_demo.py
           python tools/orchestration_demo.py --runtime docker     # one container per instance (deploy/edge-app)
 
+      - name: Federated learning deployed by the orchestrator (intent -> deploy -> discover -> train -> aggregate -> infer)
+        run: |
+          python tools/fl_deploy_demo.py
+          python tools/fl_deploy_demo.py --runtime docker         # one container per FL client
+
       - name: Forklift swarm coordination (group context, same schedule on every member)
         run: python tools/swarm_demo.py
 

@@ -5,6 +5,8 @@ ARG BASE=python:3.11-slim
 FROM ${BASE}
 # exec form: works on images without a shell too
 RUN ["python3", "-c", "import importlib.util, subprocess, sys; importlib.util.find_spec('requests') or subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-cache-dir', 'requests>=2.31'])"]
+# numpy: the federated-learning client (app edgeguard-fl, edgeguard/fl_app.py)
+RUN ["python3", "-c", "import importlib.util, subprocess, sys; importlib.util.find_spec('numpy') or subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-cache-dir', 'numpy>=1.24'])"]
 WORKDIR /app
 COPY edgeguard /app/edgeguard
 ENTRYPOINT ["python3", "-m", "edgeguard.edge_app"]
