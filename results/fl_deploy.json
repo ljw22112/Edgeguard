@@ -1,0 +1,376 @@
+{
+ "runtime": "thread",
+ "placement": {
+  "seoul": "host-seoul",
+  "busan": "host-busan",
+  "incheon": "host-incheon"
+ },
+ "ready_s": 1.42,
+ "rounds": [
+  {
+   "round": 1,
+   "eligible": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_incheon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_incheon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 1
+  },
+  {
+   "round": 2,
+   "eligible": [
+    "fl_incheon",
+    "fl_busan",
+    "fl_seoul"
+   ],
+   "selected": [
+    "fl_incheon",
+    "fl_busan",
+    "fl_seoul"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_incheon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 2
+  },
+  {
+   "round": 3,
+   "eligible": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_busan",
+    "fl_incheon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_seoul"
+   ],
+   "dropped": [
+    "fl_incheon"
+   ],
+   "aggregated": true,
+   "version": 3
+  },
+  {
+   "round": 4,
+   "eligible": [
+    "fl_seoul",
+    "fl_busan"
+   ],
+   "selected": [
+    "fl_seoul",
+    "fl_busan"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 4
+  },
+  {
+   "round": 5,
+   "eligible": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_daejeon"
+   ],
+   "selected": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_daejeon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_daejeon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 5
+  },
+  {
+   "round": 6,
+   "eligible": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_daejeon"
+   ],
+   "selected": [
+    "fl_busan",
+    "fl_seoul",
+    "fl_daejeon"
+   ],
+   "received": [
+    "fl_busan",
+    "fl_daejeon",
+    "fl_seoul"
+   ],
+   "dropped": [],
+   "aggregated": true,
+   "version": 6
+  }
+ ],
+ "events": [
+  "round 3: host-incheon crashes (selected, never answers)",
+  "round 4: operator submits the Daejeon intent"
+ ],
+ "inference": {
+  "seoul": {
+   "site": "seoul",
+   "rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "model_version": 6,
+   "ade_2s": 0.476,
+   "cv_2s": 0.652
+  },
+  "busan": {
+   "site": "busan",
+   "rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "model_version": 6,
+   "ade_2s": 0.499,
+   "cv_2s": 0.615
+  },
+  "daejeon": {
+   "site": "daejeon",
+   "rounds": [
+    5,
+    6
+   ],
+   "model_version": 6,
+   "ade_2s": 0.468,
+   "cv_2s": 0.6
+  }
+ },
+ "containers": {
+  "initial": null,
+  "final": null
+ },
+ "orchestration": [
+  {
+   "t": 0.357,
+   "intent": "intent_fl-seoul",
+   "step": "accepted",
+   "app": "edgeguard-fl"
+  },
+  {
+   "t": 0.36,
+   "intent": "intent_fl-busan",
+   "step": "accepted",
+   "app": "edgeguard-fl"
+  },
+  {
+   "t": 0.387,
+   "intent": "intent_fl-incheon",
+   "step": "accepted",
+   "app": "edgeguard-fl"
+  },
+  {
+   "t": 0.44,
+   "intent": "intent_fl-seoul",
+   "step": "selected",
+   "host": "host-seoul",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.448,
+   "intent": "intent_fl-incheon",
+   "step": "selected",
+   "host": "host-incheon",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.45,
+   "intent": "intent_fl-busan",
+   "step": "selected",
+   "host": "host-busan",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 0.465,
+   "intent": "intent_fl-seoul",
+   "step": "deployed",
+   "host": "host-seoul",
+   "instance": "edgeguardflhostseoul1"
+  },
+  {
+   "t": 0.489,
+   "intent": "intent_fl-incheon",
+   "step": "deployed",
+   "host": "host-incheon",
+   "instance": "edgeguardflhostincheon3"
+  },
+  {
+   "t": 0.514,
+   "intent": "intent_fl-busan",
+   "step": "deployed",
+   "host": "host-busan",
+   "instance": "edgeguardflhostbusan2"
+  },
+  {
+   "t": 0.592,
+   "intent": "intent_fl-incheon",
+   "step": "registered",
+   "app_ae": "app-edgeguardflhostincheon3"
+  },
+  {
+   "t": 0.604,
+   "intent": "intent_fl-seoul",
+   "step": "registered",
+   "app_ae": "app-edgeguardflhostseoul1"
+  },
+  {
+   "t": 0.606,
+   "intent": "intent_fl-incheon",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 0.63,
+   "intent": "intent_fl-seoul",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 0.729,
+   "intent": "intent_fl-busan",
+   "step": "registered",
+   "app_ae": "app-edgeguardflhostbusan2"
+  },
+  {
+   "t": 0.765,
+   "intent": "intent_fl-busan",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 1.238,
+   "intent": "intent_fl-seoul",
+   "step": "running",
+   "host": "host-seoul",
+   "ms": 880.3,
+   "reason": "new"
+  },
+  {
+   "t": 1.257,
+   "intent": "intent_fl-incheon",
+   "step": "running",
+   "host": "host-incheon",
+   "ms": 869.6,
+   "reason": "new"
+  },
+  {
+   "t": 1.26,
+   "intent": "intent_fl-busan",
+   "step": "running",
+   "host": "host-busan",
+   "ms": 899.9,
+   "reason": "new"
+  },
+  {
+   "t": 4.914,
+   "intent": "intent_fl-incheon",
+   "step": "host_lost",
+   "host": "host-incheon"
+  },
+  {
+   "t": 4.961,
+   "intent": "intent_fl-incheon",
+   "step": "unschedulable",
+   "reason": "host_lost"
+  },
+  {
+   "t": 11.284,
+   "intent": "intent_fl-daejeon",
+   "step": "accepted",
+   "app": "edgeguard-fl"
+  },
+  {
+   "t": 11.361,
+   "intent": "intent_fl-daejeon",
+   "step": "selected",
+   "host": "host-daejeon",
+   "rtt": 2.0,
+   "reason": "new"
+  },
+  {
+   "t": 11.379,
+   "intent": "intent_fl-daejeon",
+   "step": "deployed",
+   "host": "host-daejeon",
+   "instance": "edgeguardflhostdaejeon4"
+  },
+  {
+   "t": 11.461,
+   "intent": "intent_fl-daejeon",
+   "step": "registered",
+   "app_ae": "app-edgeguardflhostdaejeon4"
+  },
+  {
+   "t": 11.489,
+   "intent": "intent_fl-daejeon",
+   "step": "provisioned",
+   "grants": 0,
+   "revoked": false
+  },
+  {
+   "t": 11.863,
+   "intent": "intent_fl-daejeon",
+   "step": "running",
+   "host": "host-daejeon",
+   "ms": 578.8,
+   "reason": "new"
+  }
+ ],
+ "checks": {
+  "intent -> deploy: each FL client placed on its own site's MEC host": true,
+  "lifecycle per intent: selected -> deployed -> registered -> provisioned -> running": true,
+  "discover: the coordinator found the deployed clients by label": true,
+  "train / aggregate: 6 model versions, task done": true,
+  "dropout: host-incheon crashed at round 3, the round aggregated with the quorum": true,
+  "liveness: Incheon never selected after its host died": true,
+  "data residency: the Incheon client was not moved to another site; updates carry only weights": true,
+  "late join: the Daejeon intent was deployed and its client selected in a later round": true,
+  "infer at the edge: every live client runs the final model and beats constant velocity on its own data": true
+ }
+}

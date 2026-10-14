@@ -10,3 +10,4 @@ results/mcp_servers.log
 .certs/
 .mqtt/
 results/mec_mock_mobility.log
+results/mec_mock_platform.log

@@ -1,0 +1,314 @@
+{
+ "scenario": "scenarios/edgeguard-two-zones.yaml",
+ "instances": {
+  "A": [
+   "edgeguard-a",
+   "mep-a"
+  ],
+  "B": [
+   "edgeguard-b",
+   "mep-b"
+  ]
+ },
+ "mp1": {
+  "found": [
+   {
+    "serName": "edgeguard-safety",
+    "serInstanceId": "ser5",
+    "transportInfo": {
+     "id": "edgeguard-safety-rest",
+     "name": "REST",
+     "type": "REST_HTTP",
+     "protocol": "HTTP",
+     "version": "1.1",
+     "endpoint": {
+      "uris": [
+       "http://127.0.0.1:9341/a/api"
+      ]
+     },
+     "implSpecificInfo": {
+      "oneM2M": {
+       "cseBase": "http://127.0.0.1:8081/cse-mn-a",
+       "cseId": "id-mn-a",
+       "ae": "SEdgeGuardP"
+      }
+     }
+    }
+   },
+   {
+    "serName": "edgeguard-safety",
+    "serInstanceId": "ser6",
+    "transportInfo": {
+     "id": "edgeguard-safety-rest",
+     "name": "REST",
+     "type": "REST_HTTP",
+     "protocol": "HTTP",
+     "version": "1.1",
+     "endpoint": {
+      "uris": [
+       "http://127.0.0.1:9341/b/api"
+      ]
+     },
+     "implSpecificInfo": {
+      "oneM2M": {
+       "cseBase": "http://127.0.0.1:8082/cse-mn-b",
+       "cseId": "id-mn-b",
+       "ae": "SEdgeGuardP"
+      }
+     }
+    }
+   }
+  ],
+  "location_endpoint": "/location/v3",
+  "ams_endpoint": "/amsi/v1",
+  "availability": [
+   {
+    "serName": "edgeguard-safety",
+    "serInstanceId": "ser5",
+    "state": "ACTIVE",
+    "changeType": "ADDED"
+   },
+   {
+    "serName": "edgeguard-safety",
+    "serInstanceId": "ser6",
+    "state": "ACTIVE",
+    "changeType": "ADDED"
+   },
+   {
+    "serName": "edgeguard-safety",
+    "serInstanceId": "ser6",
+    "state": "ACTIVE",
+    "changeType": "REMOVED"
+   }
+  ]
+ },
+ "ams": {
+  "moves": [
+   {
+    "t": 9.04,
+    "instance": "edgeguard-a",
+    "ue": "forklift_01",
+    "status": "INTERHOST_MOVEOUT_TRIGGERED",
+    "target": "edgeguard-b",
+    "context_ms": 2.9,
+    "handover_started": true
+   },
+   {
+    "t": 9.05,
+    "instance": "edgeguard-a",
+    "ue": "forklift_01",
+    "status": "INTERHOST_MOVEOUT_COMPLETED",
+    "target": null
+   },
+   {
+    "t": 26.28,
+    "instance": "edgeguard-b",
+    "ue": "forklift_01",
+    "status": "INTERHOST_MOVEOUT_TRIGGERED",
+    "target": "edgeguard-a",
+    "context_ms": 1.8,
+    "handover_started": true
+   },
+   {
+    "t": 26.28,
+    "instance": "edgeguard-b",
+    "ue": "forklift_01",
+    "status": "INTERHOST_MOVEOUT_COMPLETED",
+    "target": null
+   }
+  ],
+  "context_received": {
+   "B": [
+    {
+     "ue": "forklift_01",
+     "from": "edgeguard-a",
+     "twin": "forklift_01@A",
+     "last": {
+      "id": "forklift_01",
+      "kind": "forklift",
+      "x": 40.733,
+      "y": 9.996,
+      "speed": 4.0,
+      "heading": 0.0,
+      "yaw_rate": 0.0,
+      "ts": 1791976754161
+     },
+     "risk": {
+      "level": "SAFE",
+      "alerts_open": 0
+     }
+    }
+   ],
+   "A": [
+    {
+     "ue": "forklift_01",
+     "from": "edgeguard-b",
+     "twin": "forklift_01@B",
+     "last": {
+      "id": "forklift_01",
+      "kind": "forklift",
+      "x": 40.067,
+      "y": 9.996,
+      "speed": 4.0,
+      "heading": 0.0,
+      "yaw_rate": 0.0,
+      "ts": 1791976771461
+     },
+     "risk": {
+      "level": "SAFE",
+      "alerts_open": 0
+     }
+    }
+   ]
+  },
+  "handovers": [
+   [
+    "A",
+    "B",
+    "ams"
+   ],
+   [
+    "B",
+    "A",
+    "ams"
+   ]
+  ]
+ },
+ "geofence": {
+  "area": {
+   "x": 60.0,
+   "y": 10.0,
+   "r": 6.0
+  },
+  "events": [
+   {
+    "event": "ENTERING_AREA_EVENT",
+    "t": 12.65,
+    "dist_to_centre_m": 4.39,
+    "mec_to_onem2m_ms": 8.6
+   },
+   {
+    "event": "LEAVING_AREA_EVENT",
+    "t": 15.66,
+    "dist_to_centre_m": 7.63,
+    "mec_to_onem2m_ms": 13.3
+   },
+   {
+    "event": "ENTERING_AREA_EVENT",
+    "t": 20.06,
+    "dist_to_centre_m": 4.75,
+    "mec_to_onem2m_ms": 9.5
+   },
+   {
+    "event": "LEAVING_AREA_EVENT",
+    "t": 23.07,
+    "dist_to_centre_m": 7.27,
+    "mec_to_onem2m_ms": 8.6
+   }
+  ]
+ },
+ "distance": {
+  "limit_m": 5.0,
+  "events": [
+   {
+    "event": "ALL_WITHIN_DISTANCE",
+    "ues": [
+     "worker_01",
+     "forklift_01"
+    ],
+    "t": 5.43,
+    "gap_m": 3.83,
+    "mec_to_onem2m_ms": 8.6
+   },
+   {
+    "event": "ALL_WITHIN_DISTANCE",
+    "ues": [
+     "worker_01",
+     "forklift_01"
+    ],
+    "t": 27.88,
+    "gap_m": 4.03,
+    "mec_to_onem2m_ms": 10.4
+   }
+  ]
+ },
+ "platform_log": [
+  {
+   "t": 1791976745.3761656,
+   "kind": "ser_availability",
+   "status": null
+  },
+  {
+   "t": 1791976745.3812728,
+   "kind": "ser_availability",
+   "status": null
+  },
+  {
+   "t": 1791976750.6630883,
+   "kind": "distance",
+   "status": null
+  },
+  {
+   "t": 1791976754.2680206,
+   "kind": "ams",
+   "status": "INTERHOST_MOVEOUT_TRIGGERED"
+  },
+  {
+   "t": 1791976754.2774353,
+   "kind": "ams",
+   "status": "INTERHOST_MOVEOUT_COMPLETED"
+  },
+  {
+   "t": 1791976757.8814816,
+   "kind": "area",
+   "status": null
+  },
+  {
+   "t": 1791976760.8866425,
+   "kind": "area",
+   "status": null
+  },
+  {
+   "t": 1791976765.2925806,
+   "kind": "area",
+   "status": null
+  },
+  {
+   "t": 1791976768.297211,
+   "kind": "area",
+   "status": null
+  },
+  {
+   "t": 1791976771.5023265,
+   "kind": "ams",
+   "status": "INTERHOST_MOVEOUT_TRIGGERED"
+  },
+  {
+   "t": 1791976771.508468,
+   "kind": "ams",
+   "status": "INTERHOST_MOVEOUT_COMPLETED"
+  },
+  {
+   "t": 1791976773.1056886,
+   "kind": "distance",
+   "status": null
+  },
+  {
+   "t": 1791976776.2642007,
+   "kind": "ser_availability",
+   "status": null
+  }
+ ],
+ "checks": {
+  "Mp1: both instances READY, 'edgeguard-safety' discoverable on both hosts with its oneM2M CSE and AE": true,
+  "Mp1: platform Location and AMS services discovered; the MEC-IPE runs on the discovered endpoint": true,
+  "Mp1: service availability notifications (ADDED x2, REMOVED on deregistration)": true,
+  "AMS: move-out triggered A->B then B->A, each to the other host's instance": true,
+  "AMS: the forklift's safety context reached the target instance's commInterface each time": true,
+  "AMS as handover trigger: oneM2M twin moved A->B->A (reason ams)": true,
+  "AMS: context transfer reported, INTERHOST_MOVEOUT_COMPLETED confirmed to each source": true,
+  "MEC 013 area (via oneM2M): ENTERING inside / LEAVING outside the geofence, within one GIS update (2 m)": true,
+  "MEC 013 distance (via oneM2M): worker_01 and forklift_01 within 5 m, true gap <= 6 m": true,
+  "all MEC 013 subscriptions removed through oneM2M": true
+ }
+}
