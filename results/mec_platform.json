@@ -85,32 +85,32 @@
  "ams": {
   "moves": [
    {
-    "t": 9.04,
+    "t": 9.05,
     "instance": "edgeguard-a",
     "ue": "forklift_01",
     "status": "INTERHOST_MOVEOUT_TRIGGERED",
     "target": "edgeguard-b",
-    "context_ms": 2.9,
+    "context_ms": 2.1,
     "handover_started": true
    },
    {
-    "t": 9.05,
+    "t": 9.06,
     "instance": "edgeguard-a",
     "ue": "forklift_01",
     "status": "INTERHOST_MOVEOUT_COMPLETED",
     "target": null
    },
    {
-    "t": 26.28,
+    "t": 26.29,
     "instance": "edgeguard-b",
     "ue": "forklift_01",
     "status": "INTERHOST_MOVEOUT_TRIGGERED",
     "target": "edgeguard-a",
-    "context_ms": 1.8,
+    "context_ms": 3.1,
     "handover_started": true
    },
    {
-    "t": 26.28,
+    "t": 26.3,
     "instance": "edgeguard-b",
     "ue": "forklift_01",
     "status": "INTERHOST_MOVEOUT_COMPLETED",
@@ -126,12 +126,12 @@
      "last": {
       "id": "forklift_01",
       "kind": "forklift",
-      "x": 40.733,
+      "x": 41.03,
       "y": 9.996,
       "speed": 4.0,
       "heading": 0.0,
       "yaw_rate": 0.0,
-      "ts": 1791976754161
+      "ts": 1792048947004
      },
      "risk": {
       "level": "SAFE",
@@ -147,12 +147,12 @@
      "last": {
       "id": "forklift_01",
       "kind": "forklift",
-      "x": 40.067,
+      "x": 40.169,
       "y": 9.996,
       "speed": 4.0,
       "heading": 0.0,
       "yaw_rate": 0.0,
-      "ts": 1791976771461
+      "ts": 1792048964204
      },
      "risk": {
       "level": "SAFE",
@@ -183,27 +183,27 @@
   "events": [
    {
     "event": "ENTERING_AREA_EVENT",
-    "t": 12.65,
-    "dist_to_centre_m": 4.39,
-    "mec_to_onem2m_ms": 8.6
+    "t": 12.66,
+    "dist_to_centre_m": 4.37,
+    "mec_to_onem2m_ms": 11.7
    },
    {
     "event": "LEAVING_AREA_EVENT",
     "t": 15.66,
-    "dist_to_centre_m": 7.63,
-    "mec_to_onem2m_ms": 13.3
+    "dist_to_centre_m": 7.66,
+    "mec_to_onem2m_ms": 10.1
    },
    {
     "event": "ENTERING_AREA_EVENT",
-    "t": 20.06,
-    "dist_to_centre_m": 4.75,
-    "mec_to_onem2m_ms": 9.5
+    "t": 20.07,
+    "dist_to_centre_m": 4.71,
+    "mec_to_onem2m_ms": 9.1
    },
    {
     "event": "LEAVING_AREA_EVENT",
-    "t": 23.07,
-    "dist_to_centre_m": 7.27,
-    "mec_to_onem2m_ms": 8.6
+    "t": 23.08,
+    "dist_to_centre_m": 7.32,
+    "mec_to_onem2m_ms": 10.1
    }
   ]
  },
@@ -216,9 +216,9 @@
      "worker_01",
      "forklift_01"
     ],
-    "t": 5.43,
-    "gap_m": 3.83,
-    "mec_to_onem2m_ms": 8.6
+    "t": 5.44,
+    "gap_m": 3.8,
+    "mec_to_onem2m_ms": 10.2
    },
    {
     "event": "ALL_WITHIN_DISTANCE",
@@ -226,75 +226,75 @@
      "worker_01",
      "forklift_01"
     ],
-    "t": 27.88,
-    "gap_m": 4.03,
-    "mec_to_onem2m_ms": 10.4
+    "t": 27.89,
+    "gap_m": 3.98,
+    "mec_to_onem2m_ms": 11.8
    }
   ]
  },
  "platform_log": [
   {
-   "t": 1791976745.3761656,
+   "t": 1792048938.2022955,
    "kind": "ser_availability",
    "status": null
   },
   {
-   "t": 1791976745.3812728,
+   "t": 1792048938.208949,
    "kind": "ser_availability",
    "status": null
   },
   {
-   "t": 1791976750.6630883,
+   "t": 1792048943.4408004,
    "kind": "distance",
    "status": null
   },
   {
-   "t": 1791976754.2680206,
+   "t": 1792048947.0483236,
    "kind": "ams",
    "status": "INTERHOST_MOVEOUT_TRIGGERED"
   },
   {
-   "t": 1791976754.2774353,
+   "t": 1792048947.0575502,
    "kind": "ams",
    "status": "INTERHOST_MOVEOUT_COMPLETED"
   },
   {
-   "t": 1791976757.8814816,
+   "t": 1792048950.654515,
    "kind": "area",
    "status": null
   },
   {
-   "t": 1791976760.8866425,
+   "t": 1792048953.6610472,
    "kind": "area",
    "status": null
   },
   {
-   "t": 1791976765.2925806,
+   "t": 1792048958.0698977,
    "kind": "area",
    "status": null
   },
   {
-   "t": 1791976768.297211,
+   "t": 1792048961.0763202,
    "kind": "area",
    "status": null
   },
   {
-   "t": 1791976771.5023265,
+   "t": 1792048964.2845197,
    "kind": "ams",
    "status": "INTERHOST_MOVEOUT_TRIGGERED"
   },
   {
-   "t": 1791976771.508468,
+   "t": 1792048964.2948291,
    "kind": "ams",
    "status": "INTERHOST_MOVEOUT_COMPLETED"
   },
   {
-   "t": 1791976773.1056886,
+   "t": 1792048965.8884819,
    "kind": "distance",
    "status": null
   },
   {
-   "t": 1791976776.2642007,
+   "t": 1792048969.0071483,
    "kind": "ser_availability",
    "status": null
   }

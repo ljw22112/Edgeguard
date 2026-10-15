@@ -19,10 +19,10 @@
    "total_delay_s": 14.5,
    "reactive_total_delay_s": 23.5,
    "context_ms": [
-    8.9,
-    7.2,
-    8.4,
-    6.5
+    8.8,
+    8.3,
+    8.0,
+    8.9
    ],
    "everyone_sees_all": true
   },
@@ -43,9 +43,9 @@
    "total_delay_s": 12.0,
    "reactive_total_delay_s": 18.0,
    "context_ms": [
-    6.5,
-    7.0,
-    5.3
+    4.9,
+    5.4,
+    6.5
    ],
    "everyone_sees_all": true
   },
@@ -68,17 +68,17 @@
    "total_delay_s": 25.5,
    "reactive_total_delay_s": 62.0,
    "context_ms": [
-    9.4,
-    8.8,
-    6.2,
-    7.5
+    9.3,
+    11.3,
+    8.3,
+    5.9
    ],
    "everyone_sees_all": true
   }
  ],
  "context_read_ms": {
-  "median": 7.2,
-  "max": 9.4
+  "median": 8.3,
+  "max": 11.3
  },
  "checks": {
   "shared context: every member read all members' plans with one group request": true,

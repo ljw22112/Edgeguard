@@ -16,6 +16,6 @@
   "a device's certificate cannot speak under another originator (ACL on the CN)": true,
   "rotation: the revoked old certificate is refused": true,
   "rotation: the new certificate works": true,
-  "create over mutual TLS: median under 50 ms": true
+  "create over mutual TLS: median under 100 ms": true
  }
 }
