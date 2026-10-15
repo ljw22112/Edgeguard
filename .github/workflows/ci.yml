@@ -13,7 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: |
+            3.13
+            3.11
           cache: pip
       - name: Python deps (CPU torch for the LSTM test)
         run: |
@@ -30,9 +32,9 @@ jobs:
         env:
           ARDUINOJSON_SRC: /tmp/arduinojson/src
         run: |
-          # pinned: ACME 2026.05.x after a681a2f changed behaviour EdgeGuard's CI depends on (being checked)
-          git init -q /tmp/acme && git -C /tmp/acme fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git a681a2f27744a11eadd67c392aa63a742d49dd2d && git -C /tmp/acme checkout -q FETCH_HEAD
-          python -m venv /tmp/acmevenv            # own venv: ACME pins packages the MEC app needs newer
+          # ACME 2026.05.3 (fixes ACME issues #199 and #200 reported by this project); its requirements need Python >= 3.12
+          git init -q /tmp/acme && git -C /tmp/acme fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git 4875e4c4d450dfaac8f1f93eadce45056fca0cd7 && git -C /tmp/acme checkout -q FETCH_HEAD
+          python3.13 -m venv /tmp/acmevenv        # own venv: ACME pins packages (numpy 2.5 needs Python >= 3.12)
           /tmp/acmevenv/bin/pip install -q -r /tmp/acme/requirements.txt
           ACME_DIR=/tmp/acme ACME_PYTHON=/tmp/acmevenv/bin/python scripts/acme.sh start in   # + EdgeGuard SDT domain
           python tools/sil_run.py --scene crossing
@@ -111,6 +113,8 @@ jobs:
             bash scripts/acme.sh start sec || { diag acme .acme/sec/acme.out; exit 1; }
           fi
           python tools/secure_transport_demo.py || { diag broker .mqtt/mosquitto.log; diag acme .acme/sec/acme.out; exit 1; }
+          # alerts to a tag over MQTT only: the CSE sends notifications over the MQTT binding (ACME >= 2026.05.3)
+          python tools/mqtt_notify_demo.py || { diag broker .mqtt/mosquitto.log; diag acme .acme/sec/acme.out; exit 1; }
 
       - name: Firmware in the loop over the oneM2M MQTT binding (TLS, broker ACL)
         env:

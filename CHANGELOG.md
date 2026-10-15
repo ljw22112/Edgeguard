@@ -2,6 +2,10 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
+## Unreleased — 2026-10-15
+- **ACME 2026.05.3**: the maintainer fixed both bugs this project reported (#199 Content-Type parameters, #200 outgoing MQTT requests). CI and `scripts/acme.sh` moved to that release. The earlier CI break came from ACME's requirements (numpy 2.5 needs Python >= 3.12): ACME's venv now uses Python 3.13.
+- **Alerts over MQTT**: tags with an `mqtts://` point of access receive alerts as oneM2M notifications over the MQTT binding (`tools/mqtt_notify_demo.py`, 6 checks in CI, p50 ≈ 10 ms). The "notifications over HTTP only" limitation is gone.
+
 ## v1.6 — 2026-10-14
 
 ### Added
@@ -11,7 +15,7 @@ All notable changes. Versions follow the project's milestones; dates are 2026.
 - CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, this changelog.
 
 ### Changed
-- CI and `scripts/acme.sh` pin ACME to a known-good commit (`ACME_REF` overrides); ACME 2026.05.2/3 broke the firmware-in-the-loop step.
+- CI and `scripts/acme.sh` pinned ACME to a known-good commit (`ACME_REF` overrides) while the 2026.05.2/3 break was investigated.
 - FL coordinator skips participants that stopped refreshing (`stale_s`); orchestration provisioning carries host and zone; app kinds via `app_class`.
 
 ## v1.5 — 2026-10-11/12

@@ -1,0 +1,22 @@
+{
+ "acme_fix": "ankraft/ACME-oneM2M-CSE#200, release 2026.05.3",
+ "poa": [
+  "mqtts://127.0.0.1:8883"
+ ],
+ "subscribe_ms": 44.0,
+ "latency_ms": {
+  "n": 30,
+  "p50": 10.3,
+  "p95": 12.5,
+  "max": 14.1
+ },
+ "spy_messages": 0,
+ "checks": {
+  "tag registered over MQTT/TLS with pointOfAccess mqtts:// (no HTTP endpoint, no inbound port)": true,
+  "the tag subscribed to its own alerts over MQTT (no verification needed: the target is the originator)": true,
+  "all 30 alerts from the HTTPS app reached the tag as MQTT notifications": true,
+  "alerts arrived in order (WAIT / GO sequence intact)": true,
+  "median alert latency app -> CSE -> broker -> tag under 100 ms": true,
+  "another device cannot read the tag's notifications (broker ACL)": true
+ }
+}

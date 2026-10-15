@@ -87,9 +87,9 @@ Worker trajectories stay in the zone's edge CSE. Only alerts, risk summaries and
 The unmodified ESP32 firmware is compiled for a PC (software-in-the-loop) and talks to a real ACME CSE on every commit. It runs over HTTP, over the MQTT binding with TLS, and with device certificates. CI checks the WAIT/GO cue, the forklift speed limit, the beacon and the confirmations.
 
 **Q14. Which interoperability problems did you find?**
-Seven are documented in [interop-notes.md](interop-notes.md). Two ACME bugs are reported upstream:
-- [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199): Content-Type with media-type parameters is not parsed.
-- [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200): the MQTT binding cannot send requests.
+Seven are documented in [interop-notes.md](interop-notes.md). Two ACME bugs were reported upstream, and the maintainer fixed both in release 2026.05.3 three days later:
+- [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199): Content-Type with media-type parameters was not parsed.
+- [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200): the MQTT binding could not send requests. With the fix, our tags now receive alerts over MQTT too (CI, p50 ≈ 10 ms).
 
 The same code runs on ACME and KETI Mobius.
 

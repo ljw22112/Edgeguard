@@ -10,6 +10,8 @@
 #   sec   IN-CSE  cse-sec     :8443   HTTPS + MQTT over TLS (scripts/acme-sec.ini; needs scripts/mqtt.sh start)
 #   ACME_MQTT=1 scripts/acme.sh start in    adds the MQTT binding (TLS, site broker) to a CSE
 #
+# ACME release 2026.05.3 by default (ACME_REF overrides); its requirements need Python >= 3.12 (ACME_PYTHON).
+#
 # Every start copies config/onem2m/edgeguard.fcp (flexContainer specializations, docs/data-model.md)
 # next to ACME's own .fcp files, so the CSE knows the egs:* device and module classes.
 set -e
@@ -29,7 +31,7 @@ up() {
 case "$cmd" in
   start)
     if [ ! -d "$ACME_DIR" ]; then
-      git init -q "$ACME_DIR" && git -C "$ACME_DIR" fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git "${ACME_REF:-a681a2f27744a11eadd67c392aa63a742d49dd2d}" && git -C "$ACME_DIR" checkout -q FETCH_HEAD
+      git init -q "$ACME_DIR" && git -C "$ACME_DIR" fetch -q --depth 1 https://github.com/ankraft/ACME-oneM2M-CSE.git "${ACME_REF:-4875e4c4d450dfaac8f1f93eadce45056fca0cd7}" && git -C "$ACME_DIR" checkout -q FETCH_HEAD
       $ACME_PY -m pip install -r "$ACME_DIR/requirements.txt"
     fi
     cp "$ROOT/config/onem2m/edgeguard.fcp" "$ACME_DIR/acmecse/init/"

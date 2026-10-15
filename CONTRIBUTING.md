@@ -9,7 +9,8 @@ Thanks for looking. EdgeGuard is a hackathon project, but the code is meant to b
 ```bash
 git clone https://github.com/ljw22112/Edgeguard && cd Edgeguard
 pip install -r requirements.txt pytest httpx
-scripts/acme.sh start in mn-a mn-b       # ACME IN-CSE + two zone MN-CSEs (pinned commit, see the script)
+scripts/acme.sh start in mn-a mn-b       # ACME 2026.05.3: IN-CSE + two zone MN-CSEs
+                                         # ACME's requirements need Python >= 3.12: ACME_PYTHON=python3.13 scripts/acme.sh ...
 python -m pytest -q                      # unit tests, no CSE needed
 python tools/mobility_demo.py            # one end-to-end demo; each prints PASS / FAIL per check
 ```

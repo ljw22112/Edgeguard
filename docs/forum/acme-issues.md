@@ -2,6 +2,8 @@
 
 [← publishing checklist](../publish-checklist.md)
 
+**Status: both fixed by the maintainer in ACME release 2026.05.3 (2026-10-12); EdgeGuard's CI runs on that release.**
+
 Two bugs we hit while building EdgeGuard. Both were checked on ACME master `a681a2f` (2026-10-08). Filed on 2026-10-11 as [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) (HTTP Content-Type) and [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) (MQTT NameError); both bugs were still present on ACME master that day.
 
 ---

@@ -36,7 +36,7 @@ ESP32 펌웨어도 oneM2M MQTT 바인딩을 씁니다. `M2M_MQTT=1`로 빌드하
 - **인증서:** [`scripts/device_cert.sh`](../../scripts/device_cert.sh)가 사이트 CA로 단말별 키와 인증서(CN = 발신자)를 발급하고, 이전 시리얼을 폐기하고, CRL을 다시 만듭니다. 브로커는 CN을 사용자 이름으로 써서 발신자별 ACL을 적용하고, 폐기된 인증서는 거부합니다.
 - **CI, 펌웨어 그대로 실행:** PC용으로 컴파일한 원본 펌웨어를 HTTP, 비밀번호를 쓰는 MQTT/TLS, 자기 인증서를 쓰는 상호 TLS로 각각 돌립니다. 세 경우 모두 8/8입니다(`sil_run.py --transport mqtt | mqtt-mtls`).
 - **CI, [`tools/device_identity_demo.py`](../../tools/device_identity_demo.py), 7/7:** 단말이 인증서만으로 등록하고 게시합니다. 거부되는 것: 인증서 없음, 다른 CA의 인증서, 사칭, 교체 후 폐기된 인증서. 새 인증서는 정상 동작합니다.
-- 경보는 여전히 HTTP 알림으로 단말에 전달됩니다. ACME가 아직 MQTT로 요청을 보내지 못하기 때문입니다([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)).
+- **경보도 MQTT로([`tools/mqtt_notify_demo.py`](../../tools/mqtt_notify_demo.py), CI, 6/6):** 태그가 접근점 `mqtts://`로 등록하고 자기 alerts를 구독하면, CSE가 경보마다 `/oneM2M/req/<CSE-ID>/<AE-ID>/json`으로 NOTIFY를 보냅니다. TLS 연결 하나로 양방향이 됩니다: HTTPS 앱이 쓴 경보 30/30, 순서 유지, **p50 약 10 ms**, p95 약 13 ms(앱 → CSE → 브로커 → 태그). 다른 단말이 태그의 토픽을 엿들으면 아무것도 받지 못합니다(브로커 ACL). 이 프로젝트가 보고한 MQTT 송신 버그([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200))를 고친 ACME 2026.05.3부터 동작합니다.
 
 ## 보안 전송 ([`edgeguard/mqtt_binding.py`](../../edgeguard/mqtt_binding.py))
 
@@ -46,6 +46,7 @@ ESP32 펌웨어도 oneM2M MQTT 바인딩을 씁니다. `M2M_MQTT=1`로 빌드하
 | CSE ↔ 브로커 | MQTT over TLS, 사이트 CA로 브로커 인증서 검증 | 브로커 비밀번호 |
 | 앱 ↔ CSE | **HTTPS**(:8443), 사이트 CA로 CSE 인증서 검증 | oneM2M 발신자 + ACP |
 | CSE → 앱 | 앱 자체 TLS 엔드포인트로 HTTPS 알림 | |
+| CSE → 디바이스 | MQTT 바인딩(TLS)으로 oneM2M 알림, 디바이스 자기 토픽 | 브로커 ACL: 자기에게 온 알림만 읽음 |
 
 `scripts/certs.sh`가 데모용 사이트 CA, 서버 인증서, 무작위 브로커 비밀번호를 `.certs/`에 만듭니다(커밋하지 않음). `scripts/mqtt.sh`는 TLS 전용 Mosquitto를 비밀번호와 발신자별 ACL로 실행합니다. `scripts/acme.sh start sec`는 보안 CSE를 시작합니다.
 
@@ -67,4 +68,4 @@ python tools/secure_transport_demo.py      # 10개 검사 -> results/secure_tran
 - 지게차 자격증명으로 `Cworker01`인 척 보내기: 브로커 ACL이 버려서 응답 없음
 - 인증된 다른 디바이스가 지게차 데이터를 읽기: oneM2M ACP, 403
 
-**참고:** 현재 ACME MQTT 바인딩은 CSE가 MQTT로 요청을 *보낼* 때 실패합니다. 그래서 알림은 MQTT로 등록한 AE가 아니라 HTTPS로 앱에 보냅니다.
+**참고:** 앱은 HTTPS로, 디바이스는 MQTT로 알림을 받습니다(ACME 2026.05.3 이상). 이전 ACME는 MQTT 송신에서 실패합니다([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200), 우리 보고 후 수정됨).

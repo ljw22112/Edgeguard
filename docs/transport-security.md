@@ -38,7 +38,7 @@ The ESP32 firmware speaks the oneM2M MQTT binding too: build with `M2M_MQTT=1` (
 - **Certificates:** [`scripts/device_cert.sh`](../scripts/device_cert.sh) issues each device's key and certificate from the site CA (CN = originator), revokes old serials and regenerates the CRL. The broker takes the CN as the username, so the per-originator ACL applies, and it refuses revoked certificates.
 - **CI, firmware in the loop:** the unmodified firmware, compiled for a PC, runs over HTTP, over MQTT/TLS with a password, and over mutual TLS with its certificate. All three runs pass 8/8 (`sil_run.py --transport mqtt | mqtt-mtls`).
 - **CI, [`tools/device_identity_demo.py`](../tools/device_identity_demo.py), 7/7:** a device registers and publishes with its certificate only. Refused: no certificate, a certificate from another CA, impersonation, and a revoked certificate after rotation. The new certificate works.
-- Alerts still reach the devices as HTTP notifications, because ACME cannot yet send requests over MQTT ([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)).
+- **Alerts over MQTT too ([`tools/mqtt_notify_demo.py`](../tools/mqtt_notify_demo.py), CI, 6/6):** a tag registers with point of access `mqtts://` and subscribes to its own alerts; the CSE delivers each alert as a NOTIFY on `/oneM2M/req/<CSE-ID>/<AE-ID>/json`. One TLS connection carries both directions: 30/30 alerts from the HTTPS app, in order, **p50 ≈ 10 ms**, p95 ≈ 13 ms (app → CSE → broker → tag). Another device listening on the tag's topic receives nothing (broker ACL). This works since ACME 2026.05.3, which fixed the outgoing-MQTT bug this project reported ([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200)).
 
 ## Secured transport ([`edgeguard/mqtt_binding.py`](../edgeguard/mqtt_binding.py))
 
@@ -48,6 +48,7 @@ The ESP32 firmware speaks the oneM2M MQTT binding too: build with `M2M_MQTT=1` (
 | CSE ↔ broker | MQTT over TLS, broker certificate verified against the site CA | broker password |
 | Application ↔ CSE | **HTTPS** (:8443), CSE certificate verified against the site CA | oneM2M originator + ACP |
 | CSE → application | HTTPS notifications to the application's own TLS endpoint | |
+| CSE → device | oneM2M notifications over the MQTT binding (TLS), on the device's own topic | broker ACL: a device reads only notifications addressed to it |
 
 [`scripts/certs.sh`](../scripts/certs.sh) creates a demo site CA, the server certificate and random broker passwords in `.certs/`, which is not committed. [`scripts/mqtt.sh`](../scripts/mqtt.sh) runs Mosquitto, TLS only, with passwords and the per-originator ACL. `scripts/acme.sh start sec` starts the secured CSE ([`scripts/acme-sec.ini`](../scripts/acme-sec.ini)).
 
@@ -73,4 +74,4 @@ python tools/secure_transport_demo.py      # 10 checks -> results/secure_transpo
 
 **Notes:**
 - ACME's HTTP server is set to server-authenticated TLS. With `verifyCertificate=true` it would demand client certificates, but it loads no CA to check them against.
-- ACME's current MQTT binding fails when the CSE *sends* requests over MQTT. For that reason, notifications go to applications over HTTPS rather than to MQTT-registered AEs; the client already handles MQTT notifications.
+- Applications receive notifications over HTTPS; devices receive them over MQTT (ACME ≥ 2026.05.3, see above). Older ACME releases fail on outgoing MQTT requests ([#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200), fixed upstream after our report).

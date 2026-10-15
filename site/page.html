@@ -223,7 +223,7 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
       <div class="stats">
         <div class="stat"><b>100 → 4</b><small class="en">collisions, 8 workers × 4 forklifts, 750 conflicts (simulation)</small><small class="ko">충돌 수, 작업자 8 · 지게차 4, 충돌 상황 750건(시뮬레이션)</small></div>
         <div class="stat"><b>0</b><small class="en">samples lost across zone handovers (CI, every commit)</small><small class="ko">구역 핸드오버 중 유실된 샘플(매 커밋 CI)</small></div>
-        <div class="stat"><b>18 / 18</b><small class="en">end-to-end demos green on ACME CSEs in CI</small><small class="ko">CI에서 ACME CSE 위 종단 데모 전부 통과</small></div>
+        <div class="stat"><b>20 / 20</b><small class="en">end-to-end demos green on ACME CSEs in CI</small><small class="ko">CI에서 ACME CSE 위 종단 데모 전부 통과</small></div>
       </div>
     </div>
 
@@ -539,6 +539,8 @@ python tools/fl_deploy_demo.py</pre>
     ["Orchestration · containers",12,L("One container per instance, ≈ 2–3 s recovery","인스턴스마다 컨테이너, 약 2~3초 복구")],
     ["Forklift swarm",9,L("Same conflict-free schedule on every member","모든 멤버가 같은 무충돌 일정")],
     ["Model delivery",8,L("Canary, activate, shadow, roll back","카나리 · 활성화 · 섀도 · 롤백")],
+    ["Alerts over MQTT",6,L("CSE → tag notifications on the MQTT binding, p50 ≈ 10 ms","CSE → 태그 알림을 MQTT 바인딩으로, p50 약 10 ms")],
+    ["oneM2M tutorial",5,L("Plain-HTTP safety app from the tutorial","튜토리얼의 HTTP 안전 앱")],
     ["Secured transport",10,L("MQTT/TLS + HTTPS; 6 attacks refused","MQTT/TLS + HTTPS, 공격 6종 거부")],
     ["Device identity",7,L("Revoked, foreign and missing certs refused","폐기 · 외부 · 없는 인증서 거부")]
   ];
@@ -566,7 +568,7 @@ python tools/fl_deploy_demo.py</pre>
   /* ---------- criteria ---------- */
   var C=[
     [1,"onem2m","Innovative use of oneM2M",L("group fanOutPoint, pollingChannel, announcement, flexContainer history, semanticDescriptor, accessControlObjectDetails, label discovery, MQTT binding.","group fanOutPoint, pollingChannel, announcement, flexContainer 이력, semanticDescriptor, accessControlObjectDetails, 라벨 탐색, MQTT 바인딩."),[["README","README.md#onem2m-in-edgeguard"],["zones","docs/transport-security.md"]]],
-    [2,"onem2m","Communication protocols",L("Devices on oneM2M MQTT over TLS down to the firmware, apps on HTTPS, NAT tags on pollingChannel, ESP-NOW D2D, MCP for the agent.","펌웨어까지 oneM2M MQTT over TLS, 앱은 HTTPS, NAT 태그는 pollingChannel, ESP-NOW D2D, 에이전트는 MCP."),[["transport","docs/transport-security.md"]]],
+    [2,"onem2m","Communication protocols",L("Devices on oneM2M MQTT over TLS down to the firmware, alerts back to tags as MQTT notifications, apps on HTTPS, NAT tags on pollingChannel, ESP-NOW D2D, MCP for the agent.","펌웨어까지 oneM2M MQTT over TLS, 태그 경보도 MQTT 알림으로, 앱은 HTTPS, NAT 태그는 pollingChannel, ESP-NOW D2D, 에이전트는 MCP."),[["transport","docs/transport-security.md"]]],
     [3,"onem2m","Innovative scenarios",L("Many devices → CSE → many apps: MEC app, agent, FL, orchestrator, dashboard. Alert routing, onboarding, mobility and swarm use oneM2M features, not app code.","여러 단말 → CSE → 여러 앱(MEC 앱 · 에이전트 · 연합학습 · 오케스트레이터 · 대시보드). 경보 · 등록 · 이동 · 스웜을 앱 코드가 아닌 oneM2M 기능으로."),[["scenario","docs/estimed-mapping.md"]]],
     [10,"onem2m","Security and privacy",L("Per-device certificates with mutual TLS, CRL revocation and rotation; per-originator broker ACL; ACP per device and app; trajectories stay on site.","단말별 인증서 + 상호 TLS, CRL 폐기 · 교체, 발신자별 브로커 ACL, 디바이스 · 앱별 ACP, 궤적은 현장에만."),[["security","docs/transport-security.md"]]],
     [11,"onem2m","Data interoperability",L("SDT domain org.edgeguard.safety plus standard cod:bat, SAREF semantic queries, devices onboarded by label.","SDT 도메인 org.edgeguard.safety + 표준 cod:bat, SAREF 시맨틱 질의, 라벨로 디바이스 등록."),[["data model","docs/data-model.md"]]],
@@ -578,8 +580,8 @@ python tools/fl_deploy_demo.py</pre>
     [17,"mec","AI agents and MCP",L("Shift safety agent over 4 MCP servers (IN, two zones, ETSI MEC); multi-step workflow; state kept in oneM2M; partial report when a zone is down.","MCP 서버 4개(IN · 구역 2 · ETSI MEC) 위 근무조 안전 에이전트, 다단계 워크플로, 상태를 oneM2M에, 구역 장애 시 부분 보고."),[["agent","docs/ai-agent.md"]]],
     [4,"pres","Quality of article",L("Published on hackster.io: hardware, resource design, protocols, measurements, oneM2M benefits, TR-0077 clause 7.","hackster.io 게시: 하드웨어, 리소스 설계, 프로토콜, 측정값, oneM2M 장점, TR-0077 7절."),[["hackster","https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309"]]],
     [5,"pres","Quality of video",L("2 min 34 s with captions: problem, architecture, live demo, firmware, mobility map, results.","2분 34초, 자막: 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · 결과."),[["YouTube","https://youtu.be/P2JI5ZG6PIg"]]],
-    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 18 demos in CI on every commit, contribution and security guides.","영문 · 한글 README, 빌드 · 실행 방법, 매 커밋 CI 데모 18종, 기여 · 보안 안내."),[["repository","README.md"]]],
-    [7,"pres","Promotion of oneM2M",L("Why oneM2M section, a 10-minute oneM2M tutorial run in CI, feature-to-spec tables, TR-0077 mapping, two ACME issues reported upstream, this page.","oneM2M을 쓰는 이유, CI에서 도는 10분 oneM2M 튜토리얼, 기능-표준 표, TR-0077 매핑, ACME 이슈 2건 보고, 이 페이지."),[["tutorial","docs/tutorial-onem2m.md"],["ACME #199","https://github.com/ankraft/ACME-oneM2M-CSE/issues/199"],["#200","https://github.com/ankraft/ACME-oneM2M-CSE/issues/200"]]]
+    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 20 demos in CI on every commit, contribution and security guides.","영문 · 한글 README, 빌드 · 실행 방법, 매 커밋 CI 데모 20종, 기여 · 보안 안내."),[["repository","README.md"]]],
+    [7,"pres","Promotion of oneM2M",L("Why oneM2M section, a 10-minute oneM2M tutorial run in CI, feature-to-spec tables, TR-0077 mapping, two ACME bugs reported and fixed upstream in 2026.05.3, this page.","oneM2M을 쓰는 이유, CI에서 도는 10분 oneM2M 튜토리얼, 기능-표준 표, TR-0077 매핑, ACME 버그 2건 보고 → 2026.05.3에서 수정, 이 페이지."),[["tutorial","docs/tutorial-onem2m.md"],["ACME #199","https://github.com/ankraft/ACME-oneM2M-CSE/issues/199"],["#200","https://github.com/ankraft/ACME-oneM2M-CSE/issues/200"]]]
   ];
   var rub=document.getElementById("rub");
   C.forEach(function(c){
