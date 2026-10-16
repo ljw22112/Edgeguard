@@ -167,6 +167,13 @@ td.spec{font-family:var(--mono);font-size:.8rem;white-space:nowrap}
 .b i{display:block;height:14px;border-radius:2px;background:var(--line);min-width:2px}
 .b.new i{background:var(--tape)}
 .b span{text-align:right;font-variant-numeric:tabular-nums}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:8px}
+.cmp-card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px;display:grid;gap:8px;min-width:0}
+.cmp-card h4{margin:0;font:700 1rem/1.2 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.cmp-row{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 4.4em;gap:8px;align-items:center;font-size:.8rem}
+.cmp-row i{display:block;height:12px;border-radius:2px;background:var(--line);min-width:2px}
+.cmp-row.eg i{background:var(--tape)} .cmp-row.eg{font-weight:600}
+.cmp-row span:last-child{text-align:right;font:500 .78rem/1 var(--mono);font-variant-numeric:tabular-nums}
 .legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px}
 
@@ -231,7 +238,7 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
       <div class="stats">
         <div class="stat"><b>100 → 4</b><small class="en">collisions, 8 workers × 4 forklifts, 750 conflicts (simulation)</small><small class="ko">충돌 수, 작업자 8 · 지게차 4, 충돌 상황 750건(시뮬레이션)</small></div>
         <div class="stat"><b>0</b><small class="en">samples lost across zone handovers (CI, every commit)</small><small class="ko">구역 핸드오버 중 유실된 샘플(매 커밋 CI)</small></div>
-        <div class="stat"><b>20 / 20</b><small class="en">end-to-end demos green on ACME CSEs in CI</small><small class="ko">CI에서 ACME CSE 위 종단 데모 전부 통과</small></div>
+        <div class="stat"><b>21 / 21</b><small class="en">end-to-end demos green on ACME CSEs in CI</small><small class="ko">CI에서 ACME CSE 위 종단 데모 전부 통과</small></div>
       </div>
     </div>
 
@@ -388,6 +395,14 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
     </div>
     <div class="legend"><span><i style="background:var(--line)"></i><span class="en">baseline</span><span class="ko">기준선</span></span><span><i style="background:var(--tape)"></i>EdgeGuard v1.5</span></div>
     <div class="chart" id="chart" style="margin-top:16px"></div>
+    <div class="sec-head" style="margin-top:44px">
+      <span class="label"><span class="en">Against site practice · same 300 episodes</span><span class="ko">현장 방식과 비교 · 같은 에피소드 300개</span></span>
+      <h3><span class="en">What sites use today, on the same floor</span><span class="ko">지금 현장에서 쓰는 방식, 같은 조건에서</span></h3>
+      <p class="lede en">8 workers, 4 forklifts, 1,123 conflicts; nobody looks out, so this is what each system alone prevents. Proximity alarm parameters follow commercial UWB systems (warning zone: slow to walking speed, danger zone: stop).</p>
+      <p class="lede ko">작업자 8명 · 지게차 4대, 충돌 상황 1,123건, 아무도 주의하지 않는 조건이라 각 방식이 혼자 막는 몫입니다. 근접 경보 설정은 상용 UWB 시스템을 따랐습니다(경고 구역: 보행 속도로 감속, 위험 구역: 정지).</p>
+    </div>
+    <div class="cmp" id="cmp"></div>
+    <p class="note"><a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/site-compare.md" target="_blank" rel="noopener"><span class="en">Method, sources and limits ↗</span><span class="ko">방법 · 근거 · 한계 ↗</span></a></p>
   </div>
 </section>
 <div class="tape" aria-hidden="true"></div>
@@ -550,7 +565,8 @@ python tools/fl_deploy_demo.py</pre>
     ["Alerts over MQTT",6,L("CSE → tag notifications on the MQTT binding, p50 ≈ 10 ms","CSE → 태그 알림을 MQTT 바인딩으로, p50 약 10 ms")],
     ["oneM2M tutorial",5,L("Plain-HTTP safety app from the tutorial","튜토리얼의 HTTP 안전 앱")],
     ["Secured transport",10,L("MQTT/TLS + HTTPS; 6 attacks refused","MQTT/TLS + HTTPS, 공격 6종 거부")],
-    ["Device identity",7,L("Revoked, foreign and missing certs refused","폐기 · 외부 · 없는 인증서 거부")]
+    ["Device identity",7,L("Revoked, foreign and missing certs refused","폐기 · 외부 · 없는 인증서 거부")],
+    ["Soak test with faults",14,L("Burst, churn, outage, CSE state loss: alerts back in 2.1 s","폭주 · 변동 · 단절 · CSE 상태 유실: 경보 2.1초 만에 복구")]
   ];
   var grid=document.getElementById("ci-grid"), total=0;
   CI.forEach(function(c){ total+=c[1]; grid.appendChild(el("div",{"class":"run"},'<b>'+c[0]+'</b><span class="n">'+c[1]+'/'+c[1]+'</span><span class="bar-m" aria-hidden="true"></span><small>'+c[2]+'</small>')); });
@@ -573,6 +589,26 @@ python tools/fl_deploy_demo.py</pre>
       '<div class="b new"><i style="width:'+(r[2]/max*100)+'%"></i><span>'+r[2]+r[3]+'</span></div></div>'));
   });
 
+  /* ---------- site practice comparison (results/site_compare.json) ---------- */
+  var SYS=[["none",L("No system","시스템 없음")],["zone",L("Speed zoning 5 km/h","속도 제한 5 km/h")],["p6",L("UWB proximity 6/3 m","UWB 근접 6/3 m")],
+           ["p4",L("UWB proximity 4/2 m","UWB 근접 4/2 m")],["eg","EdgeGuard"]];
+  var CMP=[
+    [L("Collisions (lower is safer)","충돌 (낮을수록 안전)"),{none:827,zone:666,p6:0,p4:12,eg:2},"{}",true],
+    [L("Forklift throughput (higher is better)","지게차 처리량 (높을수록 좋음)"),{none:100,zone:75,p6:48,p4:60,eg:86},"{} %",false],
+    [L("Alarms per forklift-hour (fewer interruptions)","지게차 1시간당 경보 (적을수록 덜 끊김)"),{none:0,zone:0,p6:1356,p4:929,eg:229},"{}",false]
+  ];
+  var cmpEl=document.getElementById("cmp");
+  CMP.forEach(function(c){
+    var max=Math.max.apply(null,SYS.map(function(x){return c[1][x[0]];}));
+    var html='<h4>'+c[0]+'</h4>';
+    SYS.forEach(function(x){
+      var v=c[1][x[0]], wpct=c[3]? (v<=0?0:Math.max(2,Math.log10(v+1)/Math.log10(max+1)*100)) : (max?v/max*100:0);
+      html+='<div class="cmp-row'+(x[0]==="eg"?' eg':'')+'"><span>'+x[1]+'</span><i style="width:'+wpct+'%"></i><span>'+c[2].replace("{}",v.toLocaleString("en"))+'</span></div>';
+    });
+    if(c[3]) html+='<p class="note">'+L("bar length on a log scale","막대 길이는 로그 눈금")+'</p>';
+    cmpEl.appendChild(el("div",{"class":"cmp-card"},html));
+  });
+
   /* ---------- criteria ---------- */
   var C=[
     [1,"onem2m","Innovative use of oneM2M",L("group fanOutPoint, pollingChannel, announcement, flexContainer history, semanticDescriptor, accessControlObjectDetails, label discovery, MQTT binding.","group fanOutPoint, pollingChannel, announcement, flexContainer 이력, semanticDescriptor, accessControlObjectDetails, 라벨 탐색, MQTT 바인딩."),[["README","README.md#onem2m-in-edgeguard"],["zones","docs/transport-security.md"]]],
@@ -588,7 +624,7 @@ python tools/fl_deploy_demo.py</pre>
     [17,"mec","AI agents and MCP",L("Shift safety agent over 4 MCP servers (IN, two zones, ETSI MEC); multi-step workflow; state kept in oneM2M; partial report when a zone is down.","MCP 서버 4개(IN · 구역 2 · ETSI MEC) 위 근무조 안전 에이전트, 다단계 워크플로, 상태를 oneM2M에, 구역 장애 시 부분 보고."),[["agent","docs/ai-agent.md"]]],
     [4,"pres","Quality of article",L("Published on hackster.io: hardware, resource design, protocols, measurements, oneM2M benefits, TR-0077 clause 7.","hackster.io 게시: 하드웨어, 리소스 설계, 프로토콜, 측정값, oneM2M 장점, TR-0077 7절."),[["hackster","https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309"]]],
     [5,"pres","Quality of video",L("2 min 34 s with captions: problem, architecture, live demo, firmware, mobility map, results.","2분 34초, 자막: 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · 결과."),[["YouTube","https://youtu.be/P2JI5ZG6PIg"]]],
-    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 20 demos in CI on every commit, contribution and security guides.","영문 · 한글 README, 빌드 · 실행 방법, 매 커밋 CI 데모 20종, 기여 · 보안 안내."),[["repository","README.md"]]],
+    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 21 demos in CI on every commit, contribution and security guides.","영문 · 한글 README, 빌드 · 실행 방법, 매 커밋 CI 데모 21종, 기여 · 보안 안내."),[["repository","README.md"]]],
     [7,"pres","Promotion of oneM2M",L("Why oneM2M section, a 10-minute oneM2M tutorial run in CI, feature-to-spec tables, TR-0077 mapping, two ACME bugs reported and fixed upstream in 2026.05.3, this page.","oneM2M을 쓰는 이유, CI에서 도는 10분 oneM2M 튜토리얼, 기능-표준 표, TR-0077 매핑, ACME 버그 2건 보고 → 2026.05.3에서 수정, 이 페이지."),[["tutorial","docs/tutorial-onem2m.md"],["ACME #199","https://github.com/ankraft/ACME-oneM2M-CSE/issues/199"],["#200","https://github.com/ankraft/ACME-oneM2M-CSE/issues/200"]]]
   ];
   var rub=document.getElementById("rub");
