@@ -1,0 +1,17 @@
+{
+ "episodes": 120,
+ "lost_s_per_forklift_episode": {
+  "limit: worker stepping aside": 1.491,
+  "limit: pass waiting worker at walking pace": 1.425,
+  "limit: collision course": 0.993,
+  "limit: worker waits for another truck": 0.965,
+  "speeding up again": 0.768,
+  "limit: near miss predicted": 0.211,
+  "limit: worker standing in the lane ahead": 0.111,
+  "limit: clear": 0.079,
+  "limit: clear (out of reach)": 0.02,
+  "MEC silent (fail-safe)": 0.001
+ },
+ "throughput": 0.8494,
+ "collisions": 1
+}

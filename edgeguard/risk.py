@@ -54,6 +54,16 @@ class RiskConfig:
     wait_lateral: float = 2.5      # m: "waiting at the lane edge" distance from the lane
     clear_hold: float = 2.0        # s: risk must stay low this long before an alert clears
     debounce: int = 2              # evaluations at WARNING before the first alert
+    # --- GO check inputs (sim/collision_audit.py found the remaining many-to-many collisions here) ---
+    intent_v2: bool = True         # where a waiting worker wants to go: his walking direction before the
+                                   # alert (a sidestep or the slow-down into the stop does not overwrite it)
+    walk_speed: float = 1.3        # m/s: he walks on at this pace, not at the speed seen while he slowed
+    standoff_unknown: bool = True  # direction unknown and both stopped close together: one goes first
+    # --- efficiency (sim/efficiency_audit.py: where forklift time is lost) --------------------
+    free_other_hold: bool = True   # worker waits for ANOTHER truck: keep him waiting, but this truck passes
+                                   # at its own speed when its way past him is clear
+    pass_speed_far: float = 2.0    # m/s: passing a standing worker whose distance from the truck's path is
+    pass_margin: float = 1.0       # at least r_safe + pass_margin (closer: pass_speed)
     # --- site map (edgeguard/sitemap.py) ------------------------------------------------
     occl_t_margin: float = 0.0     # s added to t_warn / t_danger (evaluated: +1 s made blind corners worse)
     occl_r_margin: float = 0.5     # m added to r_safe when racks block the line of sight (sim/occlusion_eval.py)
@@ -162,6 +172,11 @@ def go_safe(worker_pos, intent_vel, forklift, cfg, f_speed=None):
     if v1 != v0 and not getattr(forklift, "route", None):
         preds.append(_Profile(forklift, v0, v1))
     return all(min_separation(pw, pf, cfg.horizon)[1] >= cfg.r_safe for pf in preds)
+
+
+def path_clearance(worker_pos, forklift, cfg, speed):
+    """Closest distance between a worker standing at worker_pos and the truck moving on at `speed`."""
+    return min_separation(CVPredictor(worker_pos, (0.0, 0.0)), forklift_predictor(forklift, speed), cfg.horizon)[1]
 
 
 def truck_path_clear(worker_pos, forklift, cfg, speed):

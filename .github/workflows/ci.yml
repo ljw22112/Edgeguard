@@ -133,6 +133,14 @@ jobs:
       - name: Device identity by certificate (mutual TLS, rotation, revocation)
         run: python tools/device_identity_demo.py
 
+      - name: MEC app soak test with faults (burst, camera churn, link outage, CSE state loss)
+        run: |
+          bash scripts/mec.sh stop || true
+          python tools/soak_test.py --minutes 3.5 || { tail -40 .soak/mec.log; exit 1; }
+
+      - name: Site-practice baselines and audits (smoke)
+        run: python -m pytest -q tests/test_site_compare.py
+
       - name: SIL logs on failure
         if: failure()
         run: |

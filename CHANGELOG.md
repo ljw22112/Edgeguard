@@ -2,7 +2,14 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
-## Unreleased — 2026-10-15
+## Unreleased — 2026-10-16
+- **Server stability** ([docs](docs/stability.md)): `tools/soak_test.py` (burst, camera churn, link outage, CSE state loss; CI 3.5 min). Fixed: after a CSE lost its state the MEC app never sent another alert (now rebuilds its tree, recovery in 2.1 s); supervised background loops with `/health` liveness; `/notify` queues and coalesces per device (slowest `/health` 358 -> 112 ms); side tables of forgotten tracks cleaned; client retries for ACME races (4117, subscription create/update).
+- **Remaining collisions audited** (`sim/collision_audit.py`): the GO check used a wrong or missing walking direction (slow-down speed, sidestep, unknown). Fixed with the pre-alert direction at walking pace and a standoff rule; held-out 400 episodes: collisions 4 -> 2 at full compliance (not significant at 85 %), throughput -0.5 pt.
+- **Efficiency audit** (`sim/efficiency_audit.py`): forklift time lost by reason; a truck no longer crawls past a worker who waits for another truck, and passes a standing worker well clear of its path at 2 m/s.
+- **Comparison with site practice** ([docs](docs/site-compare.md)): no system, 5 km/h speed zoning, UWB proximity alarms (6/3 m and 4/2 m) and EdgeGuard on the same 300 episodes; charts in `docs/img/site_compare*.png`.
+- ACME issue drafts 3-5 (startup race, orphaned subscription, dangling originator).
+
+## 2026-10-15
 - **ACME 2026.05.3**: the maintainer fixed both bugs this project reported (#199 Content-Type parameters, #200 outgoing MQTT requests). CI and `scripts/acme.sh` moved to that release. The earlier CI break came from ACME's requirements (numpy 2.5 needs Python >= 3.12): ACME's venv now uses Python 3.13.
 - **Alerts over MQTT**: tags with an `mqtts://` point of access receive alerts as oneM2M notifications over the MQTT binding (`tools/mqtt_notify_demo.py`, 6 checks in CI, p50 ≈ 10 ms). The "notifications over HTTP only" limitation is gone.
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 
-from .risk import LEVELS, go_safe, truck_path_clear, waiting_at_lane
+from .risk import LEVELS, go_safe, path_clearance, truck_path_clear, waiting_at_lane
 
 
 NOMINAL_DT = 0.1      # s: the debounce count is tuned for 10 Hz tag data
@@ -94,6 +94,15 @@ def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0):
     return [round(nx * move, 2), round(ny * move, 2)]
 
 
+def _walking(intent, cfg):
+    """The waiting worker's intended velocity at his walking pace (direction kept)."""
+    if intent is None or not getattr(cfg, "intent_v2", False):
+        return intent
+    n = math.hypot(intent[0], intent[1])
+    ws = getattr(cfg, "walk_speed", 1.3)
+    return intent if n >= ws or n < 1e-6 else (intent[0] / n * ws, intent[1] / n * ws)
+
+
 def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     """Update the pair's alert state with assessment `r`.
 
@@ -103,7 +112,12 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     if getattr(r, "occluded", False) and getattr(cfg, "occl_debounce", 0):
         st.debounce = cfg.occl_debounce          # blind corner: no time to confirm twice
     r.hold = False
-    if st.level >= 2 and w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent:
+    if getattr(cfg, "intent_v2", False):
+        # walking before the alert: that is where he wants to go; during the alert only if still unknown
+        # (later motion is the slow-down into the stop or a sidestep, not his way)
+        if w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent and (st.level < 2 or st.intent is None):
+            st.intent = tuple(w_tr.vel)
+    elif st.level >= 2 and w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent:
         st.intent = tuple(w_tr.vel)                # where the worker is heading (not his sidestep)
     if f_tr is not None and abs(f_tr.speed) > 0.5 and (st.f_speed is None or abs(f_tr.speed) > abs(st.f_speed)):
         st.f_speed = f_tr.speed                    # fastest seen (signed): what the truck returns to when let go
@@ -120,11 +134,17 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             st.aside_sent = True
             st.last_any = now
             return "aside", {r.worker: {"aside": side, "vibrate": True}}
-    go_blocked = worker_first = stepping = False
-    if (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and st.intent is not None
+    go_blocked = worker_first = stepping = by_other = False
+    walk = _walking(st.intent, cfg)
+    # both stopped close together and we do not know where he wants to go: releasing both at once is
+    # how a standoff turns into a collision, so treat it as unsafe and let one go first
+    standoff = (getattr(cfg, "standoff_unknown", False) and st.intent is None and w_tr is not None and f_tr is not None
+                and abs(f_tr.speed) <= 0.2 and st.f_speed is not None
+                and math.hypot(w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]) < cfg.r_safe + 3.0)
+    if (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and (st.intent is not None or standoff)
             and w_tr is not None and f_tr is not None and (f_tr.speed > 0.2 or st.f_speed)
             and (w_tr.speed < 0.5 or st.aside_sent)          # waiting, or still stepping aside
-            and not go_safe(w_tr.pos, st.intent, f_tr, cfg, st.f_speed)):
+            and (standoff or not go_safe(w_tr.pos, walk, f_tr, cfg, st.f_speed))):
         # one of them must go first: the truck if its way past the waiting worker is clear,
         # otherwise the worker (he stands in the truck's way) while the truck stays stopped
         sign = -1.0 if (st.f_speed or f_tr.speed) < 0 else 1.0
@@ -141,8 +161,8 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             and r.level < 2 and st.level >= 2 and st.intent is not None and w_tr is not None and f_tr is not None
             and (w_tr.speed < 0.5 or st.aside_sent)
             and any(o is not f_tr and abs(o.speed) > 0.2 and math.hypot(o.pos[0] - w_tr.pos[0], o.pos[1] - w_tr.pos[1]) < 25.0
-                    and not go_safe(w_tr.pos, st.intent, o, cfg) for o in others)):
-        go_blocked = True
+                    and not go_safe(w_tr.pos, walk, o, cfg) for o in others)):
+        go_blocked = by_other = True
     if worker_first or stepping:
         r.level, r.level_name = 2, LEVELS[2]
         r.reason = ("worker stepping aside: forklift holds" if stepping
@@ -153,11 +173,25 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             and f_tr.speed > 0.2 and waiting_at_lane(w_tr, f_tr, cfg):
         # keep the alert: pass the worker waiting at the lane edge at walking pace
         # the waiting worker stays put: a truck that stopped for him moves off at passing speed first
-        limit = round(cfg.pass_speed if go_blocked else min(cfg.pass_speed, f_tr.speed), 2)
+        sign = -1.0 if (st.f_speed or f_tr.speed) < 0 else 1.0
+        cruise = st.f_speed if st.f_speed is not None else f_tr.speed
+        if by_other and getattr(cfg, "free_other_hold", False) and w_tr.speed < 0.3 \
+                and truck_path_clear(w_tr.pos, f_tr, cfg, cruise):
+            limit = None                           # he waits for another truck; this one's way is clear
+        else:
+            limit = cfg.pass_speed if go_blocked else min(cfg.pass_speed, f_tr.speed)
+            far = getattr(cfg, "pass_speed_far", 0.0)
+            if far > limit and w_tr.speed < 0.3 \
+                    and path_clearance(w_tr.pos, f_tr, cfg, sign * far) >= cfg.r_safe + getattr(cfg, "pass_margin", 1.0):
+                limit = far                        # standing well clear of the truck's path
+            limit = round(limit, 2)
         r.level, r.level_name = 2, LEVELS[2]
         r.reason = ("worker waiting: a forklift still to pass his way" if go_blocked
                     else "worker waiting at the lane edge: pass at walking pace")
-        r.speed_limit, r.speed_scale = limit, round(limit / max(f_tr.speed, 1e-6), 2)
+        if limit is None:
+            r.reason = "worker waiting for another forklift: this one passes"
+        r.speed_limit = limit
+        r.speed_scale = 1.0 if limit is None else round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True
     if st.aside_sent:
         st.hold_s = min(st.hold_s, 1.0)           # worker parked at the lane edge: no flicker to ride out

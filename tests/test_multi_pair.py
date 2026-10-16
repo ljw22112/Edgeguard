@@ -82,7 +82,14 @@ def test_standoff_truck_first_when_its_way_is_clear():
     f = trk("f", "forklift", -5.0, 0.0, speed=0.0)  # stopped for him
     r = assess(w, f, cfg)
     decide(st, r, w, f, cfg, 0.5)
-    assert r.hold and r.speed_limit == cfg.pass_speed and "still to pass" in r.reason
+    # 2.6 m from the truck's path >= r_safe + pass_margin: it may pass at pass_speed_far
+    assert r.hold and r.speed_limit == cfg.pass_speed_far and "still to pass" in r.reason
+    st2 = AlertState()
+    st2.level, st2.intent, st2.f_speed, st2.last_any, st2.last_sent = 2, (0.0, 1.2), 2.0, 0.0, 0.0
+    w2 = trk("w", "worker", 0.0, -2.2)             # closer to the path: walking pace
+    r2 = assess(w2, f, cfg)
+    decide(st2, r2, w2, f, cfg, 0.5)
+    assert r2.hold and r2.speed_limit == cfg.pass_speed
 
 
 def test_standoff_worker_in_the_way_steps_aside_and_truck_waits():

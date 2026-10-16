@@ -24,10 +24,20 @@ def test_late_sample_does_not_reset_the_track():
 @pytest.fixture(scope="module")
 def app_mod():
     pytest.importorskip("fastapi")
-    os.environ.setdefault("EDGEGUARD_OVERRIDES", "")
+    import tempfile
+    # never talk to a real CSE from unit tests: the app's self-healing would create resources there
+    over = os.path.join(tempfile.mkdtemp(), "no-cse.yaml")
+    with open(over, "w") as fh:
+        fh.write("cse: {base_url: 'http://127.0.0.1:9', cse_rn: cse-test}\ncloud_sync: {enabled: false}\n")
+    prev = os.environ.get("EDGEGUARD_OVERRIDES")
+    os.environ["EDGEGUARD_OVERRIDES"] = over
     import importlib
     import mec_app.app as m
-    return importlib.reload(m)
+    yield importlib.reload(m)
+    if prev is None:
+        os.environ.pop("EDGEGUARD_OVERRIDES", None)
+    else:
+        os.environ["EDGEGUARD_OVERRIDES"] = prev
 
 
 def test_bad_notifications_answer_2000(app_mod):
@@ -38,6 +48,9 @@ def test_bad_notifications_answer_2000(app_mod):
     assert r.status_code == 200 and r.headers["X-M2M-RSC"] == "2000"
     sgn = {"m2m:sgn": {"nev": {"rep": {"m2m:cin": {"con": {"id": "w9", "kind": "worker", "x": "a", "y": 1}}}}}}
     assert c.post("/notify", json=sgn).status_code == 200
+    deadline = time.time() + 2.0                          # samples are processed by the ingest worker
+    while app_mod.state["input"]["bad"] < before + 2 and time.time() < deadline:
+        time.sleep(0.02)
     assert app_mod.state["input"]["bad"] >= before + 2
 
 
@@ -88,3 +101,63 @@ def test_sitemap_line_of_sight_and_occluded_margin():
     cfg = RiskConfig()
     plain, occl = assess(w, f, cfg), assess(w, f, cfg, occluded=True)
     assert occl.occluded and occl.level >= plain.level
+
+
+def test_ingest_coalesces_a_devices_waiting_samples(app_mod):
+    """Under overload only the newest waiting sample of a device is processed (bounded delay)."""
+    before = app_mod.state["ingest"]["coalesced"]
+    with app_mod._ingest_cv:                              # re-entrant: the worker waits while we queue 5 samples
+        for x in range(5):
+            app_mod.enqueue({"m2m:sgn": {"nev": {"rep": {"m2m:cin": {"con": {
+                "id": "w_coal", "kind": "worker", "x": float(x), "y": 0.0}}}}}})
+    assert app_mod.state["ingest"]["coalesced"] == before + 4
+    deadline = time.time() + 2.0
+    while time.time() < deadline and "w_coal" not in app_mod.engine.tracks:
+        time.sleep(0.02)
+    assert abs(app_mod.engine.tracks["w_coal"].pos[0] - 4.0) < 1e-6     # only the newest sample was used
+
+
+def test_supervised_loop_restarts_after_an_exception(app_mod):
+    calls = []
+
+    def flaky():
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("boom")
+        time.sleep(30)
+    app_mod.supervise("test_flaky", flaky, period=60)
+    deadline = time.time() + 3.0
+    while len(calls) < 2 and time.time() < deadline:
+        time.sleep(0.05)
+    st = app_mod.loops_status()["test_flaky"]
+    assert len(calls) == 2 and st["restarts"] == 1 and "boom" in st["last_error"]
+
+
+def test_publisher_rebuilds_its_tree_when_the_cse_lost_it(app_mod, monkeypatch):
+    from edgeguard.onem2m import OneM2MError
+    made, sent = [], []
+    state = {"gone": True}
+
+    def create_cin(path, con):
+        if state["gone"]:
+            raise OneM2MError(404, "4004", "No resource with this ID", path)
+        sent.append(path)
+    monkeypatch.setattr(app_mod.cse, "create_cin", create_cin)
+    monkeypatch.setattr(app_mod.cse, "create_ae", lambda *a, **k: (made.append("ae"), state.update(gone=False)))
+    monkeypatch.setattr(app_mod.cse, "create_container", lambda *a, **k: made.append(a[1]))
+    monkeypatch.setattr(app_mod.cse, "create_subscription", lambda *a, **k: None)
+    app_mod._tree_last[0] = 0.0
+    app_mod.post("alert", {"event": "warn"})
+    deadline = time.time() + 3.0
+    while not sent and time.time() < deadline:
+        time.sleep(0.02)
+    assert "ae" in made and "alert" in made and sent and sent[-1].endswith("/alert")
+
+
+def test_gc_drops_side_tables_of_forgotten_tracks(app_mod):
+    from edgeguard.worker_cue import WaitCue
+    app_mod.handle_sample({"id": "untagged_gc", "kind": "worker", "x": 50.0, "y": 50.0})
+    app_mod.state["worker_cue"]["untagged_gc"] = WaitCue()
+    app_mod.state["worker_aside"]["untagged_gc"] = time.time()
+    app_mod.gc_once(now=time.monotonic() + app_mod.GC_S + 1)
+    assert "untagged_gc" not in app_mod.state["worker_cue"] and "untagged_gc" not in app_mod.state["worker_aside"]

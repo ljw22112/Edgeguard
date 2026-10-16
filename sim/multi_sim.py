@@ -94,8 +94,26 @@ def _worker(rng, times):
     return out
 
 
-def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstacles=True, min_move=None, over=None):
+# --- systems used on sites today (sim/site_compare.py), on the same floor and episodes -------------------
+# "none"        no system: drivers and walkers rely on their own attention
+# "speed_zone"  automated speed zoning: trucks capped at pedestrian-area speed (5 km/h) in the shared aisles
+# "proximity"   UWB proximity warning (tag on the worker, anchor on the truck): inside the warning zone the
+#               truck is slowed to walking speed and the tag vibrates, inside the danger zone the truck stops;
+#               direction-agnostic, the tag buzzes (the worker stops ~2 s and walks on)
+ZONE_KMH = 5.0
+PROX_WARN_M, PROX_DANGER_M, PROX_SLOW_MPS = 6.0, 3.0, 1.4
+PROX_TIGHT = (4.0, 2.0)    # "proximity_tight": zones narrowed to cut nuisance alarms
+UNNEEDED_M = 4.0           # an alarm for a pair that would not have come closer than this anyway
+
+
+def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstacles=True, min_move=None, over=None,
+                trace=None, system="edgeguard", attentive=False):
+    """trace: a list that receives, for analysis (sim/collision_audit.py), every alert sent / delivered and
+    a per-step snapshot of each worker-forklift pair closer than 8 m."""
     rng = random.Random(seed)
+    if system.startswith("proximity"):
+        ux = "buzz"
+    warn_m, danger_m = PROX_TIGHT if system == "proximity_tight" else (PROX_WARN_M, PROX_DANGER_M)
     Mover.UX, Mover.COMPLY = ux, comply
     ForkliftLimit.MODE = "coop"
     cfg = site_cfg()
@@ -110,19 +128,27 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     fp = {f"f{j}": _forklift(rng, times) for j in range(n_f)}
     movers = {k: Mover(k, "worker", Path(p)) for k, p in wp.items()}
     movers.update({k: Mover(k, "forklift", Path(p, m)) for k, (p, m) in fp.items()})
+    if system == "speed_zone":                 # trucks enter the zone already at the zone speed
+        for k in fp:
+            movers[k].v = min(movers[k].v, ZONE_KMH / 3.6)
     nominal = {(w, f): min(math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(wp[w], fp[f][0]))
                for w in wp for f in fp}
     engine = RiskEngine(cfg, "guidance_ctrv")
     states, pending, actual = {}, [], {k: 1e9 for k in nominal}
     last_hb = -1e9
+    alarms = {"total": 0, "unneeded": 0}
+    prox_in, prox_buzz = {}, {}
     key = (lambda other: other) if per_pair else (lambda other: "")
     for t in times:
         keep = []
-        for due, ev, acts, to, other in pending:
+        for due, ev, acts, to, other, *why in pending:
             if due > t:
-                keep.append((due, ev, acts, to, other))
+                keep.append((due, ev, acts, to, other, *why))
                 continue
             m = movers[to]
+            if trace is not None and ev != "hb":
+                trace.append({"t": round(t, 2), "type": "deliver", "ev": ev, "to": to, "about": other,
+                              "acts": (acts.get(to) or {}), "reason": why[0] if why else None})
             if ev == "hb":
                 m.pending.append((t, "hb", None, ""))
             elif m.kind == "forklift":
@@ -150,11 +176,66 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                     d = math.hypot(dx, dy)
                     if d < 2.2 and (dx * ux + dy * uy) / (un * max(d, 1e-6)) > 0.5:
                         mw.blocked = True
+        if attentive:                          # the driver brakes for someone right in front of the truck
+            for f in fp:
+                mf = movers[f]
+                if mf.human_cap and mf.human_cap[1] > t:
+                    continue
+                xf, yf = mf.pos()
+                th, sign, _ = mf.path.meta_at(mf.s)
+                hx, hy = math.cos(th) * sign, math.sin(th) * sign
+                for w in wp:
+                    xw, yw = movers[w].pos()
+                    ahead, lat = (xw - xf) * hx + (yw - yf) * hy, abs(-(xw - xf) * hy + (yw - yf) * hx)
+                    if 0 < ahead < 6.0 and lat < 1.2 and mf.v > 0.3:
+                        mf.human_cap = (t + 1.0, t + 3.0, 0.0)          # perception-reaction 1.0 s, then stop
+                        break
+        if system != "edgeguard":              # local systems need no MEC heartbeat
+            for f in fp:
+                movers[f].fl.hb_t = t
+            if system == "speed_zone":
+                for f in fp:
+                    movers[f].fl.limits["zone"] = (ZONE_KMH / 3.6, t)
+            elif system.startswith("proximity"):
+                for f in fp:
+                    mf = movers[f]
+                    for w in wp:
+                        xw, yw = movers[w].pos()
+                        xf, yf = mf.pos()
+                        d = math.hypot(xw - xf, yw - yf) + rng.gauss(0, 0.1)        # UWB two-way ranging
+                        zone = 2 if d < danger_m else 1 if d < warn_m else 0
+                        was = prox_in.get((w, f), 0)
+                        if zone == 0 and d > warn_m + 0.5:
+                            mf.fl.limits.pop(w, None)
+                            prox_in[(w, f)] = 0
+                            continue
+                        if zone:
+                            prox_in[(w, f)] = max(zone, was) if zone == 2 else zone
+                            mf.fl.limits[w] = (0.0 if zone == 2 else PROX_SLOW_MPS, t)
+                            if was == 0 or t - prox_buzz.get((w, f), -1e9) >= 3.0:   # tag buzzes, again every 3 s inside
+                                prox_buzz[(w, f)] = t
+                                alarms["total"] += 1
+                                alarms["unneeded"] += nominal[(w, f)] > UNNEEDED_M
+                                movers[w].on_alert(t, "raise", vibrate=True, rng=rng, src=f)
         for m in movers.values():
             m.step(t, DT)
+        if trace is not None:
+            from edgeguard.device_policy import SILENCE_S
+            for f in fp:
+                mf = movers[f]
+                trace.append({"t": round(t, 2), "type": "fstep", "f": f, "v": round(mf.v, 3), "vn": round(mf.path.v_nom(mf.s), 3),
+                              "lim": mf.fl.effective(t), "silent": t - mf.fl.hb_t > SILENCE_S,
+                              "limits": {k: v for k, (v, _) in mf.fl.limits.items()}})
         pos = {k: m.pos() for k, m in movers.items()}
         for (w, f) in actual:
-            actual[(w, f)] = min(actual[(w, f)], math.hypot(pos[w][0] - pos[f][0], pos[w][1] - pos[f][1]))
+            d_wf = math.hypot(pos[w][0] - pos[f][0], pos[w][1] - pos[f][1])
+            actual[(w, f)] = min(actual[(w, f)], d_wf)
+            if trace is not None and d_wf < 8.0:
+                mw, mf = movers[w], movers[f]
+                trace.append({"t": round(t, 2), "type": "pair", "w": w, "f": f, "d": round(d_wf, 2),
+                              "wv": round(mw.v, 2), "fv": round(mf.v, 2), "flim": mf.fl.effective(t),
+                              "wstop": mw.stop_from <= t < mw.stop_until, "holds": sorted(mw.holds), "aside": mw.aside is not None,
+                              "blocked": mw.blocked, "wpos": [round(v, 2) for v in pos[w]], "fpos": [round(v, 2) for v in pos[f]]})
         for k, m in movers.items():
             if rng.random() < up_loss:
                 continue
@@ -165,12 +246,16 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                 smp = m.sample()
                 engine.update(Track, k, "forklift", t, x=x, y=y, speed=smp["speed"] + rng.gauss(0, 0.05),
                               heading=smp["heading"] + rng.gauss(0, 0.035), yaw_rate=smp["yaw_rate"])
-        if t < 0.5:
+        if t < 0.5 or system != "edgeguard":
             continue
 
-        def send(ev, acts, to, other):
-            if rng.random() >= down_loss:
-                pending.append((t + max(0.0, rng.gauss(lat_ms, jit_ms)) / 1000, ev, acts, to, other))
+        def send(ev, acts, to, other, reason=None):
+            lost = rng.random() < down_loss
+            if trace is not None and ev != "hb":
+                trace.append({"t": round(t, 2), "type": "send", "ev": ev, "to": to, "about": other, "lost": lost,
+                              "reason": reason})
+            if not lost:
+                pending.append((t + max(0.0, rng.gauss(lat_ms, jit_ms)) / 1000, ev, acts, to, other, reason))
         if t - last_hb >= 1.0 - 1e-9:
             last_hb = t
             for f in fp:
@@ -179,19 +264,27 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             st = states.setdefault((r.worker, r.forklift), AlertState())
             others = [tr for tr in engine.tracks.values() if tr.kind == "forklift" and tr.x is not None]
             ev, acts = decide(st, r, engine.tracks.get(r.worker), engine.tracks.get(r.forklift), cfg, t, others=others)
+            if ev == "raise" and (acts.get(r.worker) or {}).get("vibrate"):
+                alarms["total"] += 1
+                alarms["unneeded"] += nominal[(r.worker, r.forklift)] > UNNEEDED_M
             if ev:
-                send(ev, acts, r.worker, r.forklift)
+                send(ev, acts, r.worker, r.forklift, r.reason)
                 if ev not in ("wait", "release", "aside"):
-                    send(ev, acts, r.forklift, r.worker)
+                    send(ev, acts, r.forklift, r.worker, r.reason)
     fl = [m for m in movers.values() if m.kind == "forklift"]
     wk = [m for m in movers.values() if m.kind == "worker"]
     nom = sum(_nominal_s(m.path) for m in fl)
+    if trace is not None:
+        trace.append({"type": "env", "lat_ms": round(lat_ms), "jit_ms": round(jit_ms), "up_loss": round(up_loss, 3),
+                      "down_loss": round(down_loss, 3), "noise": round(noise, 3),
+                      "collided": [list(k) for k in nominal if actual[k] < R_COLLIDE]})
     return {"conflicts": sum(d < R_CONTACT for d in nominal.values()),
             "collisions": sum(actual[k] < R_COLLIDE for k in nominal),
             "collisions_in_conflict": sum(actual[k] < R_COLLIDE for k, d in nominal.items() if d < R_CONTACT),
             "forklift_m": sum(min(m.s, _nominal_s(m.path)) for m in fl), "forklift_nominal_m": nom,
             "forklift_lost_s": sum(m.lost_s for m in fl), "worker_wait_s": sum(m.wait_s for m in wk),
-            "pairs_close": sum(d < 4.0 for d in nominal.values())}
+            "pairs_close": sum(d < 4.0 for d in nominal.values()),
+            "alarms": alarms["total"], "alarms_unneeded": alarms["unneeded"]}
 
 
 def _nominal_s(path):

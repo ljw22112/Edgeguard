@@ -63,6 +63,52 @@ It is `acmecse/plugins/bindings/MQTTClient.py`, line 600. The module no longer i
 
 ---
 
+## 3. Startup aborts when a request arrives before "CSE started" (draft, not yet filed)
+
+**Title:** Requests that arrive during startup abort it: "The setup method 'add_url_rule' can no longer be called"
+
+**Body:**
+
+If an HTTP request reaches ACME after the Flask app started serving but before every plugin has registered its routes, startup fails:
+
+```
+ERROR Error during startup: The setup method 'add_url_rule' can no longer be called on the application.
+It has already handled its first request, any changes will not be applied consistently.
+```
+
+On a site where devices keep sending (here 9 devices at 5 Hz), a restarted CSE therefore does not come up; a retry fails the same way. Registering all routes before the HTTP server accepts connections (or answering 503 until startup is complete) would avoid it.
+
+**To reproduce:** send requests in a loop to `http://127.0.0.1:8080/cse-in` and start ACME.
+
+**Environment:** ACME 2026.05.3, Python 3.13.
+
+## 4. Deleting a resource can leave its subscription behind (draft, not yet filed)
+
+**Title:** Orphaned `<subscription>` after its parent is deleted while the notification target is unreachable
+
+**Body:**
+
+We deleted device AEs (with containers that each had a subscription whose `nu` pointed to an application that was not running). Afterwards, for the re-created container:
+- `POST <container>` with the same subscription `rn` answers **409** "already exists"
+- `GET <container>/<rn>` answers 200, but the returned subscription's `pi` is the **deleted** container's `ri`
+- `PUT <container>/<rn>` answers **404** "resource not found"
+
+The structured-ID index still points at the old subscription. Restarting the CSE clears it (memory database).
+
+**Environment:** ACME 2026.05.3, `databaseType=memory`, Python 3.13.
+
+## 5. Concurrent create and delete of the same AE can leave a dangling originator (draft, not yet filed)
+
+**Title:** AE gone, but its originator stays registered: every new registration answers 4117
+
+**Body:**
+
+While one client deleted the AE `EdgeGuard` (originator `SEdgeGuard`) and another created it again at about the same time, ACME ended up with no AE but the originator still registered. From then on every `POST` of the AE answered **4117** "Originator has already registered: SEdgeGuard", and `GET /cse-in/EdgeGuard` answered 404. `RegistrationManager.hasRegisteredAE()` finds the originator in storage although its AE is gone.
+
+**Environment:** ACME 2026.05.3, `databaseType=memory`, Python 3.13.
+
+---
+
 ## Post for the oneM2M developer community (forum / Discord)
 
 > **EdgeGuard: worker–forklift collision prediction on oneM2M + ETSI MEC (open source)**

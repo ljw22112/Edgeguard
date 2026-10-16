@@ -21,7 +21,6 @@ import time
 from collections import deque
 
 from fastapi import FastAPI, Request, Response
-from starlette.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -90,30 +89,125 @@ STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 lock = threading.Lock()
 
 
+# --- supervision: every background loop restarts after an exception and reports a heartbeat ------------
+# A loop that dies silently takes a safety function with it (no heartbeat -> every forklift crawls; no
+# publisher -> no alert).  /health lists each loop with its restarts and the age of its last tick.
+state["loops"] = {}
+
+
+def tick(name):
+    state["loops"].setdefault(name, {"restarts": 0})["last"] = time.monotonic()
+
+
+def supervise(name, fn, *args, period=None):
+    """Run fn(*args) in a daemon thread; if it raises, log the traceback and run it again (1 s backoff)."""
+    rec = state["loops"].setdefault(name, {"restarts": 0})
+    rec["period"] = period
+
+    def run():
+        while True:
+            try:
+                tick(name)
+                fn(*args)
+            except Exception:
+                rec["restarts"] += 1
+                rec["last_error"] = log_exc(f"loop {name} failed, restarting")
+            time.sleep(1.0)
+    threading.Thread(target=run, daemon=True, name=f"eg-{name}").start()
+
+
+def log_exc(msg):
+    import traceback
+    tb = traceback.format_exc().strip().splitlines()
+    log.error("%s: %s", msg, tb[-1] if tb else "")
+    return (tb[-1] if tb else "")[:160]
+
+
+def loops_status():
+    now = time.monotonic()
+    out = {}
+    for k, v in state["loops"].items():
+        age = None if v.get("last") is None else round(now - v["last"], 1)
+        per = v.get("period")
+        out[k] = {"restarts": v["restarts"], "last_tick_s": age,
+                  "alive": per is None or age is None or age < max(5.0, 5 * per)}
+        if v.get("last_error"):
+            out[k]["last_error"] = v["last_error"]
+    return out
+
+
+# --- self-healing resource tree: a CSE restored without its database loses the MEC app's own AE ---------
+state["recovery"] = {"tree_ensured": 0, "tree_errors": 0, "resub_bursts": 0, "feed_silence": 0}
+_tree_lock = threading.Lock()
+_tree_last = [0.0]
+resub_now = threading.Event()                 # housekeeping: re-subscribe at once, then often for a while
+
+
+def ensure_own_tree(force=False):
+    """(Re)create the MEC app's AE and the containers it writes (idempotent, at most every 2 s).  Called at
+    start, when a write finds its container gone (404), and from housekeeping."""
+    if not is_leader() and not force:
+        return False
+    with _tree_lock:
+        if not force and time.monotonic() - _tree_last[0] < 2.0:
+            return False
+        _tree_last[0] = time.monotonic()
+        try:
+            cse.create_ae(PATHS["ae"], api="Nedgeguard.mec")
+            for leaf, mni in (("risk", 200), ("alert", 200), ("control", 200), ("nearmiss", 2000), ("mec_lease", 20)):
+                cse.create_container(PATHS["ae"], leaf, mni=mni)
+            for i, url in enumerate(CFG.get("alert_subscribers") or []):   # configured device endpoints
+                cse.create_subscription(PATHS["alert"], f"sub_hw{i + 1}", [url])
+                cse.create_subscription(PATHS["control"], f"sub_hw{i + 1}", [url])
+            state["recovery"]["tree_ensured"] += 1
+            return True
+        except Exception as e:
+            state["recovery"]["tree_errors"] += 1
+            log.warning("own resource tree: %s", e)
+            return False
+
+
 def publisher():
-    """Write contentInstances to the CSE off the request path (stale entries dropped)."""
+    """Write contentInstances to the CSE off the request path (stale entries dropped).  A write that finds
+    its container gone means the CSE lost its database: rebuild the tree, re-subscribe, retry once."""
     pub = state["publisher"]
     while True:
-        _, _, t_enq, kind, path, con = outbox.get()
+        try:
+            _, _, t_enq, kind, path, con = outbox.get(timeout=1.0)
+        except queue.Empty:
+            tick("publisher")
+            continue
+        tick("publisher")
         if time.monotonic() - t_enq > TTL_S[kind]:
             pub["dropped_stale"] += 1
             continue
         delay = MEC.get("emulated_extra_delay_ms", 0)
         if delay:
             time.sleep(delay / 1000)
-        try:
-            cse.create_cin(path, con)
-            m2m_out = state["m2m"]["out"]
-            m2m_out[path] = m2m_out.get(path, 0) + 1
-            pub["ok"] += 1
-            pub["last_ok"] = time.monotonic()
-        except Exception as e:                       # keep the loop alive
-            pub["failed"] += 1
-            pub["last_error"] = f"{type(e).__name__}: {str(e)[:120]}"
-            log.warning("publish to %s failed: %s", path, e)
+        for attempt in (1, 2):
+            try:
+                cse.create_cin(path, con)
+                m2m_out = state["m2m"]["out"]
+                m2m_out[path] = m2m_out.get(path, 0) + 1
+                pub["ok"] += 1
+                pub["last_ok"] = time.monotonic()
+                if pub.get("failing"):
+                    pub["failing"] = False
+                    resub_now.set()                  # the CSE is back: make sure it still notifies us
+                break
+            except Exception as e:                   # keep the loop alive
+                pub["failed"] += 1
+                pub["failing"] = True
+                pub["last_error"] = f"{type(e).__name__}: {str(e)[:120]}"
+                if attempt == 1 and getattr(e, "status", None) == 404 and ensure_own_tree():
+                    log.warning("container %s was gone (CSE reset?): resource tree rebuilt", path)
+                    resub_now.set()
+                    continue
+                log.warning("publish to %s failed: %s", path, e)
+                break
 
 
-threading.Thread(target=publisher, daemon=True).start()
+supervise("publisher", publisher, period=1.0)
 
 # Optional cloud sync: risk summaries and alerts copied to the cloud IN-CSE
 # (store-and-forward, see edgeguard/cloud_sync.py).
@@ -229,6 +323,7 @@ def ipe_watch():
     cl = config.client(CFG)
     done = set()
     while True:
+        tick("mec_ipe_watch")
         for group in ("location", "rnis"):
             try:
                 paths = cl.discover(f"{root}/{group}")
@@ -254,6 +349,7 @@ def mec_services_loop():
     rnis = RnisClient(MS["base_url"], MS.get("rnis_api", "rni/v2"))
     last_rnis, last_fix = 0.0, {}
     while True:
+        tick("mec_services")
         now = time.monotonic()
         try:
             for u in loc.all_users():
@@ -319,6 +415,8 @@ def handle_sample(p: dict):
             meas["route"] = [tuple(map(float, q)) for q in rt]
     with lock:
         state["rx"] += 1
+        state["last_rx_mono"] = time.monotonic()
+        state["had_live"] = True
         if p.get("ts"):
             state["ingest_ms"].append(rx - p["ts"])
         if engine.update(Track, p["id"], kind, t, **meas) is False:
@@ -361,12 +459,13 @@ def heartbeat():
     while True:
         hb_now.wait(RC.get("heartbeat_s", 1.0))
         hb_now.clear()
+        tick("heartbeat")
         with lock:
             rates = dict(rate_ctl.rate) if rate_ctl is not None else {}
         post("control", {"ts": now_ms(), "hb": True, "rates": rates})
 
 
-threading.Thread(target=heartbeat, daemon=True).start()
+supervise("heartbeat", heartbeat, period=RC.get("heartbeat_s", 1.0))
 
 
 CAM = CFG.get("camera") or {}
@@ -500,6 +599,16 @@ def gc_once(now=None):
                     if isinstance(d, dict):
                         d.pop(k, None)
         state["gc"]["tracks_removed"] += len(gone)
+        # side tables keyed by device: drop what belongs to forgotten tracks (camera untagged_N ids are
+        # new every time, so without this they grow for ever)
+        for k in gone:
+            state["worker_cue"].pop(k, None)
+            state["worker_aside"].pop(k, None)
+            _zone_last.pop(k, None)
+        wall = time.time()
+        for d in [d for d, a in state["acks"].items() if wall - a.get("rx", wall) > 60]:
+            del state["acks"][d]
+        del state["onboarded"][:-200]
         live = {(w, f) for w, t in engine.tracks.items() if t.kind == "worker"
                 for f, u in engine.tracks.items() if u.kind == "forklift"
                 and now - getattr(t, "last_seen", now) <= 2.0 and now - getattr(u, "last_seen", now) <= 2.0}
@@ -535,34 +644,65 @@ def discover_devices(cl=None):
     return new
 
 
+def resubscribe(cl):
+    """Make sure the CSE notifies us of every device container (creating a subscription that exists only
+    refreshes its notification URI).  Returns how many paths answered."""
+    state["subs"]["checks"] += 1
+    ok = 0
+    for path in (list(PATHS["workers"].values()) + list(PATHS["forklifts"].values())
+                 + list(PATHS["cameras"].values()) + list(PATHS.get("relay", {}).values())
+                 + list(PATHS.get("status", {}).values())):
+        try:   # each HA instance owns its own subscription (rn), so neither overwrites the other's URL
+            cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
+            ok += 1
+        except Exception as e:
+            state["subs"]["repaired_errors"] += 1
+            log.debug("subscription check %s: %s", path, e)
+    return ok
+
+
 def housekeeping():
-    """Every 10 s: GC; every 60 s: make sure the CSE still notifies us (a CSE restored without its
-    database, or a subscription removed after failed notifications, would silently stop the feed)."""
+    """GC every 10 s; make sure the CSE still notifies us every 60 s (a CSE restored without its database,
+    or a subscription removed after failed notifications, would silently stop the feed).
+
+    Recovery mode, 2 minutes of checks every 3 s: entered when the CSE comes back after failed writes,
+    when our own containers had to be rebuilt, or when no device has been heard for feed_silence_s
+    although devices were live - devices re-register one by one after a CSE reset, so a single
+    re-subscription is not enough."""
     cl = config.client(CFG)
     last_sub = 0.0 if not HA.get("enabled") else -1e9   # HA: subscribe right away (second instance)
+    last_gc, recover_until = 0.0, 0.0
     state["subs"] = {"checks": 0, "repaired_errors": 0}
     while True:
-        time.sleep(10.0)
-        try:
-            gc_once()
-        except Exception as e:
-            log.warning("gc failed: %s", e)
-        try:
-            discover_devices(cl)
-        except Exception as e:
-            log.debug("device discovery: %s", e)
-        if not MEC.get("subscription_watchdog", True) or time.monotonic() - last_sub < MEC.get("subscription_check_s", 60):
-            continue
-        last_sub = time.monotonic()
-        state["subs"]["checks"] += 1
-        for path in (list(PATHS["workers"].values()) + list(PATHS["forklifts"].values())
-                     + list(PATHS["cameras"].values()) + list(PATHS.get("relay", {}).values())
-                     + list(PATHS.get("status", {}).values())):
-            try:   # each HA instance owns its own subscription (rn), so neither overwrites the other's URL
-                cl.create_subscription(path, MEC.get("subscription_rn", "sub_mec"), [MEC["notify_url"]])
+        woke = resub_now.wait(3.0 if time.monotonic() < recover_until else 10.0)
+        resub_now.clear()
+        tick("housekeeping")
+        now = time.monotonic()
+        silent = now - state.get("last_rx_mono", now) > MEC.get("feed_silence_s", 8.0) and state.get("had_live")
+        if woke or silent:
+            if now >= recover_until:
+                state["recovery"]["resub_bursts"] += 1
+                if silent:
+                    state["recovery"]["feed_silence"] += 1
+                log.info("recovery: %s -> re-subscribing every 3 s for 2 min", "feed silent" if silent else "CSE back / reset")
+            recover_until = now + 120.0
+            state["had_live"] = False if silent else state.get("had_live")
+        if now - last_gc >= 10.0:
+            last_gc = now
+            try:
+                gc_once()
+            except Exception:
+                log_exc("gc failed")
+            try:
+                discover_devices(cl)
             except Exception as e:
-                state["subs"]["repaired_errors"] += 1
-                log.debug("subscription check %s: %s", path, e)
+                log.debug("device discovery: %s", e)
+        if not MEC.get("subscription_watchdog", True):
+            continue
+        if now < recover_until or now - last_sub >= MEC.get("subscription_check_s", 60):
+            last_sub = now
+            ensure_own_tree()
+            resubscribe(cl)
 
 
 app = FastAPI(title="EdgeGuard MEC App")
@@ -570,7 +710,8 @@ app = FastAPI(title="EdgeGuard MEC App")
 
 @app.on_event("startup")
 def _start_housekeeping():
-    threading.Thread(target=housekeeping, daemon=True).start()
+    threading.Thread(target=ensure_own_tree, daemon=True).start()     # the CSE may not be up yet: retried later
+    supervise("housekeeping", housekeeping, period=10.0)
 
 
 @app.on_event("startup")
@@ -618,6 +759,7 @@ def zone_loop():
     zg = ZoneGroups(cl, PATHS["ae"], {z: tuple(b) for z, b in ZB["zones"].items()})
     checked, last, last_setup, ready = set(), 0.0, -1e9, False
     while True:
+        tick("zones")
         try:
             forklift, msg = zone_q.get(timeout=1.0)
         except queue.Empty:
@@ -661,14 +803,17 @@ def zone_loop():
 @app.on_event("startup")
 def _start_zones():
     if state["zones"]["enabled"]:
-        threading.Thread(target=zone_loop, daemon=True).start()
+        supervise("zones", zone_loop, period=1.0)
 
 
 @app.on_event("startup")
 def _start_mec_services():
     if MS.get("enabled"):
         src = MS.get("location_source", "cse")
-        threading.Thread(target=ipe_watch if src == "cse" else mec_services_loop, daemon=True).start()
+        if src == "cse":
+            supervise("mec_ipe_watch", ipe_watch, period=(MS.get("ipe") or {}).get("discover_s", 5.0))
+        else:
+            supervise("mec_services", mec_services_loop, period=MS.get("poll_s", 0.25))
 
 
 _GROUP = {"worker": "workers", "forklift": "forklifts", "camera": "cameras"}
@@ -703,16 +848,78 @@ def process_notification(body):
             handle_sample(payload)
 
 
+# --- ingest: /notify answers at once, one worker runs the risk engine; under overload a device's newer
+# sample replaces its older one still waiting (the tracker wants the latest position, not a backlog), so
+# the delay from sample to alert stays bounded and the CSE never sees a slow or failed notification.
+_ingest_cv = threading.Condition()
+_ingest: "dict" = {}                      # key -> body, in arrival order (dicts keep insertion order)
+_ingest_seq = itertools.count()
+INGEST_MAX = MEC.get("ingest_max", 2000)
+state["ingest"] = {"queued": 0, "coalesced": 0, "dropped": 0, "processed": 0, "max_depth": 0}
+
+
+def _ingest_key(body):
+    try:
+        con = body["m2m:sgn"]["nev"]["rep"]
+        con = con.get("m2m:cin", {}).get("con") or con
+        if isinstance(con, str):
+            con = json.loads(con)
+        dev = con.get("id") if isinstance(con, dict) else None
+        if isinstance(dev, str) and len(dev) <= 64 and con.get("kind") in ("worker", "forklift"):
+            return ("s", dev)
+    except (KeyError, TypeError, AttributeError, ValueError):
+        pass
+    return ("u", next(_ingest_seq))
+
+
+def enqueue(body):
+    key = _ingest_key(body)
+    ing = state["ingest"]
+    with _ingest_cv:
+        if key in _ingest:
+            ing["coalesced"] += 1
+            _ingest.pop(key)                  # re-insert: newest content, place of the latest arrival
+        elif len(_ingest) >= INGEST_MAX:
+            _ingest.pop(next(iter(_ingest)))  # drop the oldest waiting item
+            ing["dropped"] += 1
+        _ingest[key] = body
+        ing["queued"] += 1
+        ing["max_depth"] = max(ing["max_depth"], len(_ingest))
+        _ingest_cv.notify()
+
+
+def ingest_worker():
+    while True:
+        with _ingest_cv:
+            if not _ingest:
+                _ingest_cv.wait(1.0)
+            tick("ingest")
+            if not _ingest:
+                continue
+            key = next(iter(_ingest))
+            body = _ingest.pop(key)
+        try:
+            process_notification(body)
+        except Exception as e:                        # a bad sample never stops the worker
+            state["input"]["bad"] += 1
+            log.warning("bad notification: %s", str(e)[:200])
+        state["ingest"]["processed"] += 1
+
+
+supervise("ingest", ingest_worker, period=1.0)
+
+
 @app.post("/notify")
 async def notify(req: Request):
-    """Always answers 2000: a CSE that gets errors back may drop the subscription.  The risk
-    engine runs in the thread pool so a slow evaluation never blocks the event loop."""
+    """Always answers 2000 at once: a CSE that gets errors or timeouts back may drop the subscription."""
     try:
         body = await req.json()
-        await run_in_threadpool(process_notification, body)
-    except Exception as e:                            # malformed JSON or a bad sample
+        if not isinstance(body, dict):
+            raise ValueError("notification is not a JSON object")
+        enqueue(body)
+    except Exception as e:                            # malformed JSON
         state["input"]["bad"] += 1
-        log.warning("bad notification: %s", e)
+        log.warning("bad notification: %s", str(e)[:200])
     return Response(status_code=200, headers={"X-M2M-RSC": "2000"})
 
 
@@ -728,13 +935,18 @@ def health():
     pub = publisher_status()
     # degraded: the CSE has not accepted a write for 5 s although we have been trying
     degraded = pub["failed"] > 0 and (pub["last_ok_age_s"] is None or pub["last_ok_age_s"] > 5)
+    degraded = degraded or any(not v["alive"] for v in loops_status().values())
     return {"ok": True, "degraded": degraded, "method": engine.method, "samples": state["rx"],
             "ha": None if lease is None else {"instance": INSTANCE, "leader": lease.leader, **lease.stats},
             "publisher": pub, "input": state["input"], "tracks": len(engine.tracks), "gc": state["gc"],
             "alerts_sent": state["alerts_sent"], "worker_cues": state["worker_cues"], "cloud": state["cloud"],
             "network": state["network"], "location_fixes": state["location_fixes"], "mec": state["mec"],
             "camera": state["camera"], "rates": state["rates"],
-            "ingest_ms_median": ing[len(ing) // 2] if ing else None}
+            "ingest_ms_median": ing[len(ing) // 2] if ing else None,
+            "ingest": {**state["ingest"], "depth": len(_ingest)}, "loops": loops_status(),
+            "recovery": state["recovery"], "subs": state.get("subs"),
+            "tables": {"tracks": len(engine.tracks), "pairs": len(state["pairs"]), "worker_cue": len(state["worker_cue"]),
+                       "worker_aside": len(state["worker_aside"]), "zone_timers": len(_zone_last), "acks": len(state["acks"])}}
 
 
 def _paths(w, f):

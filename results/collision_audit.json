@@ -1,0 +1,3962 @@
+[
+ {
+  "seed": 831538941,
+  "worker": "w1",
+  "forklift": "f3",
+  "t_hit": 18.5,
+  "env": {
+   "type": "env",
+   "lat_ms": 111,
+   "jit_ms": 7,
+   "up_loss": 0.078,
+   "down_loss": 0.084,
+   "noise": 0.323,
+   "collided": [
+    [
+     "w1",
+     "f3"
+    ]
+   ]
+  },
+  "steps": [
+   {
+    "t": 12.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 12.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 12.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 12.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 12.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 13.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.45,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.07
+    ]
+   },
+   {
+    "t": 13.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.44,
+    "wv": 0.0,
+    "fv": 0.1,
+    "flim": null,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.44,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.08
+    ]
+   },
+   {
+    "t": 13.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.42,
+    "wv": 0.15,
+    "fv": 0.2,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.42,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.1
+    ]
+   },
+   {
+    "t": 13.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.38,
+    "wv": 0.3,
+    "fv": 0.3,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.39,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.13
+    ]
+   },
+   {
+    "t": 13.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.34,
+    "wv": 0.45,
+    "fv": 0.4,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.35,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.17
+    ]
+   },
+   {
+    "t": 13.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.28,
+    "wv": 0.6,
+    "fv": 0.5,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.29,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.22
+    ]
+   },
+   {
+    "t": 13.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.22,
+    "wv": 0.75,
+    "fv": 0.6,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.21,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.28
+    ]
+   },
+   {
+    "t": 13.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.14,
+    "wv": 0.87,
+    "fv": 0.7,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.13,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.35
+    ]
+   },
+   {
+    "t": 13.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.1,
+    "wv": 0.87,
+    "fv": 0.45,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.04,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.39
+    ]
+   },
+   {
+    "t": 13.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.06,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.95,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.43
+    ]
+   },
+   {
+    "t": 14.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 3.03,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.86,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.47
+    ]
+   },
+   {
+    "t": 14.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.99,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.78,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.5
+    ]
+   },
+   {
+    "t": 14.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.97,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.69,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.54
+    ]
+   },
+   {
+    "t": 14.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.94,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.6,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.58
+    ]
+   },
+   {
+    "t": 14.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.92,
+    "wv": 0.87,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.52,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.61
+    ]
+   },
+   {
+    "t": 14.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.89,
+    "wv": 0.67,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.45,
+     5.49
+    ],
+    "fpos": [
+     12.0,
+     2.65
+    ]
+   },
+   {
+    "t": 14.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.84,
+    "wv": 0.47,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.5,
+     5.48
+    ],
+    "fpos": [
+     12.0,
+     2.69
+    ]
+   },
+   {
+    "t": 14.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.79,
+    "wv": 0.27,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.57,
+     5.48
+    ],
+    "fpos": [
+     12.0,
+     2.72
+    ]
+   },
+   {
+    "t": 14.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.73,
+    "wv": 0.07,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.67,
+     5.47
+    ],
+    "fpos": [
+     12.0,
+     2.76
+    ]
+   },
+   {
+    "t": 14.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.68,
+    "wv": 0.0,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.77,
+     5.47
+    ],
+    "fpos": [
+     12.0,
+     2.8
+    ]
+   },
+   {
+    "t": 15.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.63,
+    "wv": 0.0,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.87,
+     5.46
+    ],
+    "fpos": [
+     12.0,
+     2.84
+    ]
+   },
+   {
+    "t": 15.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.58,
+    "wv": 0.0,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     11.97,
+     5.46
+    ],
+    "fpos": [
+     12.0,
+     2.87
+    ]
+   },
+   {
+    "t": 15.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.54,
+    "wv": 0.0,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.07,
+     5.45
+    ],
+    "fpos": [
+     12.0,
+     2.91
+    ]
+   },
+   {
+    "t": 15.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.51,
+    "wv": 0.0,
+    "fv": 0.37,
+    "flim": 0.37,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.17,
+     5.45
+    ],
+    "fpos": [
+     12.0,
+     2.95
+    ]
+   },
+   {
+    "t": 15.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.5,
+    "wv": 0.0,
+    "fv": 0.12,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.27,
+     5.44
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 15.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.5,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.37,
+     5.44
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 15.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.52,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.47,
+     5.43
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 15.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.53,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.57,
+     5.43
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 15.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.55,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.66,
+     5.42
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 15.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.57,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.76,
+     5.41
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.6,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.86,
+     5.41
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.63,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.96,
+     5.4
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.66,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     13.06,
+     5.4
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.7,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     13.16,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.74,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     13.26,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.74,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.27,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.74,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.27,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.74,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.27,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.96
+    ]
+   },
+   {
+    "t": 16.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.73,
+    "wv": 0.0,
+    "fv": 0.1,
+    "flim": null,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.27,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.97
+    ]
+   },
+   {
+    "t": 16.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.71,
+    "wv": 0.15,
+    "fv": 0.2,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.25,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     2.99
+    ]
+   },
+   {
+    "t": 17.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.67,
+    "wv": 0.3,
+    "fv": 0.3,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.22,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.02
+    ]
+   },
+   {
+    "t": 17.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.61,
+    "wv": 0.45,
+    "fv": 0.4,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.18,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.06
+    ]
+   },
+   {
+    "t": 17.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.54,
+    "wv": 0.6,
+    "fv": 0.5,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.12,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.11
+    ]
+   },
+   {
+    "t": 17.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.45,
+    "wv": 0.75,
+    "fv": 0.6,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     13.04,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.17
+    ]
+   },
+   {
+    "t": 17.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.35,
+    "wv": 0.87,
+    "fv": 0.7,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.95,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.24
+    ]
+   },
+   {
+    "t": 17.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.24,
+    "wv": 0.87,
+    "fv": 0.8,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.87,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.32
+    ]
+   },
+   {
+    "t": 17.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.13,
+    "wv": 0.87,
+    "fv": 0.9,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     12.78,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.41
+    ]
+   },
+   {
+    "t": 17.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 2.0,
+    "wv": 0.87,
+    "fv": 1.0,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.69,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.51
+    ]
+   },
+   {
+    "t": 17.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.87,
+    "wv": 0.87,
+    "fv": 1.1,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.61,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.62
+    ]
+   },
+   {
+    "t": 17.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.73,
+    "wv": 0.87,
+    "fv": 1.2,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.52,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.74
+    ]
+   },
+   {
+    "t": 18.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.58,
+    "wv": 0.87,
+    "fv": 1.3,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.43,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     3.87
+    ]
+   },
+   {
+    "t": 18.1,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.42,
+    "wv": 0.87,
+    "fv": 1.4,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.34,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     4.01
+    ]
+   },
+   {
+    "t": 18.2,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.26,
+    "wv": 0.87,
+    "fv": 1.5,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.26,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     4.16
+    ]
+   },
+   {
+    "t": 18.3,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.12,
+    "wv": 0.87,
+    "fv": 1.25,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.17,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     4.28
+    ]
+   },
+   {
+    "t": 18.4,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.01,
+    "wv": 0.67,
+    "fv": 1.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.1,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     4.38
+    ]
+   },
+   {
+    "t": 18.5,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 0.95,
+    "wv": 0.47,
+    "fv": 0.75,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.16,
+     5.39
+    ],
+    "fpos": [
+     12.0,
+     4.46
+    ]
+   },
+   {
+    "t": 18.6,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 0.92,
+    "wv": 0.27,
+    "fv": 0.5,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.23,
+     5.4
+    ],
+    "fpos": [
+     12.0,
+     4.51
+    ]
+   },
+   {
+    "t": 18.7,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 0.92,
+    "wv": 0.07,
+    "fv": 0.25,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.32,
+     5.4
+    ],
+    "fpos": [
+     12.0,
+     4.53
+    ]
+   },
+   {
+    "t": 18.8,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 0.97,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.42,
+     5.4
+    ],
+    "fpos": [
+     12.0,
+     4.53
+    ]
+   },
+   {
+    "t": 18.9,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.02,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     12.52,
+     5.41
+    ],
+    "fpos": [
+     12.0,
+     4.53
+    ]
+   },
+   {
+    "t": 19.0,
+    "type": "pair",
+    "w": "w1",
+    "f": "f3",
+    "d": 1.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f3"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     12.62,
+     5.41
+    ],
+    "fpos": [
+     12.0,
+     4.53
+    ]
+   }
+  ],
+  "msgs": [
+   {
+    "t": 11.1,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 11.1,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 11.2,
+    "type": "send",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "lost": true
+   },
+   {
+    "t": 11.3,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 11.3,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.03,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 12.2,
+    "type": "send",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 12.4,
+    "type": "deliver",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "wait": true
+    }
+   },
+   {
+    "t": 12.7,
+    "type": "send",
+    "ev": "clear",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 12.7,
+    "type": "send",
+    "ev": "clear",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 12.9,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 12.9,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": false,
+     "speed_scale": 1.0,
+     "speed_limit": null
+    }
+   },
+   {
+    "t": 13.4,
+    "type": "send",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 13.4,
+    "type": "send",
+    "ev": "raise",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 13.5,
+    "type": "send",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 13.6,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 13.6,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 1.0,
+     "speed_limit": 0.37
+    }
+   },
+   {
+    "t": 13.7,
+    "type": "deliver",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "aside": [
+      1.9,
+      -0.1
+     ],
+     "vibrate": true
+    }
+   },
+   {
+    "t": 14.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 14.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "lost": true
+   },
+   {
+    "t": 14.2,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 14.5,
+    "type": "send",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "lost": true
+   },
+   {
+    "t": 15.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 15.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 15.2,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 15.2,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.48,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 16.0,
+    "type": "send",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 16.2,
+    "type": "deliver",
+    "ev": "wait",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "wait": true
+    }
+   },
+   {
+    "t": 16.4,
+    "type": "send",
+    "ev": "clear",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 16.4,
+    "type": "send",
+    "ev": "clear",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 16.6,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 16.6,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": false,
+     "speed_scale": 1.0,
+     "speed_limit": null
+    }
+   },
+   {
+    "t": 17.4,
+    "type": "send",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 17.4,
+    "type": "send",
+    "ev": "raise",
+    "to": "f3",
+    "about": "w1",
+    "lost": true
+   },
+   {
+    "t": 17.5,
+    "type": "send",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 17.6,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 17.7,
+    "type": "deliver",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "aside": [
+      1.13,
+      0.04
+     ],
+     "vibrate": true
+    }
+   },
+   {
+    "t": 17.9,
+    "type": "send",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 17.9,
+    "type": "send",
+    "ev": "raise",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 18.1,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 18.1,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "f3",
+    "about": "w1",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.0,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 18.8,
+    "type": "send",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 18.9,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w1",
+    "about": "f3",
+    "lost": false
+   },
+   {
+    "t": 18.9,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f3",
+    "about": "w1",
+    "lost": false
+   },
+   {
+    "t": 19.0,
+    "type": "deliver",
+    "ev": "aside",
+    "to": "w1",
+    "about": "f3",
+    "acts": {
+     "aside": [
+      1.87,
+      -0.03
+     ],
+     "vibrate": true
+    }
+   }
+  ]
+ },
+ {
+  "seed": 465566503,
+  "worker": "w4",
+  "forklift": "f2",
+  "t_hit": 11.3,
+  "env": {
+   "type": "env",
+   "lat_ms": 137,
+   "jit_ms": 35,
+   "up_loss": 0.116,
+   "down_loss": 0.026,
+   "noise": 0.212,
+   "collided": [
+    [
+     "w4",
+     "f2"
+    ]
+   ]
+  },
+  "steps": [
+   {
+    "t": 5.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 3.18,
+    "wv": 0.0,
+    "fv": 0.74,
+    "flim": 0.74,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.07
+    ],
+    "fpos": [
+     -12.0,
+     -12.04
+    ]
+   },
+   {
+    "t": 5.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 3.02,
+    "wv": 0.0,
+    "fv": 0.74,
+    "flim": 0.74,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.17
+    ],
+    "fpos": [
+     -12.0,
+     -11.96
+    ]
+   },
+   {
+    "t": 5.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.86,
+    "wv": 0.0,
+    "fv": 0.74,
+    "flim": 0.74,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.27
+    ],
+    "fpos": [
+     -12.0,
+     -11.89
+    ]
+   },
+   {
+    "t": 5.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.72,
+    "wv": 0.0,
+    "fv": 0.49,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.37
+    ],
+    "fpos": [
+     -12.0,
+     -11.84
+    ]
+   },
+   {
+    "t": 5.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.61,
+    "wv": 0.0,
+    "fv": 0.24,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.47
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 5.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.52,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.57
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.43,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.67
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.34,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.77
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.26,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.87
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.17,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -9.97
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.09,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.07
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 6.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f0",
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.07,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.86,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.12,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.76,
+     -10.09
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 7.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.18,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.66,
+     -10.1
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.24,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": true,
+    "wpos": [
+     -10.56,
+     -10.1
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.3,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.46,
+     -10.1
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.37,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.36,
+     -10.11
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.43,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.26,
+     -10.11
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.5,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.16,
+     -10.12
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.58,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -10.06,
+     -10.12
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.65,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -9.96,
+     -10.12
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.72,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -9.86,
+     -10.13
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.8,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -9.76,
+     -10.13
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 8.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.88,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": true,
+    "blocked": false,
+    "wpos": [
+     -9.66,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.9,
+    "wv": 0.0,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.82
+    ]
+   },
+   {
+    "t": 9.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.89,
+    "wv": 0.0,
+    "fv": 0.1,
+    "flim": null,
+    "wstop": true,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.64,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.81
+    ]
+   },
+   {
+    "t": 9.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.87,
+    "wv": 0.15,
+    "fv": 0.2,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.65,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.79
+    ]
+   },
+   {
+    "t": 9.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.82,
+    "wv": 0.3,
+    "fv": 0.3,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.68,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.76
+    ]
+   },
+   {
+    "t": 9.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.77,
+    "wv": 0.45,
+    "fv": 0.4,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.73,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.72
+    ]
+   },
+   {
+    "t": 10.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.69,
+    "wv": 0.6,
+    "fv": 0.5,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.79,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.67
+    ]
+   },
+   {
+    "t": 10.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.59,
+    "wv": 0.75,
+    "fv": 0.6,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.86,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.61
+    ]
+   },
+   {
+    "t": 10.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.48,
+    "wv": 0.9,
+    "fv": 0.7,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -9.95,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.54
+    ]
+   },
+   {
+    "t": 10.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.35,
+    "wv": 1.01,
+    "fv": 0.8,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.05,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.46
+    ]
+   },
+   {
+    "t": 10.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.22,
+    "wv": 1.01,
+    "fv": 0.9,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.16,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.37
+    ]
+   },
+   {
+    "t": 10.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 2.08,
+    "wv": 1.01,
+    "fv": 1.0,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.26,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.27
+    ]
+   },
+   {
+    "t": 10.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.93,
+    "wv": 1.01,
+    "fv": 1.1,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.36,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.16
+    ]
+   },
+   {
+    "t": 10.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.78,
+    "wv": 1.01,
+    "fv": 1.2,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.46,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -11.04
+    ]
+   },
+   {
+    "t": 10.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.63,
+    "wv": 1.01,
+    "fv": 1.3,
+    "flim": null,
+    "wstop": false,
+    "holds": [],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.56,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.91
+    ]
+   },
+   {
+    "t": 10.9,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.48,
+    "wv": 1.01,
+    "fv": 1.4,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.66,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.77
+    ]
+   },
+   {
+    "t": 11.0,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.33,
+    "wv": 1.01,
+    "fv": 1.5,
+    "flim": null,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.76,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.62
+    ]
+   },
+   {
+    "t": 11.1,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.19,
+    "wv": 1.01,
+    "fv": 1.25,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.86,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.49
+    ]
+   },
+   {
+    "t": 11.2,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 1.07,
+    "wv": 1.01,
+    "fv": 1.0,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -10.96,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.39
+    ]
+   },
+   {
+    "t": 11.3,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.95,
+    "wv": 1.01,
+    "fv": 0.75,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -11.06,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.32
+    ]
+   },
+   {
+    "t": 11.4,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.85,
+    "wv": 1.01,
+    "fv": 0.5,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -11.16,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.27
+    ]
+   },
+   {
+    "t": 11.5,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.74,
+    "wv": 1.01,
+    "fv": 0.25,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": false,
+    "wpos": [
+     -11.26,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.24
+    ]
+   },
+   {
+    "t": 11.6,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.66,
+    "wv": 0.81,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": false,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -11.34,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.24
+    ]
+   },
+   {
+    "t": 11.7,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.6,
+    "wv": 0.61,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -11.4,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.24
+    ]
+   },
+   {
+    "t": 11.8,
+    "type": "pair",
+    "w": "w4",
+    "f": "f2",
+    "d": 0.56,
+    "wv": 0.41,
+    "fv": 0.0,
+    "flim": 0.0,
+    "wstop": true,
+    "holds": [
+     "f2"
+    ],
+    "aside": false,
+    "blocked": true,
+    "wpos": [
+     -11.45,
+     -10.14
+    ],
+    "fpos": [
+     -12.0,
+     -10.24
+    ]
+   }
+  ],
+  "msgs": [
+   {
+    "t": 3.6,
+    "type": "send",
+    "ev": "aside",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 3.8,
+    "type": "deliver",
+    "ev": "aside",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "aside": [
+      1.14,
+      0.03
+     ],
+     "vibrate": true
+    }
+   },
+   {
+    "t": 4.1,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 4.1,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 4.3,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 4.3,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 1.0,
+     "speed_limit": 0.74
+    }
+   },
+   {
+    "t": 5.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 5.0,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": true
+   },
+   {
+    "t": 5.1,
+    "type": "send",
+    "ev": "wait",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 5.2,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 5.2,
+    "type": "deliver",
+    "ev": "wait",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "wait": true
+    }
+   },
+   {
+    "t": 5.3,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 5.3,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 5.5,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 5.5,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.4,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 5.5,
+    "type": "send",
+    "ev": "raise",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 5.5,
+    "type": "send",
+    "ev": "raise",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 5.7,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 5.7,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.0,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 6.5,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 6.5,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 6.7,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 6.7,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 1.0,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 6.8,
+    "type": "send",
+    "ev": "aside",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 7.0,
+    "type": "deliver",
+    "ev": "aside",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "aside": [
+      1.22,
+      -0.05
+     ],
+     "vibrate": true
+    }
+   },
+   {
+    "t": 7.5,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 7.5,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 7.7,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 7.7,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.0,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 8.5,
+    "type": "send",
+    "ev": "wait",
+    "to": "w4",
+    "about": "f2",
+    "lost": true
+   },
+   {
+    "t": 9.2,
+    "type": "send",
+    "ev": "clear",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 9.2,
+    "type": "send",
+    "ev": "clear",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 9.4,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": false
+    }
+   },
+   {
+    "t": 9.4,
+    "type": "deliver",
+    "ev": "clear",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": false,
+     "speed_scale": 1.0,
+     "speed_limit": null
+    }
+   },
+   {
+    "t": 10.7,
+    "type": "send",
+    "ev": "raise",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 10.7,
+    "type": "send",
+    "ev": "raise",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 10.9,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 10.9,
+    "type": "deliver",
+    "ev": "raise",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 0.1,
+     "speed_limit": 0.0
+    }
+   },
+   {
+    "t": 11.7,
+    "type": "send",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "lost": false
+   },
+   {
+    "t": 11.7,
+    "type": "send",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "lost": false
+   },
+   {
+    "t": 11.8,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "w4",
+    "about": "f2",
+    "acts": {
+     "vibrate": true
+    }
+   },
+   {
+    "t": 11.8,
+    "type": "deliver",
+    "ev": "refresh",
+    "to": "f2",
+    "about": "w4",
+    "acts": {
+     "beacon": true,
+     "speed_scale": 1.0,
+     "speed_limit": 0.0
+    }
+   }
+  ]
+ }
+]

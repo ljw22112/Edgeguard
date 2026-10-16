@@ -66,7 +66,12 @@ class OneM2MClient:
             body["m2m:ae"]["poa"] = poa
         if lbl:
             body["m2m:ae"]["lbl"] = list(lbl)
-        return self.request("POST", "", TY_AE, body, ok_conflict=True)
+        try:
+            return self.request("POST", "", TY_AE, body, ok_conflict=True)
+        except OneM2MError as e:
+            if e.rsc == "4117":           # ACME: "originator has already registered" - the AE exists
+                return None
+            raise
 
     def create_container(self, parent, rn, mni=200):
         body = {"m2m:cnt": {"rn": rn, "mni": mni}}
@@ -93,9 +98,18 @@ class OneM2MClient:
                             "enc": {"net": list(net)}}}
         if acpi:      # e.g. the device's ACP: the device may read the subscription and carry it to
             body["m2m:sub"]["acpi"] = list(acpi)   # another CSE on handover (edgeguard/handover.py)
-        res = self.request("POST", parent, TY_SUB, body, ok_conflict=True)
-        if res is None:
-            res = self.request("PUT", f"{parent}/{rn}", None, {"m2m:sub": {"nu": list(nu)}})
+        for attempt in (1, 2, 3):
+            res = self.request("POST", parent, TY_SUB, body, ok_conflict=True)
+            if res is not None:
+                return res
+            try:
+                return self.request("PUT", f"{parent}/{rn}", None, {"m2m:sub": {"nu": list(nu)}})
+            except OneM2MError as e:
+                # "already exists" but not found: another client is creating it this very moment (ACME
+                # reserves the name before the resource can be read) or it was just removed - try again
+                if e.status != 404 or attempt == 3:
+                    raise
+                time.sleep(0.2 * attempt)
         return res
 
     # --- SDT data model: flexContainer, semanticDescriptor, discovery ---------

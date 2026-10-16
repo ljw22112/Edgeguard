@@ -92,6 +92,24 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ## Key results
 
+### Against what sites use today ([details](docs/site-compare.md))
+
+Same simulated floor and the same 300 episodes for every system (8 workers, 4 forklifts, 1,123 conflicts, nobody looking out):
+
+| | Collisions | Forklift throughput | Alarms per forklift-hour |
+|---|---|---|---|
+| No system | 827 | 100 % | 0 |
+| Speed zoning 5 km/h | 666 | 75 % | 0 |
+| UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,356 |
+| UWB proximity alarm, 4 m / 2 m zones | 12 | 60 % | 929 |
+| **EdgeGuard** | **2** | **86 %** | **229** |
+
+![EdgeGuard vs site practice](docs/img/site_compare.png)
+
+### Server stability under faults ([details](docs/stability.md))
+
+The soak test in CI (burst of 2,000 notifications, camera churn, 10 s link outage, CSE state loss) found that after a CSE lost its state, the MEC app never sent another alert. Now: alerts back in **2.1 s**, device data back in 2.1 s (was 11.1 s), slowest `/health` 112 ms (was 358 ms), 14/14 checks (was 10/14).
+
 ### Safety
 
 | Metric | Result | Baseline |
