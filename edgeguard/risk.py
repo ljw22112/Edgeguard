@@ -88,6 +88,8 @@ class RiskConfig:
     env_walk_in: bool = False      # a worker walking into the path is a stop point at its middle, not where he is
     env_held_floor: float = 0.0    # m/s: pass a waiting worker standing within env_held_gap of the path no faster
     env_held_gap: float = 1.0      # m beyond r_safe
+    plan_confirm: bool = False     # the MEC app re-sends a speed plan / stop point the truck does not report applying
+    ack_s: float = 0.5             # s to wait for that report before re-sending
     stop_point: bool = False       # send a person in the path as a stop point the module brakes for itself
     comply_grace: float = 0.0      # s after the alert: a worker still walking in is planned for as not stopping
     stop_hold_m: float = 1.0       # m: a stop point moves away only after he has moved this much (not with noise)

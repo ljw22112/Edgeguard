@@ -8,7 +8,7 @@
 
 namespace cue {
 
-constexpr float HOLD_MAX_S = 10.0f;   // longest WAIT kept through MEC silence while a truck is near (D2D)
+constexpr float HOLD_MAX_S = 20.0f;   // longest WAIT kept through MEC silence while a truck is near (D2D)
 constexpr float HOLD_IDLE_S = 2.5f, PULSE_PERIOD_S = 1.0f, PULSE_ON_S = 0.15f;
 constexpr int MAX_HOLDS = 4;
 

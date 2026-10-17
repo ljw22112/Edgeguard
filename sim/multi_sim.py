@@ -156,6 +156,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     from edgeguard.device_policy import ForkliftLimit as _FL
     tags = {w: _FL("coop") for w in wp} if d2d and system == "edgeguard" else {}
     drng = random.Random(seed ^ 0xD2D)
+    confirm = getattr(cfg, "plan_confirm", False) and system == "edgeguard"
+    wanted, resend, crng = {}, [], random.Random(seed ^ 0xACC)
     states, pending, actual = {}, [], {k: 1e9 for k in nominal}
     last_hb = -1e9
     alarms = {"total": 0, "unneeded": 0}
@@ -275,7 +277,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                 if tags[w].vibrate_local(t):
                     mw.on_alert(t, "local", vibrate=True)
                 live = {k: u for k, u in mw.holds.items() if u > t}
-                if live and t - mw.stop_from < 10.0 and tags[w].truck_near(t):   # WaitCue keep (HOLD_MAX_S)
+                if live and t - mw.stop_from < 20.0 and tags[w].truck_near(t):   # WaitCue keep (HOLD_MAX_S)
                     for k, u in live.items():
                         if u < t + 0.2:
                             mw.holds[k] = t + 0.2
@@ -317,6 +319,22 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             states.clear()                     # restarted MEC app: no memory of the alerts it had sent
             continue                           # MEC app silent: no alerts, no heartbeats
 
+        if wanted:                             # plan confirmation: the truck reports the plan it applies
+            for (f, w), (ts, ev0, acts0, why0) in list(wanted.items()):
+                if t - ts < cfg.ack_s:
+                    continue
+                fa, fl_ = acts0.get(f) or {}, movers[f].fl
+                lim = fl_.limits.get(w)
+                ok = ((ev0 == "clear" or fa.get("speed_limit") is None) and lim is None or
+                      lim is not None and fa.get("speed_limit") is not None and abs(lim[0] - fa["speed_limit"]) < 0.01)
+                stp = fl_.stops.get(w)
+                ok = ok and ((ev0 == "clear" or fa.get("stop_at") is None) == (stp is None))
+                if ok:
+                    del wanted[(f, w)]
+                elif crng.random() >= up_loss:     # its status got through and shows the old plan: send again
+                    wanted[(f, w)] = (t, ev0, acts0, why0)
+                    resend.append((ev0, acts0, f, w, why0))
+
         def send(ev, acts, to, other, reason=None):
             lost = rng.random() < down_loss
             if trace is not None and ev != "hb":
@@ -324,6 +342,11 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                               "reason": reason})
             if not lost:
                 pending.append((t + max(0.0, rng.gauss(lat_ms, jit_ms)) / 1000, ev, acts, to, other, reason))
+            if confirm and to in fp and ev != "hb":
+                wanted[(to, other)] = (t, ev, acts, reason)
+        for ev0, acts0, f, w, why0 in resend:
+            send(ev0, acts0, f, w, why0)
+        resend.clear()
         if t - last_hb >= 1.0 - 1e-9:
             last_hb = t
             for f in fp:

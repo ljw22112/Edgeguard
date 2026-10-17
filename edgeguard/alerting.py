@@ -98,7 +98,7 @@ def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0, others=()):
         move = side * gap - lat
         return [round(nx * move, 2), round(ny * move, 2)]
     # the step must not take him towards another truck or onto its path: nearer edge first, else the other one
-    for sd in (side, -side):
+    for sd in ((side, -side) if abs(lat) < 0.3 else (side,)):    # never across the truck's path
         move = sd * gap - lat
         tgt = (wpos[0] + nx * move, wpos[1] + ny * move)
         if all(_spot_clear(tgt, wpos, o, cfg) for o in others if o is not f_tr):

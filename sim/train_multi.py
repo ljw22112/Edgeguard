@@ -41,14 +41,14 @@ BOUNDS = {
 BOUNDS_PRIORITY = {
     "t_warn": (3.5, 5.0), "t_danger": (1.0, 2.0), "clear_hold": (1.0, 2.5), "worker_react": (0.5, 1.2),
     "brake_decel": (1.8, 2.8), "env_react": (0.3, 1.0), "env_lateral": (2.0, 4.0), "env_detect": (0.3, 1.2),
-    "env_margin": (0.0, 0.8), "env_pass_floor": (1.2, 2.8), "walk_speed": (1.0, 1.6), "pass_speed": (1.2, 2.6),
+    "env_margin": (0.0, 0.8), "env_pass_floor": (0.8, 2.8), "walk_speed": (1.0, 1.6), "pass_speed": (1.2, 2.6),
     "pass_speed_far": (1.6, 3.0), "wait_lateral": (1.8, 3.0), "aside_margin": (0.3, 1.2),
-    "comply_grace": (0.8, 2.5), "env_held_floor": (1.4, 3.0), "env_held_gap": (0.3, 1.5),
+    "comply_grace": (0.8, 2.5), "env_held_floor": (1.4, 3.0), "env_held_gap": (0.3, 1.5), "ack_s": (0.3, 1.0),
 }
 BOUNDS_PRIORITY["env_margin"] = (0.25, 0.8)          # covers position noise of a standing worker (audit)
 FIXED = {"default": {"env_cap": True},
          "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True,
-                      "aside_check_others": True}}
+                      "aside_check_others": True, "env_walk_in": True, "plan_confirm": True}}
 MODE = "default"
 NAMES = list(BOUNDS)
 LO = np.array([BOUNDS[n][0] for n in NAMES])
@@ -74,8 +74,16 @@ def to_over(z):
     return over
 
 
+ROBUST = None     # --robust: scenario of every training episode (sim/robust_eval.py), normal half of the time
+ROBUST_MIX = ["normal", "comply_85", "normal", "bad_network", "normal", "mec_restart", "normal", "comply_70",
+              "normal", "noisy_uwb", "normal", "dense"]
+
+
 def job(a):
     seeds, over = a
+    if ROBUST:
+        from sim.robust_eval import job as rjob
+        return [rjob((s, ROBUST_MIX[i % len(ROBUST_MIX)], over)) for i, s in seeds]
     return [run_episode(s, 8, 4, comply=(1.0 if i % 2 == 0 else 0.85), over=over) for i, s in seeds]
 
 
@@ -84,7 +92,7 @@ def evaluate(pool, over, seeds, n):
     ep = len(res)
     tot = {k: sum(r[k] for r in res) for k in ("collisions", "near", "forklift_m", "forklift_nominal_m", "worker_wait_s")}
     thr = tot["forklift_m"] / tot["forklift_nominal_m"]
-    wl = tot["worker_wait_s"] / (ep * 8)
+    wl = tot["worker_wait_s"] / sum(r.get("_w", 8) for r in res)
     score = thr - W_WORKER * wl - W_COLL * tot["collisions"] / ep - W_NEAR * tot["near"] / ep
     return {"score": round(score, 5), "throughput": round(thr, 4), "worker_lost_s": round(wl, 3),
             "collisions": tot["collisions"], "near": tot["near"], "episodes": ep}
@@ -100,10 +108,13 @@ def main():
     ap.add_argument("--init", help="start from this JSON policy file (e.g. a previous run's best) instead of site.yaml")
     ap.add_argument("--seed-base", type=int, default=10_000, help="training seeds start here (never the evaluation seeds)")
     ap.add_argument("--mode", choices=sorted(FIXED), default="default")
+    ap.add_argument("--robust", action="store_true", help="train on the normal / exceptional scenario mix")
     ap.add_argument("--w-coll", type=float, help="collision penalty per collision per episode (default 0.5)")
     ap.add_argument("--start", help="JSON overrides for the start policy (on top of site.yaml)")
     a = ap.parse_args()
     set_mode(a.mode, a.w_coll)
+    global ROBUST
+    ROBUST = a.robust
     from sim.failsafe_eval import site_cfg
     base = site_cfg()
     start = {k: getattr(base, k) for k in BOUNDS}

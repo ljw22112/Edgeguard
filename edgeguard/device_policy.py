@@ -73,7 +73,7 @@ CPA_SLOW_S, CPA_SLOW_D_M = 4.5, 3.0
 LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
 LOCAL_RECOVER_S = 1.5    # the local rule stays on this long after a silence ends: a restarted MEC app has lost
                          # its alert state and needs a moment to raise the alerts again (sim/robust_eval.py)
-HOLD_MAX_S = 10.0        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
+HOLD_MAX_S = 20.0        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0

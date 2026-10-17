@@ -18,7 +18,7 @@ not send the worker into the path of another one that still makes him wait.
 from __future__ import annotations
 
 HOLD_IDLE_S = 2.5
-HOLD_MAX_S = 10.0                              # longest WAIT kept through MEC silence for a near truck
+HOLD_MAX_S = 20.0                              # longest WAIT kept through MEC silence for a near truck
 PULSE_PERIOD_S, PULSE_ON_S = 1.0, 0.15
 GO_PULSES = ((0.0, 0.08), (0.16, 0.24))       # (on, off) offsets after GO, seconds
 MAX_HOLDS = 4                                  # forklifts tracked at once (firmware array size)
