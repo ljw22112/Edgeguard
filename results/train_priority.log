@@ -1,3 +1,4 @@
 start policy: {'t_warn': 4.926, 't_danger': 1.513, 'clear_hold': 1.595, 'worker_react': 0.723, 'brake_decel': 2.47, 'env_react': 0.616, 'env_lateral': 3.5, 'env_detect': 0.7, 'env_margin': 0.3, 'env_pass_floor': 2.0, 'walk_speed': 1.28, 'pass_speed': 1.694, 'pass_speed_far': 1.865, 'wait_lateral': 2.355, 'aside_margin': 0.8, 'env_cap': True, 'truck_priority': True, 'env_v2': True, 'stop_point': True, 'prompt_ease': True}
 gen 0: best {'score': 0.95744, 'throughput': 0.9842, 'worker_lost_s': 2.174, 'collisions': 0, 'near': 6, 'episodes': 60}  (reference 0.95313, thr 0.9802, coll 0, near 4)  155 s
 gen 1: best {'score': 0.96044, 'throughput': 0.9869, 'worker_lost_s': 2.226, 'collisions': 0, 'near': 5, 'episodes': 60}  (reference 0.94375, thr 0.9771, coll 1, near 3)  299 s
+gen 2: best {'score': 0.95876, 'throughput': 0.9864, 'worker_lost_s': 2.518, 'collisions': 0, 'near': 3, 'episodes': 60}  (reference 0.94816, thr 0.9825, coll 1, near 4)  441 s
