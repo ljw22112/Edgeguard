@@ -104,16 +104,17 @@ risk:
   t_caution: 5.0
   m_caution: 1.0
   horizon: 5.0
-  # trained policy (sim/train_policy.py, C=50) - see docs/risk-and-evaluation.md "Policy learning"
-  t_warn: 4.108
-  t_danger: 1.669
-  m_warn: 0.246
-  worker_react: 0.894
-  brake_decel: 2.317
-  brake_margin: 0.944
-  lane_lookahead: 4.961
-  pass_speed: 1.681
-  clear_hold: 2.464
+  # learned policy (sim/train_multi.py: CEM on the many-to-many floor, training seeds 10000+/20000+, picked on
+  # validation seeds 3000+; docs/site-compare.md). Replaces the one-pair policy of sim/train_policy.py.
+  t_warn: 4.926
+  t_danger: 1.513
+  m_warn: 0.148
+  worker_react: 0.723
+  brake_decel: 2.47
+  brake_margin: 1.011
+  lane_lookahead: 3.571
+  pass_speed: 1.694
+  clear_hold: 1.595
   stand_speed: 0.577
   # worker WAIT until GO (edgeguard/worker_cue.py): keep the tag's WAIT alive while the alert is on,
   # and do not let a waiting worker go while walking on would cross the forklift (docs/risk-and-evaluation.md)
@@ -125,6 +126,15 @@ risk:
   aside_cue: true
   # a worker slower than this is predicted to stand still (UWB-noise "walking" of standing pickers)
   still_speed: 0.4
+
+  # passing a standing worker well clear of the path; GO-check walking pace; stopping envelope (learned)
+  pass_speed_far: 1.865
+  pass_margin: 0.708
+  wait_lateral: 2.355
+  walk_speed: 1.28
+  env_cap: true
+  env_lateral: 1.95
+  env_react: 0.616
 
 # Adaptive reporting rate (edgeguard/rate_control.py): devices with no counterpart close or
 # closing in report at 2 Hz, the rest at 10 Hz; commands go to <ae>/control.  On by default:

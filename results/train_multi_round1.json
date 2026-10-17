@@ -1,0 +1,425 @@
+{
+ "bounds": {
+  "t_warn": [
+   2.5,
+   5.0
+  ],
+  "t_danger": [
+   1.0,
+   2.5
+  ],
+  "m_warn": [
+   0.0,
+   0.8
+  ],
+  "worker_react": [
+   0.5,
+   1.4
+  ],
+  "brake_decel": [
+   1.5,
+   3.0
+  ],
+  "brake_margin": [
+   0.4,
+   1.8
+  ],
+  "lane_lookahead": [
+   3.0,
+   8.0
+  ],
+  "pass_speed": [
+   0.8,
+   2.2
+  ],
+  "clear_hold": [
+   1.0,
+   3.0
+  ],
+  "pass_speed_far": [
+   1.5,
+   3.0
+  ],
+  "pass_margin": [
+   0.5,
+   2.0
+  ],
+  "wait_lateral": [
+   1.8,
+   3.2
+  ],
+  "walk_speed": [
+   1.0,
+   1.6
+  ],
+  "env_lateral": [
+   1.5,
+   3.2
+  ],
+  "env_react": [
+   0.4,
+   1.0
+  ]
+ },
+ "weights": [
+  0.01,
+  0.5,
+  0.05
+ ],
+ "history": [
+  {
+   "gen": 0,
+   "best": {
+    "score": 0.83718,
+    "throughput": 0.8643,
+    "worker_lost_s": 2.716,
+    "collisions": 0,
+    "near": 0,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.151,
+    "t_danger": 1.679,
+    "m_warn": 0.173,
+    "worker_react": 0.99,
+    "brake_decel": 2.558,
+    "brake_margin": 1.025,
+    "lane_lookahead": 4.225,
+    "pass_speed": 1.865,
+    "clear_hold": 2.283,
+    "pass_speed_far": 2.237,
+    "pass_margin": 0.711,
+    "wait_lateral": 2.73,
+    "walk_speed": 1.298,
+    "env_lateral": 1.818,
+    "env_react": 0.566,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.389,
+    "t_danger": 1.604,
+    "m_warn": 0.206,
+    "worker_react": 0.964,
+    "brake_decel": 2.398,
+    "brake_margin": 1.002,
+    "lane_lookahead": 4.623,
+    "pass_speed": 1.703,
+    "clear_hold": 2.521,
+    "pass_speed_far": 1.946,
+    "pass_margin": 0.738,
+    "wait_lateral": 2.503,
+    "walk_speed": 1.287,
+    "env_lateral": 2.059,
+    "env_react": 0.595,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.80769,
+    "throughput": 0.8354,
+    "worker_lost_s": 2.766,
+    "collisions": 0,
+    "near": 0,
+    "episodes": 48
+   },
+   "secs": 154
+  },
+  {
+   "gen": 1,
+   "best": {
+    "score": 0.85547,
+    "throughput": 0.8836,
+    "worker_lost_s": 2.814,
+    "collisions": 0,
+    "near": 0,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.711,
+    "t_danger": 1.495,
+    "m_warn": 0.151,
+    "worker_react": 0.803,
+    "brake_decel": 2.33,
+    "brake_margin": 1.202,
+    "lane_lookahead": 4.141,
+    "pass_speed": 1.751,
+    "clear_hold": 1.957,
+    "pass_speed_far": 1.945,
+    "pass_margin": 0.869,
+    "wait_lateral": 2.458,
+    "walk_speed": 1.258,
+    "env_lateral": 2.111,
+    "env_react": 0.629,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.558,
+    "t_danger": 1.625,
+    "m_warn": 0.178,
+    "worker_react": 0.975,
+    "brake_decel": 2.372,
+    "brake_margin": 1.027,
+    "lane_lookahead": 4.535,
+    "pass_speed": 1.699,
+    "clear_hold": 2.452,
+    "pass_speed_far": 1.844,
+    "pass_margin": 0.797,
+    "wait_lateral": 2.435,
+    "walk_speed": 1.273,
+    "env_lateral": 2.05,
+    "env_react": 0.626,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.82905,
+    "throughput": 0.8607,
+    "worker_lost_s": 2.956,
+    "collisions": 0,
+    "near": 2,
+    "episodes": 48
+   },
+   "secs": 306
+  },
+  {
+   "gen": 2,
+   "best": {
+    "score": 0.85427,
+    "throughput": 0.8814,
+    "worker_lost_s": 2.606,
+    "collisions": 0,
+    "near": 1,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.471,
+    "t_danger": 1.348,
+    "m_warn": 0.2,
+    "worker_react": 0.743,
+    "brake_decel": 2.321,
+    "brake_margin": 1.071,
+    "lane_lookahead": 4.656,
+    "pass_speed": 1.651,
+    "clear_hold": 1.816,
+    "pass_speed_far": 1.944,
+    "pass_margin": 0.819,
+    "wait_lateral": 2.314,
+    "walk_speed": 1.3,
+    "env_lateral": 1.923,
+    "env_react": 0.598,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.561,
+    "t_danger": 1.518,
+    "m_warn": 0.183,
+    "worker_react": 0.818,
+    "brake_decel": 2.387,
+    "brake_margin": 0.987,
+    "lane_lookahead": 4.425,
+    "pass_speed": 1.699,
+    "clear_hold": 2.253,
+    "pass_speed_far": 1.888,
+    "pass_margin": 0.79,
+    "wait_lateral": 2.42,
+    "walk_speed": 1.279,
+    "env_lateral": 1.983,
+    "env_react": 0.619,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.82193,
+    "throughput": 0.8545,
+    "worker_lost_s": 3.05,
+    "collisions": 0,
+    "near": 2,
+    "episodes": 48
+   },
+   "secs": 461
+  },
+  {
+   "gen": 3,
+   "best": {
+    "score": 0.82824,
+    "throughput": 0.8618,
+    "worker_lost_s": 3.354,
+    "collisions": 0,
+    "near": 0,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.675,
+    "t_danger": 1.52,
+    "m_warn": 0.198,
+    "worker_react": 0.657,
+    "brake_decel": 2.433,
+    "brake_margin": 0.984,
+    "lane_lookahead": 4.549,
+    "pass_speed": 1.817,
+    "clear_hold": 1.64,
+    "pass_speed_far": 1.914,
+    "pass_margin": 0.724,
+    "wait_lateral": 2.467,
+    "walk_speed": 1.247,
+    "env_lateral": 1.939,
+    "env_react": 0.624,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.601,
+    "t_danger": 1.499,
+    "m_warn": 0.185,
+    "worker_react": 0.726,
+    "brake_decel": 2.418,
+    "brake_margin": 0.949,
+    "lane_lookahead": 4.427,
+    "pass_speed": 1.715,
+    "clear_hold": 2.032,
+    "pass_speed_far": 1.906,
+    "pass_margin": 0.741,
+    "wait_lateral": 2.404,
+    "walk_speed": 1.267,
+    "env_lateral": 2.003,
+    "env_react": 0.617,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.81003,
+    "throughput": 0.8437,
+    "worker_lost_s": 3.267,
+    "collisions": 0,
+    "near": 1,
+    "episodes": 48
+   },
+   "secs": 624
+  },
+  {
+   "gen": 4,
+   "best": {
+    "score": 0.83171,
+    "throughput": 0.8746,
+    "worker_lost_s": 2.934,
+    "collisions": 1,
+    "near": 3,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.577,
+    "t_danger": 1.563,
+    "m_warn": 0.217,
+    "worker_react": 0.761,
+    "brake_decel": 2.571,
+    "brake_margin": 0.942,
+    "lane_lookahead": 4.627,
+    "pass_speed": 1.81,
+    "clear_hold": 2.001,
+    "pass_speed_far": 1.857,
+    "pass_margin": 0.67,
+    "wait_lateral": 2.414,
+    "walk_speed": 1.294,
+    "env_lateral": 2.031,
+    "env_react": 0.621,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.598,
+    "t_danger": 1.516,
+    "m_warn": 0.189,
+    "worker_react": 0.743,
+    "brake_decel": 2.46,
+    "brake_margin": 0.949,
+    "lane_lookahead": 4.479,
+    "pass_speed": 1.726,
+    "clear_hold": 1.958,
+    "pass_speed_far": 1.904,
+    "pass_margin": 0.754,
+    "wait_lateral": 2.402,
+    "walk_speed": 1.285,
+    "env_lateral": 2.028,
+    "env_react": 0.613,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.80549,
+    "throughput": 0.8612,
+    "worker_lost_s": 3.173,
+    "collisions": 2,
+    "near": 3,
+    "episodes": 48
+   },
+   "secs": 781
+  },
+  {
+   "gen": 5,
+   "best": {
+    "score": 0.86256,
+    "throughput": 0.8895,
+    "worker_lost_s": 2.593,
+    "collisions": 0,
+    "near": 1,
+    "episodes": 48
+   },
+   "best_policy": {
+    "t_warn": 4.638,
+    "t_danger": 1.629,
+    "m_warn": 0.211,
+    "worker_react": 0.784,
+    "brake_decel": 2.462,
+    "brake_margin": 0.839,
+    "lane_lookahead": 4.117,
+    "pass_speed": 1.647,
+    "clear_hold": 1.933,
+    "pass_speed_far": 1.923,
+    "pass_margin": 0.798,
+    "wait_lateral": 2.383,
+    "walk_speed": 1.308,
+    "env_lateral": 2.009,
+    "env_react": 0.596,
+    "env_cap": true
+   },
+   "mean_policy": {
+    "t_warn": 4.638,
+    "t_danger": 1.554,
+    "m_warn": 0.196,
+    "worker_react": 0.752,
+    "brake_decel": 2.464,
+    "brake_margin": 0.914,
+    "lane_lookahead": 4.437,
+    "pass_speed": 1.723,
+    "clear_hold": 1.994,
+    "pass_speed_far": 1.901,
+    "pass_margin": 0.765,
+    "wait_lateral": 2.395,
+    "walk_speed": 1.3,
+    "env_lateral": 2.026,
+    "env_react": 0.598,
+    "env_cap": true
+   },
+   "generation_reference": {
+    "score": 0.84384,
+    "throughput": 0.8721,
+    "worker_lost_s": 2.718,
+    "collisions": 0,
+    "near": 1,
+    "episodes": 48
+   },
+   "secs": 935
+  }
+ ],
+ "final_mean": {
+  "t_warn": 4.638,
+  "t_danger": 1.554,
+  "m_warn": 0.196,
+  "worker_react": 0.752,
+  "brake_decel": 2.464,
+  "brake_margin": 0.914,
+  "lane_lookahead": 4.437,
+  "pass_speed": 1.723,
+  "clear_hold": 1.994,
+  "pass_speed_far": 1.901,
+  "pass_margin": 0.765,
+  "wait_lateral": 2.395,
+  "walk_speed": 1.3,
+  "env_lateral": 2.026,
+  "env_react": 0.598,
+  "env_cap": true
+ }
+}

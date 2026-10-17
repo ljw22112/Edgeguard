@@ -58,12 +58,20 @@ class RiskConfig:
     intent_v2: bool = True         # where a waiting worker wants to go: his walking direction before the
                                    # alert (a sidestep or the slow-down into the stop does not overwrite it)
     walk_speed: float = 1.3        # m/s: he walks on at this pace, not at the speed seen while he slowed
+    intent_min_speed: float = 0.8  # m/s: his direction is learned only while he clearly walks (smoothed),
+                                   # not from the first noisy steps or the slow-down
     standoff_unknown: bool = True  # direction unknown and both stopped close together: one goes first
     # --- efficiency (sim/efficiency_audit.py: where forklift time is lost) --------------------
     free_other_hold: bool = True   # worker waits for ANOTHER truck: keep him waiting, but this truck passes
                                    # at its own speed when its way past him is clear
     pass_speed_far: float = 2.0    # m/s: passing a standing worker whose distance from the truck's path is
     pass_margin: float = 1.0       # at least r_safe + pass_margin (closer: pass_speed)
+    aside_margin: float = 0.8      # m: STEP ASIDE takes the worker to r_safe + aside_margin from the truck's path
+    aside_hold_speed: float = 0.0  # m/s: the truck may creep this fast while he steps aside, if > 5 m away
+    # --- stopping envelope (OSHA 1910.178(n)(8): a speed at which the truck can be stopped) -----
+    env_cap: bool = False          # a person near the truck's path ahead: limit the truck (quietly, no buzz)
+    env_lateral: float = 2.2       # m from the truck's path that counts as "near"
+    env_react: float = 0.6         # s from MEC decision to brakes acting (radio + actuator)
     # --- site map (edgeguard/sitemap.py) ------------------------------------------------
     occl_t_margin: float = 0.0     # s added to t_warn / t_danger (evaluated: +1 s made blind corners worse)
     occl_r_margin: float = 0.5     # m added to r_safe when racks block the line of sight (sim/occlusion_eval.py)

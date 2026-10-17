@@ -2,7 +2,10 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
-## Unreleased — 2026-10-16
+## Unreleased — 2026-10-17
+- **Policy learning on the many-to-many floor** (`sim/train_multi.py`, CEM, 15 parameters; training seeds 10,000+/20,000+, selection 3,000+, test 5,000+): stopping envelope near a person ahead (`env_cap`), walking direction learned only while walking, learned `config/site.yaml`. Same 300 test episodes: collisions 1 -> 0, throughput 86.6 -> 89.4 %, worker time lost 2.80 -> 2.71 s. Against the wide UWB proximity alarm: equally 0 collisions, +85 % throughput, -81 % alarms; against the narrowed one: 0 vs 12 collisions, +48 %. A refinement candidate (`sim/train_multi_refine.py`, +1.6 pt) was rejected for 4 collisions on 400 fresh validation episodes.
+
+## 2026-10-16
 - **Server stability** ([docs](docs/stability.md)): `tools/soak_test.py` (burst, camera churn, link outage, CSE state loss; CI 3.5 min). Fixed: after a CSE lost its state the MEC app never sent another alert (now rebuilds its tree, recovery in 2.1 s); supervised background loops with `/health` liveness; `/notify` queues and coalesces per device (slowest `/health` 358 -> 112 ms); side tables of forgotten tracks cleaned; client retries for ACME races (4117, subscription create/update).
 - **Remaining collisions audited** (`sim/collision_audit.py`): the GO check used a wrong or missing walking direction (slow-down speed, sidestep, unknown). Fixed with the pre-alert direction at walking pace and a standoff rule; held-out 400 episodes: collisions 4 -> 2 at full compliance (not significant at 85 %), throughput -0.5 pt.
 - **Efficiency audit** (`sim/efficiency_audit.py`): forklift time lost by reason; a truck no longer crawls past a worker who waits for another truck, and passes a standing worker well clear of its path at 2 m/s.

@@ -280,11 +280,14 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                       "collided": [list(k) for k in nominal if actual[k] < R_COLLIDE]})
     return {"conflicts": sum(d < R_CONTACT for d in nominal.values()),
             "collisions": sum(actual[k] < R_COLLIDE for k in nominal),
+            "close_calls": sum(actual[k] < R_CONTACT for k in nominal),
             "collisions_in_conflict": sum(actual[k] < R_COLLIDE for k, d in nominal.items() if d < R_CONTACT),
             "forklift_m": sum(min(m.s, _nominal_s(m.path)) for m in fl), "forklift_nominal_m": nom,
             "forklift_lost_s": sum(m.lost_s for m in fl), "worker_wait_s": sum(m.wait_s for m in wk),
             "pairs_close": sum(d < 4.0 for d in nominal.values()),
-            "alarms": alarms["total"], "alarms_unneeded": alarms["unneeded"]}
+            "alarms": alarms["total"], "alarms_unneeded": alarms["unneeded"],
+            "near": sum(actual[k] < R_CONTACT for k in nominal),                   # closer than 1.5 m (incl. collisions)
+            "shortfall_m": round(sum(max(0.0, R_CONTACT - actual[k]) for k in nominal), 3)}
 
 
 def _nominal_s(path):

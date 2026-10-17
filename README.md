@@ -94,15 +94,17 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ### Against what sites use today ([details](docs/site-compare.md))
 
-Same simulated floor and the same 300 episodes for every system (8 workers, 4 forklifts, 1,123 conflicts, nobody looking out):
+Same simulated floor and the same 300 test episodes for every system (8 workers, 4 forklifts, 1,066 conflicts, nobody looking out). EdgeGuard runs its learned policy; the test episodes were never used to train or pick it:
 
 | | Collisions | Forklift throughput | Alarms per forklift-hour |
 |---|---|---|---|
-| No system | 827 | 100 % | 0 |
-| Speed zoning 5 km/h | 666 | 75 % | 0 |
-| UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,356 |
-| UWB proximity alarm, 4 m / 2 m zones | 12 | 60 % | 929 |
-| **EdgeGuard** | **2** | **86 %** | **229** |
+| No system | 804 | 100 % | 0 |
+| Speed zoning 5 km/h | 633 | 75 % | 0 |
+| UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,353 |
+| UWB proximity alarm, 4 m / 2 m zones | 12 | 61 % | 932 |
+| **EdgeGuard (learned policy)** | **0** | **89 %** | **251** |
+
+As safe as the wide proximity alarm with +85 % throughput and 81 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +48 % throughput. Learning moved EdgeGuard from 1 collision and 86.6 % to 0 and 89.4 % on the same test episodes ([how](docs/site-compare.md#how-the-policy-was-learned-simtrain_multipy)).
 
 ![EdgeGuard vs site practice](docs/img/site_compare.png)
 

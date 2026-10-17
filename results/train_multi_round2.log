@@ -1,0 +1,10 @@
+start policy: {'t_warn': 4.638, 't_danger': 1.629, 'm_warn': 0.211, 'worker_react': 0.784, 'brake_decel': 2.462, 'brake_margin': 0.839, 'lane_lookahead': 4.117, 'pass_speed': 1.647, 'clear_hold': 1.933, 'pass_speed_far': 1.923, 'pass_margin': 0.798, 'wait_lateral': 2.383, 'walk_speed': 1.308, 'env_lateral': 2.009, 'env_react': 0.596, 'env_cap': True}
+gen 0: best {'score': 0.82846, 'throughput': 0.8642, 'worker_lost_s': 3.572, 'collisions': 0, 'near': 0, 'episodes': 48}  (reference 0.79529, thr 0.8281, coll 0, near 2)  146 s
+gen 1: best {'score': 0.86596, 'throughput': 0.8899, 'worker_lost_s': 2.293, 'collisions': 0, 'near': 1, 'episodes': 48}  (reference 0.83502, thr 0.8725, coll 1, near 2)  288 s
+gen 2: best {'score': 0.85859, 'throughput': 0.8838, 'worker_lost_s': 2.518, 'collisions': 0, 'near': 0, 'episodes': 48}  (reference 0.83886, thr 0.8671, coll 0, near 1)  432 s
+gen 3: best {'score': 0.83616, 'throughput': 0.8638, 'worker_lost_s': 2.768, 'collisions': 0, 'near': 0, 'episodes': 48}  (reference 0.80938, thr 0.839, coll 0, near 0)  588 s
+{"name": "current", "n": 300, "off": 3000, "secs": 123, "collisions": 0, "conflicts": 1113, "thr": 0.8612, "f_lost_s": 5.64, "w_wait_s": 2.8, "coll_seeds": []}
+{"name": "r1best", "n": 300, "off": 3000, "secs": 125, "collisions": 1, "conflicts": 1113, "thr": 0.8776, "f_lost_s": 5.25, "w_wait_s": 2.89, "coll_seeds": [343002506]}
+{"name": "r2mean", "n": 300, "off": 3000, "secs": 128, "collisions": 0, "conflicts": 1113, "thr": 0.8911, "f_lost_s": 4.84, "w_wait_s": 2.67, "coll_seeds": []}
+{"name": "r2g3", "n": 300, "off": 3000, "secs": 125, "collisions": 4, "conflicts": 1113, "thr": 0.8858, "f_lost_s": 4.97, "w_wait_s": 2.72, "coll_seeds": [343002506, 296817240, 549555970, 775318234]}
+{"name": "r2g1", "n": 300, "off": 3000, "secs": 125, "collisions": 0, "conflicts": 1113, "thr": 0.9018, "f_lost_s": 4.57, "w_wait_s": 2.68, "coll_seeds": []}

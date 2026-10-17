@@ -32,6 +32,7 @@ class AlertState:
         self.f_speed = None               # forklift speed before the alert slowed it (it resumes on clear)
         self.aside_sent = False           # STEP ASIDE already sent in this encounter
         self.last_any = 0.0               # last message of any kind for this pair (WAIT keep-alive)
+        self.no_intent_until = 0.0        # after STEP ASIDE his motion is the sidestep, not his way
 
     def reset(self):
         self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
@@ -90,7 +91,7 @@ def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0):
     nx, ny = -ty / tn, tx / tn                                  # path normal
     lat = (wpos[0] - px) * nx + (wpos[1] - py) * ny
     side = 1.0 if lat >= 0 else -1.0
-    move = side * (cfg.r_safe + 0.8) - lat
+    move = side * (cfg.r_safe + getattr(cfg, "aside_margin", 0.8)) - lat
     return [round(nx * move, 2), round(ny * move, 2)]
 
 
@@ -101,6 +102,25 @@ def _walking(intent, cfg):
     n = math.hypot(intent[0], intent[1])
     ws = getattr(cfg, "walk_speed", 1.3)
     return intent if n >= ws or n < 1e-6 else (intent[0] / n * ws, intent[1] / n * ws)
+
+
+def envelope_limit(w_tr, f_tr, cfg):
+    """Speed at which the truck can still stop short of a person near its path ahead (reaction env_react, then
+    brake_decel, stopping r_safe before him), or None when nobody is near its path."""
+    if w_tr is None or f_tr is None or w_tr.x is None or f_tr.x is None or abs(f_tr.speed) < 0.5:
+        return None
+    vx, vy = f_tr.vel
+    sp = math.hypot(vx, vy)
+    if sp < 0.3:
+        return None
+    ux, uy = vx / sp, vy / sp
+    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    ahead, lat = dx * ux + dy * uy, abs(-dx * uy + dy * ux)
+    if ahead <= 0 or ahead > 15.0 or lat > cfg.env_lateral:
+        return None
+    room = max(0.0, ahead - cfg.r_safe)
+    a, tr = cfg.brake_decel, cfg.env_react
+    return a * (-tr + math.sqrt(tr * tr + 2.0 * room / a))
 
 
 def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
@@ -115,8 +135,14 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     if getattr(cfg, "intent_v2", False):
         # walking before the alert: that is where he wants to go; during the alert only if still unknown
         # (later motion is the slow-down into the stop or a sidestep, not his way)
-        if w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent and (st.level < 2 or st.intent is None):
-            st.intent = tuple(w_tr.vel)
+        vmin = getattr(cfg, "intent_min_speed", 0.5)
+        if w_tr is not None and w_tr.speed > vmin and not st.aside_sent and now >= st.no_intent_until \
+                and now >= getattr(w_tr, "no_intent_until", 0.0) and (st.level < 2 or st.intent is None):
+            vx, vy = w_tr.vel
+            if st.intent is None or st.level >= 2:
+                st.intent = (vx, vy)
+            else:                                  # smoothed: one noisy fix does not turn his way
+                st.intent = (0.7 * st.intent[0] + 0.3 * vx, 0.7 * st.intent[1] + 0.3 * vy)
     elif st.level >= 2 and w_tr is not None and w_tr.speed > 0.5 and not st.aside_sent:
         st.intent = tuple(w_tr.vel)                # where the worker is heading (not his sidestep)
     if f_tr is not None and abs(f_tr.speed) > 0.5 and (st.f_speed is None or abs(f_tr.speed) > abs(st.f_speed)):
@@ -132,6 +158,8 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         side = _aside_vector(w_tr.pos, f_tr, st.f_speed, cfg)
         if side is not None:
             st.aside_sent = True
+            st.no_intent_until = now + 5.0
+            w_tr.no_intent_until = now + 5.0       # the sidestep is not his way for any other truck either
             st.last_any = now
             return "aside", {r.worker: {"aside": side, "vibrate": True}}
     go_blocked = worker_first = stepping = by_other = False
@@ -168,6 +196,10 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         r.reason = ("worker stepping aside: forklift holds" if stepping
                     else "worker first: forklift holds until he has crossed")
         r.speed_limit, r.speed_scale = 0.0, 0.0
+        creep = getattr(cfg, "aside_hold_speed", 0.0)
+        if stepping and creep > 0 and r.range > 5.0:
+            r.speed_limit = creep                  # far enough: roll on slowly while he steps aside
+            r.speed_scale = round(creep / max(abs(f_tr.speed), 1e-6), 2)
         r.hold = True
     elif go_blocked or r.level < 2 and st.level >= 2 and w_tr is not None and f_tr is not None \
             and f_tr.speed > 0.2 and waiting_at_lane(w_tr, f_tr, cfg):
@@ -193,6 +225,17 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         r.speed_limit = limit
         r.speed_scale = 1.0 if limit is None else round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True
+    r.quiet = False
+    if getattr(cfg, "env_cap", False) and r.level < 2:
+        lim = envelope_limit(w_tr, f_tr, cfg)
+        if lim is not None and lim < abs(f_tr.speed) - 0.2:
+            # someone close to the truck's path: it may only go as fast as it can still stop if he steps in;
+            # the worker is not buzzed (nothing is predicted), only the truck is limited
+            r.level, r.level_name = 2, LEVELS[2]
+            r.reason = "person near the path: speed for the stopping distance"
+            r.speed_limit = round(max(lim, 0.0), 2)
+            r.speed_scale = round(r.speed_limit / max(abs(f_tr.speed), 1e-6), 2)
+            r.hold = r.quiet = True
     if st.aside_sent:
         st.hold_s = min(st.hold_s, 1.0)           # worker parked at the lane edge: no flicker to ride out
     ev = st.step(r.level, now)
@@ -232,7 +275,7 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     # worker who has already stopped is not buzzed every second
     walking_in = w_tr is not None and w_tr.speed > 0.3 and r.closing_speed > 0.2
     buzz = ev == "raise" or (ev == "refresh" and not r.hold and (r.level >= 3 or walking_in))
-    actions = {r.worker: {"vibrate": buzz and not untagged},
+    actions = {r.worker: {"vibrate": buzz and not untagged and not getattr(r, "quiet", False)},
                r.forklift: {"beacon": ev != "clear" and r.level >= 2,
                             "speed_scale": 1.0 if ev == "clear" else r.speed_scale,
                             # absolute limit: a ratio of an already reduced speed
