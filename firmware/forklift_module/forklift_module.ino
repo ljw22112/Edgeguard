@@ -95,6 +95,7 @@ const float MAX_SPEED = 2.5f;           // HIL: the motor stands for a site fork
 const float MAX_SPEED = 1.0f;           // m/s at full drive PWM (calibrate on the RC car)
 #endif
 policy::ForkliftLimit speedLimit;       // m/s, fail-safe on MEC silence
+policy::MsgOrder msgOrder;                         // drops MEC messages overtaken by newer ones
 policy::ReportRate reportRate;          // 10 Hz until told otherwise
 const char* PEER_ANCHOR_EUI = "01:20:5B:D5:A9:9A:E2:9C";   // short address 0x2001 (forklift_01)
 const int PIN_RST = 17, PIN_IRQ = 34, PIN_SS = 5;
@@ -298,6 +299,7 @@ void handleAlert() {
     return;
   }
   if (String((const char*)alert["forklift"]) != DEVICE_ID) return;
+  if (!alert["mec_tx_ts"].isNull() && !msgOrder.fresh(alert["worker"] | "", (double)alert["mec_tx_ts"])) return;
   String ev = (const char*)(alert["event"] | "");
   if (ev == "wait" || ev == "release" || ev == "aside") return;   // worker-only cues: the speed limit stays
   JsonObject act = alert["actions"][DEVICE_ID];

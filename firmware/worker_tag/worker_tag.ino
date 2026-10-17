@@ -122,6 +122,7 @@ float directT = -1e9f;                  // last MEC notification received direct
 
 WebServer server(HTTP_PORT);
 uint32_t vibrateUntil = 0;           // local-rule buzz (MEC silent)
+policy::MsgOrder msgOrder;           // drops MEC messages overtaken by newer ones (a late clear)
 cue::WaitCue waitCue;                // WAIT until GO for MEC alerts (worker_cue.h)
 bool asideCue = false;               // the current WAIT started with STEP ASIDE
 uint32_t lastPublish = 0;
@@ -303,6 +304,7 @@ void handleAlert() {
     return;
   }
   if (alert.isNull() || String((const char*)alert["worker"]) != DEVICE_ID) return;
+  if (!alert["mec_tx_ts"].isNull() && !msgOrder.fresh(alert["forklift"] | "", (double)alert["mec_tx_ts"])) return;
   bool vibrate = alert["actions"][DEVICE_ID]["vibrate"] | false;
   const char* level = alert["level"] | "SAFE";
   const char* ev = alert["event"] | "";

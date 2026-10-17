@@ -38,9 +38,15 @@ class WaitCue:
         if not self.holds:
             self.go_at = t
 
-    def on_alert(self, t, event, vibrate=False, danger=False, src=""):
-        """src: the forklift the alert is about (alert["forklift"], or the relaying forklift)."""
+    def on_alert(self, t, event, vibrate=False, danger=False, src="", ts=None):
+        """src: the forklift the alert is about (alert["forklift"], or the relaying forklift).
+        ts: the MEC app's send time - a message overtaken by a newer one (a late clear) is dropped."""
         key = src
+        if ts is not None:
+            last = self.__dict__.setdefault("last_ts", {})
+            if ts < last.get(key, -1e18):
+                return
+            last[key] = ts
         self.tick(t)
         if event == "aside":                          # step to the lane edge and wait there
             event, vibrate, danger = "raise", True, True

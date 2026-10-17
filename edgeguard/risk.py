@@ -88,6 +88,7 @@ class RiskConfig:
     env_walk_in: bool = False      # a worker walking into the path is a stop point at its middle, not where he is
     env_held_floor: float = 0.0    # m/s: pass a waiting worker standing within env_held_gap of the path no faster
     env_held_gap: float = 1.0      # m beyond r_safe
+    msg_order: bool = False        # devices drop a message overtaken by a newer one (send time, sim/multi_sim.py)
     plan_confirm: bool = False     # the MEC app re-sends a speed plan / stop point the truck does not report applying
     ack_s: float = 0.5             # s to wait for that report before re-sending
     stop_point: bool = False       # send a person in the path as a stop point the module brakes for itself

@@ -133,13 +133,21 @@ class Mover:
     # dead MEC app never pins people in place.  A worker who does not comply (probability
     # 1 - COMPLY per alert) behaves as with "buzz".
     UX, COMPLY, HOLD_IDLE_S = "hold", 1.0, 2.5         # v1.1 tags hold (edgeguard/worker_cue.py)
+    NEW_HOLD_ON_GO = False                             # WaitCue: a WAIT during the GO walk-off holds again
 
-    def on_alert(self, t, event, limit=None, vibrate=False, rng=None, src="", stop_at=None):
+    def on_alert(self, t, event, limit=None, vibrate=False, rng=None, src="", stop_at=None, ts=None):
         """src: forklift -> the worker the alert is about (one plan per pair);
-                worker   -> the forklift that holds him (one WAIT per forklift)."""
+                worker   -> the forklift that holds him (one WAIT per forklift).
+        ts: when the MEC app sent it - an older message than the last one applied for src is dropped."""
         if self.kind == "forklift":                       # limit: absolute m/s, None = no limit
-            self.pending.append((t + 0.2, event, limit, src, stop_at))           # actuator delay
+            self.pending.append((t + 0.2, event, limit, src, stop_at, ts))       # actuator delay
             return
+        if ts is not None and event != "local":
+            last = getattr(self, "last_ts", {})
+            self.last_ts = last
+            if ts < last.get(src, -1e9):
+                return                                    # overtaken by a newer message (jitter)
+            last[src] = ts
         self.holds = {k: u for k, u in self.holds.items() if u > t}
         if event == "aside" and Mover.UX == "hold" and limit is not None:
             # STEP ASIDE: after the reaction time walk sideways to the lane edge, then WAIT there
@@ -165,7 +173,7 @@ class Mover:
             self.holds[src] = t + Mover.HOLD_IDLE_S
             self.stop_until = max(self.stop_until, self.holds[src])
             return
-        if vibrate and t > self.stop_until:
+        if vibrate and (t > self.stop_until or Mover.UX == "hold" and not self.holds and Mover.NEW_HOLD_ON_GO):
             self.stops += 1
             comply = Mover.UX == "hold" and event != "local" and (rng is None or rng.random() < Mover.COMPLY)
             self.stop_from = t + 0.8                                             # reaction 0.8 s
@@ -185,10 +193,11 @@ class Mover:
                 self.pending = [x for x in self.pending if x[0] > t]
             for _, ev, lim, src, *rest in ready:
                 stop = rest[0] if rest else None
+                ts = rest[1] if len(rest) > 1 else None
                 if ev == "hb":
                     self.fl.on_heartbeat(t)
                 else:
-                    self.fl.on_alert(t, ev, lim, src, stop_at=stop)
+                    self.fl.on_alert(t, ev, lim, src, stop_at=stop, ts=ts)
             (x0, y0), (x1, y1) = self.path.pos(self.s), self.path.pos(self.s + 0.3)
             hn = math.hypot(x1 - x0, y1 - y0)
             if hn > 1e-6:

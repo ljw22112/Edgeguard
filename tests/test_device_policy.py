@@ -296,3 +296,25 @@ def test_aeb_stops_for_a_collision_course_even_with_mec_alive():
     assert fl.effective(0.1) == 0.0
     fl.on_peer_state(0.05, "w", 3.0, -3.0, 0.0, -1.0)        # walks away: no brake
     assert fl.effective(0.1) is None
+
+
+def test_late_message_is_dropped():
+    fl = ForkliftLimit("coop")
+    fl.on_alert(1.0, "raise", 0.5, "w", ts=0.9)
+    fl.on_alert(1.1, "clear", None, "w", ts=0.7)            # sent before the raise, arrived after it
+    assert fl.effective(1.2) == 0.5
+    from edgeguard.worker_cue import WaitCue
+    c = WaitCue()
+    c.on_alert(1.0, "raise", vibrate=True, src="f", ts=0.9)
+    c.on_alert(1.1, "clear", src="f", ts=0.7)
+    assert c.waiting
+
+
+@pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
+def test_firmware_msg_order(tmp_path):
+    src = tmp_path / "m.cpp"
+    src.write_text('#include <cstdio>\n#include "device_policy.h"\nint main(){policy::MsgOrder o; int a = o.fresh("w",5), b = o.fresh("w",4), c = o.fresh("v",1), d = o.fresh("w",6);'
+                   'std::printf("%d%d%d%d\\n", a, b, c, d);}')
+    exe = tmp_path / "m"
+    subprocess.run(["g++", "-std=c++17", "-I", os.path.join(ROOT, "firmware", "common"), str(src), "-o", str(exe)], check=True)
+    assert subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() == "1011"

@@ -99,6 +99,7 @@ class ForkliftLimit:
         self.stops = {}                                # worker -> ((x, y) stop point, t)
         self.recover = True                            # local rule also during LOCAL_RECOVER_S after a silence
         self.aeb = ForkliftLimit.AEB                   # always-on D2D emergency brake
+        self.last_ts = {}                              # worker -> send time of the last applied message
         self.recover_until = -1e9
         self.pose = None
 
@@ -199,11 +200,16 @@ class ForkliftLimit:
     STOP_DECEL = 2.3          # m/s^2 the module plans with (below the 2.5 the drive achieves)
     STOP_REACT = 0.1          # s control cycle + actuator lag left after the 0.2 s command delay
 
-    def on_alert(self, t, event, limit, src="", stop_at=None):
+    def on_alert(self, t, event, limit, src="", stop_at=None, ts=None):
         """src: the worker the alert is about.  Each pair keeps its own limit and the tightest
-        one applies, so a `clear` for one worker does not lift the limit another worker needs."""
+        one applies, so a `clear` for one worker does not lift the limit another worker needs.
+        ts: the MEC app's send time (alert mec_tx_ts) - a message overtaken by a newer one is dropped."""
         self._mark(t)
         self.hb_t = t                                  # any MEC message proves it is alive
+        if ts is not None:
+            if ts < self.last_ts.get(src, -1e18):
+                return
+            self.last_ts[src] = ts
         if event in ("wait", "release", "aside"):      # worker-only cues: the speed limit stays
             return
         if event == "clear":

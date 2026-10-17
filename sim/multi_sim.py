@@ -118,6 +118,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
         ux = "buzz"
     warn_m, danger_m = PROX_TIGHT if system == "proximity_tight" else (PROX_WARN_M, PROX_DANGER_M)
     Mover.UX, Mover.COMPLY = ux, comply
+    Mover.NEW_HOLD_ON_GO = bool(d2d)           # the tag model of the robust evaluation (WaitCue behaviour)
     ForkliftLimit.MODE = "coop"
     ForkliftLimit.AEB = bool(d2d) and system == "edgeguard"   # the always-on D2D emergency brake needs D2D states
     cfg = site_cfg()
@@ -174,6 +175,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             if trace is not None and ev != "hb":
                 trace.append({"t": round(t, 2), "type": "deliver", "ev": ev, "to": to, "about": other,
                               "acts": (acts.get(to) or {}), "reason": why[0] if why else None})
+            ts = why[1] if len(why) > 1 and getattr(cfg, "msg_order", False) else None
             if ev == "hb":
                 m.pending.append((t, "hb", None, ""))
                 for w in tags:                         # the heartbeat on <ae>/control reaches the tags too
@@ -181,10 +183,10 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                         tags[w].on_heartbeat(t)
             elif m.kind == "forklift":
                 fa = acts.get(to) or {}
-                m.on_alert(t, ev, fa.get("speed_limit"), src=key(other), stop_at=fa.get("stop_at"))
+                m.on_alert(t, ev, fa.get("speed_limit"), src=key(other), stop_at=fa.get("stop_at"), ts=ts)
             else:
                 wa = acts.get(to) or {}
-                m.on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), rng=rng, src=key(other))
+                m.on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), rng=rng, src=key(other), ts=ts)
                 if to in tags:
                     tags[to].on_heartbeat(t)           # any MEC message proves it is alive
         pending = keep
@@ -342,7 +344,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                 trace.append({"t": round(t, 2), "type": "send", "ev": ev, "to": to, "about": other, "lost": lost,
                               "reason": reason})
             if not lost:
-                pending.append((t + max(0.0, rng.gauss(lat_ms, jit_ms)) / 1000, ev, acts, to, other, reason))
+                pending.append((t + max(0.0, rng.gauss(lat_ms, jit_ms)) / 1000, ev, acts, to, other, reason, t))
             if confirm and to in fp and ev != "hb":
                 wanted[(to, other)] = (t, ev, acts, reason)
         for ev0, acts0, f, w, why0 in resend:

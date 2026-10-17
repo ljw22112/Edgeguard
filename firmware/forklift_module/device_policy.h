@@ -245,6 +245,25 @@ struct ForkliftLimit {
   }
 };
 
+// Message order: MEC messages carry mec_tx_ts; one that is overtaken by a newer one for the same pair
+// (radio jitter: a late "clear" after a new "raise") is dropped (mirrors ForkliftLimit/WaitCue ts).
+struct MsgOrder {
+  static constexpr int N = 8;
+  char src[N][16] = {};
+  double ts[N] = {};
+  bool fresh(const char* s, double t) {
+    int free_ = -1, oldest = 0;
+    for (int i = 0; i < N; i++) {
+      if (src[i][0] && !strcmp(src[i], s)) { if (t < ts[i]) return false; ts[i] = t; return true; }
+      if (!src[i][0] && free_ < 0) free_ = i;
+      if (ts[i] < ts[oldest]) oldest = i;
+    }
+    int k = free_ >= 0 ? free_ : oldest;
+    strncpy(src[k], s, 15); src[k][15] = 0; ts[k] = t;
+    return true;
+  }
+};
+
 struct ReportRate {
   float hz = FULL_HZ;
   float t = -1e9f;
