@@ -36,6 +36,7 @@ class AlertState:
         self.raise_t = None               # when this encounter's alert was raised (truck priority)
         self.sent_stop = None             # stop point last sent to the truck
         self.slow_since = None            # worker slower than 0.5 m/s since (STEP ASIDE only for one standing)
+        self.aside_t = None               # when STEP ASIDE was sent
 
     def reset(self):
         self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
@@ -170,6 +171,20 @@ def _envelope_at(wpos, f_tr, cfg):
     return a * (-tr + math.sqrt(tr * tr + 2.0 * room / a))
 
 
+def _lat_to_leave(w_tr, f_tr, cfg):
+    """How far the worker still has to move sideways to be out of the truck's path (r_safe from its line)."""
+    vx, vy = f_tr.vel
+    vn = math.hypot(vx, vy)
+    if vn > 0.3:
+        ux, uy = vx / vn, vy / vn
+    elif f_tr.heading is not None:
+        ux, uy = math.cos(f_tr.heading), math.sin(f_tr.heading)
+    else:
+        return 0.0
+    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    return max(0.0, cfg.r_safe + 0.2 - abs(-dx * uy + dy * ux))
+
+
 def _v_stop(room, cfg):
     a, tr = cfg.brake_decel, cfg.env_react
     return a * (-tr + math.sqrt(tr * tr + 2.0 * max(0.0, room) / a))
@@ -278,6 +293,7 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         if side is not None and (st.level >= 2 or r.level >= 2 or abs(f_tr.speed) > 0.5):
             new = st.level < 2                     # the first cue of this encounter (counts as an alarm)
             st.aside_sent = True
+            st.aside_t = now
             st.no_intent_until = now + 5.0
             w_tr.no_intent_until = now + 5.0       # the sidestep is not his way for any other truck either
             st.last_any = now
@@ -363,6 +379,7 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         r.hold = True
     r.quiet = False
     r.stop_at = None
+    r.glide = False
     if getattr(cfg, "env_cap", False) and r.level < 2:
         stop = [] if getattr(cfg, "stop_point", False) else None
         lim = envelope_limit(w_tr, f_tr, cfg, held=st.level >= 2, out_stop=stop)
@@ -397,6 +414,16 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             if stop:
                 r.stop_at = stop[0]                    # the module brakes for the point itself; the limit is
                                                        # for modules without stop points
+                # glide: he is stepping out of the path - roll slowly so the truck reaches the stop point when
+                # he is out, instead of braking into it, standing and speeding up again (1 m/s^2)
+                if getattr(cfg, "glide", False) and st.aside_sent and getattr(st, "aside_t", None) is not None:
+                    t_out = max(0.0, st.aside_t + 0.8 - now) + _lat_to_leave(w_tr, f_tr, cfg) / 1.0 + 0.3
+                    d = math.hypot(stop[0][0] - f_tr.pos[0], stop[0][1] - f_tr.pos[1])
+                    if t_out > 0.2:
+                        v = max(getattr(cfg, "glide_min", 0.5), d / t_out)
+                        if r.speed_limit is None or v < r.speed_limit:
+                            r.speed_limit = round(v, 2)
+                            r.glide = True
         else:
             r.speed_limit = round(max(lim, 0.0), 2) if lim is not None and lim < abs(f_tr.speed) - 0.1 else None
         r.speed_scale = 1.0 if r.speed_limit is None else round(r.speed_limit / max(abs(f_tr.speed), 1e-6), 2)
@@ -434,7 +461,8 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     sent = st.sent_limit if st.sent_limit is not None or not getattr(cfg, "prompt_ease", False) else math.inf
     if ev is None and r.level >= 2 and st.level >= 2 and r.speed_limit is not None \
             and sent is not None and r.speed_limit < sent - 0.3 \
-            and (getattr(r, "stop_at", None) is None or getattr(st, "sent_stop", None) is None):
+            and (getattr(r, "stop_at", None) is None or getattr(st, "sent_stop", None) is None
+                 or getattr(r, "glide", False)):
         ev = "refresh"
         st.last_sent = now
     # a stop point does not creep away with position noise: within the encounter it only moves closer, or
@@ -459,6 +487,9 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             and now - st.last_sent >= getattr(cfg, "ease_min_s", 0.3) and w_tr is not None and f_tr is not None:
         new = r.speed_limit if r.level >= 2 else None
         settled = w_tr.speed < 0.3 or r.closing_speed < -0.3      # he stopped for the alert, or they separate
+        if getattr(cfg, "ease_on_leave", False) and getattr(st, "sent_stop", None) is not None \
+                and getattr(r, "stop_at", None) is None:
+            settled = True                         # he has left the truck's path: its stop point can go
         if settled and getattr(r, "stop_at", None) is None and (new is None or new > st.sent_limit + 0.3):
             ev = "refresh"
             st.last_sent = now

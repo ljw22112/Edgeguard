@@ -44,11 +44,13 @@ BOUNDS_PRIORITY = {
     "env_margin": (0.0, 0.8), "env_pass_floor": (0.8, 2.8), "walk_speed": (1.0, 1.6), "pass_speed": (1.2, 2.6),
     "pass_speed_far": (1.6, 3.0), "wait_lateral": (1.8, 3.0), "aside_margin": (0.3, 1.2),
     "comply_grace": (0.8, 2.5), "env_held_floor": (1.4, 3.0), "env_held_gap": (0.3, 1.5), "ack_s": (0.3, 1.0),
+    "glide_min": (0.3, 1.5),
 }
 BOUNDS_PRIORITY["env_margin"] = (0.25, 0.8)          # covers position noise of a standing worker (audit)
 FIXED = {"default": {"env_cap": True},
          "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True,
-                      "aside_check_others": True, "env_walk_in": True, "plan_confirm": True}}
+                      "aside_check_others": True, "env_walk_in": True, "plan_confirm": True, "msg_order": True,
+                      "glide": True, "ease_on_leave": True}}
 MODE = "default"
 NAMES = list(BOUNDS)
 LO = np.array([BOUNDS[n][0] for n in NAMES])
@@ -108,6 +110,7 @@ def main():
     ap.add_argument("--init", help="start from this JSON policy file (e.g. a previous run's best) instead of site.yaml")
     ap.add_argument("--seed-base", type=int, default=10_000, help="training seeds start here (never the evaluation seeds)")
     ap.add_argument("--mode", choices=sorted(FIXED), default="default")
+    ap.add_argument("--sigma", type=float, help="initial CEM spread (share of each range)")
     ap.add_argument("--robust", action="store_true", help="train on the normal / exceptional scenario mix")
     ap.add_argument("--w-coll", type=float, help="collision penalty per collision per episode (default 0.5)")
     ap.add_argument("--start", help="JSON overrides for the start policy (on top of site.yaml)")
@@ -125,7 +128,7 @@ def main():
         start.update({k: v for k, v in (d["history"][-1]["best_policy"] if "history" in d else d).items() if k in BOUNDS})
     z0 = np.array([(min(max(start[k], lo), hi) - lo) / (hi - lo) for k, (lo, hi) in BOUNDS.items()])
     print("start policy:", to_over(z0), flush=True)
-    mu, sigma = z0.copy(), np.full(len(NAMES), 0.12 if a.init else 0.18)
+    mu, sigma = z0.copy(), np.full(len(NAMES), a.sigma if a.sigma else (0.12 if a.init else 0.18))
     rng = np.random.default_rng(1)
     n = os.cpu_count() or 1
     hist = []

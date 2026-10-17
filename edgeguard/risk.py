@@ -77,6 +77,9 @@ class RiskConfig:
     env_react: float = 0.6         # s from MEC decision to brakes acting (radio + actuator)
     # --- prompt ease (sim/efficiency_audit.py: limits outlived the conflict by the refresh / clear hold) ---
     prompt_ease: bool = False      # a looser truck limit is sent at once once the worker stopped or they separate
+    glide: bool = False            # a worker stepping out of the path: the truck rolls slowly to arrive when he is out
+    glide_min: float = 0.5         # m/s: slowest glide speed
+    ease_on_leave: bool = False    # lift a stop point as soon as the worker has left the path (not when he stands)
     ease_min_s: float = 0.3        # s: at most one easing message per pair this often
     # --- truck priority: the worker yields, the truck keeps its speed within its stopping envelope ---------
     truck_priority: bool = False   # WARNING limits the truck only to the envelope (DANGER and "worker first" keep theirs)

@@ -38,7 +38,7 @@ def categorize(reason):
 def episode(args):
     seed, n_w, n_f, over = args
     tr = []
-    res = run_episode(seed, n_w, n_f, over=over, trace=tr)
+    res = run_episode(seed, n_w, n_f, over=over, trace=tr, d2d=True)
     reason_of = {}                                  # (forklift, worker) -> reason of the last delivered alert
     lost = Counter()
     for e in tr:
