@@ -67,6 +67,7 @@ class RiskConfig:
     pass_speed_far: float = 2.0    # m/s: passing a standing worker whose distance from the truck's path is
     pass_margin: float = 1.0       # at least r_safe + pass_margin (closer: pass_speed)
     aside_margin: float = 0.8      # m: STEP ASIDE takes the worker to r_safe + aside_margin from the truck's path
+    aside_reach: float = 0.3       # m beyond r_safe from the truck's predicted path that still counts as "on it"
     aside_still_s: float = 0.0     # s a worker must have been slow (< 0.5 m/s) before he is told to STEP ASIDE
     aside_check_others: bool = False  # STEP ASIDE only to a side that is clear of the other trucks
     aside_hold_speed: float = 0.0  # m/s: the truck may creep this fast while he steps aside, if > 5 m away
@@ -86,6 +87,8 @@ class RiskConfig:
     env_detect: float = 0.7        # s: a standing person who starts walking is noticed this late
     env_margin: float = 0.3        # m: stop this much short of r_safe from a person in the path
     env_pass_floor: float = 1.0    # m/s: a truck may always pass a person beside its path this fast
+    go_unknown_worst: bool = False # GO check with an unknown walking direction: assume he walks at the truck's path
+    env_buzz_walker: bool = False  # the envelope alert buzzes a worker who walks towards the truck (not quiet)
     env_walk_in: bool = False      # a worker walking into the path is a stop point at its middle, not where he is
     env_held_floor: float = 0.0    # m/s: pass a waiting worker standing within env_held_gap of the path no faster
     env_held_gap: float = 1.0      # m beyond r_safe

@@ -86,7 +86,7 @@ def _aside_vector(wpos, f_tr, f_speed, cfg, horizon=5.0, others=()):
     best = min(range(len(pts)), key=lambda i: math.hypot(wpos[0] - pts[i][0], wpos[1] - pts[i][1]))
     px, py = pts[best]
     d = math.hypot(wpos[0] - px, wpos[1] - py)
-    if d >= cfg.r_safe + 0.3:
+    if d >= cfg.r_safe + getattr(cfg, "aside_reach", 0.3):
         return None
     qx, qy = pts[min(best + 1, len(pts) - 1)] if best + 1 < len(pts) else pts[best - 1]
     tx, ty = qx - px, qy - py                                   # path direction there
@@ -286,12 +286,26 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             return "aside", {r.worker: {"aside": side, "vibrate": True, "new": new}}
     go_blocked = worker_first = stepping = by_other = False
     walk = _walking(st.intent, cfg)
+    if walk is None and getattr(cfg, "go_unknown_worst", False) and st.level >= 2 and w_tr is not None \
+            and f_tr is not None and abs(f_tr.speed) > 0.2:
+        # where he wants to go is not known (he stood, or stepped aside): GO only if walking straight at the
+        # truck's path would be safe too
+        vx, vy = f_tr.vel
+        vn = math.hypot(vx, vy) or 1.0
+        ux, uy = vx / vn, vy / vn
+        dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+        side = 1.0 if (-dx * uy + dy * ux) > 0 else -1.0
+        ws = getattr(cfg, "walk_speed", 1.3)
+        walk = (side * uy * ws, -side * ux * ws)               # towards the path line
+        if st.intent is None:
+            st.intent_guess = True
     # both stopped close together and we do not know where he wants to go: releasing both at once is
     # how a standoff turns into a collision, so treat it as unsafe and let one go first
     standoff = (getattr(cfg, "standoff_unknown", False) and st.intent is None and w_tr is not None and f_tr is not None
                 and abs(f_tr.speed) <= 0.2 and st.f_speed is not None
                 and math.hypot(w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]) < cfg.r_safe + 3.0)
-    if (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and (st.intent is not None or standoff)
+    guess = walk is not None and st.intent is None
+    if (getattr(cfg, "go_check", False) and r.level < 2 and st.level >= 2 and (st.intent is not None or standoff or guess)
             and w_tr is not None and f_tr is not None and (f_tr.speed > 0.2 or st.f_speed)
             and (w_tr.speed < 0.5 or st.aside_sent)          # waiting, or still stepping aside
             and (standoff or not go_safe(w_tr.pos, walk, f_tr, cfg, st.f_speed))):
@@ -361,6 +375,9 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             r.speed_limit = round(max(lim, 0.0), 2)
             r.speed_scale = round(r.speed_limit / max(abs(f_tr.speed), 1e-6), 2)
             r.hold = r.quiet = True
+            if getattr(cfg, "env_buzz_walker", False) and w_tr is not None and w_tr.speed > 0.5 \
+                    and r.closing_speed > 0.3:
+                r.quiet = False                    # he walks towards the truck: tell him to WAIT (he yields)
             if stop:
                 r.stop_at = stop[0]
     if getattr(cfg, "truck_priority", False) and r.level >= 2 and r.level < 3 and f_tr is not None and w_tr is not None \

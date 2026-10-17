@@ -94,7 +94,7 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ### Against what sites use today ([details](docs/site-compare.md))
 
-Same simulated floor and the same 300 test episodes for every system (8 workers, 4 forklifts, 1,066 conflicts, nobody looking out). EdgeGuard runs its learned policy; the test episodes were never used to train or pick it:
+Same simulated floor and the same 300 test episodes for every system (8 workers, 4 forklifts, 1,066 conflicts, nobody looking out). The test episodes were never used to train or pick EdgeGuard's policy:
 
 | | Collisions | Forklift throughput | Alarms per forklift-hour |
 |---|---|---|---|
@@ -102,9 +102,10 @@ Same simulated floor and the same 300 test episodes for every system (8 workers,
 | Speed zoning 5 km/h | 633 | 75 % | 0 |
 | UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,353 |
 | UWB proximity alarm, 4 m / 2 m zones | 12 | 61 % | 932 |
-| **EdgeGuard (learned policy)** | **0** | **89 %** | **251** |
+| EdgeGuard, previous policy | 1 | 91 % | 233 |
+| **EdgeGuard (robust policy)** | **0** | **97 %** | **249** |
 
-As safe as the wide proximity alarm with +85 % throughput and 81 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +48 % throughput. Learning moved EdgeGuard from 1 collision and 86.6 % to 0 and 89.4 % on the same test episodes ([how](docs/site-compare.md#how-the-policy-was-learned-simtrain_multipy)).
+As safe as the wide proximity alarm with 2.0 x the throughput and 82 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +60 % throughput. The worker yields and the truck brakes for **stop points** on its own; under bad network, MEC restart, low compliance, noisy UWB and a dense floor the robust policy had 1 collision in 1,200 test episodes (previous policy 3) and was 5-9 points faster in every condition ([robustness](docs/robustness.md)).
 
 ![EdgeGuard vs site practice](docs/img/site_compare.png)
 
@@ -212,6 +213,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 |---|---|
 | [Risk engine and evaluation](docs/risk-and-evaluation.md) | v1.2 many-to-many · standoff resolution · stepping aside · false alarms; v1.1 WAIT/GO; collision-course test; comparison experiments; LSTM; policy learning |
 | [Resilience](docs/resilience.md) | graceful degradation (v0.8), D2D cooperation (v0.9), HA (v1.0), scale · restart · server hardening |
+| [Comparison with site practice](docs/site-compare.md) · [Robustness](docs/robustness.md) | EdgeGuard vs speed zoning and UWB proximity alarms; 8 normal / exceptional scenarios; truck priority, stop points, emergency brake |
 | [Site features](docs/site-features.md) | blind corners, D2D authentication, monitoring, near-miss analysis, camera, access control, dashboard · reports |
 | [Deployment](docs/deployment.md) | Compose stack, local demo, deployment architecture (measured), oneM2M resource tree, firmware · CI |
 | [ETSI MEC integration · Sandbox](docs/mec-sandbox.md) | MEC API integration, live public Sandbox, self-hosted Sandbox ([setup](deploy/sandbox-host/README.md)) |
