@@ -105,15 +105,15 @@ risk:
   m_caution: 1.0
   horizon: 5.0
   # learned policy (sim/train_multi.py, see below); the previous one is in results/policy_previous.json
-  t_warn: 4.88
-  t_danger: 1.53
+  t_warn: 4.927
+  t_danger: 1.684
   m_warn: 0.148
-  worker_react: 0.832
-  brake_decel: 2.637
+  worker_react: 0.841
+  brake_decel: 2.57
   brake_margin: 1.011
   lane_lookahead: 3.571
-  pass_speed: 1.897
-  clear_hold: 1.327
+  pass_speed: 1.884
+  clear_hold: 1.199
   stand_speed: 0.577
   # worker WAIT until GO (edgeguard/worker_cue.py): keep the tag's WAIT alive while the alert is on,
   # and do not let a waiting worker go while walking on would cross the forklift (docs/risk-and-evaluation.md)
@@ -133,20 +133,21 @@ risk:
   # ASIDE), the truck keeps its speed inside its stopping envelope and brakes for stop points on its own; the
   # MEC app re-sends plans the truck does not report applying; devices drop overtaken messages.  Values from
   # sim/train_multi.py --mode priority --robust (training seeds 80000+, normal and exceptional scenarios),
-  # picked with no collision on validation seeds 7000+ / 9000+ (results/policy_robust.json).
-  env_react: 0.515
-  env_lateral: 2.96
-  env_detect: 0.703
-  env_margin: 0.505
-  env_pass_floor: 2.239
-  walk_speed: 1.205
-  pass_speed_far: 1.765
-  wait_lateral: 2.019
-  aside_margin: 1.081
-  comply_grace: 0.983
-  env_held_floor: 2.058
-  env_held_gap: 0.59
-  ack_s: 0.339
+  # picked with no collision on validation seeds 7000+ / 9000+, refined with glide (training seeds 90000+, validation
+  # 13000+ / 15000+; results/policy_robust.json, v1 in results/policy_robust_v1.json).
+  env_react: 0.503
+  env_lateral: 2.933
+  env_detect: 0.766
+  env_margin: 0.458
+  env_pass_floor: 2.192
+  walk_speed: 1.215
+  pass_speed_far: 1.74
+  wait_lateral: 2.047
+  aside_margin: 1.13
+  comply_grace: 1.098
+  env_held_floor: 1.978
+  env_held_gap: 0.485
+  ack_s: 0.383
   env_cap: true
   truck_priority: true
   env_v2: true
@@ -157,6 +158,9 @@ risk:
   env_walk_in: true
   plan_confirm: true
   msg_order: true
+  glide_min: 0.461
+  glide: true
+  ease_on_leave: true
 
 # Adaptive reporting rate (edgeguard/rate_control.py): devices with no counterpart close or
 # closing in report at 2 Hz, the rest at 10 Hz; commands go to <ae>/control.  On by default:

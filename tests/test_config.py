@@ -14,7 +14,7 @@ def test_overrides_deep_merge(tmp_path, monkeypatch):
     cfg = config.load(os.path.join(ROOT, "config", "site.yaml"))
     assert cfg["cse"]["base_url"] == "http://mobius:7579"
     assert cfg["cse"]["origin"] == "SEdgeGuard"                 # untouched keys survive
-    assert cfg["risk"]["t_warn"] == 4.88 and cfg["risk"]["truck_priority"] is True   # robust policy (sim/train_multi.py)
+    assert cfg["risk"]["truck_priority"] is True and cfg["risk"]["glide"] is True   # robust policy (sim/train_multi.py)
 
 
 def test_compose_overrides_only_change_deployment_keys():

@@ -1,0 +1,33 @@
+{
+ "note": "robust policy v1 (truck priority, before glide): config/site.yaml until 2026-10-18",
+ "policy": {
+  "t_warn": 4.88,
+  "t_danger": 1.53,
+  "clear_hold": 1.327,
+  "worker_react": 0.832,
+  "brake_decel": 2.637,
+  "env_react": 0.515,
+  "env_lateral": 2.96,
+  "env_detect": 0.703,
+  "env_margin": 0.505,
+  "env_pass_floor": 2.239,
+  "walk_speed": 1.205,
+  "pass_speed": 1.897,
+  "pass_speed_far": 1.765,
+  "wait_lateral": 2.019,
+  "aside_margin": 1.081,
+  "comply_grace": 0.983,
+  "env_held_floor": 2.058,
+  "env_held_gap": 0.59,
+  "ack_s": 0.339,
+  "env_cap": true,
+  "truck_priority": true,
+  "env_v2": true,
+  "stop_point": true,
+  "prompt_ease": true,
+  "aside_check_others": true,
+  "env_walk_in": true,
+  "plan_confirm": true,
+  "msg_order": true
+ }
+}
