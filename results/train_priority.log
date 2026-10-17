@@ -6,3 +6,4 @@ gen 3: best {'score': 0.94667, 'throughput': 0.986, 'worker_lost_s': 2.516, 'col
 gen 4: best {'score': 0.96177, 'throughput': 0.995, 'worker_lost_s': 2.911, 'collisions': 0, 'near': 5, 'episodes': 60}  (reference 0.95878, thr 0.9881, coll 0, near 3)  731 s
 gen 5: best {'score': 0.96154, 'throughput': 0.9885, 'worker_lost_s': 2.117, 'collisions': 0, 'near': 7, 'episodes': 60}  (reference 0.94638, thr 0.9855, coll 1, near 9)  873 s
 gen 6: best {'score': 0.9594, 'throughput': 0.9892, 'worker_lost_s': 2.564, 'collisions': 0, 'near': 5, 'episodes': 60}  (reference 0.95841, thr 0.9882, coll 0, near 2)  1023 s
+gen 7: best {'score': 0.95568, 'throughput': 0.9848, 'worker_lost_s': 2.496, 'collisions': 0, 'near': 5, 'episodes': 60}  (reference 0.93055, thr 0.9791, coll 2, near 8)  1167 s
