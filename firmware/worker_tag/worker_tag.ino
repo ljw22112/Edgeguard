@@ -396,8 +396,9 @@ void loop() {
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
   float tc = nowS();
   bool local = millis() < vibrateUntil;
-  digitalWrite(MOTOR_PIN, local || waitCue.motor(tc));
-  digitalWrite(LED_PIN, local || waitCue.led(tc));
+  bool keep = peerGuard.truckNear(tc);              // MEC silent and a truck close (D2D): do not show GO by itself
+  digitalWrite(MOTOR_PIN, local || waitCue.motor(tc, keep));
+  digitalWrite(LED_PIN, local || waitCue.led(tc, keep));
   postAck(waitCue.led(tc) ? (asideCue ? "STEP ASIDE" : "WAIT") : "GO");
   if (!HIL_MODE && millis() - lastPublish >= reportRate.periodMs(millis() / 1000.0f)) {
     lastPublish = millis();

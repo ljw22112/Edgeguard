@@ -27,6 +27,7 @@ namespace policy {
 const float ALERT_STALE_S = 5.0f;
 const float SILENCE_S = 1.3f;
 const float STOP_AFTER_S = 2.0f;
+const float LOCAL_RECOVER_S = 1.5f;      // local rule stays on after a silence (restarted MEC app re-raising)
 const float RATE_FAILSAFE_S = 6.0f;
 const float FULL_HZ = 10.0f;
 const float NO_LIMIT = -1.0f;            // "no limit" (a limit is always >= 0)
@@ -145,12 +146,18 @@ struct ForkliftLimit {
   void onRange(double t, int tag, double d) { local.onRange(t, tag, d); }
   void onOwnState(double t, double x, double y, double vx, double vy) { local.onOwnState(t, x, y, vx, vy); }
   void onPeerState(double t, int tag, double x, double y, double vx, double vy) { local.onPeerState(t, tag, x, y, vx, vy); }
+  float recoverUntil = -1e9f;
   bool mecSilent(double t) const { return t - hbT > LOCAL_AFTER_S; }
+  bool recovering(double t) const { return t < recoverUntil; }
+  void mark(float t) { if ((double)t - hbT > LOCAL_AFTER_S + 1e-3 && hbT > -1e8f) recoverUntil = t + LOCAL_RECOVER_S; }
   // worker tag side: vibrate when the local rule says stop
-  bool vibrateLocal(double t) const { return localTtc && mecSilent(t) && local.cap(t, true, coop) == 0.0; }
+  bool vibrateLocal(double t) const { return localTtc && (mecSilent(t) || recovering(t)) && local.cap(t, true, coop) == 0.0; }
+  // worker tag side: a truck that would have to slow or stop for this worker (keeps a WAIT through silence)
+  bool truckNear(double t) const { return localTtc && local.cap(t, true, coop) >= 0; }
 
   // clear = the pair cleared; src = the worker the alert is about
   void onAlert(float t, bool clear, float lim, const char* src = "", bool hasStop = false, float sx = 0, float sy = 0) {
+    mark(t);
     hbT = t;                             // any MEC message proves it is alive
     int i = find(src);
     if (clear || (lim < 0 && !hasStop)) { if (i >= 0) pairs[i].used = false; return; }
@@ -188,12 +195,12 @@ struct ForkliftLimit {
     for (const Pair& p : pairs) if (p.used && p.limit >= 0 && (m < 0 || p.limit < m)) m = p.limit;
     return m;
   }
-  void onHeartbeat(float t) { hbT = t; }
+  void onHeartbeat(float t) { mark(t); hbT = t; }
 
   // effective limit in m/s, or NO_LIMIT
   float effective(float t) {
     float held = heldLimit(t);
-    if (localTtc && mecSilent(t)) {
+    if (localTtc && (mecSilent(t) || recovering(t))) {
       double c = local.cap(t, true, coop);
       if (c >= 0) return (held < 0 || (float)c < held) ? (float)c : held;
     }

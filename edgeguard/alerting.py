@@ -197,6 +197,10 @@ def _envelope_v2(w_tr, f_tr, cfg, held=False, out_stop=None):
     rs = cfg.r_safe
     if ahead <= -rs or ahead > 20.0 or lat > cfg.env_lateral:
         return None
+    wvx, wvy = w_tr.vel
+    toward = -(wvx * -uy + wvy * ux) * (1.0 if lat_s > 0 else -1.0)      # his speed towards the path line
+    if getattr(cfg, "env_walk_in", False) and toward > 0.3 and lat < rs + 1.0:
+        lat = 0.0                                            # walking into the path: stop short of its middle
     if lat < rs:                                             # in the path
         if ahead <= 0:
             return 0.0                                       # beside the front of the truck: do not move
@@ -211,8 +215,6 @@ def _envelope_v2(w_tr, f_tr, cfg, held=False, out_stop=None):
         if hf > 0 and lat - rs < getattr(cfg, "env_held_gap", 1.0) and 0 < ahead and hf < sp:
             return hf
         return None
-    wvx, wvy = w_tr.vel
-    toward = -(wvx * -uy + wvy * ux) * (1.0 if lat_s > 0 else -1.0)      # his speed towards the path line
     if toward > 0.3:
         t_reach = (lat - rs) / toward
     else:

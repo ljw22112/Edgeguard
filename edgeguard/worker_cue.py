@@ -9,7 +9,8 @@ state while an alert is active and shows GO when the MEC app says the way is cle
   raise / refresh / wait        -> stay in WAIT (the MEC app re-sends `wait` every second)
   aside                         -> STEP ASIDE to the lane edge, then WAIT there (long burst)
   clear / release               -> GO: LED off, two short pulses
-  no message for HOLD_IDLE_S    -> GO by itself (lost clear, MEC app silent: never pin people)
+  no message for HOLD_IDLE_S    -> GO by itself (lost clear, MEC app silent: never pin people) - unless the
+                                   tag's own D2D rule sees a truck close (keep=True), then up to HOLD_MAX_S
 
 Each forklift holds the worker separately (key = forklift id): a clear from one forklift does
 not send the worker into the path of another one that still makes him wait.
@@ -17,6 +18,7 @@ not send the worker into the path of another one that still makes him wait.
 from __future__ import annotations
 
 HOLD_IDLE_S = 2.5
+HOLD_MAX_S = 10.0                              # longest WAIT kept through MEC silence for a near truck
 PULSE_PERIOD_S, PULSE_ON_S = 1.0, 0.15
 GO_PULSES = ((0.0, 0.08), (0.16, 0.24))       # (on, off) offsets after GO, seconds
 MAX_HOLDS = 4                                  # forklifts tracked at once (firmware array size)
@@ -58,16 +60,19 @@ class WaitCue:
             self.holds[key] = t + HOLD_IDLE_S
             self.burst_until = t + (1.5 if danger else 0.6)
 
-    def tick(self, t):
+    def tick(self, t, keep=False):
         for k in [k for k, u in self.holds.items() if t >= u]:   # nothing heard: give up that hold
-            self._drop(t, k)
+            if keep and t - self.since < HOLD_MAX_S:
+                self.holds[k] = t + 0.2                      # a truck is near (D2D): keep waiting for now
+            else:
+                self._drop(t, k)
 
-    def led(self, t):
-        self.tick(t)
+    def led(self, t, keep=False):
+        self.tick(t, keep)
         return self.waiting
 
-    def motor(self, t):
-        self.tick(t)
+    def motor(self, t, keep=False):
+        self.tick(t, keep)
         if t < self.burst_until:
             return True
         if self.waiting:

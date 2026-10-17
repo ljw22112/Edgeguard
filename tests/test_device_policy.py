@@ -59,7 +59,10 @@ def test_local_fallback_only_while_mec_silent():
     assert fl.effective(3.0) == 0.0                      # silent 3 s, 2.5 m and closing: stop
     assert fl.vibrate_local(3.0)
     fl.on_heartbeat(3.1)
-    assert fl.effective(3.2) is None                     # heard again: back to the MEC plan
+    assert fl.effective(3.2) == 0.0                      # heard again, but a restarted MEC app has not
+                                                         # re-raised its alerts yet: local rule LOCAL_RECOVER_S
+    fl.on_heartbeat(4.5)
+    assert fl.effective(4.7) is None                     # recovered: back to the MEC plan
 
 
 def test_local_fallback_ttc_slows_before_the_zone():

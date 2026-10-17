@@ -107,7 +107,10 @@ UNNEEDED_M = 4.0           # an alarm for a pair that would not have come closer
 
 
 def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstacles=True, min_move=None, over=None,
-                trace=None, system="edgeguard", attentive=False):
+                trace=None, system="edgeguard", attentive=False, stress=None, d2d=False):
+    """d2d: the devices also broadcast their state peer to peer (ESP-NOW / sidelink, 10 Hz, 25 m, 5 % loss) and
+    apply the cooperative local rule while the MEC app is silent (edgeguard/device_policy.py, mode "coop") -
+    trucks on the closest point of approach, tags vibrate their worker."""
     """trace: a list that receives, for analysis (sim/collision_audit.py), every alert sent / delivered and
     a per-step snapshot of each worker-forklift pair closer than 8 m."""
     rng = random.Random(seed)
@@ -124,6 +127,22 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     times = _times()
     lat_ms, jit_ms = rng.uniform(40, 220), rng.uniform(5, 40)
     up_loss, down_loss, noise = rng.uniform(0, 0.2), rng.uniform(0, 0.1), rng.uniform(0.1, 0.35)
+    # stress scenarios (sim/robust_eval.py): the same episode under worse conditions; drawn from their own
+    # generator so the floor, the people and the trucks stay those of the normal episode
+    stress = stress or {}
+    srng = random.Random(seed ^ 0x57E55)
+    if "lat_ms" in stress:
+        lat_ms, jit_ms = srng.uniform(*stress["lat_ms"]), srng.uniform(*stress.get("jit_ms", (5, 40)))
+    if "up_loss" in stress:
+        up_loss = srng.uniform(*stress["up_loss"])
+    if "down_loss" in stress:
+        down_loss = srng.uniform(*stress["down_loss"])
+    if "noise" in stress:
+        noise = srng.uniform(*stress["noise"])
+    mec_down = None
+    if "mec_down_s" in stress:                 # the MEC app is silent (restart / host fault) for this long
+        t0 = srng.uniform(3.0, 15.0)
+        mec_down = (t0, t0 + stress["mec_down_s"])
     wp = {f"w{i}": _worker(rng, times) for i in range(n_w)}
     fp = {f"f{j}": _forklift(rng, times) for j in range(n_f)}
     movers = {k: Mover(k, "worker", Path(p)) for k, p in wp.items()}
@@ -134,6 +153,9 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     nominal = {(w, f): min(math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(wp[w], fp[f][0]))
                for w in wp for f in fp}
     engine = RiskEngine(cfg, "guidance_ctrv")
+    from edgeguard.device_policy import ForkliftLimit as _FL
+    tags = {w: _FL("coop") for w in wp} if d2d and system == "edgeguard" else {}
+    drng = random.Random(seed ^ 0xD2D)
     states, pending, actual = {}, [], {k: 1e9 for k in nominal}
     last_hb = -1e9
     alarms = {"total": 0, "unneeded": 0}
@@ -151,12 +173,17 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                               "acts": (acts.get(to) or {}), "reason": why[0] if why else None})
             if ev == "hb":
                 m.pending.append((t, "hb", None, ""))
+                for w in tags:                         # the heartbeat on <ae>/control reaches the tags too
+                    if drng.random() >= down_loss:
+                        tags[w].on_heartbeat(t)
             elif m.kind == "forklift":
                 fa = acts.get(to) or {}
                 m.on_alert(t, ev, fa.get("speed_limit"), src=key(other), stop_at=fa.get("stop_at"))
             else:
                 wa = acts.get(to) or {}
                 m.on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), rng=rng, src=key(other))
+                if to in tags:
+                    tags[to].on_heartbeat(t)           # any MEC message proves it is alive
         pending = keep
         if see_obstacles:                      # nobody walks into a truck standing right in front of him
             for w in wp:
@@ -218,6 +245,41 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                                 alarms["total"] += 1
                                 alarms["unneeded"] += nominal[(w, f)] > UNNEEDED_M
                                 movers[w].on_alert(t, "raise", vibrate=True, rng=rng, src=f)
+        if tags:                               # D2D state broadcast and the local rule while MEC is silent
+            st_f = {}
+            for f in fp:
+                mf = movers[f]
+                smp = mf.sample()
+                x, y = mf.pos()
+                st_f[f] = (x + drng.gauss(0, noise), y + drng.gauss(0, noise),
+                           smp["speed"] * math.cos(smp["heading"]), smp["speed"] * math.sin(smp["heading"]))
+                mf.fl.on_own_state(t, *st_f[f])
+            for w in wp:
+                mw = movers[w]
+                x, y = mw.pos()
+                wv = 0.0 if (mw.stop_from <= t < mw.stop_until) or mw.blocked else mw.v
+                (px, py) = mw.path.pos(min(mw.path.end, mw.s + 0.1))
+                (qx, qy) = mw.path.pos(mw.s)
+                un = math.hypot(px - qx, py - qy) or 1.0
+                sw = (x + drng.gauss(0, noise), y + drng.gauss(0, noise),
+                      wv * (px - qx) / un + drng.gauss(0, 0.1), wv * (py - qy) / un + drng.gauss(0, 0.1))
+                tags[w].on_own_state(t, *sw)
+                for f in fp:
+                    xf, yf = movers[f].pos()
+                    if math.hypot(x - xf, y - yf) > 25.0:
+                        continue
+                    if drng.random() >= 0.05:
+                        movers[f].fl.on_peer_state(t, w, *sw)
+                    if drng.random() >= 0.05:
+                        tags[w].on_peer_state(t, f, *st_f[f])
+                if tags[w].vibrate_local(t):
+                    mw.on_alert(t, "local", vibrate=True)
+                live = {k: u for k, u in mw.holds.items() if u > t}
+                if live and t - mw.stop_from < 10.0 and tags[w].truck_near(t):   # WaitCue keep (HOLD_MAX_S)
+                    for k, u in live.items():
+                        if u < t + 0.2:
+                            mw.holds[k] = t + 0.2
+                    mw.stop_until = max(mw.stop_until, t + 0.2)
         for m in movers.values():
             m.step(t, DT)
         if trace is not None:
@@ -250,6 +312,10 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                               heading=smp["heading"] + rng.gauss(0, 0.035), yaw_rate=smp["yaw_rate"])
         if t < 0.5 or system != "edgeguard":
             continue
+
+        if mec_down and mec_down[0] <= t < mec_down[1]:
+            states.clear()                     # restarted MEC app: no memory of the alerts it had sent
+            continue                           # MEC app silent: no alerts, no heartbeats
 
         def send(ev, acts, to, other, reason=None):
             lost = rng.random() < down_loss

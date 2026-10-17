@@ -8,6 +8,7 @@
 
 namespace cue {
 
+constexpr float HOLD_MAX_S = 10.0f;   // longest WAIT kept through MEC silence while a truck is near (D2D)
 constexpr float HOLD_IDLE_S = 2.5f, PULSE_PERIOD_S = 1.0f, PULSE_ON_S = 0.15f;
 constexpr int MAX_HOLDS = 4;
 
@@ -49,10 +50,15 @@ struct WaitCue {
       burstUntil = t + (danger ? 1.5f : 0.6f);
     }
   }
-  void tick(float t) { for (int i = 0; i < MAX_HOLDS; i++) if (holds[i].used && t >= holds[i].until) drop(t, i); }
-  bool led(float t) { tick(t); return waiting(); }
-  bool motor(float t) {
-    tick(t);
+  // keep: the tag's D2D rule sees a truck close - a hold that heard nothing is kept (up to HOLD_MAX_S)
+  void tick(float t, bool keep = false) {
+    for (int i = 0; i < MAX_HOLDS; i++) if (holds[i].used && t >= holds[i].until) {
+      if (keep && t - since < HOLD_MAX_S) holds[i].until = t + 0.2f; else drop(t, i);
+    }
+  }
+  bool led(float t, bool keep = false) { tick(t, keep); return waiting(); }
+  bool motor(float t, bool keep = false) {
+    tick(t, keep);
     if (t < burstUntil) return true;
     if (waiting()) return std::fmod(t - since, PULSE_PERIOD_S) < PULSE_ON_S;
     if (goAt >= 0) { float d = t - goAt; return (d >= 0 && d < 0.08f) || (d >= 0.16f && d < 0.24f); }

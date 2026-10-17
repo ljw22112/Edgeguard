@@ -71,6 +71,9 @@ CPA_HORIZON_S = 5.0
 CPA_STOP_S, CPA_STOP_D_M = 2.5, 2.0
 CPA_SLOW_S, CPA_SLOW_D_M = 4.5, 3.0
 LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
+LOCAL_RECOVER_S = 1.5    # the local rule stays on this long after a silence ends: a restarted MEC app has lost
+                         # its alert state and needs a moment to raise the alerts again (sim/robust_eval.py)
+HOLD_MAX_S = 10.0        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0
@@ -89,6 +92,8 @@ class ForkliftLimit:
         self.own = None                                # (t, x, y, vx, vy) this device (coop)
         self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
         self.stops = {}                                # worker -> ((x, y) stop point, t)
+        self.recover = True                            # local rule also during LOCAL_RECOVER_S after a silence
+        self.recover_until = -1e9
         self.pose = None
 
     def on_own_state(self, t, x, y, vx, vy):
@@ -173,6 +178,7 @@ class ForkliftLimit:
     def on_alert(self, t, event, limit, src="", stop_at=None):
         """src: the worker the alert is about.  Each pair keeps its own limit and the tightest
         one applies, so a `clear` for one worker does not lift the limit another worker needs."""
+        self._mark(t)
         self.hb_t = t                                  # any MEC message proves it is alive
         if event in ("wait", "release", "aside"):      # worker-only cues: the speed limit stays
             return
@@ -213,14 +219,27 @@ class ForkliftLimit:
         return min((v for v, _ in self.limits.values()), default=None)
 
     def on_heartbeat(self, t):
+        self._mark(t)
         self.hb_t = t
+
+    def _mark(self, t):
+        """Remember when a silence long enough for the local rule ended (LOCAL_RECOVER_S)."""
+        if t - self.hb_t > LOCAL_AFTER_S + 1e-3 and self.hb_t > -1e8:      # 1e-3: same result as float32
+            self.recover_until = t + LOCAL_RECOVER_S
+
+    def recovering(self, t):
+        return t < getattr(self, "recover_until", -1e9)
+
+    def truck_near(self, t):
+        """Worker-tag side: the local rule sees a truck that would have to slow or stop for this worker."""
+        return self.local_mode() and self.local_limit(t) is not None
 
     def mec_silent(self, t):
         return t - self.hb_t > LOCAL_AFTER_S
 
     def vibrate_local(self, t):
         """Worker-tag side of the local fallback: vibrate when the rule says stop."""
-        return self.local_mode() and self.mec_silent(t) and self.local_limit(t) == 0.0
+        return self.local_mode() and (self.mec_silent(t) or self.recovering(t)) and self.local_limit(t) == 0.0
 
     def local_mode(self):
         return self.mode.startswith("failsafe_local") or self.mode.startswith("coop")
@@ -229,7 +248,7 @@ class ForkliftLimit:
         if self.mode == "halt_on_silence" and t - self.hb_t > STOP_AFTER_S:
             return 0.0                                 # reference only: every truck stops
         held = self._held(t)
-        if self.local_mode() and t - self.hb_t > LOCAL_AFTER_S:
+        if self.local_mode() and (t - self.hb_t > LOCAL_AFTER_S or (self.recover and self.recovering(t))):
             loc = self.local_limit(t)
             if loc is not None:
                 return loc if held is None else min(held, loc)

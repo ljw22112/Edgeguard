@@ -85,6 +85,7 @@ class RiskConfig:
     env_detect: float = 0.7        # s: a standing person who starts walking is noticed this late
     env_margin: float = 0.3        # m: stop this much short of r_safe from a person in the path
     env_pass_floor: float = 1.0    # m/s: a truck may always pass a person beside its path this fast
+    env_walk_in: bool = False      # a worker walking into the path is a stop point at its middle, not where he is
     env_held_floor: float = 0.0    # m/s: pass a waiting worker standing within env_held_gap of the path no faster
     env_held_gap: float = 1.0      # m beyond r_safe
     stop_point: bool = False       # send a person in the path as a stop point the module brakes for itself
