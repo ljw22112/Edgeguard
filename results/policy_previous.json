@@ -1,0 +1,31 @@
+{
+ "note": "learned policy before truck priority (2026-10-17 morning): config/site.yaml risk block",
+ "policy": {
+  "r_safe": 1.5,
+  "t_caution": 5.0,
+  "m_caution": 1.0,
+  "horizon": 5.0,
+  "t_warn": 4.926,
+  "t_danger": 1.513,
+  "m_warn": 0.148,
+  "worker_react": 0.723,
+  "brake_decel": 2.47,
+  "brake_margin": 1.011,
+  "lane_lookahead": 3.571,
+  "pass_speed": 1.694,
+  "clear_hold": 1.595,
+  "stand_speed": 0.577,
+  "wait_keepalive": true,
+  "go_check": true,
+  "min_move": 0.3,
+  "aside_cue": true,
+  "still_speed": 0.4,
+  "pass_speed_far": 1.865,
+  "pass_margin": 0.708,
+  "wait_lateral": 2.355,
+  "walk_speed": 1.28,
+  "env_cap": true,
+  "env_lateral": 1.95,
+  "env_react": 0.616
+ }
+}

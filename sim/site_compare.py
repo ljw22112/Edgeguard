@@ -12,7 +12,9 @@ everyone starting at random times).  Systems (sources in docs/site-compare.md):
   edgeguard   this project: collision-course prediction on the MEC host, WAIT / GO / STEP ASIDE, per-pair
               speed plans, GO check, D2D fall-back
 Two crews: "inattentive" (nobody looks: what the system alone prevents) and "attentive driver" (the driver
-brakes for a person right in front after a 1 s reaction).  Seeds 200.. are not the ones used to tune or audit.
+brakes for a person right in front after a 1 s reaction).  Test seeds: --offset 5000 (never used to train, pick
+or audit).  "edgeguard_prev" is the policy before truck priority (results/policy_previous.json); both EdgeGuard
+rows run with the devices' D2D fall-back and emergency brake.
 """
 from __future__ import annotations
 
@@ -28,12 +30,21 @@ from sim.multi_sim import DT, T_END, run_episode                               #
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SYSTEMS = [("none", "No system"), ("speed_zone", "Speed zoning 5 km/h"), ("proximity", "UWB proximity 6/3 m"),
-           ("proximity_tight", "UWB proximity 4/2 m"), ("edgeguard", "EdgeGuard")]
+           ("proximity_tight", "UWB proximity 4/2 m"), ("edgeguard_prev", "EdgeGuard (previous policy)"),
+           ("edgeguard", "EdgeGuard")]
+PREV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results", "policy_previous.json")
 CREWS = [("inattentive", False), ("attentive driver", True)]
 
 
 def job(a):
     seeds, system, attentive, n_w, n_f, comply = a
+    if system.startswith("edgeguard"):      # EdgeGuard with its devices' D2D fall-back and emergency brake
+        over = json.load(open(PREV))["policy"] if system == "edgeguard_prev" else None
+        if over is not None:                # the previous policy: its own parameters, none of the new modes
+            over = {**over, "truck_priority": False, "env_v2": False, "stop_point": False, "prompt_ease": False,
+                    "aside_check_others": False, "env_walk_in": False, "plan_confirm": False, "msg_order": False}
+        return [run_episode(s, n_w, n_f, comply=comply, system="edgeguard", attentive=attentive, over=over, d2d=True)
+                for s in seeds]
     return [run_episode(s, n_w, n_f, comply=comply, system=system, attentive=attentive) for s in seeds]
 
 
@@ -50,8 +61,8 @@ def summarize(res, n_ep, n_w, n_f):
 
 
 LABELS = {"none": "No system", "speed_zone": "Speed zoning\n5 km/h", "proximity": "UWB proximity\n6 m / 3 m",
-          "proximity_tight": "UWB proximity\n4 m / 2 m", "edgeguard": "EdgeGuard"}
-COLORS = {"none": "#9aa0a6", "speed_zone": "#c58b2c", "proximity": "#3f78b5", "proximity_tight": "#8db8e3", "edgeguard": "#e2ad00"}
+          "proximity_tight": "UWB proximity\n4 m / 2 m", "edgeguard_prev": "EdgeGuard\n(previous)", "edgeguard": "EdgeGuard"}
+COLORS = {"none": "#9aa0a6", "speed_zone": "#c58b2c", "proximity": "#3f78b5", "proximity_tight": "#8db8e3", "edgeguard_prev": "#f1d77a", "edgeguard": "#e2ad00"}
 
 
 def charts(out, path_png):
