@@ -69,7 +69,9 @@ Adding UWB boards (DW1000) makes positioning physical too, with the same firmwar
 | ESP32 dev board (e.g. ESP32-WROOM DevKit) | 2 | Tag · forklift module |
 | Coin vibration motor + NPN transistor (2N2222) + diode (1N4148) + 1 kΩ resistor | 1 set | Tag vibration |
 | LED + 220 Ω resistor | 2 | Tag WAIT indicator, forklift beacon |
-| Small DC motor + motor driver (L298N or MOSFET module) | 1 | Forklift drive (attach a wheel or fan so the slowdown is visible) |
+| Small DC motor + logic-level MOSFET (IRLZ44N), 100 Ω + 10 kΩ, Schottky diode (1N5819) - or an L298N | 1 | Forklift drive (attach a wheel or fan so the slowdown is visible) |
+| DWM1000 UWB module + 100 nF / 10 µF capacitors | 2 | Positioning, D2D ranging |
+| MPU-6050 breakout | 1 | Forklift yaw rate |
 | Breadboard · jumper wires · 2 power banks | — | |
 
 ## Wiring
@@ -77,6 +79,22 @@ Adding UWB boards (DW1000) makes positioning physical too, with the same firmwar
 ![Wiring of the worker tag and the forklift module](img/wiring.png)
 
 The diagram is drawn from the firmware pin constants by `tools/draw_wiring.py`.
+
+### Schematics
+
+Worker tag (ESP32 + DWM1000 UWB + vibration motor + WAIT LED):
+
+![Worker tag schematic](img/schematic_tag.png)
+
+Forklift module (ESP32 + DWM1000 UWB + MPU-6050 IMU + drive motor + beacon):
+
+![Forklift module schematic](img/schematic_forklift.png)
+
+Drawn from the firmware pin constants by [`tools/draw_schematic.py`](../tools/draw_schematic.py) (SVG next to the PNG). Notes:
+- The DWM1000 sits on the ESP32's VSPI bus (SCK 18, MISO 19, MOSI 23); IRQ goes to GPIO 34, an input-only pin. Decouple its 3.3 V pin with 100 nF + 10 µF close to the module.
+- The vibration motor is switched low-side by a 2N2222 (1 kΩ base resistor) with a 1N4148 flyback diode, cathode to 3.3 V.
+- The drive motor runs from its own 5 V supply through a logic-level MOSFET (IRLZ44N, 100 Ω gate resistor, 10 kΩ pull-down so the motor stays off while the ESP32 boots) with a 1N5819 flyback diode. All grounds are common. With an L298N instead: GPIO 27 to ENA, IN1 high, IN2 low.
+- The MPU-6050 breakout has its own I2C pull-ups; AD0 low gives address 0x68 as the firmware expects.
 
 | Board | Pin | Connection |
 |---|---|---|
