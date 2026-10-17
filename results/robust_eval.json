@@ -1,0 +1,220 @@
+{
+ "episodes": 150,
+ "seed_offset": 5000,
+ "scenarios": {
+  "normal": [
+   8,
+   4,
+   1.0,
+   false,
+   {}
+  ],
+  "comply_85": [
+   8,
+   4,
+   0.85,
+   false,
+   {}
+  ],
+  "comply_70": [
+   8,
+   4,
+   0.7,
+   false,
+   {}
+  ],
+  "bad_network": [
+   8,
+   4,
+   1.0,
+   false,
+   {
+    "lat_ms": [
+     300,
+     600
+    ],
+    "jit_ms": [
+     20,
+     80
+    ],
+    "up_loss": [
+     0.2,
+     0.4
+    ],
+    "down_loss": [
+     0.15,
+     0.3
+    ]
+   }
+  ],
+  "mec_restart": [
+   8,
+   4,
+   1.0,
+   false,
+   {
+    "mec_down_s": 2.5
+   }
+  ],
+  "noisy_uwb": [
+   8,
+   4,
+   1.0,
+   false,
+   {
+    "noise": [
+     0.35,
+     0.6
+    ]
+   }
+  ],
+  "dense": [
+   12,
+   6,
+   1.0,
+   false,
+   {}
+  ],
+  "attentive": [
+   8,
+   4,
+   1.0,
+   true,
+   {}
+  ]
+ },
+ "results": {
+  "current": {
+   "normal": {
+    "collisions": 0,
+    "close_passes": 0,
+    "conflicts": 542,
+    "throughput": 0.9663,
+    "worker_lost_s": 2.149,
+    "alarms_per_episode": 7.17
+   },
+   "comply_85": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.9466,
+    "worker_lost_s": 2.357,
+    "alarms_per_episode": 7.51
+   },
+   "comply_70": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.9077,
+    "worker_lost_s": 2.836,
+    "alarms_per_episode": 7.96
+   },
+   "bad_network": {
+    "collisions": 0,
+    "close_passes": 6,
+    "conflicts": 542,
+    "throughput": 0.908,
+    "worker_lost_s": 2.711,
+    "alarms_per_episode": 8.59
+   },
+   "mec_restart": {
+    "collisions": 0,
+    "close_passes": 8,
+    "conflicts": 542,
+    "throughput": 0.9381,
+    "worker_lost_s": 2.368,
+    "alarms_per_episode": 7.41
+   },
+   "noisy_uwb": {
+    "collisions": 1,
+    "close_passes": 4,
+    "conflicts": 542,
+    "throughput": 0.9062,
+    "worker_lost_s": 3.107,
+    "alarms_per_episode": 11.57
+   },
+   "dense": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 1262,
+    "throughput": 0.9506,
+    "worker_lost_s": 3.191,
+    "alarms_per_episode": 15.71
+   },
+   "attentive": {
+    "collisions": 0,
+    "close_passes": 0,
+    "conflicts": 542,
+    "throughput": 0.9542,
+    "worker_lost_s": 2.142,
+    "alarms_per_episode": 6.91
+   }
+  },
+  "results/policy_previous_eval.json": {
+   "normal": {
+    "collisions": 0,
+    "close_passes": 0,
+    "conflicts": 542,
+    "throughput": 0.9107,
+    "worker_lost_s": 2.464,
+    "alarms_per_episode": 6.65
+   },
+   "comply_85": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.8608,
+    "worker_lost_s": 2.765,
+    "alarms_per_episode": 6.89
+   },
+   "comply_70": {
+    "collisions": 0,
+    "close_passes": 3,
+    "conflicts": 542,
+    "throughput": 0.8215,
+    "worker_lost_s": 2.972,
+    "alarms_per_episode": 6.61
+   },
+   "bad_network": {
+    "collisions": 0,
+    "close_passes": 15,
+    "conflicts": 542,
+    "throughput": 0.8291,
+    "worker_lost_s": 3.037,
+    "alarms_per_episode": 8.06
+   },
+   "mec_restart": {
+    "collisions": 3,
+    "close_passes": 14,
+    "conflicts": 542,
+    "throughput": 0.8594,
+    "worker_lost_s": 2.592,
+    "alarms_per_episode": 7.52
+   },
+   "noisy_uwb": {
+    "collisions": 0,
+    "close_passes": 1,
+    "conflicts": 542,
+    "throughput": 0.8266,
+    "worker_lost_s": 3.436,
+    "alarms_per_episode": 11.22
+   },
+   "dense": {
+    "collisions": 0,
+    "close_passes": 6,
+    "conflicts": 1262,
+    "throughput": 0.8724,
+    "worker_lost_s": 3.514,
+    "alarms_per_episode": 14.21
+   },
+   "attentive": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.9021,
+    "worker_lost_s": 2.411,
+    "alarms_per_episode": 6.65
+   }
+  }
+ }
+}
