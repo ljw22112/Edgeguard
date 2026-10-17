@@ -1,17 +1,18 @@
 {
- "episodes": 120,
+ "episodes": 100,
  "lost_s_per_forklift_episode": {
-  "limit: worker stepping aside": 1.491,
-  "limit: pass waiting worker at walking pace": 1.425,
-  "limit: collision course": 0.993,
-  "limit: worker waits for another truck": 0.965,
-  "speeding up again": 0.768,
-  "limit: near miss predicted": 0.211,
-  "limit: worker standing in the lane ahead": 0.111,
-  "limit: clear": 0.079,
-  "limit: clear (out of reach)": 0.02,
-  "MEC silent (fail-safe)": 0.001
+  "limit: worker stepping aside": 1.443,
+  "limit: collision course": 0.989,
+  "speeding up again": 0.891,
+  "limit: worker waits for another truck": 0.686,
+  "limit: pass waiting worker at walking pace": 0.634,
+  "limit: near miss predicted": 0.129,
+  "limit: clear": 0.086,
+  "limit: person near the path: speed for the stop": 0.067,
+  "limit: worker standing in the lane ahead": 0.03,
+  "limit: clear (out of reach)": 0.026,
+  "limit: worker waiting for another forklift: thi": 0.006
  },
- "throughput": 0.8494,
- "collisions": 1
+ "throughput": 0.8897,
+ "collisions": 0
 }
