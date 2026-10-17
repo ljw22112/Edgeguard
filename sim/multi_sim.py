@@ -119,6 +119,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     warn_m, danger_m = PROX_TIGHT if system == "proximity_tight" else (PROX_WARN_M, PROX_DANGER_M)
     Mover.UX, Mover.COMPLY = ux, comply
     ForkliftLimit.MODE = "coop"
+    ForkliftLimit.AEB = bool(d2d) and system == "edgeguard"   # the always-on D2D emergency brake needs D2D states
     cfg = site_cfg()
     if min_move is not None:
         cfg.min_move = min_move

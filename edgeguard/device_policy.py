@@ -73,7 +73,11 @@ CPA_SLOW_S, CPA_SLOW_D_M = 4.5, 3.0
 LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (results/failsafe_eval.json)
 LOCAL_RECOVER_S = 1.5    # the local rule stays on this long after a silence ends: a restarted MEC app has lost
                          # its alert state and needs a moment to raise the alerts again (sim/robust_eval.py)
-HOLD_MAX_S = 20.0        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
+HOLD_MAX_S = 20.0
+# Always-on emergency brake from D2D states (independent of the network and of the MEC app): a worker on a
+# collision course within AEB_T_S (closest approach under AEB_D_M) stops the truck - the last line behind the
+# MEC plan, like a car's AEB.  Off by default (ForkliftLimit.aeb); thresholds chosen by sim/robust_eval.py.
+AEB_T_S, AEB_D_M = 1.5, 1.3        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0
@@ -83,6 +87,7 @@ class ForkliftLimit:
     """mode "coop" (default, v0.9), "failsafe_local_ttc_tag" (v0.8), "failsafe" (v0.7, above), "legacy" (v0.6: lift after 5 s even when the MEC app
     is silent) or the rejected variants "failsafe_creep" / "failsafe_stop"."""
     MODE = "coop"     # v0.9; without D2D frames it behaves as v0.8, without direct ranges as v0.7
+    AEB = False
 
     def __init__(self, mode=None):
         self.mode = mode or ForkliftLimit.MODE
@@ -93,6 +98,7 @@ class ForkliftLimit:
         self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
         self.stops = {}                                # worker -> ((x, y) stop point, t)
         self.recover = True                            # local rule also during LOCAL_RECOVER_S after a silence
+        self.aeb = ForkliftLimit.AEB                   # always-on D2D emergency brake
         self.recover_until = -1e9
         self.pose = None
 
@@ -102,6 +108,24 @@ class ForkliftLimit:
     def on_peer_state(self, t, tag, x, y, vx, vy):
         """D2D broadcast received from a neighbour (coop mode)."""
         self.peers[tag] = (t, x, y, vx, vy)
+
+    def aeb_cap(self, t):
+        """0.0 if a D2D peer is on a collision course within AEB_T_S, else None."""
+        if not self.aeb or self.own is None:
+            return None
+        for tag, p in self.peers.items():
+            if t - p[0] > D2D_STALE_S or t - self.own[0] > D2D_STALE_S:
+                continue
+            rx, ry = p[1] - self.own[1], p[2] - self.own[2]
+            wx, wy = p[3] - self.own[3], p[4] - self.own[4]
+            ww = wx * wx + wy * wy
+            t_cpa = 0.0 if ww < 1e-9 else max(0.0, -(rx * wx + ry * wy) / ww)
+            if t_cpa > AEB_T_S:
+                continue
+            cx, cy = rx + wx * t_cpa, ry + wy * t_cpa
+            if (cx * cx + cy * cy) ** 0.5 < AEB_D_M and ww > 0.25:     # closing faster than 0.5 m/s
+                return 0.0
+        return None
 
     def _cpa_cap(self, t, tag):
         """Speed cap from the 2-D closest point of approach with this peer, or "stale"."""
@@ -247,6 +271,8 @@ class ForkliftLimit:
     def effective(self, t):
         if self.mode == "halt_on_silence" and t - self.hb_t > STOP_AFTER_S:
             return 0.0                                 # reference only: every truck stops
+        if self.aeb and self.aeb_cap(t) == 0.0:
+            return 0.0
         held = self._held(t)
         if self.local_mode() and (t - self.hb_t > LOCAL_AFTER_S or (self.recover and self.recovering(t))):
             loc = self.local_limit(t)

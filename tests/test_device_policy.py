@@ -104,8 +104,11 @@ def test_firmware_coop_matches_python(tmp_path):
     subprocess.run(["g++", "-std=c++17", "-O1", "-I", os.path.join(ROOT, "firmware", "common"),
                     os.path.join(ROOT, "tests", "firmware", "policy_driver.cpp"), "-o", str(exe)], check=True)
     rng = random.Random(23)
-    for _ in range(300):
+    for case in range(300):
         fl, lines, expect, t = ForkliftLimit("coop"), ["M 1", "C 1"], [], 0.0
+        if case % 2:                                     # half of the cases with the always-on emergency brake
+            fl.aeb = True
+            lines.append("B 1")
         own = [0.0, 0.0, rng.uniform(-2.5, 2.5), rng.uniform(-2.5, 2.5)]
         peers = {tg: [rng.uniform(-12, 12), rng.uniform(-12, 12), rng.uniform(-1.5, 1.5), rng.uniform(-1.5, 1.5)]
                  for tg in (1, 2)}
@@ -282,3 +285,14 @@ def test_firmware_stop_point_matches_python(tmp_path):
         out = subprocess.run([str(exe)], input="\n".join(lines), capture_output=True, text=True, check=True)
         got = [float(ln.split()[0]) for ln in out.stdout.split("\n") if ln]
         assert got == [pytest.approx(e, abs=2e-3) for e in expect]
+
+
+def test_aeb_stops_for_a_collision_course_even_with_mec_alive():
+    fl = ForkliftLimit("coop")
+    fl.aeb = True
+    fl.on_heartbeat(0.0)
+    fl.on_own_state(0.0, 0.0, 0.0, 2.5, 0.0)
+    fl.on_peer_state(0.0, "w", 3.0, -1.0, 0.0, 1.0)          # walks into the truck's way, 1.2 s out
+    assert fl.effective(0.1) == 0.0
+    fl.on_peer_state(0.05, "w", 3.0, -3.0, 0.0, -1.0)        # walks away: no brake
+    assert fl.effective(0.1) is None

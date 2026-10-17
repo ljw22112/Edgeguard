@@ -358,6 +358,7 @@ void registerAE() {
 
 void setup() {
   Serial.begin(115200);
+  speedLimit.aeb = true;                           // always-on D2D emergency brake (device_policy.h)
   pinMode(BEACON_PIN, OUTPUT);
   Wire.begin();
   Wire.beginTransmission(MPU); Wire.write(0x6B); Wire.write(0); Wire.endTransmission();  // wake

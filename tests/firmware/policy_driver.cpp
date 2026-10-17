@@ -21,6 +21,7 @@ int main() {
     else if (op == 'H' && std::scanf("%f", &t) == 1) fl.onHeartbeat(t);
     else if (op == 'M' && std::scanf("%d", &c) == 1) fl.localTtc = c != 0;
     else if (op == 'C' && std::scanf("%d", &c) == 1) fl.coop = c != 0;
+    else if (op == 'B' && std::scanf("%d", &c) == 1) fl.aeb = c != 0;
     else if (op == 'O') { double a[5]; if (std::scanf("%lf %lf %lf %lf %lf", &a[0], &a[1], &a[2], &a[3], &a[4]) == 5) fl.onOwnState(a[0], a[1], a[2], a[3], a[4]); }
     else if (op == 'P') { double a[5]; int tg; if (std::scanf("%lf %d %lf %lf %lf %lf", &a[0], &tg, &a[1], &a[2], &a[3], &a[4]) == 6) fl.onPeerState(a[0], tg, a[1], a[2], a[3], a[4]); }
     else if (op == 'D') { double td, dd; int tag; if (std::scanf("%lf %d %lf", &td, &tag, &dd) == 3) fl.onRange(td, tag, dd); }

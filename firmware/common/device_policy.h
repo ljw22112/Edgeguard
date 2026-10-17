@@ -37,6 +37,7 @@ const double LOCAL_AFTER_S = STOP_AFTER_S, LOCAL_RANGE_STALE_S = 1.2, LOCAL_RATE
 const int LOCAL_TAGS = 8, LOCAL_HIST = 24;   // 1.5 s at 10 Hz + margin
 const double D2D_STALE_S = 0.5, CPA_HORIZON_S = 5.0;
 const double CPA_STOP_S = 2.5, CPA_STOP_D_M = 2.0, CPA_SLOW_S = 4.5, CPA_SLOW_D_M = 3.0;
+const double AEB_T_S = 1.5, AEB_D_M = 1.3;   // always-on D2D emergency brake (mirrors ForkliftLimit.aeb_cap())
 const double CPA_STALE = -2.0;            // "no fresh D2D state for this peer"
 
 // 2-D closest point of approach between this device (own) and a peer, both constant velocity.
@@ -90,6 +91,23 @@ struct LocalGuard {
   }
   void shift(int k) { for (int j = 1; j < n[k]; j++) { ht[k][j - 1] = ht[k][j]; hd[k][j - 1] = hd[k][j]; } n[k]--; }
 
+  // always-on emergency brake: a peer on a collision course within AEB_T_S (closest approach < AEB_D_M)
+  bool aebStop(double t) const {
+    if (own[0] < -1e8) return false;
+    for (int k = 0; k < used; k++) {
+      const double* p = peer[k];
+      if (p[0] < -1e8 || t - p[0] > D2D_STALE_S || t - own[0] > D2D_STALE_S) continue;
+      double rx = p[1] - own[1], ry = p[2] - own[2], wx = p[3] - own[3], wy = p[4] - own[4];
+      double ww = wx * wx + wy * wy;
+      double tc = ww < 1e-9 ? 0.0 : -(rx * wx + ry * wy) / ww;
+      if (tc < 0) tc = 0;
+      if (tc > AEB_T_S) continue;
+      double cx = rx + wx * tc, cy = ry + wy * tc;
+      if (std::sqrt(cx * cx + cy * cy) < AEB_D_M && ww > 0.25) return true;
+    }
+    return false;
+  }
+
   // speed cap in m/s from direct ranging, or NO_LIMIT
   double cap(double t, bool ttc, bool coop = false) const {
     double c0 = NO_LIMIT;
@@ -141,6 +159,7 @@ struct ForkliftLimit {
   float hbT = -1e9f;
   bool localTtc = true;                  // v0.8 local UWB fallback (no ranges -> v0.7 behaviour)
   bool coop = true;                      // v0.9 D2D state -> 2-D closest approach (no D2D -> v0.8)
+  bool aeb = false;                      // always-on D2D emergency brake
   LocalGuard local;
 
   void onRange(double t, int tag, double d) { local.onRange(t, tag, d); }
@@ -199,6 +218,7 @@ struct ForkliftLimit {
 
   // effective limit in m/s, or NO_LIMIT
   float effective(float t) {
+    if (aeb && local.aebStop(t)) return 0.0f;
     float held = heldLimit(t);
     if (localTtc && (mecSilent(t) || recovering(t))) {
       double c = local.cap(t, true, coop);
