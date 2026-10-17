@@ -398,8 +398,8 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
     <div class="sec-head" style="margin-top:44px">
       <span class="label"><span class="en">Against site practice · same 300 episodes</span><span class="ko">현장 방식과 비교 · 같은 에피소드 300개</span></span>
       <h3><span class="en">What sites use today, on the same floor</span><span class="ko">지금 현장에서 쓰는 방식, 같은 조건에서</span></h3>
-      <p class="lede en">8 workers, 4 forklifts, 1,123 conflicts; nobody looks out, so this is what each system alone prevents. Proximity alarm parameters follow commercial UWB systems (warning zone: slow to walking speed, danger zone: stop).</p>
-      <p class="lede ko">작업자 8명 · 지게차 4대, 충돌 상황 1,123건, 아무도 주의하지 않는 조건이라 각 방식이 혼자 막는 몫입니다. 근접 경보 설정은 상용 UWB 시스템을 따랐습니다(경고 구역: 보행 속도로 감속, 위험 구역: 정지).</p>
+      <p class="lede en">8 workers, 4 forklifts, 1,066 conflicts in 300 test episodes never used to train EdgeGuard's learned policy; nobody looks out, so this is what each system alone prevents. Proximity alarm parameters follow commercial UWB systems (warning zone: slow to walking speed, danger zone: stop).</p>
+      <p class="lede ko">작업자 8명 · 지게차 4대, 충돌 상황 1,066건(EdgeGuard 학습 정책의 학습 · 선택에 쓰지 않은 시험 에피소드 300개), 아무도 주의하지 않는 조건이라 각 방식이 혼자 막는 몫입니다. 근접 경보 설정은 상용 UWB 시스템을 따랐습니다(경고 구역: 보행 속도로 감속, 위험 구역: 정지).</p>
     </div>
     <div class="cmp" id="cmp"></div>
     <p class="note"><a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/site-compare.md" target="_blank" rel="noopener"><span class="en">Method, sources and limits ↗</span><span class="ko">방법 · 근거 · 한계 ↗</span></a></p>
@@ -591,11 +591,11 @@ python tools/fl_deploy_demo.py</pre>
 
   /* ---------- site practice comparison (results/site_compare.json) ---------- */
   var SYS=[["none",L("No system","시스템 없음")],["zone",L("Speed zoning 5 km/h","속도 제한 5 km/h")],["p6",L("UWB proximity 6/3 m","UWB 근접 6/3 m")],
-           ["p4",L("UWB proximity 4/2 m","UWB 근접 4/2 m")],["eg","EdgeGuard"]];
+           ["p4",L("UWB proximity 4/2 m","UWB 근접 4/2 m")],["eg",L("EdgeGuard (learned)","EdgeGuard (학습)")]];
   var CMP=[
-    [L("Collisions (lower is safer)","충돌 (낮을수록 안전)"),{none:827,zone:666,p6:0,p4:12,eg:2},"{}",true],
-    [L("Forklift throughput (higher is better)","지게차 처리량 (높을수록 좋음)"),{none:100,zone:75,p6:48,p4:60,eg:86},"{} %",false],
-    [L("Alarms per forklift-hour (fewer interruptions)","지게차 1시간당 경보 (적을수록 덜 끊김)"),{none:0,zone:0,p6:1356,p4:929,eg:229},"{}",false]
+    [L("Collisions (lower is safer)","충돌 (낮을수록 안전)"),{none:804,zone:633,p6:0,p4:12,eg:0},"{}",true],
+    [L("Forklift throughput (higher is better)","지게차 처리량 (높을수록 좋음)"),{none:100,zone:75,p6:48,p4:61,eg:89},"{} %",false],
+    [L("Alarms per forklift-hour (fewer interruptions)","지게차 1시간당 경보 (적을수록 덜 끊김)"),{none:0,zone:0,p6:1353,p4:932,eg:251},"{}",false]
   ];
   var cmpEl=document.getElementById("cmp");
   CMP.forEach(function(c){
