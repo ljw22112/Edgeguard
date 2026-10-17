@@ -84,7 +84,73 @@
   ]
  },
  "results": {
-  "current": {
+  "robust_v2 (config/site.yaml)": {
+   "normal": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.9685,
+    "worker_lost_s": 2.125,
+    "alarms_per_episode": 7.38
+   },
+   "comply_85": {
+    "collisions": 0,
+    "close_passes": 3,
+    "conflicts": 542,
+    "throughput": 0.9496,
+    "worker_lost_s": 2.353,
+    "alarms_per_episode": 7.54
+   },
+   "comply_70": {
+    "collisions": 0,
+    "close_passes": 6,
+    "conflicts": 542,
+    "throughput": 0.9076,
+    "worker_lost_s": 2.725,
+    "alarms_per_episode": 7.67
+   },
+   "bad_network": {
+    "collisions": 0,
+    "close_passes": 7,
+    "conflicts": 542,
+    "throughput": 0.9139,
+    "worker_lost_s": 2.775,
+    "alarms_per_episode": 8.99
+   },
+   "mec_restart": {
+    "collisions": 2,
+    "close_passes": 10,
+    "conflicts": 542,
+    "throughput": 0.9373,
+    "worker_lost_s": 2.327,
+    "alarms_per_episode": 7.65
+   },
+   "noisy_uwb": {
+    "collisions": 0,
+    "close_passes": 2,
+    "conflicts": 542,
+    "throughput": 0.9303,
+    "worker_lost_s": 2.849,
+    "alarms_per_episode": 11.97
+   },
+   "dense": {
+    "collisions": 0,
+    "close_passes": 4,
+    "conflicts": 1262,
+    "throughput": 0.9621,
+    "worker_lost_s": 3.135,
+    "alarms_per_episode": 16.33
+   },
+   "attentive": {
+    "collisions": 0,
+    "close_passes": 1,
+    "conflicts": 542,
+    "throughput": 0.9579,
+    "worker_lost_s": 2.099,
+    "alarms_per_episode": 7.23
+   }
+  },
+  "robust_v1": {
    "normal": {
     "collisions": 0,
     "close_passes": 0,
@@ -150,7 +216,7 @@
     "alarms_per_episode": 6.91
    }
   },
-  "results/policy_previous_eval.json": {
+  "previous": {
    "normal": {
     "collisions": 0,
     "close_passes": 0,

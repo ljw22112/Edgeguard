@@ -14,7 +14,7 @@ A safety system is judged by its bad days. [`sim/robust_eval.py`](../sim/robust_
 | dense | 12 workers and 6 forklifts |
 | attentive driver | drivers brake for someone right in front (1 s reaction) |
 
-## Results on the test seeds (5000+, 150 episodes per scenario)
+## Results on the test seeds (5000+, 150 episodes per scenario), robust policy v1
 
 | Scenario | Collisions: previous / **robust** | Close passes < 1.5 m | Forklift throughput: previous / **robust** |
 |---|---|---|---|
@@ -29,6 +29,18 @@ A safety system is judged by its bad days. [`sim/robust_eval.py`](../sim/robust_
 | **all 1,200 episodes** | **3 / 1** | **43 / 24** | |
 
 Both rows run with the same devices (D2D fall-back and emergency brake, below). "Previous" is the learned policy before truck priority ([`results/policy_previous.json`](../results/policy_previous.json)). The robust policy is better on every throughput line and in total collisions and close passes; it still had **one collision in 1,200 episodes, under 0.35-0.6 m UWB noise** (see Limits).
+
+## Robust policy v2 (glide), on two test sets
+
+v2 adds the glide plan and lifts a stop point as soon as the worker has left the path ([site-compare.md](site-compare.md#truck-priority-stop-points-robust-training)); refined by robust training and picked with no collision on 2,000 validation episodes (seeds 13,000+ / 15,000+). Tested on the seeds above and on a second, fresh test set (17,000+), 8 scenarios x 150 episodes each:
+
+| | Collisions (5000+ / 17000+) | Close passes < 1.5 m | Mean throughput over the 8 scenarios |
+|---|---|---|---|
+| Previous policy | 3 / 5 | 43 / 29 | 86.0 % / 86.6 % |
+| Robust v1 | 1 / 1 | 24 / 27 | 93.5 % / 94.1 % |
+| **Robust v2** | **2 / 0** | 35 / 29 | **94.1 % / 94.4 %** |
+
+Safety stays at v1's level (2 collisions in 2,400 stressed episodes each, against 8 for the previous policy; none in the normal scenario), with 0.3-0.6 points more throughput; v2 has somewhat more close passes on the first test set. Its two collisions were after a MEC restart. Results: [`results/robust_eval.json`](../results/robust_eval.json), [`results/robust_eval_test2.json`](../results/robust_eval_test2.json).
 
 ## What failed, and what changed (Python reference and firmware)
 

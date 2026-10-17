@@ -48,24 +48,24 @@
     "unneeded_alarm_share": 0.115
    },
    "edgeguard_prev": {
-    "collisions": 1,
+    "collisions": 0,
     "conflicts": 1066,
-    "collisions_per_1000_conflicts": 0.94,
-    "throughput": 0.9145,
-    "forklift_lost_s": 4.2,
-    "worker_lost_s": 2.43,
-    "alarms_per_forklift_hour": 233.4,
-    "unneeded_alarm_share": 0.162
+    "collisions_per_1000_conflicts": 0.0,
+    "throughput": 0.9178,
+    "forklift_lost_s": 4.11,
+    "worker_lost_s": 2.38,
+    "alarms_per_forklift_hour": 234.7,
+    "unneeded_alarm_share": 0.168
    },
    "edgeguard": {
     "collisions": 0,
     "conflicts": 1066,
     "collisions_per_1000_conflicts": 0.0,
-    "throughput": 0.968,
-    "forklift_lost_s": 2.32,
-    "worker_lost_s": 2.1,
-    "alarms_per_forklift_hour": 248.6,
-    "unneeded_alarm_share": 0.162
+    "throughput": 0.9726,
+    "forklift_lost_s": 2.02,
+    "worker_lost_s": 2.12,
+    "alarms_per_forklift_hour": 255.7,
+    "unneeded_alarm_share": 0.165
    }
   },
   "attentive driver": {
@@ -113,21 +113,21 @@
     "collisions": 0,
     "conflicts": 1066,
     "collisions_per_1000_conflicts": 0.0,
-    "throughput": 0.9082,
-    "forklift_lost_s": 4.43,
-    "worker_lost_s": 2.4,
-    "alarms_per_forklift_hour": 236.5,
-    "unneeded_alarm_share": 0.164
+    "throughput": 0.9104,
+    "forklift_lost_s": 4.4,
+    "worker_lost_s": 2.38,
+    "alarms_per_forklift_hour": 237.2,
+    "unneeded_alarm_share": 0.166
    },
    "edgeguard": {
     "collisions": 0,
     "conflicts": 1066,
     "collisions_per_1000_conflicts": 0.0,
-    "throughput": 0.9573,
-    "forklift_lost_s": 2.85,
+    "throughput": 0.9604,
+    "forklift_lost_s": 2.7,
     "worker_lost_s": 2.11,
-    "alarms_per_forklift_hour": 239.2,
-    "unneeded_alarm_share": 0.162
+    "alarms_per_forklift_hour": 247.8,
+    "unneeded_alarm_share": 0.163
    }
   }
  }

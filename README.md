@@ -102,10 +102,10 @@ Same simulated floor and the same 300 test episodes for every system (8 workers,
 | Speed zoning 5 km/h | 633 | 75 % | 0 |
 | UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,353 |
 | UWB proximity alarm, 4 m / 2 m zones | 12 | 61 % | 932 |
-| EdgeGuard, previous policy | 1 | 91 % | 233 |
-| **EdgeGuard (robust policy)** | **0** | **97 %** | **249** |
+| EdgeGuard, previous policy | 0 | 92 % | 235 |
+| **EdgeGuard (robust policy v2)** | **0** | **97 %** | **256** |
 
-As safe as the wide proximity alarm with 2.0 x the throughput and 82 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +60 % throughput. The worker yields and the truck brakes for **stop points** on its own; under bad network, MEC restart, low compliance, noisy UWB and a dense floor the robust policy had 1 collision in 1,200 test episodes (previous policy 3) and was 5-9 points faster in every condition ([robustness](docs/robustness.md)).
+As safe as the wide proximity alarm with 2.0 x the throughput and 81 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +61 % throughput. The worker yields and the truck brakes for **stop points** on its own; under bad network, MEC restart, low compliance, noisy UWB and a dense floor the robust policy had 2 collisions in 2,400 stressed test episodes (previous policy 8) and was 5-9 points faster in every condition ([robustness](docs/robustness.md)).
 
 ![EdgeGuard vs site practice](docs/img/site_compare.png)
 

@@ -28,12 +28,12 @@ Two crews: **nobody looks out** (what the system alone prevents) and **attentive
 | Speed zoning 5 km/h | 633 / 350 | 75 % / 63 % | 0.1 s | 0 |
 | UWB proximity 6 m / 3 m | **0** / **0** | 48 % / 48 % | 4.3 s | 1,353 (23 %) |
 | UWB proximity 4 m / 2 m | 12 / 5 | 61 % / 60 % | 3.2 s | 932 (12 %) |
-| EdgeGuard, previous policy | 1 / 0 | 91 % / 91 % | 2.4 s | 233 (16 %) |
-| **EdgeGuard (robust policy)** | **0** / **0** | **97 % / 96 %** | **2.1 s** | **249 (16 %)** |
+| EdgeGuard, previous policy | 0 / 0 | 92 % / 91 % | 2.4 s | 235 (17 %) |
+| **EdgeGuard (robust policy v2)** | **0** / **0** | **97 % / 96 %** | **2.1 s** | **256 (17 %)** |
 
 **What this says:**
-- EdgeGuard is as safe as the wide proximity alarm (no collision in 1,066 conflicts, with or without an attentive driver) and keeps trucks moving at **97 % instead of 48 % of nominal (2.0 x)**, with **82 % fewer alarms** and **51 % less worker waiting**.
-- Against the narrowed proximity alarm, the setting sites choose to cut nuisance alarms: **0 collisions instead of 12**, **60 % more throughput** (97 % vs 61 %), 73 % fewer alarms.
+- EdgeGuard is as safe as the wide proximity alarm (no collision in 1,066 conflicts, with or without an attentive driver) and keeps trucks moving at **97 % instead of 48 % of nominal (2.0 x)**, with **81 % fewer alarms** and **51 % less worker waiting**.
+- Against the narrowed proximity alarm, the setting sites choose to cut nuisance alarms: **0 collisions instead of 12**, **61 % more throughput** (97 % vs 61 %), 73 % fewer alarms.
 - Speed zoning alone barely helps here: a walker who steps out in front of a truck at 5 km/h is still hit (594 per 1,000 conflicts), and throughput drops to 75 %.
 - With an attentive driver, EdgeGuard's throughput (96 %) is above the no-system case (86 %): the alert slows a truck only as much as the conflict needs, while a startled driver brakes hard.
 
@@ -63,10 +63,13 @@ Where trucks still lost time ([`sim/efficiency_audit.py`](../sim/efficiency_audi
 
 | Same 300 test episodes (same devices) | Collisions | Throughput | Worker time lost |
 |---|---|---|---|
-| Previous policy | 1 | 91.4 % | 2.43 s |
-| **Robust policy** | **0** | **96.8 %** | **2.10 s** |
+| Previous policy | 0 | 91.8 % | 2.38 s |
+| Robust policy v1 | 0 | 96.8 % | 2.10 s |
+| **Robust policy v2 (glide)** | **0** | **97.3 %** | **2.12 s** |
 
-Throughput +5.9 % over the previous policy on the same simulation (+8.3 % over the 89.4 % published before this change, measured without the devices' D2D layer). The goal of +10 % was not reached: the remaining 3 % is mostly trucks speeding up again after a stop point and workers standing in a lane, which only a later warning (less safe) would remove.
+**v2 (glide)**: where trucks still lost time was speeding up again after braking into a stop point. When the worker in the path is stepping aside, the truck now rolls at the speed that reaches the stop point just as he is out, and the stop point is lifted the moment he has left the path. Refined by robust training, picked with no collision on 2,000 validation episodes.
+
+Throughput +6.0 % over the previous policy on the same simulation (+8.8 % over the 89.4 % published before truck priority, measured without the devices' D2D layer). What is left is mostly the initial and post-stop acceleration (1 m/s²) and workers standing in a lane; removing it would take later warnings, which costs safety.
 
 ## Limits
 
