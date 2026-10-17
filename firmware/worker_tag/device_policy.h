@@ -128,8 +128,15 @@ struct ForkliftLimit {
   // one plan per pair (src = worker id), the tightest applies: a clear for one worker must not
   // lift the limit another worker needs
   static constexpr int MAX_PAIRS = 8;
-  struct Pair { char src[16]; float limit; float t; bool used; };
+  // limit = NO_LIMIT with hasStop: the plan is only a stop point ("movement authority", edgeguard/device_policy.py)
+  struct Pair { char src[16]; float limit; float t; bool used; bool hasStop; float sx, sy; };
   Pair pairs[MAX_PAIRS] = {};
+  static constexpr float STOP_DECEL = 2.3f;  // m/s^2 planned for a stop point (the drive achieves 2.5)
+  static constexpr float STOP_REACT = 0.1f;  // s control cycle + actuator lag
+  bool hasPose = false;
+  float poseX = 0, poseY = 0, poseHx = 1, poseHy = 0;
+  // own position and unit heading (direction of travel)
+  void onPose(float x, float y, float hx, float hy) { poseX = x; poseY = y; poseHx = hx; poseHy = hy; hasPose = true; }
   float hbT = -1e9f;
   bool localTtc = true;                  // v0.8 local UWB fallback (no ranges -> v0.7 behaviour)
   bool coop = true;                      // v0.9 D2D state -> 2-D closest approach (no D2D -> v0.8)
@@ -143,10 +150,10 @@ struct ForkliftLimit {
   bool vibrateLocal(double t) const { return localTtc && mecSilent(t) && local.cap(t, true, coop) == 0.0; }
 
   // clear = the pair cleared; src = the worker the alert is about
-  void onAlert(float t, bool clear, float lim, const char* src = "") {
+  void onAlert(float t, bool clear, float lim, const char* src = "", bool hasStop = false, float sx = 0, float sy = 0) {
     hbT = t;                             // any MEC message proves it is alive
     int i = find(src);
-    if (clear || lim < 0) { if (i >= 0) pairs[i].used = false; return; }
+    if (clear || (lim < 0 && !hasStop)) { if (i >= 0) pairs[i].used = false; return; }
     if (i < 0) {
       for (int k = 0; k < MAX_PAIRS && i < 0; k++) if (!pairs[k].used) i = k;
       if (i < 0) {                       // full: replace the oldest plan
@@ -157,14 +164,28 @@ struct ForkliftLimit {
       pairs[i].used = true;
     }
     pairs[i].limit = lim; pairs[i].t = t;
+    pairs[i].hasStop = hasStop; pairs[i].sx = sx; pairs[i].sy = sy;
   }
+  // speed from which the truck can still stop short of the nearest stop point, or NO_LIMIT
+  float stopCap() const {
+    float m = NO_LIMIT;
+    if (!hasPose) return m;
+    for (const Pair& p : pairs) {
+      if (!p.used || !p.hasStop) continue;
+      float d = (p.sx - poseX) * poseHx + (p.sy - poseY) * poseHy;
+      float v = d <= 0 ? 0.0f : STOP_DECEL * (-STOP_REACT + std::sqrt(STOP_REACT * STOP_REACT + 2.0f * d / STOP_DECEL));
+      if (m < 0 || v < m) m = v;
+    }
+    return m;
+  }
+  bool anyStop() const { for (const Pair& p : pairs) if (p.used && p.hasStop) return true; return false; }
   int find(const char* src) const {
     for (int k = 0; k < MAX_PAIRS; k++) if (pairs[k].used && !strcmp(pairs[k].src, src)) return k;
     return -1;
   }
   float tightest() const {
     float m = NO_LIMIT;
-    for (const Pair& p : pairs) if (p.used && (m < 0 || p.limit < m)) m = p.limit;
+    for (const Pair& p : pairs) if (p.used && p.limit >= 0 && (m < 0 || p.limit < m)) m = p.limit;
     return m;
   }
   void onHeartbeat(float t) { hbT = t; }
@@ -180,10 +201,17 @@ struct ForkliftLimit {
   }
 
   float heldLimit(float t) {
-    if (tightest() < 0) return NO_LIMIT;
+    float held = heldLimits(t);
+    float cap = stopCap();
+    if (cap < 0) return held;
+    return (held < 0 || cap < held) ? cap : held;
+  }
+
+  float heldLimits(float t) {
+    if (!anyStop() && tightest() < 0) return NO_LIMIT;
     if (t - hbT > SILENCE_S) {           // MEC silent
       if (t - hbT > STOP_AFTER_S) return 0.0f;
-      return tightest();                 // restarting: hold the last plan
+      return tightest();                 // restarting: hold the last plan (stop points stay)
     }
     for (Pair& p : pairs) if (p.used && t - p.t > ALERT_STALE_S) p.used = false;   // MEC alive, clear lost
     return tightest();

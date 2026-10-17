@@ -301,7 +301,13 @@ void handleAlert() {
   // speed up again.
   float lim = act["speed_limit"].isNull() ? (float)(act["speed_scale"] | 1.0f) * MAX_SPEED
                                           : (float)act["speed_limit"];
-  speedLimit.onAlert(t, clear, lim < 0 ? 0.0f : lim, alert["worker"] | "");   // one plan per worker
+  JsonArray stop = act["stop_at"];                 // stop point: the module brakes for it from its own position
+  if (!clear && !stop.isNull() && stop.size() == 2) {
+    if (act["speed_limit"].isNull()) lim = policy::NO_LIMIT;
+    speedLimit.onAlert(t, false, lim, alert["worker"] | "", true, (float)stop[0], (float)stop[1]);
+  } else {
+    speedLimit.onAlert(t, clear, lim < 0 ? 0.0f : lim, alert["worker"] | "");   // one plan per worker
+  }
   Serial.printf("alert %s beacon=%d limit %.2f m/s\n", (const char*)(alert["level"] | "?"), beacon, lim);
 }
 
@@ -408,6 +414,7 @@ void loop() {
     if (readPosition(x, y)) {
       float v = readSpeed(), vx = v * cosf(heading), vy = v * sinf(heading);   // readSpeed() includes the limit
       speedLimit.onOwnState(nowS(), x, y, vx, vy);
+      speedLimit.onPose(x, y, cosf(heading), sinf(heading));   // stop points are braked for from here
       sendState(x, y, vx, vy);                     // D2D, works without the network
       if (mecHeard() || millis() - lastProbe > 2000) { lastProbe = millis(); publishMotion(x, y, v, yawRate); }
     }

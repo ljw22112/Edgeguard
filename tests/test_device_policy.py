@@ -212,3 +212,70 @@ def test_firmware_header_copies_in_sync():
     src = os.path.join(ROOT, "firmware", "common", "device_policy.h")
     for sk in ("worker_tag", "forklift_module"):
         assert filecmp.cmp(src, os.path.join(ROOT, "firmware", sk, "device_policy.h"), shallow=False)
+
+
+def test_stop_point_brakes_from_own_position():
+    from edgeguard.device_policy import ForkliftLimit
+    fl = ForkliftLimit("coop")
+    fl.on_heartbeat(0.0)
+    fl.on_pose(0.0, 0.0, 1.0, 0.0)
+    fl.on_alert(0.0, "raise", None, "w1", stop_at=(5.0, 0.0))
+    v5 = fl.effective(0.1)
+    fl.on_pose(3.0, 0.0, 1.0, 0.0)                       # closer: tighter, without any new message
+    v2 = fl.effective(0.2)
+    assert 0 < v2 < v5
+    fl.on_pose(5.2, 0.0, 1.0, 0.0)
+    assert fl.effective(0.3) == 0.0                      # at / past the point: stop
+    fl.on_alert(0.4, "clear", None, "w1")
+    assert fl.effective(0.5) is None
+
+
+def test_stop_point_survives_silence():
+    from edgeguard.device_policy import ForkliftLimit
+    fl = ForkliftLimit("coop")
+    fl.on_heartbeat(0.0)
+    fl.on_pose(0.0, 0.0, 1.0, 0.0)
+    fl.on_alert(0.0, "raise", None, "w1", stop_at=(6.0, 0.0))
+    assert fl.effective(1.5) is not None and fl.effective(1.5) > 0      # MEC restarting: the point is held
+    assert fl.effective(7.0) == 0.0                                       # MEC down: stop
+
+
+def test_firmware_stop_point_matches_python(tmp_path):
+    import random
+    from edgeguard.device_policy import ForkliftLimit
+    exe = tmp_path / "drv"
+    subprocess.run(["g++", "-std=c++17", "-O1", "-I", os.path.join(ROOT, "firmware", "common"),
+                    os.path.join(ROOT, "tests", "firmware", "policy_driver.cpp"), "-o", str(exe)], check=True)
+    rng = random.Random(5)
+    for _ in range(20):
+        fl = ForkliftLimit("coop")
+        lines, expect, t = ["M 0", "C 0"], [], 0.0
+        fl.ranges, fl.peers = {}, {}
+        x = 0.0
+        for _ in range(40):
+            t = round(t + rng.uniform(0.05, 0.6), 2)
+            k = rng.random()
+            if k < 0.25:
+                lim = rng.choice([-1.0, round(rng.uniform(0, 3), 2)])
+                sx = round(x + rng.uniform(-1, 12), 2)
+                src = rng.choice(["w1", "w2"])
+                fl.on_alert(t, "refresh", None if lim < 0 else lim, src, stop_at=(sx, 0.0))
+                lines.append(f"S {t} {src} {lim} {sx} 0")
+            elif k < 0.35:
+                src = rng.choice(["w1", "w2"])
+                fl.on_alert(t, "clear", None, src)
+                lines.append(f"K {t} {src}")
+            elif k < 0.55:
+                fl.on_heartbeat(t)
+                lines.append(f"H {t}")
+            elif k < 0.75:
+                x = round(x + rng.uniform(0, 1.5), 2)
+                fl.on_pose(x, 0.0, 1.0, 0.0)
+                lines.append(f"X {x} 0 1 0")
+            else:
+                v = fl.effective(t)
+                expect.append(-1.0 if v is None else v)
+                lines.append(f"Q {t}")
+        out = subprocess.run([str(exe)], input="\n".join(lines), capture_output=True, text=True, check=True)
+        got = [float(ln.split()[0]) for ln in out.stdout.split("\n") if ln]
+        assert got == [pytest.approx(e, abs=2e-3) for e in expect]

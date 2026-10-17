@@ -3,6 +3,7 @@
 //   R <t> <hz>                  rate cmd   Q <t>   query -> "<limit> <hz>"
 //   M <0|1>  local UWB fallback off/on      D <t> <tag> <d>  direct range to a worker tag
 //   C <0|1>  D2D coop off/on   O <t> x y vx vy  own state   P <t> <tag> x y vx vy  peer state (D2D)
+//   S <t> <src> <limit> <x> <y>  alert with a stop point (limit < 0: none)    X x y hx hy  own pose
 #include <cstdio>
 #include "device_policy.h"
 
@@ -14,6 +15,9 @@ int main() {
     float t, v;
     int c;
     if (op == 'A' && std::scanf("%f %d %f", &t, &c, &v) == 3) fl.onAlert(t, c != 0, v);
+    else if (op == 'S') { float a[4]; char src[16]; if (std::scanf("%f %15s %f %f %f", &a[0], src, &a[1], &a[2], &a[3]) == 5) fl.onAlert(a[0], false, a[1], src, true, a[2], a[3]); }
+    else if (op == 'K') { float tk; char src[16]; if (std::scanf("%f %15s", &tk, src) == 2) fl.onAlert(tk, true, 0.0f, src); }
+    else if (op == 'X') { float a[4]; if (std::scanf("%f %f %f %f", &a[0], &a[1], &a[2], &a[3]) == 4) fl.onPose(a[0], a[1], a[2], a[3]); }
     else if (op == 'H' && std::scanf("%f", &t) == 1) fl.onHeartbeat(t);
     else if (op == 'M' && std::scanf("%d", &c) == 1) fl.localTtc = c != 0;
     else if (op == 'C' && std::scanf("%d", &c) == 1) fl.coop = c != 0;

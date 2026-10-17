@@ -36,15 +36,36 @@ BOUNDS = {
     "clear_hold": (1.0, 3.0), "pass_speed_far": (1.5, 3.0), "pass_margin": (0.5, 2.0), "wait_lateral": (1.8, 3.2),
     "walk_speed": (1.0, 1.6), "env_lateral": (1.5, 3.2), "env_react": (0.4, 1.0),
 }
+# --mode priority: the worker yields, the truck keeps its speed inside its stopping envelope and brakes for
+# stop points on its own (truck_priority, env_v2, stop_point, prompt_ease in edgeguard/alerting.py)
+BOUNDS_PRIORITY = {
+    "t_warn": (3.5, 5.0), "t_danger": (1.0, 2.0), "clear_hold": (1.0, 2.5), "worker_react": (0.5, 1.2),
+    "brake_decel": (1.8, 2.8), "env_react": (0.3, 1.0), "env_lateral": (2.0, 4.0), "env_detect": (0.3, 1.2),
+    "env_margin": (0.0, 0.8), "env_pass_floor": (1.2, 2.8), "walk_speed": (1.0, 1.6), "pass_speed": (1.2, 2.6),
+    "pass_speed_far": (1.6, 3.0), "wait_lateral": (1.8, 3.0), "aside_margin": (0.3, 1.2),
+}
+FIXED = {"default": {"env_cap": True},
+         "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True}}
+MODE = "default"
 NAMES = list(BOUNDS)
 LO = np.array([BOUNDS[n][0] for n in NAMES])
 HI = np.array([BOUNDS[n][1] for n in NAMES])
 W_WORKER, W_COLL, W_NEAR = 0.01, 0.5, 0.05
 
 
+def set_mode(mode):
+    global MODE, BOUNDS, NAMES, LO, HI
+    MODE = mode
+    if mode == "priority":
+        BOUNDS = BOUNDS_PRIORITY
+    NAMES = list(BOUNDS)
+    LO = np.array([BOUNDS[n][0] for n in NAMES])
+    HI = np.array([BOUNDS[n][1] for n in NAMES])
+
+
 def to_over(z):
     over = {n: float(round(v, 3)) for n, v in zip(NAMES, LO + np.clip(z, 0, 1) * (HI - LO))}
-    over["env_cap"] = True                                  # the stopping envelope is part of the learned policy
+    over.update(FIXED[MODE])                                # the stopping envelope is part of the learned policy
     return over
 
 
@@ -73,10 +94,15 @@ def main():
     ap.add_argument("--out", default="results/train_multi.json")
     ap.add_argument("--init", help="start from this JSON policy file (e.g. a previous run's best) instead of site.yaml")
     ap.add_argument("--seed-base", type=int, default=10_000, help="training seeds start here (never the evaluation seeds)")
+    ap.add_argument("--mode", choices=sorted(FIXED), default="default")
+    ap.add_argument("--start", help="JSON overrides for the start policy (on top of site.yaml)")
     a = ap.parse_args()
+    set_mode(a.mode)
     from sim.failsafe_eval import site_cfg
     base = site_cfg()
     start = {k: getattr(base, k) for k in BOUNDS}
+    if a.start:
+        start.update({k: v for k, v in json.loads(a.start).items() if k in BOUNDS})
     if a.init:
         d = json.load(open(a.init))
         start.update({k: v for k, v in (d["history"][-1]["best_policy"] if "history" in d else d).items() if k in BOUNDS})
@@ -107,7 +133,7 @@ def main():
                          "generation_reference": ref, "secs": round(time.time() - t0)})
             print(f"gen {g}: best {best[2]}  (reference {ref['score']}, thr {ref['throughput']}, coll {ref['collisions']}, "
                   f"near {ref['near']})  {round(time.time() - t0)} s", flush=True)
-            json.dump({"bounds": BOUNDS, "weights": [W_WORKER, W_COLL, W_NEAR], "history": hist,
+            json.dump({"mode": a.mode, "bounds": BOUNDS, "weights": [W_WORKER, W_COLL, W_NEAR], "history": hist,
                        "final_mean": to_over(mu)}, open(os.path.join(ROOT, a.out), "w"), indent=1)
 
 

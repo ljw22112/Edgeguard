@@ -134,11 +134,11 @@ class Mover:
     # 1 - COMPLY per alert) behaves as with "buzz".
     UX, COMPLY, HOLD_IDLE_S = "hold", 1.0, 2.5         # v1.1 tags hold (edgeguard/worker_cue.py)
 
-    def on_alert(self, t, event, limit=None, vibrate=False, rng=None, src=""):
+    def on_alert(self, t, event, limit=None, vibrate=False, rng=None, src="", stop_at=None):
         """src: forklift -> the worker the alert is about (one plan per pair);
                 worker   -> the forklift that holds him (one WAIT per forklift)."""
         if self.kind == "forklift":                       # limit: absolute m/s, None = no limit
-            self.pending.append((t + 0.2, event, limit, src))                    # actuator delay
+            self.pending.append((t + 0.2, event, limit, src, stop_at))           # actuator delay
             return
         self.holds = {k: u for k, u in self.holds.items() if u > t}
         if event == "aside" and Mover.UX == "hold" and limit is not None:
@@ -183,11 +183,16 @@ class Mover:
             ready = sorted((x for x in self.pending if x[0] <= t), key=lambda x: x[0])
             if ready:
                 self.pending = [x for x in self.pending if x[0] > t]
-            for _, ev, lim, src in ready:
+            for _, ev, lim, src, *rest in ready:
+                stop = rest[0] if rest else None
                 if ev == "hb":
                     self.fl.on_heartbeat(t)
                 else:
-                    self.fl.on_alert(t, ev, lim, src)
+                    self.fl.on_alert(t, ev, lim, src, stop_at=stop)
+            (x0, y0), (x1, y1) = self.path.pos(self.s), self.path.pos(self.s + 0.3)
+            hn = math.hypot(x1 - x0, y1 - y0)
+            if hn > 1e-6:
+                self.fl.on_pose(x0, y0, (x1 - x0) / hn, (y1 - y0) / hn)
             lim = self.fl.effective(t)
             target = vn if lim is None else min(vn, lim)
             if self.human_cap and self.human_cap[0] <= t < self.human_cap[1]:

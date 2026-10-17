@@ -152,7 +152,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             if ev == "hb":
                 m.pending.append((t, "hb", None, ""))
             elif m.kind == "forklift":
-                m.on_alert(t, ev, (acts.get(to) or {}).get("speed_limit"), src=key(other))
+                fa = acts.get(to) or {}
+                m.on_alert(t, ev, fa.get("speed_limit"), src=key(other), stop_at=fa.get("stop_at"))
             else:
                 wa = acts.get(to) or {}
                 m.on_alert(t, ev, wa.get("aside"), vibrate=wa.get("vibrate"), rng=rng, src=key(other))
@@ -225,7 +226,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                 mf = movers[f]
                 trace.append({"t": round(t, 2), "type": "fstep", "f": f, "v": round(mf.v, 3), "vn": round(mf.path.v_nom(mf.s), 3),
                               "lim": mf.fl.effective(t), "silent": t - mf.fl.hb_t > SILENCE_S,
-                              "limits": {k: v for k, (v, _) in mf.fl.limits.items()}})
+                              "limits": {k: v for k, (v, _) in mf.fl.limits.items()},
+                              "stops": sorted(mf.fl.stops)})
         pos = {k: m.pos() for k, m in movers.items()}
         for (w, f) in actual:
             d_wf = math.hypot(pos[w][0] - pos[f][0], pos[w][1] - pos[f][1])
@@ -264,7 +266,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             st = states.setdefault((r.worker, r.forklift), AlertState())
             others = [tr for tr in engine.tracks.values() if tr.kind == "forklift" and tr.x is not None]
             ev, acts = decide(st, r, engine.tracks.get(r.worker), engine.tracks.get(r.forklift), cfg, t, others=others)
-            if ev == "raise" and (acts.get(r.worker) or {}).get("vibrate"):
+            if (ev == "raise" or ev == "aside" and (acts.get(r.worker) or {}).get("new")) \
+                    and (acts.get(r.worker) or {}).get("vibrate"):
                 alarms["total"] += 1
                 alarms["unneeded"] += nominal[(r.worker, r.forklift)] > UNNEEDED_M
             if ev:

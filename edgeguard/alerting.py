@@ -104,23 +104,92 @@ def _walking(intent, cfg):
     return intent if n >= ws or n < 1e-6 else (intent[0] / n * ws, intent[1] / n * ws)
 
 
-def envelope_limit(w_tr, f_tr, cfg):
+def envelope_limit(w_tr, f_tr, cfg, held=False, out_stop=None):
     """Speed at which the truck can still stop short of a person near its path ahead (reaction env_react, then
     brake_decel, stopping r_safe before him), or None when nobody is near its path."""
-    if w_tr is None or f_tr is None or w_tr.x is None or f_tr.x is None or abs(f_tr.speed) < 0.5:
+    if w_tr is None or f_tr is None or w_tr.x is None or f_tr.x is None:
         return None
+    if getattr(cfg, "env_v2", False):
+        return _envelope_v2(w_tr, f_tr, cfg, held, out_stop)
+    if abs(f_tr.speed) < 0.5:
+        return None
+    look = getattr(cfg, "env_look", 0.0)
+    if look > 0 and w_tr.speed > 0.3:
+        # also where he will be by the time he has stopped (still walking: reaction + slow-down)
+        wx, wy = w_tr.vel
+        later = _Pt((w_tr.pos[0] + wx * look, w_tr.pos[1] + wy * look))
+        a, b = _envelope_at(w_tr.pos, f_tr, cfg), _envelope_at(later.pos, f_tr, cfg)
+        return a if b is None else b if a is None else min(a, b)
+    return _envelope_at(w_tr.pos, f_tr, cfg)
+
+
+class _Pt:
+    def __init__(self, pos):
+        self.pos = pos
+
+
+def _envelope_at(wpos, f_tr, cfg):
     vx, vy = f_tr.vel
     sp = math.hypot(vx, vy)
     if sp < 0.3:
         return None
     ux, uy = vx / sp, vy / sp
-    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    dx, dy = wpos[0] - f_tr.pos[0], wpos[1] - f_tr.pos[1]
     ahead, lat = dx * ux + dy * uy, abs(-dx * uy + dy * ux)
     if ahead <= 0 or ahead > 15.0 or lat > cfg.env_lateral:
         return None
     room = max(0.0, ahead - cfg.r_safe)
     a, tr = cfg.brake_decel, cfg.env_react
     return a * (-tr + math.sqrt(tr * tr + 2.0 * room / a))
+
+
+def _v_stop(room, cfg):
+    a, tr = cfg.brake_decel, cfg.env_react
+    return a * (-tr + math.sqrt(tr * tr + 2.0 * max(0.0, room) / a))
+
+
+def _envelope_v2(w_tr, f_tr, cfg, held=False, out_stop=None):
+    """Stopping envelope that also covers a person beside the path who walks (or starts to walk) into it.
+
+    In the path (closer than r_safe to its line): the truck may only go as fast as it can still stop short of him.
+    Beside it: he needs t_reach to get within r_safe of the line (walking towards it: at his speed; otherwise
+    detection env_detect + the gap at walk_speed); the truck is safe if it can stop short of where he would step
+    in, or if at its speed it is past him before he can get there.  Returns a speed cap or None."""
+    sp = abs(f_tr.speed)
+    vx, vy = f_tr.vel
+    vn = math.hypot(vx, vy)
+    if vn > 0.3:
+        ux, uy = vx / vn, vy / vn
+    elif f_tr.heading is not None:
+        sgn = -1.0 if f_tr.speed < 0 else 1.0
+        ux, uy = sgn * math.cos(f_tr.heading), sgn * math.sin(f_tr.heading)
+    else:
+        return None
+    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    ahead, lat_s = dx * ux + dy * uy, -dx * uy + dy * ux
+    lat = abs(lat_s)
+    rs = cfg.r_safe
+    if ahead <= -rs or ahead > 20.0 or lat > cfg.env_lateral:
+        return None
+    if lat < rs:                                             # in the path
+        if ahead <= 0:
+            return 0.0                                       # beside the front of the truck: do not move
+        d = ahead - math.sqrt(rs * rs - lat * lat) - getattr(cfg, "env_margin", 0.3)
+        if out_stop is not None:                             # movement authority: stop short of this point
+            out_stop.append([round(f_tr.pos[0] + ux * max(d, 0.0), 2), round(f_tr.pos[1] + uy * max(d, 0.0), 2)])
+        return _v_stop(d, cfg)
+    if held and w_tr.speed < 0.3:
+        return None                                          # told to WAIT and standing: he stays put
+    wvx, wvy = w_tr.vel
+    toward = -(wvx * -uy + wvy * ux) * (1.0 if lat_s > 0 else -1.0)      # his speed towards the path line
+    if toward > 0.3:
+        t_reach = (lat - rs) / toward
+    else:
+        t_reach = getattr(cfg, "env_detect", 0.7) + (lat - rs) / getattr(cfg, "walk_speed", 1.3)
+    if ahead + rs <= max(sp, 0.0) * t_reach:
+        return None                                          # past him before he can get there
+    lim = max(_v_stop(ahead - rs, cfg), getattr(cfg, "env_pass_floor", 1.0))
+    return lim if lim < sp else None
 
 
 def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
@@ -153,15 +222,24 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     # and two parties starting at the same moment is how a standoff turns into a collision)
     # STEP ASIDE: the worker stands in the lane of a truck that stopped for him - nobody can pass,
     # so he is told to step to the nearer lane edge (and WAIT there) instead of holding both
-    if getattr(cfg, "aside_cue", False) and st.level >= 2 and not st.aside_sent and w_tr is not None \
-            and f_tr is not None and w_tr.speed < 0.5:
+    early = getattr(cfg, "truck_priority", False) and getattr(cfg, "early_aside", False)
+    ahead_m = getattr(cfg, "aside_ahead_m", 0.0) if getattr(cfg, "truck_priority", False) else 0.0
+    if getattr(cfg, "aside_cue", False) and (st.level >= 2 or early and r.level >= 2 or ahead_m > 0) and not st.aside_sent \
+            and w_tr is not None and f_tr is not None and (w_tr.speed < 0.5 or early or ahead_m > 0) \
+            and not r.worker.startswith("untagged_"):
         side = _aside_vector(w_tr.pos, f_tr, st.f_speed, cfg)
-        if side is not None:
+        if side is not None and st.level < 2 and r.level < 2 and ahead_m > 0 \
+                and math.hypot(w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]) > ahead_m:
+            side = None                            # on its path, but still far: not yet
+        if side is not None and (st.level >= 2 or r.level >= 2 or abs(f_tr.speed) > 0.5):
+            new = st.level < 2                     # the first cue of this encounter (counts as an alarm)
             st.aside_sent = True
             st.no_intent_until = now + 5.0
             w_tr.no_intent_until = now + 5.0       # the sidestep is not his way for any other truck either
             st.last_any = now
-            return "aside", {r.worker: {"aside": side, "vibrate": True}}
+            if new:
+                st.level, st.last_sent, st.below_since = 2, now, None   # the encounter is on: WAIT after the step
+            return "aside", {r.worker: {"aside": side, "vibrate": True, "new": new}}
     go_blocked = worker_first = stepping = by_other = False
     walk = _walking(st.intent, cfg)
     # both stopped close together and we do not know where he wants to go: releasing both at once is
@@ -226,9 +304,12 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         r.speed_scale = 1.0 if limit is None else round(limit / max(f_tr.speed, 1e-6), 2)
         r.hold = True
     r.quiet = False
+    r.stop_at = None
     if getattr(cfg, "env_cap", False) and r.level < 2:
-        lim = envelope_limit(w_tr, f_tr, cfg)
-        if lim is not None and lim < abs(f_tr.speed) - 0.2:
+        stop = [] if getattr(cfg, "stop_point", False) else None
+        lim = envelope_limit(w_tr, f_tr, cfg, held=st.level >= 2, out_stop=stop)
+        ref = max(abs(f_tr.speed), abs(st.f_speed or 0.0)) if getattr(cfg, "env_v2", False) else abs(f_tr.speed)
+        if lim is not None and lim < ref - 0.2:
             # someone close to the truck's path: it may only go as fast as it can still stop if he steps in;
             # the worker is not buzzed (nothing is predicted), only the truck is limited
             r.level, r.level_name = 2, LEVELS[2]
@@ -236,6 +317,22 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             r.speed_limit = round(max(lim, 0.0), 2)
             r.speed_scale = round(r.speed_limit / max(abs(f_tr.speed), 1e-6), 2)
             r.hold = r.quiet = True
+            if stop:
+                r.stop_at = stop[0]
+    if getattr(cfg, "truck_priority", False) and r.level >= 2 and r.level < 3 and f_tr is not None and w_tr is not None \
+            and not worker_first:
+        # the worker yields (WAIT, or STEP ASIDE when he is on the truck's path), the truck keeps its speed as
+        # long as it can still stop short of where he is - or of where he will have stopped if he still walks
+        stop = [] if getattr(cfg, "stop_point", False) else None
+        lim = envelope_limit(w_tr, f_tr, cfg, held=st.level >= 2 or r.level >= 2, out_stop=stop)
+        if getattr(cfg, "env_v2", False):
+            r.speed_limit = None if lim is None else round(max(lim, 0.0), 2)
+            if stop:
+                r.stop_at = stop[0]                    # the module brakes for the point itself; the limit is
+                                                       # for modules without stop points
+        else:
+            r.speed_limit = round(max(lim, 0.0), 2) if lim is not None and lim < abs(f_tr.speed) - 0.1 else None
+        r.speed_scale = 1.0 if r.speed_limit is None else round(r.speed_limit / max(abs(f_tr.speed), 1e-6), 2)
     if st.aside_sent:
         st.hold_s = min(st.hold_s, 1.0)           # worker parked at the lane edge: no flicker to ride out
     ev = st.step(r.level, now)
@@ -256,10 +353,31 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         st.last_any = now
         return "release", {r.worker: {"release": True}}
     # a tighter speed limit must reach the forklift now, not at the next periodic refresh
+    sent = st.sent_limit if st.sent_limit is not None or not getattr(cfg, "prompt_ease", False) else math.inf
     if ev is None and r.level >= 2 and st.level >= 2 and r.speed_limit is not None \
-            and st.sent_limit is not None and r.speed_limit < st.sent_limit - 0.3:
+            and sent is not None and r.speed_limit < sent - 0.3 \
+            and (getattr(r, "stop_at", None) is None or getattr(st, "sent_stop", None) is None):
         ev = "refresh"
         st.last_sent = now
+    # a new stop point, or one that moved closer, must reach the module now
+    if ev is None and getattr(r, "stop_at", None) is not None and st.level >= 2 and f_tr is not None:
+        ss = getattr(st, "sent_stop", None)
+        closer = ss is None or (math.hypot(r.stop_at[0] - f_tr.pos[0], r.stop_at[1] - f_tr.pos[1])
+                                < math.hypot(ss[0] - f_tr.pos[0], ss[1] - f_tr.pos[1]) - 0.3)
+        if closer:
+            ev = "refresh"
+            st.last_sent = now
+    # prompt ease: the truck's limit follows the current plan when it gets looser too, instead of waiting
+    # for the periodic refresh or the end of the clear hold (the worker's WAIT is unaffected)
+    if ev is None and getattr(cfg, "prompt_ease", False) and st.level >= 2 and st.sent_limit is not None \
+            and now - st.last_sent >= getattr(cfg, "ease_min_s", 0.3) and w_tr is not None and f_tr is not None:
+        new = r.speed_limit if r.level >= 2 else None
+        settled = w_tr.speed < 0.3 or r.closing_speed < -0.3      # he stopped for the alert, or they separate
+        if settled and getattr(r, "stop_at", None) is None and (new is None or new > st.sent_limit + 0.3):
+            ev = "refresh"
+            st.last_sent = now
+            if new is None:
+                r.speed_limit, r.speed_scale = None, 1.0
     if not ev:
         # WAIT keep-alive: the tag holds the worker while it hears the alert; between refreshes
         # (level flickering, clear-hold window) it would otherwise time out and show GO early
@@ -269,6 +387,7 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
             return "wait", {r.worker: {"wait": True}}
         return None, None
     st.sent_limit = None if ev == "clear" else r.speed_limit
+    st.sent_stop = None if ev == "clear" else getattr(r, "stop_at", None)
     untagged = r.worker.startswith("untagged_")
     # vibrate on a new alert, while DANGER, and while the worker still walks into the
     # conflict (the speed plan assumes a buzzed worker stops); not on holds, so a
@@ -280,5 +399,6 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
                             "speed_scale": 1.0 if ev == "clear" else r.speed_scale,
                             # absolute limit: a ratio of an already reduced speed
                             # would let the truck speed up again
-                            "speed_limit": None if ev == "clear" else r.speed_limit}}
+                            "speed_limit": None if ev == "clear" else r.speed_limit,
+                            "stop_at": None if ev == "clear" else getattr(r, "stop_at", None)}}
     return ev, actions

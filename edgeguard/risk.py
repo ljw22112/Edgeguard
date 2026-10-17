@@ -72,6 +72,19 @@ class RiskConfig:
     env_cap: bool = False          # a person near the truck's path ahead: limit the truck (quietly, no buzz)
     env_lateral: float = 2.2       # m from the truck's path that counts as "near"
     env_react: float = 0.6         # s from MEC decision to brakes acting (radio + actuator)
+    # --- prompt ease (sim/efficiency_audit.py: limits outlived the conflict by the refresh / clear hold) ---
+    prompt_ease: bool = False      # a looser truck limit is sent at once once the worker stopped or they separate
+    ease_min_s: float = 0.3        # s: at most one easing message per pair this often
+    # --- truck priority: the worker yields, the truck keeps its speed within its stopping envelope ---------
+    truck_priority: bool = False   # WARNING limits the truck only to the envelope (DANGER and "worker first" keep theirs)
+    early_aside: bool = False      # a worker on the truck's path gets STEP ASIDE with the first alert, walking or not
+    aside_ahead_m: float = 0.0     # m: a worker on a moving truck's path within this range gets STEP ASIDE before any alert
+    env_look: float = 0.0          # s: the envelope also covers where a walking worker will be this much later
+    env_v2: bool = False           # envelope also for a person beside the path who walks / starts to walk in
+    env_detect: float = 0.7        # s: a standing person who starts walking is noticed this late
+    env_margin: float = 0.3        # m: stop this much short of r_safe from a person in the path
+    env_pass_floor: float = 1.0    # m/s: a truck may always pass a person beside its path this fast
+    stop_point: bool = False       # send a person in the path as a stop point the module brakes for itself
     # --- site map (edgeguard/sitemap.py) ------------------------------------------------
     occl_t_margin: float = 0.0     # s added to t_warn / t_danger (evaluated: +1 s made blind corners worse)
     occl_r_margin: float = 0.5     # m added to r_safe when racks block the line of sight (sim/occlusion_eval.py)
@@ -288,9 +301,19 @@ def _assess(worker, forklift, cfg: RiskConfig, method="guidance_ctrv") -> PairRi
         else:
             reason = f"near miss predicted: {d_min:.1f} m in {t_min:.1f} s"
 
-    return PairRisk(worker.id, forklift.id, level, LEVELS[level], method, enc.range,
-                    enc.closing_speed, enc.los_rate, enc.tcpa, enc.dcpa, enc.ttc,
-                    t_min, d_min, scale, reason, _limit(scale, forklift.speed, cfg))
+    out = PairRisk(worker.id, forklift.id, level, LEVELS[level], method, enc.range,
+                   enc.closing_speed, enc.los_rate, enc.tcpa, enc.dcpa, enc.ttc,
+                   t_min, d_min, scale, reason, _limit(scale, forklift.speed, cfg))
+    out.plan_limit = None
+    if level >= 2 and moving and method in ("guidance_ctrv", "guidance_lstm", "guidance_fl"):
+        # braking plan for a worker who stops after his reaction time (no velocity obstacle); DANGER: also
+        # for one who walks on
+        stop2 = StopAfterPredictor(worker.pos, worker.vel, t_react=getattr(cfg, "plan_react", cfg.worker_react))
+        st_s = braking_scale(stop2, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk)
+        if level >= 3:
+            st_s = min(st_s, braking_scale(pw, pf, forklift.speed, cfg.r_safe, cfg.horizon, **bk))
+        out.plan_limit = _limit(st_s, forklift.speed, cfg)
+    return out
 
 
 def _limit(scale, speed, cfg):

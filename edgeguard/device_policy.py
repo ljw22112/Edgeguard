@@ -88,6 +88,8 @@ class ForkliftLimit:
         self.ranges = {}                               # tag -> [(t, d)] recent direct ranges
         self.own = None                                # (t, x, y, vx, vy) this device (coop)
         self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
+        self.stops = {}                                # worker -> ((x, y) stop point, t)
+        self.pose = None
 
     def on_own_state(self, t, x, y, vx, vy):
         self.own = (t, x, y, vx, vy)
@@ -162,16 +164,49 @@ class ForkliftLimit:
                 cap = c if cap is None else min(cap, c)
         return cap
 
-    def on_alert(self, t, event, limit, src=""):
+    # Stop point ("movement authority", as the limit of movement authority in ETCS): instead of a speed, the MEC
+    # app may send the site position the truck must stop short of.  The module brakes for it from its own
+    # position every control cycle, so radio latency and a lost refresh do not delay the braking.
+    STOP_DECEL = 2.3          # m/s^2 the module plans with (below the 2.5 the drive achieves)
+    STOP_REACT = 0.1          # s control cycle + actuator lag left after the 0.2 s command delay
+
+    def on_alert(self, t, event, limit, src="", stop_at=None):
         """src: the worker the alert is about.  Each pair keeps its own limit and the tightest
         one applies, so a `clear` for one worker does not lift the limit another worker needs."""
         self.hb_t = t                                  # any MEC message proves it is alive
         if event in ("wait", "release", "aside"):      # worker-only cues: the speed limit stays
             return
-        if event == "clear" or limit is None:
+        if event == "clear":
+            self.limits.pop(src, None)
+            self.stops.pop(src, None)
+            return
+        if stop_at is not None:
+            self.stops[src] = (tuple(stop_at), t)
+        else:
+            self.stops.pop(src, None)
+        if limit is None:
             self.limits.pop(src, None)
         else:
             self.limits[src] = (limit, t)
+
+    def on_pose(self, x, y, hx, hy):
+        """Own position and unit heading (direction of travel) from the module's tag and drive."""
+        self.pose = (x, y, hx, hy)
+
+    def stop_cap(self, t):
+        """Speed from which the truck can still stop short of the nearest stop point ahead, or None."""
+        if not self.stops or self.pose is None:
+            return None
+        if t - self.hb_t <= SILENCE_S:                 # MEC alive, refreshes for a pair stopped: its clear was lost
+            self.stops = {k: v for k, v in self.stops.items() if t - v[1] <= ALERT_STALE_S}
+        x, y, hx, hy = self.pose
+        cap = None
+        for (sx, sy), _ in self.stops.values():
+            d = (sx - x) * hx + (sy - y) * hy                # distance left along the heading
+            a, tr = self.STOP_DECEL, self.STOP_REACT
+            v = 0.0 if d <= 0 else a * (-tr + (tr * tr + 2.0 * d / a) ** 0.5)
+            cap = v if cap is None else min(cap, v)
+        return cap
 
     @property
     def limit(self):
@@ -201,7 +236,19 @@ class ForkliftLimit:
         return held
 
     def _held(self, t):
+        cap = self.stop_cap(t) if self.stops else None
+        held = self._held_limits(t)
+        if cap is None:
+            return held
+        if t - self.hb_t > SILENCE_S and held is None:
+            held = cap                                 # MEC silent: the stop point is part of the held plan
+        return cap if held is None else min(held, cap)
+
+    def _held_limits(self, t):
         if not self.limits:
+            if self.stops and t - self.hb_t > STOP_AFTER_S and self.mode.startswith(("failsafe", "coop")) \
+                    and self.mode != "failsafe_creep":
+                return 0.0                             # MEC really down with a plan active: stop
             return None
         if self.mode == "legacy":
             self.limits = {k: v for k, v in self.limits.items() if t - v[1] <= 5.0}
