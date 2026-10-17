@@ -35,6 +35,7 @@ class AlertState:
         self.no_intent_until = 0.0        # after STEP ASIDE his motion is the sidestep, not his way
         self.raise_t = None               # when this encounter's alert was raised (truck priority)
         self.sent_stop = None             # stop point last sent to the truck
+        self.slow_since = None            # worker slower than 0.5 m/s since (STEP ASIDE only for one standing)
 
     def reset(self):
         self.level, self.streak, self.below_since, self.sent_limit, self.last_eval = 0, 0, None, None, None
@@ -257,10 +258,17 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     # and two parties starting at the same moment is how a standoff turns into a collision)
     # STEP ASIDE: the worker stands in the lane of a truck that stopped for him - nobody can pass,
     # so he is told to step to the nearer lane edge (and WAIT there) instead of holding both
+    # a worker counts as standing for STEP ASIDE only once he has been slow for aside_still_s (with noisy fixes a
+    # walking worker's speed dips below 0.5 m/s now and then; a sidestep planned from where he was is then wrong)
+    if w_tr is not None and w_tr.speed < 0.5:
+        st.slow_since = st.slow_since if st.slow_since is not None else now
+    else:
+        st.slow_since = None
+    still = st.slow_since is not None and now - st.slow_since >= getattr(cfg, "aside_still_s", 0.0)
     early = getattr(cfg, "truck_priority", False) and getattr(cfg, "early_aside", False)
     ahead_m = getattr(cfg, "aside_ahead_m", 0.0) if getattr(cfg, "truck_priority", False) else 0.0
     if getattr(cfg, "aside_cue", False) and (st.level >= 2 or early and r.level >= 2 or ahead_m > 0) and not st.aside_sent \
-            and w_tr is not None and f_tr is not None and (w_tr.speed < 0.5 or early or ahead_m > 0) \
+            and w_tr is not None and f_tr is not None and (w_tr.speed < 0.5 and still or early or ahead_m > 0) \
             and not r.worker.startswith("untagged_"):
         side = _aside_vector(w_tr.pos, f_tr, st.f_speed, cfg,
                              others=others if getattr(cfg, "aside_check_others", False) else ())

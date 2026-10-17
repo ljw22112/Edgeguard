@@ -153,6 +153,7 @@ risk:
   stop_point: true
   prompt_ease: true
   aside_check_others: true
+  aside_still_s: 0.6      # noisy UWB: a walker's speed dips below 0.5 m/s; STEP ASIDE only once he really stands
   env_walk_in: true
   plan_confirm: true
   msg_order: true

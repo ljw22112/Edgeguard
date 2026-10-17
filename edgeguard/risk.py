@@ -67,6 +67,7 @@ class RiskConfig:
     pass_speed_far: float = 2.0    # m/s: passing a standing worker whose distance from the truck's path is
     pass_margin: float = 1.0       # at least r_safe + pass_margin (closer: pass_speed)
     aside_margin: float = 0.8      # m: STEP ASIDE takes the worker to r_safe + aside_margin from the truck's path
+    aside_still_s: float = 0.0     # s a worker must have been slow (< 0.5 m/s) before he is told to STEP ASIDE
     aside_check_others: bool = False  # STEP ASIDE only to a side that is clear of the other trucks
     aside_hold_speed: float = 0.0  # m/s: the truck may creep this fast while he steps aside, if > 5 m away
     # --- stopping envelope (OSHA 1910.178(n)(8): a speed at which the truck can be stopped) -----
