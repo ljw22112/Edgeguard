@@ -249,6 +249,12 @@ void publishMotion(float x, float y, float v, float yawRate) {
   con["speed"] = v;
   con["heading"] = heading;
   con["yaw_rate"] = yawRate;
+  JsonArray plan = con["plan"].to<JsonArray>();     // the plan it applies: the MEC app re-sends what is missing
+  for (const auto& pr : speedLimit.pairs) {
+    if (!pr.used) continue;
+    JsonArray e = plan.add<JsonArray>();
+    e.add(pr.src); e.add(pr.limit); e.add(pr.hasStop ? 1 : 0);
+  }
   String body;
   serializeJson(doc, body);
   int code = m2mPost(String("/") + DEVICE_ID + "/motion", 4, body, "fk");

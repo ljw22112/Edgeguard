@@ -422,6 +422,8 @@ def handle_sample(p: dict):
         if engine.update(Track, p["id"], kind, t, **meas) is False:
             state["input"]["late"] += 1                # out-of-order sample, the track kept the newer one
             return
+        if kind == "forklift" and isinstance(p.get("plan"), list):
+            confirm_plans(p["id"], p["plan"])
         evaluate_and_alert(p.get("ts"), rx, only=p["id"])
         if rate_ctl is not None:
             control_rates()
@@ -524,6 +526,44 @@ def record_near_miss(ev):
                  ev["x"], ev["y"], "" if ev["alerted"] else " - no alert before")
 
 
+# --- plan confirmation (RiskConfig.plan_confirm, sim/robust_eval.py "bad_network") ----------------------------
+# A forklift reports the plan it applies in every motion sample: "plan": [[worker, limit | -1, stop 0|1], ...].
+# A speed plan / stop point it does not report within ack_s is sent again (a lost notification, a lossy cell).
+state["plans"] = {"wanted": {}, "resent": 0, "confirmed": 0}
+
+
+def _plan_of(alert):
+    a = (alert.get("actions") or {}).get(alert["forklift"]) or {}
+    if alert["event"] == "clear":
+        return None, False
+    return a.get("speed_limit"), a.get("stop_at") is not None
+
+
+def confirm_plans(forklift, plan):
+    """Caller holds `lock`."""
+    if not getattr(engine.cfg, "plan_confirm", False):
+        return
+    got = {}
+    for e in plan:
+        if isinstance(e, (list, tuple)) and len(e) == 3 and isinstance(e[0], str) and _num(e[1]):
+            got[e[0]] = (None if e[1] < 0 else float(e[1]), bool(e[2]))
+    now = time.time()
+    for (f, w), (ts, alert) in list(state["plans"]["wanted"].items()):
+        if f != forklift or now - ts < engine.cfg.ack_s:
+            continue
+        lim, stop = _plan_of(alert)
+        have = got.get(w, (None, False))
+        same_lim = (lim is None and have[0] is None) or (lim is not None and have[0] is not None
+                                                         and abs(lim - have[0]) < 0.01)
+        if same_lim and stop == have[1]:
+            del state["plans"]["wanted"][(f, w)]
+            state["plans"]["confirmed"] += 1
+        else:
+            state["plans"]["wanted"][(f, w)] = (now, alert)
+            state["plans"]["resent"] += 1
+            post("alert", alert)                   # the same plan again
+
+
 def evaluate_and_alert(src_ts, rx, only=None):
     """Assess the pairs touched by the new sample and emit alerts; caller holds `lock`."""
     risks = engine.evaluate(only=only)
@@ -558,6 +598,8 @@ def evaluate_and_alert(src_ts, rx, only=None):
                 "src_ts": src_ts, "mec_rx_ts": rx, "mec_tx_ts": now_ms(),
             }
             post("alert", alert)
+            if ev not in ("wait", "release", "aside") and getattr(engine.cfg, "plan_confirm", False):
+                state["plans"]["wanted"][(r.forklift, r.worker)] = (now, alert)
             if ev in ("wait", "release", "aside"):     # worker WAIT keep-alive / GO / STEP ASIDE (edgeguard/worker_cue.py)
                 state["worker_cues"][ev] += 1
                 continue
@@ -609,6 +651,9 @@ def gc_once(now=None):
         for d in [d for d, a in state["acks"].items() if wall - a.get("rx", wall) > 60]:
             del state["acks"][d]
         del state["onboarded"][:-200]
+        wanted = state["plans"]["wanted"]          # plans nobody confirms (truck without plan reports, gone)
+        for k in [k for k, (ts, _) in wanted.items() if wall - ts > 10.0 or k[0] in gone or k[1] in gone]:
+            del wanted[k]
         live = {(w, f) for w, t in engine.tracks.items() if t.kind == "worker"
                 for f, u in engine.tracks.items() if u.kind == "forklift"
                 and now - getattr(t, "last_seen", now) <= 2.0 and now - getattr(u, "last_seen", now) <= 2.0}
@@ -945,6 +990,7 @@ def health():
             "ingest_ms_median": ing[len(ing) // 2] if ing else None,
             "ingest": {**state["ingest"], "depth": len(_ingest)}, "loops": loops_status(),
             "recovery": state["recovery"], "subs": state.get("subs"),
+            "plans": {k: v for k, v in state["plans"].items() if k != "wanted"} | {"pending": len(state["plans"]["wanted"])},
             "tables": {"tracks": len(engine.tracks), "pairs": len(state["pairs"]), "worker_cue": len(state["worker_cue"]),
                        "worker_aside": len(state["worker_aside"]), "zone_timers": len(_zone_last), "acks": len(state["acks"])}}
 

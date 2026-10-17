@@ -161,3 +161,20 @@ def test_gc_drops_side_tables_of_forgotten_tracks(app_mod):
     app_mod.state["worker_aside"]["untagged_gc"] = time.time()
     app_mod.gc_once(now=time.monotonic() + app_mod.GC_S + 1)
     assert "untagged_gc" not in app_mod.state["worker_cue"] and "untagged_gc" not in app_mod.state["worker_aside"]
+
+
+def test_plan_not_reported_by_the_forklift_is_sent_again(monkeypatch):
+    import mec_app.app as app
+    from edgeguard.alerting import AlertState  # noqa: F401
+    sent = []
+    monkeypatch.setattr(app, "post", lambda c, b: sent.append((c, b)))
+    monkeypatch.setattr(app.engine.cfg, "plan_confirm", True, raising=False)
+    monkeypatch.setattr(app.engine.cfg, "ack_s", 0.0, raising=False)
+    alert = {"event": "raise", "forklift": "f9", "worker": "w9",
+             "actions": {"f9": {"speed_limit": 1.2, "stop_at": [3.0, 0.0]}}}
+    with app.lock:
+        app.state["plans"]["wanted"][("f9", "w9")] = (0.0, alert)
+        app.confirm_plans("f9", [])                         # applies nothing: re-send
+        assert sent and sent[-1] == ("alert", alert)
+        app.confirm_plans("f9", [["w9", 1.2, 1]])           # now it reports the plan: done
+        assert ("f9", "w9") not in app.state["plans"]["wanted"]
