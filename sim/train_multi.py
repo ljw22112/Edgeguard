@@ -43,9 +43,12 @@ BOUNDS_PRIORITY = {
     "brake_decel": (1.8, 2.8), "env_react": (0.3, 1.0), "env_lateral": (2.0, 4.0), "env_detect": (0.3, 1.2),
     "env_margin": (0.0, 0.8), "env_pass_floor": (1.2, 2.8), "walk_speed": (1.0, 1.6), "pass_speed": (1.2, 2.6),
     "pass_speed_far": (1.6, 3.0), "wait_lateral": (1.8, 3.0), "aside_margin": (0.3, 1.2),
+    "comply_grace": (0.8, 2.5), "env_held_floor": (1.4, 3.0), "env_held_gap": (0.3, 1.5),
 }
+BOUNDS_PRIORITY["env_margin"] = (0.25, 0.8)          # covers position noise of a standing worker (audit)
 FIXED = {"default": {"env_cap": True},
-         "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True}}
+         "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True,
+                      "aside_check_others": True}}
 MODE = "default"
 NAMES = list(BOUNDS)
 LO = np.array([BOUNDS[n][0] for n in NAMES])
@@ -53,9 +56,11 @@ HI = np.array([BOUNDS[n][1] for n in NAMES])
 W_WORKER, W_COLL, W_NEAR = 0.01, 0.5, 0.05
 
 
-def set_mode(mode):
-    global MODE, BOUNDS, NAMES, LO, HI
+def set_mode(mode, w_coll=None):
+    global MODE, BOUNDS, NAMES, LO, HI, W_COLL
     MODE = mode
+    if w_coll is not None:
+        W_COLL = w_coll
     if mode == "priority":
         BOUNDS = BOUNDS_PRIORITY
     NAMES = list(BOUNDS)
@@ -95,9 +100,10 @@ def main():
     ap.add_argument("--init", help="start from this JSON policy file (e.g. a previous run's best) instead of site.yaml")
     ap.add_argument("--seed-base", type=int, default=10_000, help="training seeds start here (never the evaluation seeds)")
     ap.add_argument("--mode", choices=sorted(FIXED), default="default")
+    ap.add_argument("--w-coll", type=float, help="collision penalty per collision per episode (default 0.5)")
     ap.add_argument("--start", help="JSON overrides for the start policy (on top of site.yaml)")
     a = ap.parse_args()
-    set_mode(a.mode)
+    set_mode(a.mode, a.w_coll)
     from sim.failsafe_eval import site_cfg
     base = site_cfg()
     start = {k: getattr(base, k) for k in BOUNDS}

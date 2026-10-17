@@ -67,6 +67,7 @@ class RiskConfig:
     pass_speed_far: float = 2.0    # m/s: passing a standing worker whose distance from the truck's path is
     pass_margin: float = 1.0       # at least r_safe + pass_margin (closer: pass_speed)
     aside_margin: float = 0.8      # m: STEP ASIDE takes the worker to r_safe + aside_margin from the truck's path
+    aside_check_others: bool = False  # STEP ASIDE only to a side that is clear of the other trucks
     aside_hold_speed: float = 0.0  # m/s: the truck may creep this fast while he steps aside, if > 5 m away
     # --- stopping envelope (OSHA 1910.178(n)(8): a speed at which the truck can be stopped) -----
     env_cap: bool = False          # a person near the truck's path ahead: limit the truck (quietly, no buzz)
@@ -84,7 +85,11 @@ class RiskConfig:
     env_detect: float = 0.7        # s: a standing person who starts walking is noticed this late
     env_margin: float = 0.3        # m: stop this much short of r_safe from a person in the path
     env_pass_floor: float = 1.0    # m/s: a truck may always pass a person beside its path this fast
+    env_held_floor: float = 0.0    # m/s: pass a waiting worker standing within env_held_gap of the path no faster
+    env_held_gap: float = 1.0      # m beyond r_safe
     stop_point: bool = False       # send a person in the path as a stop point the module brakes for itself
+    comply_grace: float = 0.0      # s after the alert: a worker still walking in is planned for as not stopping
+    stop_hold_m: float = 1.0       # m: a stop point moves away only after he has moved this much (not with noise)
     # --- site map (edgeguard/sitemap.py) ------------------------------------------------
     occl_t_margin: float = 0.0     # s added to t_warn / t_danger (evaluated: +1 s made blind corners worse)
     occl_r_margin: float = 0.5     # m added to r_safe when racks block the line of sight (sim/occlusion_eval.py)
