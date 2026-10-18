@@ -185,6 +185,34 @@ def _lat_to_leave(w_tr, f_tr, cfg):
     return max(0.0, cfg.r_safe + 0.2 - abs(-dx * uy + dy * ux))
 
 
+def entry_gate_needed(w_tr, f_tr, cfg):
+    """A walker heading into the truck's path whose stopping point after a late alert would be inside it, and
+    the truck reaches his crossing within gate_t before he can be across."""
+    sp = abs(f_tr.speed)
+    vx, vy = f_tr.vel
+    vn = math.hypot(vx, vy)
+    if sp < 0.8 or vn < 0.3:
+        return False
+    ux, uy = vx / vn, vy / vn
+    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    ahead, lat_s = dx * ux + dy * uy, -dx * uy + dy * ux
+    wvx, wvy = w_tr.vel
+    toward = -(wvx * -uy + wvy * ux) * (1.0 if lat_s > 0 else -1.0)
+    rs, lat = cfg.r_safe, abs(lat_s)
+    if toward < 0.5 or lat <= rs or ahead <= 0:
+        return False
+    # where he stops if the alert comes at the usual time: warning lead + reaction + slowing down
+    t_late = 0.8 + 0.3
+    stop_lat = lat - toward * (t_late + toward / 4.0)
+    if stop_lat >= rs:
+        return False                                          # a later alert still stops him outside
+    if lat - toward * 0.8 - toward * toward / 4.0 < rs + 0.2:
+        return False                                          # too late to stop him outside anyway
+    t_out = (lat + rs) / toward
+    t_f_in = (ahead - rs) / sp
+    return t_f_in < min(t_out, getattr(cfg, "gate_t", 6.0))
+
+
 def green_wave_speed(w_tr, f_tr, cfg):
     """Speed at which the truck reaches the crossing just after a walking worker has crossed its path, or None.
 
@@ -420,6 +448,12 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     r.quiet = False
     r.stop_at = None
     r.glide = False
+    if getattr(cfg, "entry_gate", False) and r.level < 2 and w_tr is not None and f_tr is not None \
+            and entry_gate_needed(w_tr, f_tr, cfg):
+        # he walks towards the truck's path and would stop inside it if told later: tell him now, while he can
+        # still stop outside (the truck then passes instead of braking for a person standing in its lane)
+        r.level, r.level_name = 2, LEVELS[2]
+        r.reason = "stop before the forklift's path"
     if getattr(cfg, "green_wave", False) and r.level < 2 and w_tr is not None and f_tr is not None:
         v_gw = green_wave_speed(w_tr, f_tr, cfg)
         if v_gw is not None:

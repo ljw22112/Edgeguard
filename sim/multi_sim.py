@@ -154,7 +154,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             movers[k].v = min(movers[k].v, ZONE_KMH / 3.6)
     nominal = {(w, f): min(math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(wp[w], fp[f][0]))
                for w in wp for f in fp}
-    engine = RiskEngine(cfg, "guidance_ctrv")
+    engine = RiskEngine(cfg, "guidance_lstm" if getattr(cfg, "worker_model", "cv") == "lstm" else "guidance_ctrv")
     from edgeguard.device_policy import ForkliftLimit as _FL
     tags = {w: _FL("coop") for w in wp} if d2d and system == "edgeguard" else {}
     drng = random.Random(seed ^ 0xD2D)
@@ -309,6 +309,9 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             if rng.random() < up_loss:
                 continue
             x, y = pos[k][0] + rng.gauss(0, noise), pos[k][1] + rng.gauss(0, noise)
+            fs = getattr(cfg, "pos_fusion", 1.0)
+            if fs != 1.0 and m.kind == "worker":   # tag fuses UWB with its IMU (step detection): smaller error
+                x, y = pos[k][0] + (x - pos[k][0]) * fs, pos[k][1] + (y - pos[k][1]) * fs
             if m.kind == "worker":
                 engine.update(Track, k, "worker", t, x=x, y=y)
             else:
