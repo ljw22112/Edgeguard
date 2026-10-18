@@ -58,6 +58,20 @@ Each row was found by tracing a collision of the scenario set ([`sim/collision_a
 
 Rejected after validation (kept as options, off): STEP ASIDE only after 0.6 s of standing (`aside_still_s`, more collisions and less throughput), narrowing STEP ASIDE to workers inside r_safe (`aside_reach`, fixed the noisy-UWB case but added three elsewhere), buzzing a walker on an envelope alert (`env_buzz_walker`) and a worst-case GO direction (`go_unknown_worst`), no measurable effect.
 
+## Tried on top of v2, not adopted (development seeds 60000+, 8 scenarios x 100 episodes)
+
+| | Collisions | Normal throughput | Worker time lost (normal) | Alarms per episode (normal) |
+|---|---|---|---|---|
+| v2 | 0 | 98.4 % | 1.99 s | 7.1 |
+| + green wave (slow the truck early so it reaches a crossing after the walker) | 1 | 96.9 % | 2.21 s | 6.1 |
+| + green wave, gentler (at most 20 % slower) | 0-1 | 97.6 % | 2.21 s | 6.6-6.8 |
+| + alert state restored after a MEC restart | 0 | 98.4 % | 1.99 s | 7.1 |
+
+- **Green wave** cut alarms by 7-14 % but cost throughput and worker time and added a collision. Under truck priority a WAIT for the worker is cheap, so slowing the truck for a crossing the WAIT would have resolved moves the cost to the truck; the walker's path 6-8 s ahead is uncertain (people turn and stop); and the quiet slow-down holds the pair's alert at WARNING, so a real collision course that follows is no longer a new alert and the worker is not buzzed - a safety gap that would need its own alert channel.
+- **Restoring the alert state** after a MEC restart (read back from the CSE) changed little here (MEC restart: close passes 6 -> 5, throughput +0.2 points): the devices' own layers (tag WAIT kept while a truck is near, local D2D rule, emergency brake) already cover the restart. Its costs: a CSE write per alert change, a stale state after a long outage (needs an age limit), and consistency with an active-standby pair.
+
+Raw output: [`results/green_wave_state_restore_dev.txt`](../results/green_wave_state_restore_dev.txt).
+
 ## How the policy was chosen
 
 1. Training ([`sim/train_multi.py`](../sim/train_multi.py) `--mode priority --robust`): CEM over 20 parameters, every candidate scored on 144 episodes, half normal and half exceptional (85 / 70 % compliance, bad network, MEC restart, noisy UWB, dense), seeds 80,000+, a collision costing 2 episodes' output.
