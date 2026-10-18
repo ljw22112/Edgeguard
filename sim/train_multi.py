@@ -51,6 +51,9 @@ FIXED = {"default": {"env_cap": True},
          "priority": {"env_cap": True, "truck_priority": True, "env_v2": True, "stop_point": True, "prompt_ease": True,
                       "aside_check_others": True, "env_walk_in": True, "plan_confirm": True, "msg_order": True,
                       "glide": True, "ease_on_leave": True}}
+# --mode plus: the same with the entry gate, the learned walking prediction (LSTM) and tag UWB + IMU fusion
+# (assumed 40 % less worker position error) - the policy re-trained for that sensor set
+FIXED["plus"] = {**FIXED["priority"], "entry_gate": True, "worker_model": "lstm", "pos_fusion": 0.6}
 MODE = "default"
 NAMES = list(BOUNDS)
 LO = np.array([BOUNDS[n][0] for n in NAMES])
@@ -63,7 +66,7 @@ def set_mode(mode, w_coll=None):
     MODE = mode
     if w_coll is not None:
         W_COLL = w_coll
-    if mode == "priority":
+    if mode in ("priority", "plus"):
         BOUNDS = BOUNDS_PRIORITY
     NAMES = list(BOUNDS)
     LO = np.array([BOUNDS[n][0] for n in NAMES])
@@ -109,7 +112,7 @@ def main():
     ap.add_argument("--out", default="results/train_multi.json")
     ap.add_argument("--init", help="start from this JSON policy file (e.g. a previous run's best) instead of site.yaml")
     ap.add_argument("--seed-base", type=int, default=10_000, help="training seeds start here (never the evaluation seeds)")
-    ap.add_argument("--mode", choices=sorted(FIXED), default="default")
+    ap.add_argument("--mode", choices=["default", "priority", "plus"], default="default")
     ap.add_argument("--sigma", type=float, help="initial CEM spread (share of each range)")
     ap.add_argument("--robust", action="store_true", help="train on the normal / exceptional scenario mix")
     ap.add_argument("--w-coll", type=float, help="collision penalty per collision per episode (default 0.5)")
