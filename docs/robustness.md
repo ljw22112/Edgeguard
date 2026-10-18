@@ -72,6 +72,23 @@ Rejected after validation (kept as options, off): STEP ASIDE only after 0.6 s of
 
 Raw output: [`results/green_wave_state_restore_dev.txt`](../results/green_wave_state_restore_dev.txt).
 
+A second round (same seeds; mean over the 8 scenarios, 800 episodes each):
+
+| | Collisions | Close passes | Mean throughput | Worker time lost | Alarms per episode |
+|---|---|---|---|---|---|
+| v2 | 0 | 26 | 94.7 % | 2.52 s | 9.2 |
+| + entry gate (WAIT a walker before he steps into the path) | 0 | 27 | 94.8 % | 2.53 s | 9.3 |
+| + tag UWB + IMU fusion (assumed 40 % less worker position error) | 3 | 26 | 95.5 % | 2.24 s | 7.6 |
+| + learned walking prediction (LSTM) | 2 | 19 | 94.8 % | 2.42 s | 8.4 |
+| + all three | 1 | 17 | 95.7 % | 2.23 s | 7.6 |
+
+- **Entry gate**: almost never fires - the collision-course warning already comes early enough for most walkers to stop outside the path; no gain, more rules.
+- **UWB + IMU fusion**: the best single gain in efficiency (worker time -11 %, alarms -17 %, +0.8 points) but 3 collisions: the policy's margins were learned for UWB-only noise, and with sharper positions the truck passes closer - a sensor change needs a re-trained, re-validated policy. The 40 % is an assumption (the sim models Gaussian noise, not NLOS outliers), and it needs an IMU on every tag, calibration and drift handling near steel racks.
+- **LSTM**: fewer close passes (-27 %) and alarms (-9 %), but 2 collisions under 0.35-0.6 m UWB noise: trained on cleaner tracks, it extrapolates noisy ones badly (the one-pair evaluation found the same trade). It also needs 2 s of history, PyTorch on the MEC host and is harder to explain for a safety case.
+- **All three**: +1.0 point throughput, -12 % worker time, -17 % alarms, -35 % close passes, 1 collision (dense floor). Promising, but adoptable only after the policy is re-trained with them and passes validation with no collision.
+
+Raw output: [`results/entry_gate_fusion_lstm_dev.txt`](../results/entry_gate_fusion_lstm_dev.txt).
+
 ## How the policy was chosen
 
 1. Training ([`sim/train_multi.py`](../sim/train_multi.py) `--mode priority --robust`): CEM over 20 parameters, every candidate scored on 144 episodes, half normal and half exceptional (85 / 70 % compliance, bad network, MEC restart, noisy UWB, dense), seeds 80,000+, a collision costing 2 episodes' output.

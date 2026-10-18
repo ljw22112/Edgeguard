@@ -1,0 +1,36 @@
+== {"entry_gate":true}
+normal       coll   0 close   1 thr 0.984 worker 2.01 alarms 7.2
+comply_85    coll   0 close   3 thr 0.945 worker 2.41 alarms 7.5
+comply_70    coll   0 close   3 thr 0.920 worker 2.53 alarms 7.8
+bad_network  coll   0 close   4 thr 0.930 worker 2.79 alarms 8.8
+mec_restart  coll   0 close   6 thr 0.953 worker 2.22 alarms 7.5
+noisy_uwb    coll   0 close   5 thr 0.935 worker 3.21 alarms 12.2
+dense        coll   0 close   4 thr 0.949 worker 2.99 alarms 15.9
+attentive    coll   0 close   1 thr 0.964 worker 2.11 alarms 7.2
+== {"pos_fusion":0.6}
+normal       coll   0 close   4 thr 0.977 worker 1.86 alarms 6.2
+comply_85    coll   0 close   2 thr 0.953 worker 2.16 alarms 6.5
+comply_70    coll   0 close   6 thr 0.934 worker 2.32 alarms 6.7
+bad_network  coll   1 close   2 thr 0.945 worker 2.38 alarms 7.2
+mec_restart  coll   1 close   8 thr 0.939 worker 2.13 alarms 6.6
+noisy_uwb    coll   1 close   2 thr 0.970 worker 2.30 alarms 8.1
+dense        coll   0 close   2 thr 0.962 worker 2.77 alarms 13.4
+attentive    coll   0 close   0 thr 0.962 worker 2.00 alarms 6.1
+== {"worker_model":"lstm"}
+normal       coll   0 close   0 thr 0.981 worker 1.97 alarms 6.6
+comply_85    coll   0 close   1 thr 0.956 worker 2.21 alarms 7.1
+comply_70    coll   0 close   2 thr 0.921 worker 2.45 alarms 7.5
+bad_network  coll   0 close   5 thr 0.928 worker 2.60 alarms 8.2
+mec_restart  coll   0 close   5 thr 0.951 worker 2.17 alarms 7.1
+noisy_uwb    coll   2 close   6 thr 0.933 worker 2.89 alarms 10.0
+dense        coll   0 close   0 thr 0.957 worker 2.92 alarms 14.6
+attentive    coll   0 close   0 thr 0.959 worker 2.12 alarms 6.4
+== {"entry_gate":true,"pos_fusion":0.6,"worker_model":"lstm"}
+normal       coll   0 close   2 thr 0.981 worker 1.89 alarms 6.4
+comply_85    coll   0 close   2 thr 0.962 worker 2.13 alarms 6.6
+comply_70    coll   0 close   4 thr 0.925 worker 2.47 alarms 7.0
+bad_network  coll   0 close   3 thr 0.927 worker 2.55 alarms 7.3
+mec_restart  coll   0 close   4 thr 0.950 worker 2.03 alarms 6.8
+noisy_uwb    coll   0 close   0 thr 0.975 worker 2.19 alarms 7.2
+dense        coll   1 close   1 thr 0.968 worker 2.69 alarms 13.2
+attentive    coll   0 close   1 thr 0.970 worker 1.93 alarms 6.0
