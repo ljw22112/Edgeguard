@@ -319,7 +319,9 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             continue
 
         if mec_down and mec_down[0] <= t < mec_down[1]:
-            states.clear()                     # restarted MEC app: no memory of the alerts it had sent
+            if not getattr(cfg, "state_persist", False):
+                states.clear()                 # restarted MEC app: no memory of the alerts it had sent
+            # state_persist: the app wrote each pair's alert state to the CSE and reads it back when it restarts
             continue                           # MEC app silent: no alerts, no heartbeats
 
         if wanted:                             # plan confirmation: the truck reports the plan it applies

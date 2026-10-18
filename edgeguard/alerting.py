@@ -185,6 +185,46 @@ def _lat_to_leave(w_tr, f_tr, cfg):
     return max(0.0, cfg.r_safe + 0.2 - abs(-dx * uy + dy * ux))
 
 
+def green_wave_speed(w_tr, f_tr, cfg):
+    """Speed at which the truck reaches the crossing just after a walking worker has crossed its path, or None.
+
+    Only when the worker walks across the path (towards its line faster than 0.5 m/s), the crossing is within
+    gw_horizon, the truck would otherwise meet him there, and the slower speed is at least gw_min_frac of its
+    speed (a gentle slow-down well before any braking would be needed)."""
+    sp = abs(f_tr.speed)
+    if sp < 0.8:
+        return None
+    vx, vy = f_tr.vel
+    vn = math.hypot(vx, vy)
+    if vn < 0.3:
+        return None
+    ux, uy = vx / vn, vy / vn
+    dx, dy = w_tr.pos[0] - f_tr.pos[0], w_tr.pos[1] - f_tr.pos[1]
+    ahead, lat_s = dx * ux + dy * uy, -dx * uy + dy * ux
+    wvx, wvy = w_tr.vel
+    toward = -(wvx * -uy + wvy * ux) * (1.0 if lat_s > 0 else -1.0)
+    along = wvx * ux + wvy * uy
+    rs, lat = cfg.r_safe, abs(lat_s)
+    if toward < 0.5 or ahead <= rs:
+        return None
+    m = getattr(cfg, "gw_margin", 0.6)
+    t_in, t_out = max(0.0, (lat - rs) / toward), (lat + rs) / toward
+    if t_out > getattr(cfg, "gw_horizon", 8.0):
+        return None
+    a_cross = ahead + along * t_out                           # where he crosses, along the truck's path
+    if a_cross - rs <= 0:
+        return None
+    t_f_in, t_f_out = (a_cross - rs) / sp, (a_cross + rs) / sp
+    if t_f_out < t_in - m or t_f_in > t_out + m:
+        return None                                          # they do not meet at this speed
+    v = (a_cross - rs) / (t_out + m)
+    if v < getattr(cfg, "gw_min_frac", 0.5) * sp or v >= sp - 0.1:
+        return None
+    if a_cross - rs < sp * cfg.env_react + sp * sp / (2 * cfg.brake_decel) + 1.0:
+        return None                                          # too close for a gentle plan: the envelope decides
+    return v
+
+
 def _v_stop(room, cfg):
     a, tr = cfg.brake_decel, cfg.env_react
     return a * (-tr + math.sqrt(tr * tr + 2.0 * max(0.0, room) / a))
@@ -380,6 +420,16 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
     r.quiet = False
     r.stop_at = None
     r.glide = False
+    if getattr(cfg, "green_wave", False) and r.level < 2 and w_tr is not None and f_tr is not None:
+        v_gw = green_wave_speed(w_tr, f_tr, cfg)
+        if v_gw is not None:
+            # a walker will cross the truck's path ahead: slow the truck a little now so it arrives just after he
+            # has crossed - nobody stops (the worker is not buzzed, he walks on)
+            r.level, r.level_name = 2, LEVELS[2]
+            r.reason = "green wave: arrive after the worker has crossed"
+            r.speed_limit = round(v_gw, 2)
+            r.speed_scale = round(v_gw / max(abs(f_tr.speed), 1e-6), 2)
+            r.hold = r.quiet = True
     if getattr(cfg, "env_cap", False) and r.level < 2:
         stop = [] if getattr(cfg, "stop_point", False) else None
         lim = envelope_limit(w_tr, f_tr, cfg, held=st.level >= 2, out_stop=stop)

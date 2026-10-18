@@ -77,6 +77,11 @@ class RiskConfig:
     env_react: float = 0.6         # s from MEC decision to brakes acting (radio + actuator)
     # --- prompt ease (sim/efficiency_audit.py: limits outlived the conflict by the refresh / clear hold) ---
     prompt_ease: bool = False      # a looser truck limit is sent at once once the worker stopped or they separate
+    green_wave: bool = False       # slow a truck early and gently so it reaches a crossing after the walker
+    gw_horizon: float = 8.0        # s: crossings this far ahead are planned
+    gw_min_frac: float = 0.5       # the green-wave speed is at least this share of the truck's speed
+    gw_margin: float = 0.6         # s between the worker leaving the path and the truck arriving
+    state_persist: bool = False    # the MEC app keeps its alert state in the CSE and restores it after a restart
     glide: bool = False            # a worker stepping out of the path: the truck rolls slowly to arrive when he is out
     glide_min: float = 0.5         # m/s: slowest glide speed
     ease_on_leave: bool = False    # lift a stop point as soon as the worker has left the path (not when he stands)
