@@ -89,6 +89,8 @@ A second round (same seeds; mean over the 8 scenarios, 800 episodes each):
 
 Raw output: [`results/entry_gate_fusion_lstm_dev.txt`](../results/entry_gate_fusion_lstm_dev.txt).
 
+**Re-trained with all three** (`sim/train_multi.py --mode plus --robust`, 7 CEM generations; the LSTM makes a generation ~3 x slower): the best candidate had no collision on validation seeds 13,000+ (mean throughput 95.6 % vs v2's 94.3 % on the same episodes) but **2 collisions on validation seeds 15,000+** (after a MEC restart and on the dense floor; v2 had none there, 94.8 % vs 93.4 %). It fails the gate and is not adopted ([`results/policy_plus_rejected.json`](../results/policy_plus_rejected.json)): about 1.3 points of throughput for a safety record that does not hold on fresh episodes, plus an IMU on every tag and PyTorch on the MEC host.
+
 ## How the policy was chosen
 
 1. Training ([`sim/train_multi.py`](../sim/train_multi.py) `--mode priority --robust`): CEM over 20 parameters, every candidate scored on 144 episodes, half normal and half exceptional (85 / 70 % compliance, bad network, MEC restart, noisy UWB, dense), seeds 80,000+, a collision costing 2 episodes' output.

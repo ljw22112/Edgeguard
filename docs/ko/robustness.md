@@ -89,6 +89,8 @@ v2는 글라이드와, 작업자가 경로를 벗어나면 정지 지점을 바�
 
 원자료: [`results/entry_gate_fusion_lstm_dev.txt`](../../results/entry_gate_fusion_lstm_dev.txt)
 
+**셋 다 켜고 재학습**(`sim/train_multi.py --mode plus --robust`, CEM 7세대, LSTM 때문에 세대당 약 3배 느림): 최고 후보가 검증 시드 13,000번부터에서는 충돌 0(평균 처리량 95.6 %, 같은 에피소드에서 v2 94.3 %)이었지만 **검증 시드 15,000번부터에서 충돌 2건**(MEC 재시작 뒤, 혼잡; v2는 0건, 94.8 % 대 93.4 %). 기준을 통과하지 못해 채택하지 않았습니다([`results/policy_plus_rejected.json`](../../results/policy_plus_rejected.json)). 처리량 약 1.3%p를 얻는 대신 새 에피소드에서 안전 기록이 유지되지 않고, 모든 태그에 IMU, MEC 호스트에 PyTorch가 필요합니다.
+
 ## 정책 선택 과정
 
 1. 학습([`sim/train_multi.py`](../../sim/train_multi.py) `--mode priority --robust`): 파라미터 20개 CEM, 후보마다 에피소드 144개(절반 일반, 절반 예외: 준수율 85 / 70 %, 통신 불량, MEC 재시작, 측위 오차, 혼잡), 시드 80,000번부터, 충돌 1건 = 에피소드 2개 분량 처리량 벌점
