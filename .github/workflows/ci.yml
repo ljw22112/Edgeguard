@@ -19,7 +19,7 @@ jobs:
           cache: pip
       - name: Python deps (CPU torch for the LSTM test)
         run: |
-          pip install -r requirements.txt pytest httpx
+          pip install -r requirements.txt pytest httpx hypothesis
           pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: ArduinoJson for the firmware type-check
         run: git clone --depth 1 https://github.com/bblanchon/ArduinoJson.git /tmp/arduinojson
