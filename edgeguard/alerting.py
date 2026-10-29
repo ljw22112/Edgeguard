@@ -290,7 +290,8 @@ def _envelope_v2(w_tr, f_tr, cfg, held=False, out_stop=None):
             return 0.0                                       # beside the front of the truck: do not move
         d = ahead - math.sqrt(rs * rs - lat * lat) - getattr(cfg, "env_margin", 0.3)
         if out_stop is not None:                             # movement authority: stop short of this point
-            out_stop.append([round(f_tr.pos[0] + ux * max(d, 0.0), 2), round(f_tr.pos[1] + uy * max(d, 0.0), 2)])
+            dd = max(d - 0.01, 0.0)                          # 1 cm towards the truck: rounding never moves it forward
+            out_stop.append([round(f_tr.pos[0] + ux * dd, 2), round(f_tr.pos[1] + uy * dd, 2)])
         return _v_stop(d, cfg)
     if held and w_tr.speed < 0.3:
         # told to WAIT and standing: he stays put - only right at the path is he passed no faster than
