@@ -89,6 +89,21 @@ A second round (same seeds; mean over the 8 scenarios, 800 episodes each):
 
 Raw output: [`results/entry_gate_fusion_lstm_dev.txt`](../results/entry_gate_fusion_lstm_dev.txt).
 
+A third round (same seeds, 800 episodes each):
+
+| | Collisions | Close passes | Mean throughput | Worker time lost |
+|---|---|---|---|---|
+| v2 | 0 | 21 | 94.7 % | 2.51 s |
+| + early GO (release the worker once the truck is past) | 1 | 24 | 94.5 % | 2.38 s |
+| + adaptive stop-point margin (k x estimated position error) | 2 | 26 | 94.4 % | 2.58 s |
+| + green wave on a truck-only channel | 2 | 18 | 93.7 % | 2.37 s |
+| + all three | 4 | 40 | 93.5 % | 2.17 s |
+
+- **Early GO** saves workers 5 % of their waiting but sends some out while a truck that has only just passed is still close; one collision (attentive driver).
+- **Adaptive margin**: the innovation also contains a walker's own manoeuvres, so the margin grows in normal operation (less throughput) without growing enough when it matters.
+- **Green wave on its own channel** fixes the masked-alert gap but still costs a point of throughput: under truck priority the worker's WAIT is cheaper than the truck's slow-down.
+- Together they trade truck throughput for worker time and add collisions. v2 stays. [`results/release_margin_greenwave2_dev.txt`](../results/release_margin_greenwave2_dev.txt).
+
 **Re-trained with all three** (`sim/train_multi.py --mode plus --robust`, 7 CEM generations; the LSTM makes a generation ~3 x slower): the best candidate had no collision on validation seeds 13,000+ (mean throughput 95.6 % vs v2's 94.3 % on the same episodes) but **2 collisions on validation seeds 15,000+** (after a MEC restart and on the dense floor; v2 had none there, 94.8 % vs 93.4 %). It fails the gate and is not adopted ([`results/policy_plus_rejected.json`](../results/policy_plus_rejected.json)): about 1.3 points of throughput for a safety record that does not hold on fresh episodes, plus an IMU on every tag and PyTorch on the MEC host.
 
 ## How the policy was chosen

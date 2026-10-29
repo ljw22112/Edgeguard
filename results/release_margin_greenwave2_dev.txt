@@ -1,0 +1,45 @@
+== {}
+normal       coll   0 close   1 thr 0.985 worker 1.98 alarms 7.1
+comply_85    coll   0 close   2 thr 0.943 worker 2.42 alarms 7.5
+comply_70    coll   0 close   1 thr 0.916 worker 2.54 alarms 7.7
+bad_network  coll   0 close   4 thr 0.932 worker 2.72 alarms 8.9
+mec_restart  coll   0 close   5 thr 0.953 worker 2.19 alarms 7.5
+noisy_uwb    coll   0 close   4 thr 0.933 worker 3.19 alarms 12.2
+dense        coll   0 close   3 thr 0.948 worker 2.96 alarms 15.7
+attentive    coll   0 close   1 thr 0.964 worker 2.10 alarms 7.2
+== {"release_worker":true}
+normal       coll   0 close   1 thr 0.981 worker 1.90 alarms 7.2
+comply_85    coll   0 close   1 thr 0.942 worker 2.26 alarms 7.5
+comply_70    coll   0 close   3 thr 0.914 worker 2.52 alarms 7.7
+bad_network  coll   0 close   6 thr 0.932 worker 2.54 alarms 8.8
+mec_restart  coll   0 close   6 thr 0.950 worker 2.08 alarms 7.4
+noisy_uwb    coll   0 close   3 thr 0.926 worker 2.92 alarms 12.4
+dense        coll   0 close   2 thr 0.957 worker 2.86 alarms 15.8
+attentive    coll   1 close   2 thr 0.958 worker 2.00 alarms 7.2
+== {"env_margin_k":1.5}
+normal       coll   0 close   2 thr 0.978 worker 2.14 alarms 7.2
+comply_85    coll   0 close   2 thr 0.941 worker 2.49 alarms 7.3
+comply_70    coll   0 close   2 thr 0.912 worker 2.73 alarms 7.8
+bad_network  coll   0 close   5 thr 0.925 worker 2.66 alarms 8.9
+mec_restart  coll   1 close  10 thr 0.951 worker 2.26 alarms 7.7
+noisy_uwb    coll   0 close   1 thr 0.924 worker 3.21 alarms 12.1
+dense        coll   0 close   2 thr 0.955 worker 2.97 alarms 15.6
+attentive    coll   1 close   2 thr 0.962 worker 2.21 alarms 7.4
+== {"green_wave2":true}
+normal       coll   0 close   1 thr 0.968 worker 1.90 alarms 6.9
+comply_85    coll   0 close   1 thr 0.940 worker 2.19 alarms 7.1
+comply_70    coll   0 close   2 thr 0.910 worker 2.37 alarms 7.4
+bad_network  coll   0 close   5 thr 0.919 worker 2.73 alarms 9.0
+mec_restart  coll   0 close   4 thr 0.937 worker 2.03 alarms 7.2
+noisy_uwb    coll   1 close   2 thr 0.918 worker 3.03 alarms 12.4
+dense        coll   0 close   1 thr 0.956 worker 2.76 alarms 14.8
+attentive    coll   1 close   2 thr 0.948 worker 1.97 alarms 6.9
+== {"release_worker":true,"env_margin_k":1.5,"green_wave2":true}
+normal       coll   0 close   2 thr 0.971 worker 1.77 alarms 7.1
+comply_85    coll   0 close   3 thr 0.943 worker 2.03 alarms 7.5
+comply_70    coll   0 close   6 thr 0.908 worker 2.10 alarms 7.7
+bad_network  coll   0 close   7 thr 0.912 worker 2.45 alarms 8.8
+mec_restart  coll   0 close   6 thr 0.938 worker 1.97 alarms 7.3
+noisy_uwb    coll   1 close   4 thr 0.910 worker 2.62 alarms 12.3
+dense        coll   1 close   8 thr 0.947 worker 2.62 alarms 15.0
+attentive    coll   2 close   4 thr 0.947 worker 1.82 alarms 7.2
