@@ -2,7 +2,16 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
-## Unreleased — 2026-10-18
+## Unreleased — 2026-10-29
+- **Policy v3: the tag checks GO itself** ([docs](docs/robustness.md#policy-v3-the-tag-checks-go-itself)): a WAIT that runs out unheard, or one given before an MEC silence and then cleared, ends only when walking on at the worker's last pace would not meet a truck (D2D state, Python + firmware); a truck standing before someone in its path stays stopped. Found by tracing v2's MEC-restart collisions. Development seeds: 2 -> 0 collisions, throughput and worker time unchanged; validation seeds: none.
+- **Large-scale test with confidence intervals** (`sim/large_eval.py`): 1,000 fresh episodes for the site comparison (EdgeGuard 0 collisions in 3,617 conflicts, 97.4 % [97.0-97.7]; wide proximity alarm 0, 48.3 %; narrowed 49, 60.3 %) and 8,000 per policy under the 8 scenarios: previous policy 30 collisions (0.87 per 1,000 conflicts), v2 5 (0.14), **v3 2 (0.06 [0.02-0.21])**, v3 +4.8 to +9.9 points over the previous policy in every scenario. Charts `docs/img/large_eval*.png`.
+- **Safety case** ([docs](docs/safety-case.md)): hazards, claims, arguments and the tests that are their evidence; assumptions and residual risk.
+- **Stop-point guarantee** proved by property-based tests (`tests/test_stop_guarantee.py`, hypothesis, ~5,000 cases): a point received in time is never passed; a late one is overshot by at most the stopping distance; it holds through MEC silence; its placement keeps r_safe.
+- **SDT speedLimit** reports the stop point and the plans the truck applies (`egs:spdLt` stpX/stpY/plans/aebAc); the MEC app confirms plans from the twin.
+- Tried and not adopted, with measured downsides: green wave (two variants), alert-state restore, entry gate, UWB + IMU fusion, LSTM walking prediction, the three combined and re-trained, early GO, adaptive stop-point margin.
+- CI on ubuntu-24.04, actions/checkout v5, setup-python v6.
+
+## 2026-10-18
 - **Robust policy v2 (glide)**: a worker stepping out of the truck's path - the truck rolls at the speed that reaches the stop point when he is out instead of braking into it and speeding up again; the stop point is lifted as soon as he has left the path. Refined by robust training, no collision on 2,000 validation episodes. Test: 300 episodes 0 collisions, throughput 96.8 -> 97.3 % (previous policy 91.8 %); 2,400 stressed episodes on two test sets: 2 collisions (v1 2, previous policy 8), mean throughput +0.3-0.6 points over v1.
 - Electronic schematics of the tag and the forklift module (`tools/draw_schematic.py`).
 
