@@ -1,0 +1,64 @@
+# Tag GO check variants (sim/robust_eval.py scenarios, 150 episodes each; over = on top of v2)
+## dev seeds 62000+: v2 (base)
+normal       coll   0 close   0 thr 0.978 worker 2.13 alarms 7.1
+comply_85    coll   0 close   0 thr 0.954 worker 2.42 alarms 7.4
+comply_70    coll   0 close   2 thr 0.928 worker 2.78 alarms 7.5
+bad_network  coll   0 close   8 thr 0.932 worker 2.61 alarms 8.8
+mec_restart  coll   1 close   7 thr 0.953 worker 2.39 alarms 7.4
+noisy_uwb    coll   0 close   1 thr 0.937 worker 3.00 alarms 12.7
+dense        coll   1 close   5 thr 0.956 worker 2.98 alarms 15.7
+attentive    coll   0 close   0 thr 0.966 worker 2.17 alarms 7.0
+## dev: A tag_walk_check 1 + env_keep_stop 0.5 (orphaned WAIT only, walking threshold 0.3)
+normal       coll   0 close   0 thr 0.978 worker 2.13 alarms 7.1
+comply_85    coll   0 close   0 thr 0.954 worker 2.42 alarms 7.4
+comply_70    coll   0 close   2 thr 0.928 worker 2.78 alarms 7.5
+bad_network  coll   0 close   8 thr 0.932 worker 2.61 alarms 8.8
+mec_restart  coll   0 close   0 thr 0.950 worker 2.42 alarms 7.3
+noisy_uwb    coll   0 close   1 thr 0.937 worker 3.00 alarms 12.7
+dense        coll   1 close   5 thr 0.956 worker 2.98 alarms 15.7
+attentive    coll   0 close   0 thr 0.966 worker 2.17 alarms 7.0
+## dev: B tag_walk_check 2 (every GO), walking threshold 0.6
+normal       coll   0 close   0 thr 0.978 worker 2.79 alarms 6.8
+comply_85    coll   0 close   0 thr 0.953 worker 3.11 alarms 7.1
+comply_70    coll   0 close   3 thr 0.925 worker 3.35 alarms 7.5
+bad_network  coll   0 close   8 thr 0.937 worker 3.05 alarms 8.8
+mec_restart  coll   0 close   1 thr 0.954 worker 2.93 alarms 7.1
+noisy_uwb    coll   0 close   2 thr 0.939 worker 3.60 alarms 12.3
+dense        coll   0 close   2 thr 0.957 worker 3.90 alarms 15.5
+attentive    coll   0 close   0 thr 0.965 worker 2.77 alarms 6.8
+## dev: C tag_walk_check 3 (WAIT running out), threshold 0.6
+normal       coll   0 close   0 thr 0.978 worker 2.13 alarms 7.1
+comply_85    coll   0 close   0 thr 0.954 worker 2.43 alarms 7.4
+comply_70    coll   0 close   2 thr 0.928 worker 2.78 alarms 7.5
+bad_network  coll   0 close   8 thr 0.932 worker 2.65 alarms 8.8
+mec_restart  coll   0 close   0 thr 0.954 worker 2.43 alarms 7.2
+noisy_uwb    coll   0 close   1 thr 0.937 worker 3.00 alarms 12.6
+dense        coll   0 close   4 thr 0.956 worker 2.98 alarms 15.7
+attentive    coll   0 close   0 thr 0.966 worker 2.18 alarms 7.0
+## dev: D tag_walk_check 4 (= C + clear of an orphaned WAIT)
+normal       coll   0 close   0 thr 0.978 worker 2.13 alarms 7.1
+comply_85    coll   0 close   0 thr 0.954 worker 2.43 alarms 7.4
+comply_70    coll   0 close   2 thr 0.928 worker 2.78 alarms 7.5
+bad_network  coll   0 close   8 thr 0.932 worker 2.65 alarms 8.8
+mec_restart  coll   0 close   0 thr 0.953 worker 2.49 alarms 7.1
+noisy_uwb    coll   0 close   1 thr 0.937 worker 3.00 alarms 12.6
+dense        coll   0 close   4 thr 0.956 worker 2.98 alarms 15.7
+attentive    coll   0 close   0 thr 0.966 worker 2.18 alarms 7.0
+## validation seeds 11000+: C
+normal       coll   0 close   2 thr 0.974 worker 2.12 alarms 7.0
+comply_85    coll   0 close   2 thr 0.950 worker 2.32 alarms 7.3
+comply_70    coll   0 close   1 thr 0.920 worker 2.61 alarms 7.5
+bad_network  coll   0 close   3 thr 0.922 worker 2.75 alarms 8.4
+mec_restart  coll   1 close   5 thr 0.950 worker 2.46 alarms 7.2
+noisy_uwb    coll   0 close   2 thr 0.944 worker 2.98 alarms 12.1
+dense        coll   0 close   5 thr 0.955 worker 2.97 alarms 15.5
+attentive    coll   0 close   2 thr 0.960 worker 2.21 alarms 7.1
+## validation seeds 11000+: D (adopted as v3)
+normal       coll   0 close   2 thr 0.974 worker 2.12 alarms 7.0
+comply_85    coll   0 close   2 thr 0.950 worker 2.32 alarms 7.3
+comply_70    coll   0 close   1 thr 0.920 worker 2.61 alarms 7.5
+bad_network  coll   0 close   3 thr 0.922 worker 2.75 alarms 8.4
+mec_restart  coll   0 close   2 thr 0.950 worker 2.51 alarms 7.2
+noisy_uwb    coll   0 close   2 thr 0.944 worker 2.98 alarms 12.1
+dense        coll   0 close   5 thr 0.955 worker 2.97 alarms 15.5
+attentive    coll   0 close   2 thr 0.960 worker 2.21 alarms 7.1

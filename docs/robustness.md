@@ -56,6 +56,31 @@ Each row was found by tracing a collision of the scenario set ([`sim/collision_a
 | A worker walking into the truck's path was a stop point where he stood | ... at the middle of the path (`env_walk_in`) |
 | The rare case none of the above covers | **Always-on D2D emergency brake**: from the peer-to-peer state broadcast alone, a worker on a collision course within 1.5 s (closest approach < 1.3 m) stops the truck, whether or not the MEC app and the network work |
 
+## Policy v3: the tag checks GO itself
+
+The large-scale test below found v2's weak spot: 4 of its 5 collisions in 8,000 episodes came after a MEC restart. Tracing them (and one on the dense floor) gave three mechanisms:
+
+| Found | Change (v3) |
+|---|---|
+| The restarted MEC app had lost the WAIT it had given. Nobody checked GO: the WAIT ran out after 2.5 s unheard, and the worker walked into a truck that was still coming | **Tag GO check** (`tag_walk_check`): before a WAIT ends on its own, the tag checks, from the D2D state broadcast alone, whether walking on at the pace and heading the worker had before the WAIT would bring a truck onto a collision course. If it would, the WAIT is kept, up to 20 s |
+| The same thing on the dense floor: a worker waiting for one truck was released when that WAIT ran out, while a second truck - passing him quietly under the stopping envelope, which trusts a waiting worker - was 4 m away | the same check, for every WAIT that runs out unheard |
+| After a restart, the rebuilt alert state cleared a pair (GO) while the truck was just pulling away next to the worker | the GO check also applies to the clear / release of a WAIT given before an MEC silence (an "orphaned" WAIT) |
+| A truck standing before a person in its path had its plan lifted ("no faster than you are going" is no limit at 0 m/s) and crept up to him | a truck standing before someone in its path stays stopped (`env_keep_stop`) |
+
+The walking velocity is taken only while the worker clearly walks (> 0.6 m/s; at 0.3 m/s the velocity noise of a standing worker overwrote it). Python reference [`edgeguard/device_policy.py`](../edgeguard/device_policy.py) (`truck_near_if_walk`, `orphaned`), firmware [`firmware/common/device_policy.h`](../firmware/common/device_policy.h) and [`worker_cue.h`](../firmware/common/worker_cue.h), the same results in [`tests/test_device_policy.py`](../tests/test_device_policy.py).
+
+Variants compared on development seeds 62,000+ (8 scenarios x 150 episodes; mean over the scenarios):
+
+| | Collisions | Close passes | Mean throughput | Worker time lost |
+|---|---|---|---|---|
+| v2 | 2 | 23 | 95.0 % | 2.56 s |
+| GO check for orphaned WAITs only (+ keep-stop) | 1 | 16 | 95.0 % | 2.56 s |
+| GO check on every GO, also the MEC app's own | 0 | 16 | 95.1 % | **3.19 s** |
+| GO check when a WAIT runs out | 0 | 15 | 95.1 % | 2.57 s |
+| **v3: ... and on the clear of an orphaned WAIT** | **0** | **15** | **95.0 %** | **2.58 s** |
+
+Checking every GO is as safe but makes workers wait 25 % longer: the MEC app's own GO check already covers the trucks it knows about, and the tag then also holds for trucks merely passing nearby. The variant that only checks WAITs running out had one collision on the validation seeds 11,000+ (the clear after a restart); v3 had none there (8 x 150 episodes, mean throughput 94.7 %, worker time 2.56 s). Raw output: [`results/tag_go_check_dev_val.txt`](../results/tag_go_check_dev_val.txt).
+
 Rejected after validation (kept as options, off): STEP ASIDE only after 0.6 s of standing (`aside_still_s`, more collisions and less throughput), narrowing STEP ASIDE to workers inside r_safe (`aside_reach`, fixed the noisy-UWB case but added three elsewhere), buzzing a walker on an envelope alert (`env_buzz_walker`) and a worst-case GO direction (`go_unknown_worst`), no measurable effect.
 
 ## Tried on top of v2, not adopted (development seeds 60000+, 8 scenarios x 100 episodes)
