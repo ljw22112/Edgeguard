@@ -161,6 +161,11 @@ risk:
   glide_min: 0.461
   glide: true
   ease_on_leave: true
+  # v3 (docs/robustness.md): the tag checks GO itself when a WAIT runs out unheard, or is cleared after an MEC
+  # silence (the restarted app may have lost it): walking on at his last pace must not meet a truck (D2D);
+  # a truck standing before someone in its path stays stopped.  Validation seeds 11000+: no collision.
+  tag_walk_check: 4
+  env_keep_stop: 0.5
 
 # Adaptive reporting rate (edgeguard/rate_control.py): devices with no counterpart close or
 # closing in report at 2 Hz, the rest at 10 Hz; commands go to <ae>/control.  On by default:
