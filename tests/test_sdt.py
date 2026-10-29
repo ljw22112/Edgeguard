@@ -61,3 +61,33 @@ def test_fcp_defines_every_type_the_code_uses():
     kin = {a["sname"] for a in types[sdt.KIN_TP]["attributes"]}
     assert set(sdt.to_kin({"x": 0, "y": 0, "pos_sigma": 0, "source": "u", "speed": 0, "heading": 0,
                            "yaw_rate": 0, "ts": 0})) <= kin
+
+
+def test_speed_limit_module_carries_stop_points_and_plans():
+    text = open(os.path.join(ROOT, "config", "onem2m", "edgeguard.fcp")).read()
+    defs = {d["type"]: d for d in json.loads(re.sub(r"//[^\n]*", "", text))}
+    names = {a["sname"] for a in defs["egs:spdLt"]["attributes"]}
+    assert {"limit", "stpX", "stpY", "stpSo", "plans", "aebAc", "rptTe"} <= names
+    rep = sdt.speed_limit_report([("w1", 1.2, True), ("w2", None, False)], stop=(3.0, -1.0, "w1"), aeb=False, ts=5)
+    assert rep["limit"] == 1.2 and rep["stpX"] == 3.0 and rep["stpSo"] == "w1"
+    assert sdt.plans_from_report(rep) == [["w1", 1.2, 1], ["w2", -1.0, 0]]
+    alert = {"event": "refresh", "forklift": "f1", "worker": "w1",
+             "actions": {"f1": {"speed_limit": 0.9, "stop_at": [4.0, 2.0]}}}
+    assert sdt.speed_limit_from_alert(alert) == {"limit": 0.9, "stpX": 4.0, "stpY": 2.0, "stpSo": "w1"}
+    assert "egs:StopPoint" in sdt.saref_turtle("f1", "forklift", "f1/module")
+
+
+def test_plan_report_through_the_twin_confirms_the_plan(monkeypatch):
+    import mec_app.app as app
+    sent = []
+    monkeypatch.setattr(app, "post", lambda c, b: sent.append(b))
+    monkeypatch.setattr(app.engine.cfg, "plan_confirm", True, raising=False)
+    monkeypatch.setattr(app.engine.cfg, "ack_s", 0.0, raising=False)
+    alert = {"event": "raise", "forklift": "f9", "worker": "w9", "actions": {"f9": {"speed_limit": 1.2, "stop_at": [3, 0]}}}
+    with app.lock:
+        app.state["plans"]["wanted"][("f9", "w9")] = (0.0, alert)
+    rep = {"egs:spdLt": {"rn": "speedLimit", "cnd": sdt.DEVICE["forklift"][5],
+                         "lbl": ["egs:id/f9", "egs:role/forklift", "egs:module/speedLimit"],
+                         **sdt.speed_limit_report([("w9", 1.2, True)])}}
+    app.process_notification({"m2m:sgn": {"nev": {"rep": rep, "net": 1}, "sur": "x"}})
+    assert ("f9", "w9") not in app.state["plans"]["wanted"] and not sent

@@ -22,7 +22,7 @@ File: [`config/onem2m/edgeguard.fcp`](../config/onem2m/edgeguard.fcp). `scripts/
 | `egs:frkMe` forkliftModule | device class | zone; children kinematics, speedLimit, `cod:bat` |
 | `egs:kinSt` kinematicState | module class | positionX/Y, positionSigma, positionSource, speed, heading, yawRate, sampleTime |
 | `egs:wrkCe` workerCue | module class | cueState (IDLE, WAIT, ASIDE, GO), cueSource |
-| `egs:spdLt` speedLimit | module class | limit, maxSpeed |
+| `egs:spdLt` speedLimit | module class | limit, maxSpeed; stopPointX / Y / Source (the stop point the module brakes for), plans (every plan it applies, `worker\|limit\|stop`: the MEC app re-sends a plan that is not reported), emergencyBrakeActive, reportTime |
 | `cod:bat` battery | standard module class (org.onem2m.common) | level, charging, … |
 | `egs:flTsk`, `egs:flPrt` | module classes | federated learning task and participant ([federated learning](federated-learning.md)) |
 

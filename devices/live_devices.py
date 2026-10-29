@@ -131,8 +131,9 @@ class Live:
             cue = {"aside": "ASIDE", "release": "GO", "clear": "GO"}.get(ev, "WAIT")
             self.pool.submit(self._update, w, f"{twins[w]}/cue", "egs:wrkCe", {"cueSe": cue, "cueSo": f or ""})
         if f in twins and f in self.movers and ev not in ("wait", "release", "aside"):
-            lim = None if ev == "clear" else (acts.get(f) or {}).get("speed_limit")
-            self.pool.submit(self._update, f, f"{twins[f]}/speedLimit", "egs:spdLt", {"limit": lim})
+            from edgeguard import sdt
+            attrs = sdt.speed_limit_from_alert({"event": ev, "forklift": f, "worker": w, "actions": acts})
+            self.pool.submit(self._update, f, f"{twins[f]}/speedLimit", "egs:spdLt", attrs)
 
     def _update(self, dev, path, tp, attrs):
         try:

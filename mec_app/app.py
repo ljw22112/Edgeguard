@@ -878,6 +878,13 @@ def process_notification(body):
     kind, payload = parse_notification(body)
     if kind == "fcnt" and payload.get("tp") == sdt.KIN_TP:      # SDT data model: kinematics module updated
         kind, payload = "cin", sdt.from_kin(payload)
+    elif kind == "fcnt" and payload.get("tp") == sdt.DEVICE["forklift"][4]:
+        # SDT data model: the forklift module reports the plans it applies in its speedLimit module
+        dev = sdt.from_label(payload.get("lbl"), "id")
+        if dev:
+            with lock:
+                confirm_plans(dev, sdt.plans_from_report(payload))
+        return
     if kind == "cin" and isinstance(payload, dict):
         _count_in(payload)
     if kind == "cin" and isinstance(payload, dict) and payload.get("kind") == "ack":

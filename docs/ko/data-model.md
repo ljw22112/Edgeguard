@@ -22,7 +22,7 @@
 | `egs:frkMe` forkliftModule | 디바이스 클래스 | zone; 자식 kinematics, speedLimit, `cod:bat` |
 | `egs:kinSt` kinematicState | 모듈 클래스 | positionX/Y, positionSigma, positionSource, speed, heading, yawRate, sampleTime |
 | `egs:wrkCe` workerCue | 모듈 클래스 | cueState (IDLE, WAIT, ASIDE, GO), cueSource |
-| `egs:spdLt` speedLimit | 모듈 클래스 | limit, maxSpeed |
+| `egs:spdLt` speedLimit | 모듈 클래스 | limit, maxSpeed; stopPointX / Y / Source(모듈이 제동 기준으로 삼는 정지 지점), plans(적용 중인 모든 계획, `worker\|limit\|stop`: 보고되지 않은 계획은 MEC 앱이 재전송), emergencyBrakeActive, reportTime |
 | `cod:bat` battery | 표준 모듈 클래스 (org.onem2m.common) | level, charging, … |
 | `egs:flTsk`, `egs:flPrt` | 모듈 클래스 | 연합학습 태스크 · 참여자 ([연합학습](federated-learning.md)) |
 

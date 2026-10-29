@@ -52,7 +52,19 @@
         "attributes": [
             // DataPoint: limit (m/s, absent = no limit), maxSpeed (m/s)
             { "sname" : "limit", "lname" : "limit", "type" : "float", "car" : "01" },
-            { "sname" : "maxSd", "lname" : "maxSpeed", "type" : "float", "car" : "01" }
+            { "sname" : "maxSd", "lname" : "maxSpeed", "type" : "float", "car" : "01" },
+            // DataPoint: stopPointX, stopPointY (site frame, metres) and stopPointSource (the worker it is for):
+            // the nearest stop point ("movement authority") the module brakes for from its own position
+            { "sname" : "stpX", "lname" : "stopPointX", "type" : "float", "car" : "01" },
+            { "sname" : "stpY", "lname" : "stopPointY", "type" : "float", "car" : "01" },
+            { "sname" : "stpSo", "lname" : "stopPointSource", "type" : "string", "car" : "01" },
+            // DataPoint: plans - every plan the module applies, one entry "worker|limit|stop" per pair
+            // (limit -1 = none, stop 0/1); the MEC app re-sends a plan that is not reported (plan confirmation)
+            { "sname" : "plans", "lname" : "plans", "type" : "list", "car" : "01" },
+            // DataPoint: emergencyBrakeActive (the always-on D2D emergency brake holds the truck)
+            { "sname" : "aebAc", "lname" : "emergencyBrakeActive", "type" : "boolean", "car" : "01" },
+            // DataPoint: reportTime (ms since the epoch, device clock)
+            { "sname" : "rptTe", "lname" : "reportTime", "type" : "integer", "car" : "01" }
         ]
     },
 

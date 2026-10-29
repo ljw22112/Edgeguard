@@ -88,6 +88,43 @@ def from_kin(attrs: dict, lbl=None) -> dict:
     return s
 
 
+# --- speedLimit module: what the forklift module enforces (limit, stop point, every plan, emergency brake) ---
+def speed_limit_report(plans, stop=None, aeb=False, ts=None):
+    """plans: [(worker, limit or None, has_stop)] the module applies; stop: (x, y, worker) of the nearest stop
+    point -> egs:spdLt attributes."""
+    out = {"limit": min((p[1] for p in plans if p[1] is not None), default=None),
+           "plans": [f"{w}|{-1 if lim is None else round(float(lim), 2)}|{1 if st else 0}" for w, lim, st in plans],
+           "aebAc": bool(aeb)}
+    if stop is not None:
+        out.update(stpX=round(float(stop[0]), 2), stpY=round(float(stop[1]), 2), stpSo=str(stop[2]))
+    if ts is not None:
+        out["rptTe"] = int(ts)
+    return out
+
+
+def plans_from_report(attrs):
+    """egs:spdLt attributes -> [[worker, limit (-1 = none), has_stop]] as the MEC app's plan confirmation reads them."""
+    out = []
+    for e in attrs.get("plans") or []:
+        try:
+            w, lim, st = str(e).split("|")
+            out.append([w, float(lim), int(st)])
+        except ValueError:
+            continue
+    return out
+
+
+def speed_limit_from_alert(alert):
+    """An EdgeGuard alert -> the egs:spdLt values the forklift module will report once it applies it."""
+    a = (alert.get("actions") or {}).get(alert.get("forklift")) or {}
+    if alert.get("event") == "clear":
+        return {"limit": None}
+    out = {"limit": a.get("speed_limit")}
+    if a.get("stop_at"):
+        out.update(stpX=a["stop_at"][0], stpY=a["stop_at"][1], stpSo=alert.get("worker"))
+    return out
+
+
 # --- semantics ----------------------------------------------------------------
 def saref_turtle(dev, kind, path, zone=None):
     """SAREF description of a device twin; egs:resource ties the RDF node to the oneM2M path so a
@@ -102,7 +139,8 @@ def saref_turtle(dev, kind, path, zone=None):
         f'    egs:role "{kind}" ;',
         f'    egs:resource "{path}" ;',
         "    saref:measuresProperty egs:Position , egs:Velocity ;",
-        "    saref:controlsProperty egs:WorkerCue ;" if kind == "worker" else "    saref:controlsProperty egs:DriveSpeed ;",
+        "    saref:controlsProperty egs:WorkerCue ;" if kind == "worker"
+        else "    saref:controlsProperty egs:DriveSpeed , egs:StopPoint ;",
         f"    saref:consistsOf {actuator} ;",
         "    saref:hasFunction saref:SensingFunction , saref:ActuatingFunction"
         + (f' ;\n    egs:zone "{zone}" .' if zone else " ."),
