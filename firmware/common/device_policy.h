@@ -28,7 +28,7 @@ const float ALERT_STALE_S = 5.0f;
 const float SILENCE_S = 1.3f;
 const float STOP_AFTER_S = 2.0f;
 const float LOCAL_RECOVER_S = 1.5f;      // local rule stays on after a silence (restarted MEC app re-raising)
-const float WALK_MIN_MPS = 0.3f;        // own speed above which the tag counts the worker as walking (GO check)
+const float WALK_MIN_MPS = 0.6f;        // own speed above which the tag counts the worker as walking (above standing noise)
 const float RATE_FAILSAFE_S = 6.0f;
 const float FULL_HZ = 10.0f;
 const float NO_LIMIT = -1.0f;            // "no limit" (a limit is always >= 0)

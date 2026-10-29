@@ -74,7 +74,7 @@ LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (resu
 LOCAL_RECOVER_S = 1.5    # the local rule stays on this long after a silence ends: a restarted MEC app has lost
                          # its alert state and needs a moment to raise the alerts again (sim/robust_eval.py)
 HOLD_MAX_S = 20.0
-WALK_MIN_MPS = 0.3        # own speed above which the tag counts the worker as walking
+WALK_MIN_MPS = 0.6        # own speed above which the tag counts the worker as walking (above standing noise)
 # Always-on emergency brake from D2D states (independent of the network and of the MEC app): a worker on a
 # collision course within AEB_T_S (closest approach under AEB_D_M) stops the truck - the last line behind the
 # MEC plan, like a car's AEB.  Off by default (ForkliftLimit.aeb); thresholds chosen by sim/robust_eval.py.
