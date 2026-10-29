@@ -187,7 +187,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             else:
                 wa = acts.get(to) or {}
                 from edgeguard import device_policy as _dp
-                if getattr(cfg, "tag_walk_check", 0) == 2 and ev in ("clear", "release") and to in tags and key(other) in m.holds \
+                if (getattr(cfg, "tag_walk_check", 0) == 2 or getattr(cfg, "tag_walk_check", 0) == 4 and to in tags
+                        and tags[to].orphaned(m.stop_from)) and ev in ("clear", "release") and to in tags and key(other) in m.holds \
                         and t - m.stop_from < _dp.HOLD_MAX_S and tags[to].truck_near_if_walk(t):
                     m.holds[key(other)] = t + 0.2      # tag GO check: walking on now meets a truck - WAIT a bit more
                     m.stop_until = max(m.stop_until, t + 0.2)
