@@ -37,6 +37,29 @@ Two crews: **nobody looks out** (what the system alone prevents) and **attentive
 - Speed zoning alone barely helps here: a walker who steps out in front of a truck at 5 km/h is still hit (594 per 1,000 conflicts), and throughput drops to 75 %.
 - With an attentive driver, EdgeGuard's throughput (96 %) is above the no-system case (86 %): the alert slows a truck only as much as the conflict needs, while a startled driver brakes hard.
 
+## Large-scale test: 1,000 fresh episodes, with confidence intervals
+
+The table above has 300 episodes; collision counts of 0-12 there have wide uncertainty. [`sim/large_eval.py`](../sim/large_eval.py) repeats the comparison on **1,000 fresh episodes** (seeds 21,000+, 3,617 conflicts), the same for every system, with Wilson 95 % intervals for collisions and bootstrap 95 % intervals for throughput. EdgeGuard runs the adopted policy v3.
+
+![Systems used on sites today vs EdgeGuard, 1,000 episodes](img/large_eval.png)
+
+| Nobody looks out | Collisions in 3,617 conflicts | per 1,000 (95 % CI) | Throughput (95 % CI) | Worker time lost | Alarms per episode |
+|---|---|---|---|---|---|
+| No system | 2,621 | 725 [710-739] | 99.9 % | 0.1 s | 0 |
+| Speed zoning 5 km/h | 2,088 | 577 [561-593] | 75.1 % [74.6-75.6] | 0.1 s | 0 |
+| UWB proximity 6 m / 3 m | 0 | 0 [0-1.06] | 48.3 % [47.3-49.3] | 4.3 s | 37.6 |
+| UWB proximity 4 m / 2 m | 49 | 13.5 [10.3-17.9] | 60.3 % [59.2-61.4] | 3.3 s | 25.7 |
+| EdgeGuard, previous policy | 1 | 0.28 [0.05-1.56] | 91.5 % [90.9-92.1] | 2.3 s | 6.3 |
+| **EdgeGuard (policy v3)** | **0** | **0 [0-1.06]** | **97.4 % [97.0-97.7]** | **2.1 s** | **7.0** |
+
+With an attentive driver: EdgeGuard 0 collisions, 96.0 % [95.5-96.4]; proximity 6/3 m 0, 47.9 %; proximity 4/2 m 20, 59.9 %.
+
+- **As safe as the wide proximity alarm** (0 in 3,617 conflicts for both; with 1,000 episodes the upper bound is now about 1 per 1,000 conflicts) at **2.0 x its throughput** (97.4 % vs 48.3 %, intervals far apart), with **81 % fewer alarms** and **51 % less worker waiting**.
+- **Against the narrowed alarm sites choose to cut nuisance alarms: 0 collisions instead of 49** (its interval starts at 10 per 1,000) and **+37 points of throughput**.
+- v3 and v2 give the same result here (0 collisions, 97.4 %); v3's change matters under exceptional conditions ([robustness.md](robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)).
+
+Reproduce: `python -m sim.large_eval site --episodes 1000 --offset 21000`, then `python -m sim.large_eval report` (raw data [`results/large_eval.json`](../results/large_eval.json)).
+
 ## How the policy was learned ([`sim/train_multi.py`](../sim/train_multi.py))
 
 The alert and speed policy (when to warn, how fast to pass a waiting worker, the stopping envelope near a person, how long an alert holds, when GO is safe) was trained on this floor with the Cross-Entropy Method:

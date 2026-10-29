@@ -42,6 +42,31 @@ v2 adds the glide plan and lifts a stop point as soon as the worker has left the
 
 Safety stays at v1's level (2 collisions in 2,400 stressed episodes each, against 8 for the previous policy; none in the normal scenario), with 0.3-0.6 points more throughput; v2 has somewhat more close passes on the first test set. Its two collisions were after a MEC restart. Results: [`results/robust_eval.json`](../results/robust_eval.json), [`results/robust_eval_test2.json`](../results/robust_eval_test2.json).
 
+## Large-scale test: 8,000 fresh episodes per policy, with confidence intervals
+
+Counts of 0-5 in 1,200 episodes cannot separate policies. [`sim/large_eval.py`](../sim/large_eval.py) runs every policy on the **same 1,000 fresh episodes per scenario** (seeds 23,000+, never used to train, pick or tune any policy): 8,000 episodes and 34,644 conflicts each. Intervals: Wilson 95 % for collisions per 1,000 conflicts, bootstrap 95 % for throughput.
+
+![Policies under exceptional conditions](img/large_eval_robust.png)
+
+| Scenario | Collisions: previous / v2 / **v3** | Throughput: previous / v2 / **v3** |
+|---|---|---|
+| normal | 0 / 0 / **0** | 91.6 % / 97.3 % / **97.3 %** |
+| comply 85 % | 0 / 0 / **0** | 87.4 % / 94.7 % / **94.7 %** |
+| comply 70 % | 1 / 0 / **0** | 83.0 % / 90.6 % / **90.7 %** |
+| bad network | 9 / 1 / **0** | 83.4 % / 91.0 % / **91.2 %** |
+| MEC restart | 9 / 4 / **2** | 87.6 % / 94.6 % / **94.6 %** |
+| noisy UWB | 3 / 0 / **0** | 83.2 % / 93.1 % / **93.1 %** |
+| dense (12 workers, 6 forklifts) | 6 / 0 / **0** | 87.4 % / 95.1 % / **95.1 %** |
+| attentive driver | 2 / 0 / **0** | 90.7 % / 95.5 % / **95.5 %** |
+| **all 34,644 conflicts** | **30 / 5 / 2** | |
+| per 1,000 conflicts (95 % CI) | 0.87 [0.61-1.24] / 0.14 [0.06-0.34] / **0.06 [0.02-0.21]** | |
+
+- **v3 vs previous policy: 93 % fewer collisions** (intervals do not overlap) and **+4.8 to +9.9 points of throughput in every scenario**.
+- **v3 vs v2:** 2 collisions instead of 5, throughput unchanged (within ±0.2 points). The intervals overlap: v3 is at least as safe, and its two collisions are in the one scenario it was built for, MEC restart (4 -> 2).
+- Seven of the eight scenarios had no collision in 1,000 episodes each; for these the 95 % upper bound is about 1 collision per 1,000 conflicts (0.46 on the dense floor).
+
+Raw per-episode data: [`results/large_eval.json`](../results/large_eval.json), summary [`results/large_eval_report.txt`](../results/large_eval_report.txt).
+
 ## What failed, and what changed (Python reference and firmware)
 
 Each row was found by tracing a collision of the scenario set ([`sim/collision_audit.py`](../sim/collision_audit.py) style traces), fixed, and checked again on fresh seeds.
