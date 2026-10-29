@@ -74,6 +74,7 @@ LOCAL_AFTER_S = STOP_AFTER_S   # swept 1.3 / 2.0 / 3.0 s: 2.0 best overall (resu
 LOCAL_RECOVER_S = 1.5    # the local rule stays on this long after a silence ends: a restarted MEC app has lost
                          # its alert state and needs a moment to raise the alerts again (sim/robust_eval.py)
 HOLD_MAX_S = 20.0
+WALK_MIN_MPS = 0.3        # own speed above which the tag counts the worker as walking
 # Always-on emergency brake from D2D states (independent of the network and of the MEC app): a worker on a
 # collision course within AEB_T_S (closest approach under AEB_D_M) stops the truck - the last line behind the
 # MEC plan, like a car's AEB.  Off by default (ForkliftLimit.aeb); thresholds chosen by sim/robust_eval.py.
@@ -105,6 +106,8 @@ class ForkliftLimit:
 
     def on_own_state(self, t, x, y, vx, vy):
         self.own = (t, x, y, vx, vy)
+        if vx * vx + vy * vy > WALK_MIN_MPS ** 2:
+            self.walk_v = (vx, vy)                     # last walking velocity, kept while the worker waits
 
     def on_peer_state(self, t, tag, x, y, vx, vy):
         """D2D broadcast received from a neighbour (coop mode)."""
@@ -256,6 +259,7 @@ class ForkliftLimit:
         """Remember when a silence long enough for the local rule ended (LOCAL_RECOVER_S)."""
         if t - self.hb_t > LOCAL_AFTER_S + 1e-3 and self.hb_t > -1e8:      # 1e-3: same result as float32
             self.recover_until = t + LOCAL_RECOVER_S
+            self.silence_end = t
 
     def recovering(self, t):
         return t < getattr(self, "recover_until", -1e9)
@@ -263,6 +267,24 @@ class ForkliftLimit:
     def truck_near(self, t):
         """Worker-tag side: the local rule sees a truck that would have to slow or stop for this worker."""
         return self.local_mode() and self.local_limit(t) is not None
+
+    def orphaned(self, since):
+        """A WAIT given at `since` was given by an MEC app that has since gone silent (and may have
+        restarted without it): nobody will check that walking on is safe before it runs out."""
+        return since < getattr(self, "silence_end", -1e9)
+
+    def truck_near_if_walk(self, t):
+        """Worker-tag side: walking on at the speed and heading the worker had before the WAIT would
+        bring a truck onto a collision course (the GO check the MEC app does, done on the tag)."""
+        wv = getattr(self, "walk_v", None)
+        if not self.local_mode() or self.own is None or wv is None:
+            return False
+        own = self.own
+        self.own = (own[0], own[1], own[2], wv[0], wv[1])
+        try:
+            return self.local_limit(t) is not None
+        finally:
+            self.own = own
 
     def mec_silent(self, t):
         return t - self.hb_t > LOCAL_AFTER_S

@@ -485,7 +485,9 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         stop = [] if getattr(cfg, "stop_point", False) else None
         lim = envelope_limit(w_tr, f_tr, cfg, held=st.level >= 2, out_stop=stop)
         ref = max(abs(f_tr.speed), abs(st.f_speed or 0.0)) if getattr(cfg, "env_v2", False) else abs(f_tr.speed)
-        if lim is not None and lim < ref - 0.2:
+        if lim is not None and (lim < ref - 0.2 or (stop and lim < getattr(cfg, "env_keep_stop", 0.0))):
+            # (env_keep_stop: a truck already standing in front of someone in its path stays stopped -
+            # otherwise "no faster than you are going" lifts the plan and it creeps up to him)
             # someone close to the truck's path: it may only go as fast as it can still stop if he steps in;
             # the worker is not buzzed (nothing is predicted), only the truck is limited
             r.level, r.level_name = 2, LEVELS[2]
