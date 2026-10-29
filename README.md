@@ -94,20 +94,22 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ### Against what sites use today ([details](docs/site-compare.md))
 
-Same simulated floor and the same 300 test episodes for every system (8 workers, 4 forklifts, 1,066 conflicts, nobody looking out). The test episodes were never used to train or pick EdgeGuard's policy:
+Same simulated floor and the **same 1,000 fresh episodes** for every system (8 workers, 4 forklifts, 3,617 conflicts, nobody looking out); none of them was used to train, pick or tune EdgeGuard's policy. 95 % confidence intervals:
 
-| | Collisions | Forklift throughput | Alarms per forklift-hour |
+| | Collisions (per 1,000 conflicts) | Forklift throughput | Alarms per episode |
 |---|---|---|---|
-| No system | 804 | 100 % | 0 |
-| Speed zoning 5 km/h | 633 | 75 % | 0 |
-| UWB proximity alarm, 6 m / 3 m zones | 0 | 48 % | 1,353 |
-| UWB proximity alarm, 4 m / 2 m zones | 12 | 61 % | 932 |
-| EdgeGuard, previous policy | 0 | 92 % | 235 |
-| **EdgeGuard (robust policy v2)** | **0** | **97 %** | **256** |
+| No system | 2,621 (725) | 99.9 % | 0 |
+| Speed zoning 5 km/h | 2,088 (577) | 75.1 % | 0 |
+| UWB proximity alarm, 6 m / 3 m zones | 0 (< 1.1) | 48.3 % | 37.6 |
+| UWB proximity alarm, 4 m / 2 m zones | 49 (13.5 [10.3-17.9]) | 60.3 % | 25.7 |
+| EdgeGuard, previous policy | 1 (0.3) | 91.5 % | 6.3 |
+| **EdgeGuard (policy v3)** | **0 (< 1.1)** | **97.4 % [97.0-97.7]** | **7.0** |
 
-As safe as the wide proximity alarm with 2.0 x the throughput and 81 % fewer alarms; against the narrowed one, 0 instead of 12 collisions and +61 % throughput. The worker yields and the truck brakes for **stop points** on its own; under bad network, MEC restart, low compliance, noisy UWB and a dense floor the robust policy had 2 collisions in 2,400 stressed test episodes (previous policy 8) and was 5-9 points faster in every condition ([robustness](docs/robustness.md)).
+As safe as the wide proximity alarm with **2.0 x the throughput**, 81 % fewer alarms and half the worker waiting; against the narrowed alarm, **0 instead of 49 collisions and +37 points**. The worker yields and the truck brakes for **stop points** on its own.
 
-![EdgeGuard vs site practice](docs/img/site_compare.png)
+**Under exceptional conditions** (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): policy v3 had **2 collisions (0.06 per 1,000 conflicts, 95 % CI 0.02-0.21)**, v2 had 5, the previous policy 30, and v3 was **4.8-9.9 points faster in every condition** ([robustness](docs/robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)). Why it stays safe, claim by claim: [safety case](docs/safety-case.md).
+
+![EdgeGuard vs site practice, 1,000 episodes](docs/img/large_eval.png)
 
 ### Server stability under faults ([details](docs/stability.md))
 
@@ -213,7 +215,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 |---|---|
 | [Risk engine and evaluation](docs/risk-and-evaluation.md) | v1.2 many-to-many · standoff resolution · stepping aside · false alarms; v1.1 WAIT/GO; collision-course test; comparison experiments; LSTM; policy learning |
 | [Resilience](docs/resilience.md) | graceful degradation (v0.8), D2D cooperation (v0.9), HA (v1.0), scale · restart · server hardening |
-| [Comparison with site practice](docs/site-compare.md) · [Robustness](docs/robustness.md) | EdgeGuard vs speed zoning and UWB proximity alarms; 8 normal / exceptional scenarios; truck priority, stop points, emergency brake |
+| [Comparison with site practice](docs/site-compare.md) · [Robustness](docs/robustness.md) · [Safety case](docs/safety-case.md) | EdgeGuard vs speed zoning and UWB proximity alarms; 8 normal / exceptional scenarios; large-scale test with confidence intervals; truck priority, stop points, tag GO check, emergency brake; hazards, claims and evidence |
 | [Site features](docs/site-features.md) | blind corners, D2D authentication, monitoring, near-miss analysis, camera, access control, dashboard · reports |
 | [Deployment](docs/deployment.md) | Compose stack, local demo, deployment architecture (measured), oneM2M resource tree, firmware · CI |
 | [ETSI MEC integration · Sandbox](docs/mec-sandbox.md) | MEC API integration, live public Sandbox, self-hosted Sandbox ([setup](deploy/sandbox-host/README.md)) |
