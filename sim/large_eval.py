@@ -153,43 +153,105 @@ def report(_a):
 
 
 def chart(d):
+    """docs/img/large_eval.png (systems used on sites today vs EdgeGuard) and docs/img/large_eval_robust.png
+    (policies under the 8 scenarios).  Horizontal bars, EdgeGuard emphasised, the others muted."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    ink, muted, grid = "#1f1f1e", "#6b6a64", "#e4e3de"
+    plt.rcParams.update({"font.size": 9, "text.color": ink, "axes.labelcolor": ink, "xtick.color": muted,
+                         "ytick.color": ink, "axes.edgecolor": "#bdbcb5"})
     site = d.get("site", {}).get("inattentive", {})
-    if not site:
-        return
-    keys = list(site)
-    labels = [site[k]["label"].replace(" (previous policy)", "\n(previous)").replace("UWB proximity ", "UWB prox.\n")
-              for k in keys]
-    cols = {"none": "#9aa0a6", "speed_zone": "#c58b2c", "proximity": "#3f78b5", "proximity_tight": "#8db8e3",
-            "edgeguard_prev": "#f1d77a", "edgeguard": "#e2ad00"}
-    fig, axs = plt.subplots(1, 2, figsize=(12.5, 4.8))
-    for ax, key, title in ((axs[0], "per_1000_conflicts", "Collisions per 1,000 conflicts (95 % CI, log)"),
-                           (axs[1], "throughput", "Forklift throughput (95 % CI)")):
-        vals = [site[k]["summary"][key] for k in keys]
-        ci = [site[k]["summary"]["per_1000_ci95" if key.startswith("per") else "throughput_ci95"] for k in keys]
-        err = [[max(0, v - c[0]) for v, c in zip(vals, ci)], [max(0, c[1] - v) for v, c in zip(vals, ci)]]
-        plot_vals = [max(v, 0.02) for v in vals] if key.startswith("per") else vals
-        ax.bar(range(len(keys)), plot_vals, color=[cols.get(k, "#888") for k in keys], edgecolor="#15181b", lw=0.8,
-               yerr=err, capsize=4)
-        for i, (v, c) in enumerate(zip(vals, ci)):
-            txt = (f"{v:.1f}\n[{c[0]:.1f}-{c[1]:.1f}]" if key.startswith("per") else f"{100 * v:.1f} %")
-            ax.text(i, (max(c[1], 0.02) * 1.15) if key.startswith("per") else c[1] + 0.02, txt, ha="center", fontsize=7.5)
-        if key.startswith("per"):
-            ax.set_yscale("log")
-            ax.set_ylim(0.01, 3000)
-        else:
-            ax.set_ylim(0, 1.12)
-        ax.set_xticks(range(len(keys)))
-        ax.set_xticklabels(labels, fontsize=8)
-        ax.set_title(title, fontsize=10)
-        ax.spines[["top", "right"]].set_visible(False)
-    m = d["site"]["meta"]
-    fig.suptitle(f"Same {m['episodes']} fresh episodes for every system (nobody looks out), simulation", fontsize=11)
-    fig.tight_layout()
-    fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval.png"), dpi=150)
-    plt.close(fig)
+    if site:
+        keys = [k for k in site if k != "edgeguard_v2"][::-1]           # top: no system ... bottom: EdgeGuard
+        name = {"edgeguard": "EdgeGuard (policy v3)", "edgeguard_prev": "EdgeGuard, previous policy"}
+        labels = [name.get(k, site[k]["label"]) for k in keys]
+        col = ["#2a78d6" if k == "edgeguard" else "#9ec5f4" if k == "edgeguard_prev" else "#c9c8c1" for k in keys]
+        fig, axs = plt.subplots(1, 2, figsize=(11, 3.9), sharey=True)
+        y = range(len(keys))
+        ax = axs[0]
+        for i, k in enumerate(keys):
+            s_ = site[k]["summary"]
+            v, (lo, hi) = s_["per_1000_conflicts"], s_["per_1000_ci95"]
+            if v > 0:
+                ax.barh(i, v, color=col[i], height=0.62, left=0.01)
+            ax.plot([max(lo, 0.01), hi], [i, i], color=ink, lw=1.2)
+            ax.plot([hi], [i], marker="|", color=ink, ms=8)
+            txt = f"{s_['collisions']} in {s_['conflicts']:,}" + (f"  ({v:.1f} per 1,000)" if v > 0 else f"  (95 % CI < {hi:.1f})")
+            ax.text(max(hi, v) * 1.35, i, txt, va="center", fontsize=8, color=ink if k == "edgeguard" else muted)
+        ax.set_xscale("log")
+        ax.set_xlim(0.01, 1e5)
+        ax.set_xticks([0.1, 1, 10, 100, 1000])
+        ax.set_xticklabels(["0.1", "1", "10", "100", "1,000"])
+        ax.set_title("Collisions per 1,000 conflicts (bar: estimate, line: 95 % CI)", fontsize=9.5, loc="left")
+        ax = axs[1]
+        for i, k in enumerate(keys):
+            s_ = site[k]["summary"]
+            v, (lo, hi) = s_["throughput"], s_["throughput_ci95"]
+            ax.barh(i, 100 * v, color=col[i], height=0.62)
+            ax.text(100 * v + 1.2, i, f"{100 * v:.1f} %", va="center", fontsize=8,
+                    color=ink if k == "edgeguard" else muted, fontweight="bold" if k == "edgeguard" else None)
+        ax.set_xlim(0, 112)
+        ax.set_title("Forklift throughput, % of nominal", fontsize=9.5, loc="left")
+        for ax in axs:
+            ax.grid(axis="x", color=grid, lw=0.8)
+            ax.set_axisbelow(True)
+            ax.spines[["top", "right"]].set_visible(False)
+            ax.tick_params(axis="y", length=0)
+        axs[0].set_yticks(list(y))
+        axs[0].set_yticklabels(labels)
+        m = d["site"]["meta"]
+        fig.suptitle(f"Same {m['episodes']:,} fresh simulated episodes for every system, nobody looks out "
+                     f"(8 workers, 4 forklifts)", fontsize=10.5, x=0.01, ha="left")
+        fig.tight_layout()
+        fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval.png"), dpi=150)
+        plt.close(fig)
+    rob = d.get("robust", {})
+    pols = [(n, lab, c) for n, lab, c in (("previous", "previous policy", "#9ec5f4"), ("robust_v2", "v2", "#5598e7"),
+                                          ("robust_v3", "v3 (adopted)", "#1c5cab")) if n in rob]
+    if pols:
+        scs = [k for k in rob[pols[0][0]] if k != "meta"]
+        nice = {"normal": "normal", "comply_85": "85 % comply", "comply_70": "70 % comply", "bad_network": "bad network",
+                "mec_restart": "MEC restart", "noisy_uwb": "noisy UWB", "dense": "dense (12 x 6)",
+                "attentive": "attentive driver"}
+        fig, axs = plt.subplots(1, 2, figsize=(11, 3.9), gridspec_kw={"width_ratios": [1.7, 1]})
+        ax = axs[0]
+        w = 0.8 / len(pols)
+        for j, (n, lab, c) in enumerate(pols):
+            vals = [rob[n][sc]["summary"]["collisions"] for sc in scs]
+            xs = [i + (j - (len(pols) - 1) / 2) * w for i in range(len(scs))]
+            ax.bar(xs, vals, width=w * 0.92, color=c, label=lab)
+            for x, v in zip(xs, vals):
+                ax.text(x, v + 0.15, str(v), ha="center", fontsize=7.5, color=muted)
+        ax.set_xticks(range(len(scs)))
+        ax.set_xticklabels([nice.get(sc, sc) for sc in scs], rotation=20, ha="right")
+        ax.set_title("Collisions per scenario (1,000 episodes each)", fontsize=9.5, loc="left")
+        ax.legend(frameon=False, fontsize=8)
+        ax = axs[1]
+        for j, (n, lab, c) in enumerate(pols):
+            eps = [e for sc in scs for e in rob[n][sc]["episodes"]]
+            coll = sum(e["collisions"] for e in eps)
+            conf = sum(e["conflicts"] for e in eps)
+            lo, hi = wilson(coll, conf)
+            v = 1000.0 * coll / conf
+            ax.barh(len(pols) - 1 - j, v, color=c, height=0.6)
+            ax.plot([1000 * lo, 1000 * hi], [len(pols) - 1 - j] * 2, color=ink, lw=1.2)
+            ax.text(1000 * hi + 0.03, len(pols) - 1 - j, f"{coll} in {conf:,}  ({v:.2f} per 1,000)", va="center",
+                    fontsize=8, color=ink)
+            lab_y = lab
+        ax.set_yticks(range(len(pols)))
+        ax.set_yticklabels([lab for _, lab, _ in pols][::-1])
+        ax.set_xlim(0, 1.9)
+        ax.set_title("All 8 scenarios: per 1,000 conflicts (95 % CI)", fontsize=9.5, loc="left")
+        for ax in axs:
+            ax.grid(axis="y" if ax is axs[0] else "x", color=grid, lw=0.8)
+            ax.set_axisbelow(True)
+            ax.spines[["top", "right"]].set_visible(False)
+        fig.suptitle("Exceptional conditions: same fresh simulated episodes for every policy", fontsize=10.5,
+                     x=0.01, ha="left")
+        fig.tight_layout()
+        fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval_robust.png"), dpi=150)
+        plt.close(fig)
 
 
 def main():
