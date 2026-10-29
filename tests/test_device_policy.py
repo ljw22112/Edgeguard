@@ -318,3 +318,25 @@ def test_firmware_msg_order(tmp_path):
     exe = tmp_path / "m"
     subprocess.run(["g++", "-std=c++17", "-I", os.path.join(ROOT, "firmware", "common"), str(src), "-o", str(exe)], check=True)
     assert subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() == "1011"
+
+
+def test_tag_go_check_sees_the_truck_he_would_walk_into():
+    """Tag GO check: standing, no truck is on a collision course; walking on east at his old pace would be."""
+    tag = ForkliftLimit("coop")
+    tag.on_heartbeat(0.0)
+    tag.on_own_state(1.0, 0.0, 0.0, 1.2, 0.0)                 # walking east
+    tag.on_own_state(2.0, 0.0, 0.0, 0.0, 0.0)                 # told to WAIT: standing
+    tag.on_peer_state(2.0, "f", 3.0, -3.0, 0.0, 1.5)          # truck going north, crosses his line 3 m ahead
+    assert not tag.truck_near(2.05)
+    assert tag.truck_near_if_walk(2.05)
+    tag.on_peer_state(2.1, "f", 3.0, 4.0, 0.0, 1.5)           # truck has passed
+    assert not tag.truck_near_if_walk(2.15)
+
+
+def test_wait_is_orphaned_only_by_a_silence_after_it():
+    tag = ForkliftLimit("coop")
+    tag.on_heartbeat(0.0)
+    tag.on_heartbeat(1.0)
+    assert not tag.orphaned(0.5)                              # no silence since the WAIT
+    tag.on_heartbeat(4.0)                                     # 3 s silence: the MEC app may have restarted
+    assert tag.orphaned(0.5) and not tag.orphaned(4.5)
