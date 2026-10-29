@@ -29,6 +29,7 @@ class Track:
         self.yaw_rate = 0.0
         self.heading = None
         self.r_pos = pos_sigma ** 2
+        self.res_var = None
         self.r_vel = vel_sigma ** 2
         self.q = accel_sigma ** 2
         self.src_ts = None                    # device timestamp of last sample (ms)
@@ -87,6 +88,10 @@ class Track:
             rp = self.r_pos if pos_sigma is None else pos_sigma ** 2
             R = np.diag([rp, rp, self.r_vel, self.r_vel])
         y_res = z - H @ self.x
+        # position innovation, smoothed: how far fixes land from where the track expected them (UWB noise,
+        # NLOS jumps); a margin can grow with it (RiskConfig.env_margin_k)
+        r2 = float(y_res[0] ** 2 + y_res[1] ** 2) / 2.0
+        self.res_var = r2 if self.res_var is None else 0.9 * self.res_var + 0.1 * r2
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
         self.x = self.x + K @ y_res
@@ -100,6 +105,11 @@ class Track:
     @property
     def vel(self):
         return (float(self.x[2]), float(self.x[3]))
+
+    @property
+    def noise_est(self):
+        """Estimated 1-sigma position error of the fixes (m), from the smoothed innovation."""
+        return math.sqrt(self.res_var) if self.res_var is not None else None
 
     @property
     def speed(self):

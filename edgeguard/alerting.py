@@ -288,7 +288,12 @@ def _envelope_v2(w_tr, f_tr, cfg, held=False, out_stop=None):
     if lat < rs:                                             # in the path
         if ahead <= 0:
             return 0.0                                       # beside the front of the truck: do not move
-        d = ahead - math.sqrt(rs * rs - lat * lat) - getattr(cfg, "env_margin", 0.3)
+        margin = getattr(cfg, "env_margin", 0.3)
+        k = getattr(cfg, "env_margin_k", 0.0)
+        ne = getattr(w_tr, "noise_est", None)
+        if k > 0 and ne is not None:                         # margin from the estimated position error
+            margin = min(1.0, max(getattr(cfg, "env_margin_min", 0.25), k * ne))
+        d = ahead - math.sqrt(rs * rs - lat * lat) - margin
         if out_stop is not None:                             # movement authority: stop short of this point
             dd = max(d - 0.01, 0.0)                          # 1 cm towards the truck: rounding never moves it forward
             out_stop.append([round(f_tr.pos[0] + ux * dd, 2), round(f_tr.pos[1] + uy * dd, 2)])
@@ -455,6 +460,17 @@ def decide(st: AlertState, r, w_tr, f_tr, cfg, now, congested=False, others=()):
         # still stop outside (the truck then passes instead of braking for a person standing in its lane)
         r.level, r.level_name = 2, LEVELS[2]
         r.reason = "stop before the forklift's path"
+    if getattr(cfg, "green_wave2", False) and st.level < 2 and r.level < 2 and w_tr is not None and f_tr is not None:
+        # green wave on its own channel: a truck-only "limit" message that does not touch the pair's alert state,
+        # so a real collision course afterwards is still a new alert (the gap found in the first green wave)
+        v_gw = green_wave_speed(w_tr, f_tr, cfg)
+        prev = getattr(st, "gw_sent", None)
+        if v_gw is not None and (prev is None or abs(v_gw - prev) > 0.3) and now - getattr(st, "gw_t", -9) >= 0.5:
+            st.gw_sent, st.gw_t = round(v_gw, 2), now
+            return "limit", {r.forklift: {"speed_limit": st.gw_sent, "speed_scale": 1.0}}
+        if v_gw is None and prev is not None and now - getattr(st, "gw_t", -9) >= 0.5:
+            st.gw_sent, st.gw_t = None, now
+            return "limit", {r.forklift: {"speed_limit": None, "speed_scale": 1.0}}
     if getattr(cfg, "green_wave", False) and r.level < 2 and w_tr is not None and f_tr is not None:
         v_gw = green_wave_speed(w_tr, f_tr, cfg)
         if v_gw is not None:

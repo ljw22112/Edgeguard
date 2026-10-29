@@ -77,6 +77,9 @@ class RiskConfig:
     env_react: float = 0.6         # s from MEC decision to brakes acting (radio + actuator)
     # --- prompt ease (sim/efficiency_audit.py: limits outlived the conflict by the refresh / clear hold) ---
     prompt_ease: bool = False      # a looser truck limit is sent at once once the worker stopped or they separate
+    env_margin_k: float = 0.0      # > 0: stop-point margin = k x the worker track's estimated position error
+    env_margin_min: float = 0.25   # m: ... but at least this
+    green_wave2: bool = False      # green wave as truck-only limit messages, outside the pair's alert state
     entry_gate: bool = False       # WAIT a walker before he steps into a truck's path, not when he is in it
     gate_t: float = 6.0            # s: the truck reaches his crossing within this
     worker_model: str = "cv"       # "lstm": learned walking prediction (edgeguard/learned.py) in the risk engine
