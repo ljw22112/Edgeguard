@@ -244,7 +244,7 @@ void handleD2D() {
     } else if (f.type == d2d::ALERT && d2d::idIs(f, DEVICE_ID)) {   // relayed MEC alert for me
       peerGuard.onHeartbeat(t);
       // relay frames carry clear (clear / release) or an active alert (raise / refresh / wait)
-      waitCue.onAlert(t, f.clear ? "clear" : (f.vibrate ? "raise" : "wait"), f.vibrate, f.level >= 2, f.src);
+      waitCue.onAlert(t, f.clear ? "clear" : (f.vibrate ? "raise" : "wait"), f.vibrate, f.level >= 2, f.src, peerGuard.truckNearIfWalk(t));
     } else if (f.type == d2d::HEARTBEAT && !mecHeard()) {
       peerGuard.onHeartbeat(t);
     }
@@ -309,7 +309,7 @@ void handleAlert() {
   const char* level = alert["level"] | "SAFE";
   const char* ev = alert["event"] | "";
   // WAIT until GO: burst (DANGER 1.5 s, WARNING 0.6 s), red LED + 1 s pulses, two pulses on GO
-  waitCue.onAlert(nowS(), ev, vibrate, strcmp(level, "DANGER") == 0, alert["forklift"] | "");
+  waitCue.onAlert(nowS(), ev, vibrate, strcmp(level, "DANGER") == 0, alert["forklift"] | "", peerGuard.truckNearIfWalk(nowS()));
   if (!strcmp(ev, "aside")) asideCue = true;
   else if (!waitCue.waiting()) asideCue = false;
   Serial.printf("alert %s %s vibrate=%d wait=%d\n", ev, level, vibrate, waitCue.waiting());
@@ -398,7 +398,7 @@ void loop() {
   if (peerGuard.vibrateLocal(millis() / 1000.0)) vibrateUntil = millis() + 300;   // MEC silent: local rule
   float tc = nowS();
   bool local = millis() < vibrateUntil;
-  bool keep = peerGuard.truckNear(tc);              // MEC silent and a truck close (D2D): do not show GO by itself
+  bool keep = peerGuard.truckNear(tc) || peerGuard.truckNearIfWalk(tc);   // a truck close, or walking on would meet one (D2D GO check)
   digitalWrite(MOTOR_PIN, local || waitCue.motor(tc, keep));
   digitalWrite(LED_PIN, local || waitCue.led(tc, keep));
   postAck(waitCue.led(tc) ? (asideCue ? "STEP ASIDE" : "WAIT") : "GO");

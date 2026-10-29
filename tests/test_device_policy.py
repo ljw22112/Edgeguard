@@ -340,3 +340,17 @@ def test_wait_is_orphaned_only_by_a_silence_after_it():
     assert not tag.orphaned(0.5)                              # no silence since the WAIT
     tag.on_heartbeat(4.0)                                     # 3 s silence: the MEC app may have restarted
     assert tag.orphaned(0.5) and not tag.orphaned(4.5)
+
+
+@pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
+def test_firmware_tag_go_check(tmp_path):
+    src = tmp_path / "g.cpp"
+    src.write_text('#include <cstdio>\n#include "device_policy.h"\n#include "worker_cue.h"\nint main(){policy::ForkliftLimit g; g.hbT = 0;'
+                   'g.onOwnState(1.0,0,0,1.2,0); g.onOwnState(2.0,0,0,0,0); g.onPeerState(2.0,7,3.0,-3.0,0,1.5);'
+                   'int a = g.truckNear(2.05), b = g.truckNearIfWalk(2.05);'
+                   'cue::WaitCue c; c.onAlert(1.0f,"raise",true,false,"f"); c.onAlert(2.0f,"clear",false,false,"f",b);'
+                   'int w = c.led(2.1f, true); g.onPeerState(2.1,7,3.0,4.0,0,1.5); int d = g.truckNearIfWalk(2.15);'
+                   'int e = c.led(2.3f, d); std::printf("%d%d%d%d%d\\n", a, b, w, d, e);}')
+    exe = tmp_path / "g"
+    subprocess.run(["g++", "-std=c++17", "-I", os.path.join(ROOT, "firmware", "common"), str(src), "-o", str(exe)], check=True)
+    assert subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() == "01100"

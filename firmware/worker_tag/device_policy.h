@@ -28,6 +28,7 @@ const float ALERT_STALE_S = 5.0f;
 const float SILENCE_S = 1.3f;
 const float STOP_AFTER_S = 2.0f;
 const float LOCAL_RECOVER_S = 1.5f;      // local rule stays on after a silence (restarted MEC app re-raising)
+const float WALK_MIN_MPS = 0.3f;        // own speed above which the tag counts the worker as walking (GO check)
 const float RATE_FAILSAFE_S = 6.0f;
 const float FULL_HZ = 10.0f;
 const float NO_LIMIT = -1.0f;            // "no limit" (a limit is always >= 0)
@@ -75,7 +76,21 @@ struct LocalGuard {
     ids[used] = tag; n[used] = 0; peer[used][0] = -1e9;
     return used++;
   }
-  void onOwnState(double t, double x, double y, double vx, double vy) { own[0] = t; own[1] = x; own[2] = y; own[3] = vx; own[4] = vy; }
+  double walkV[2] = {0, 0};
+  bool hasWalk = false;
+  void onOwnState(double t, double x, double y, double vx, double vy) {
+    own[0] = t; own[1] = x; own[2] = y; own[3] = vx; own[4] = vy;
+    if (vx * vx + vy * vy > WALK_MIN_MPS * WALK_MIN_MPS) { walkV[0] = vx; walkV[1] = vy; hasWalk = true; }
+  }
+  // tag GO check: would walking on at the pace and heading before the WAIT meet a truck?
+  bool wouldMeet(double t, bool ttc, bool coop) {
+    if (!hasWalk || own[0] < -1e8) return false;
+    double vx = own[3], vy = own[4];
+    own[3] = walkV[0]; own[4] = walkV[1];
+    bool r = cap(t, ttc, coop) >= 0;
+    own[3] = vx; own[4] = vy;
+    return r;
+  }
   void onPeerState(double t, int tag, double x, double y, double vx, double vy) {
     int k = slot(tag);
     if (k < 0) return;
@@ -168,7 +183,11 @@ struct ForkliftLimit {
   float recoverUntil = -1e9f;
   bool mecSilent(double t) const { return t - hbT > LOCAL_AFTER_S; }
   bool recovering(double t) const { return t < recoverUntil; }
-  void mark(float t) { if ((double)t - hbT > LOCAL_AFTER_S + 1e-3 && hbT > -1e8f) recoverUntil = t + LOCAL_RECOVER_S; }
+  float silenceEnd = -1e9f;
+  void mark(float t) { if ((double)t - hbT > LOCAL_AFTER_S + 1e-3 && hbT > -1e8f) { recoverUntil = t + LOCAL_RECOVER_S; silenceEnd = t; } }
+  // a WAIT given at `since` by an MEC app that has gone silent since (it may have restarted without it)
+  bool orphaned(float since) const { return since < silenceEnd; }
+  bool truckNearIfWalk(double t) { return localTtc && local.wouldMeet(t, true, coop); }
   // worker tag side: vibrate when the local rule says stop
   bool vibrateLocal(double t) const { return localTtc && (mecSilent(t) || recovering(t)) && local.cap(t, true, coop) == 0.0; }
   // worker tag side: a truck that would have to slow or stop for this worker (keeps a WAIT through silence)

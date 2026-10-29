@@ -38,9 +38,11 @@ class WaitCue:
         if not self.holds:
             self.go_at = t
 
-    def on_alert(self, t, event, vibrate=False, danger=False, src="", ts=None):
+    def on_alert(self, t, event, vibrate=False, danger=False, src="", ts=None, walk_block=False):
         """src: the forklift the alert is about (alert["forklift"], or the relaying forklift).
-        ts: the MEC app's send time - a message overtaken by a newer one (a late clear) is dropped."""
+        ts: the MEC app's send time - a message overtaken by a newer one (a late clear) is dropped.
+        walk_block: the tag's own GO check (ForkliftLimit.truck_near_if_walk) - walking on now would meet a
+        truck, so a clear / release only shortens the WAIT to 0.2 s (tick(keep=...) then decides)."""
         key = src
         if ts is not None:
             last = self.__dict__.setdefault("last_ts", {})
@@ -52,7 +54,10 @@ class WaitCue:
             event, vibrate, danger = "raise", True, True
         if event in ("clear", "release"):
             if key in self.holds:
-                self._drop(t, key)
+                if walk_block and t - self.since < HOLD_MAX_S:
+                    self.holds[key] = t + 0.2
+                else:
+                    self._drop(t, key)
             return
         if event not in ("raise", "refresh", "wait"):
             return

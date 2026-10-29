@@ -27,13 +27,14 @@ struct WaitCue {
     holds[i].used = false;
     if (count() == 0) goAt = t;
   }
-  void onAlert(float t, const char* ev, bool vibrate, bool danger, const char* src = "") {
+  // walkBlock: the tag's GO check says walking on now meets a truck - a clear / release only shortens the WAIT
+  void onAlert(float t, const char* ev, bool vibrate, bool danger, const char* src = "", bool walkBlock = false) {
     const char* key = src;
     tick(t);
     if (!strcmp(ev, "aside")) { ev = "raise"; vibrate = true; danger = true; }   // step aside, then WAIT
     int i = find(key);
     if (!strcmp(ev, "clear") || !strcmp(ev, "release")) {
-      if (i >= 0) drop(t, i);
+      if (i >= 0) { if (walkBlock && t - since < HOLD_MAX_S) holds[i].until = t + 0.2f; else drop(t, i); }
       return;
     }
     if (strcmp(ev, "raise") && strcmp(ev, "refresh") && strcmp(ev, "wait")) return;
