@@ -82,6 +82,7 @@ class RiskConfig:
     green_wave2: bool = False      # green wave as truck-only limit messages, outside the pair's alert state
     env_keep_stop: float = 0.0     # a truck standing before someone in its path stays stopped (cap below this)
     tag_walk_check: int = 0        # tag GO check: 1 = a WAIT orphaned by an MEC restart, 2 = every WAIT
+                                   # (also on clear / release), 3 = every WAIT that runs out unheard
     entry_gate: bool = False       # WAIT a walker before he steps into a truck's path, not when he is in it
     gate_t: float = 6.0            # s: the truck reaches his crossing within this
     worker_model: str = "cv"       # "lstm": learned walking prediction (edgeguard/learned.py) in the risk engine
