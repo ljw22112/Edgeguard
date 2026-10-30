@@ -285,6 +285,9 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
                         movers[f].fl.on_peer_state(t, w, *sw)
                     if drng.random() >= 0.05:
                         tags[w].on_peer_state(t, f, *st_f[f])
+                if getattr(cfg, "tag_aeb", False) and mw.v > 0.6 and tags[w].collision_course(t) \
+                        and not (mw.stop_from <= t < mw.stop_until):
+                    mw.on_alert(t, "local", vibrate=True)   # walking into a truck: the tag buzzes on its own
                 if tags[w].vibrate_local(t):
                     mw.on_alert(t, "local", vibrate=True)
                 live = {k: u for k, u in mw.holds.items() if u > t}

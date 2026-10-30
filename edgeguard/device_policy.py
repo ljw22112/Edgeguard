@@ -79,6 +79,9 @@ WALK_MIN_MPS = 0.6        # own speed above which the tag counts the worker as w
 # collision course within AEB_T_S (closest approach under AEB_D_M) stops the truck - the last line behind the
 # MEC plan, like a car's AEB.  Off by default (ForkliftLimit.aeb); thresholds chosen by sim/robust_eval.py.
 AEB_T_S, AEB_D_M = 1.5, 1.3        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
+AEB_LATCH = False         # after an emergency stop the truck stays stopped while the person is in front of it
+AEB_HOLD_M = 3.0
+AEB_NEAR_M = 0.0          # closer than this, any closing speed counts (0 = off)
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0
@@ -97,6 +100,7 @@ class ForkliftLimit:
         self.ranges = {}                               # tag -> [(t, d)] recent direct ranges
         self.own = None                                # (t, x, y, vx, vy) this device (coop)
         self.peers = {}                                # tag -> (t, x, y, vx, vy) via D2D
+        self.aeb_latched = set()                       # peers the emergency brake stopped for
         self.stops = {}                                # worker -> ((x, y) stop point, t)
         self.recover = True                            # local rule also during LOCAL_RECOVER_S after a silence
         self.aeb = ForkliftLimit.AEB                   # always-on D2D emergency brake
@@ -124,12 +128,46 @@ class ForkliftLimit:
             wx, wy = p[3] - self.own[3], p[4] - self.own[4]
             ww = wx * wx + wy * wy
             t_cpa = 0.0 if ww < 1e-9 else max(0.0, -(rx * wx + ry * wy) / ww)
-            if t_cpa > AEB_T_S:
-                continue
             cx, cy = rx + wx * t_cpa, ry + wy * t_cpa
-            if (cx * cx + cy * cy) ** 0.5 < AEB_D_M and ww > 0.25:     # closing faster than 0.5 m/s
+            close = AEB_NEAR_M > 0 and rx * rx + ry * ry < AEB_NEAR_M ** 2
+            if t_cpa <= AEB_T_S and (cx * cx + cy * cy) ** 0.5 < AEB_D_M and (ww > 0.25 or close and ww > 0.01):
+                # closing faster than 0.5 m/s, or (within AEB_NEAR_M) at all: no creeping into someone
+                if AEB_LATCH:
+                    self.aeb_latched.add(tag)
                 return 0.0
+            if tag in self.aeb_latched:
+                if self._ahead_in_path(rx, ry):
+                    return 0.0                         # braked for him: stay stopped while he is in front
+                self.aeb_latched.discard(tag)
         return None
+
+    def collision_course(self, t):
+        """A D2D peer on a collision course within AEB_T_S (closest approach < AEB_D_M, closing > 0.5 m/s): the
+        emergency-brake test, usable on the worker tag too (buzz a worker walking into a truck)."""
+        if self.own is None:
+            return False
+        for p in self.peers.values():
+            if t - p[0] > D2D_STALE_S or t - self.own[0] > D2D_STALE_S:
+                continue
+            rx, ry = p[1] - self.own[1], p[2] - self.own[2]
+            wx, wy = p[3] - self.own[3], p[4] - self.own[4]
+            ww = wx * wx + wy * wy
+            t_cpa = 0.0 if ww < 1e-9 else max(0.0, -(rx * wx + ry * wy) / ww)
+            cx, cy = rx + wx * t_cpa, ry + wy * t_cpa
+            if t_cpa <= AEB_T_S and (cx * cx + cy * cy) ** 0.5 < AEB_D_M and ww > 0.25:
+                return True
+        return False
+
+    def _ahead_in_path(self, rx, ry):
+        """The peer at (rx, ry) from the truck is in front of it, within AEB_D_M of its line of travel
+        (last direction it moved in) and closer than AEB_HOLD_M."""
+        wv = getattr(self, "walk_v", None)
+        if wv is None:
+            return False
+        n = (wv[0] * wv[0] + wv[1] * wv[1]) ** 0.5
+        ux, uy = wv[0] / n, wv[1] / n
+        ahead, lat = rx * ux + ry * uy, abs(-rx * uy + ry * ux)
+        return 0.0 < ahead < AEB_HOLD_M and lat < AEB_D_M
 
     def _cpa_cap(self, t, tag):
         """Speed cap from the 2-D closest point of approach with this peer, or "stale"."""

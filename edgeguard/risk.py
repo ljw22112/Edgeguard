@@ -81,6 +81,7 @@ class RiskConfig:
     env_margin_min: float = 0.25   # m: ... but at least this
     green_wave2: bool = False      # green wave as truck-only limit messages, outside the pair's alert state
     env_keep_stop: float = 0.0     # a truck standing before someone in its path stays stopped (cap below this)
+    tag_aeb: bool = False          # the tag buzzes by itself when walking into a truck (D2D collision course)
     tag_walk_check: int = 0        # tag GO check: 1 = a WAIT orphaned by an MEC restart, 2 = every WAIT
                                    # (also on clear / release), 3 = every WAIT that runs out unheard, 4 = 3 + on clear / release
                                    # of a WAIT given before an MEC silence
