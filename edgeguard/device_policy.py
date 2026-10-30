@@ -79,9 +79,9 @@ WALK_MIN_MPS = 0.6        # own speed above which the tag counts the worker as w
 # collision course within AEB_T_S (closest approach under AEB_D_M) stops the truck - the last line behind the
 # MEC plan, like a car's AEB.  Off by default (ForkliftLimit.aeb); thresholds chosen by sim/robust_eval.py.
 AEB_T_S, AEB_D_M = 1.5, 1.3        # a tag keeps a WAIT through MEC silence while a truck is near, but never longer than this
-AEB_LATCH = False         # after an emergency stop the truck stays stopped while the person is in front of it
+AEB_LATCH = True          # after an emergency stop the truck stays stopped while the person is in front of it
 AEB_HOLD_M = 3.0
-AEB_NEAR_M = 0.0          # closer than this, any closing speed counts (0 = off)
+AEB_NEAR_M = 1.8          # closer than this, any closing speed counts (0 = off)
 LOCAL_RANGE_STALE_S = 1.2   # no range for this long -> the tag is out of reach, rule idle
 LOCAL_RATE_WINDOW_S = 1.5   # range-rate fit window; 1.2 / 1.5 s keep 2 Hz ranging usable (results/peer_ranging_sensitivity.json)
 FULL_HZ = 10.0

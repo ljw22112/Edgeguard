@@ -39,9 +39,9 @@ const int LOCAL_TAGS = 8, LOCAL_HIST = 24;   // 1.5 s at 10 Hz + margin
 const double D2D_STALE_S = 0.5, CPA_HORIZON_S = 5.0;
 const double CPA_STOP_S = 2.5, CPA_STOP_D_M = 2.0, CPA_SLOW_S = 4.5, CPA_SLOW_D_M = 3.0;
 const double AEB_T_S = 1.5, AEB_D_M = 1.3;   // always-on D2D emergency brake (mirrors ForkliftLimit.aeb_cap())
-const bool AEB_LATCH = false;               // after an emergency stop, stay stopped while the person is in front
+const bool AEB_LATCH = true;                // after an emergency stop, stay stopped while the person is in front
 const double AEB_HOLD_M = 3.0;
-const double AEB_NEAR_M = 0.0;              // closer than this, any closing speed counts (0 = off)
+const double AEB_NEAR_M = 1.8;              // closer than this, any closing speed counts (0 = off)
 const double CPA_STALE = -2.0;            // "no fresh D2D state for this peer"
 
 // 2-D closest point of approach between this device (own) and a peer, both constant velocity.

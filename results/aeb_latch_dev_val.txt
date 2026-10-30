@@ -1,0 +1,30 @@
+# Emergency-brake latch + near-range rule (AEB_LATCH, AEB_NEAR_M=1.8) on top of v3; 150 episodes per scenario
+== new dev 62000
+normal       coll   0 close   0 thr 0.979 worker 2.12 alarms 7.1
+comply_85    coll   0 close   0 thr 0.953 worker 2.46 alarms 7.4
+comply_70    coll   0 close   2 thr 0.927 worker 2.79 alarms 7.6
+bad_network  coll   0 close   9 thr 0.932 worker 2.69 alarms 8.7
+mec_restart  coll   0 close   0 thr 0.954 worker 2.48 alarms 7.1
+noisy_uwb    coll   0 close   1 thr 0.931 worker 3.06 alarms 12.8
+dense        coll   0 close   3 thr 0.955 worker 2.96 alarms 15.7
+attentive    coll   0 close   0 thr 0.966 worker 2.18 alarms 7.0
+== new val 19000
+normal       coll   0 close   2 thr 0.970 worker 2.26 alarms 7.4
+comply_85    coll   0 close   2 thr 0.940 worker 2.54 alarms 7.4
+comply_70    coll   0 close   3 thr 0.912 worker 2.73 alarms 7.7
+bad_network  coll   0 close   2 thr 0.917 worker 2.85 alarms 8.9
+mec_restart  coll   0 close   1 thr 0.939 worker 2.64 alarms 7.2
+noisy_uwb    coll   0 close   1 thr 0.939 worker 3.17 alarms 12.3
+dense        coll   0 close   3 thr 0.952 worker 3.15 alarms 16.4
+attentive    coll   0 close   2 thr 0.956 worker 2.31 alarms 7.2
+== v3 val 19000
+normal       coll   0 close   2 thr 0.974 worker 2.23 alarms 7.4
+comply_85    coll   0 close   2 thr 0.941 worker 2.52 alarms 7.5
+comply_70    coll   0 close   5 thr 0.908 worker 2.73 alarms 7.7
+bad_network  coll   0 close   5 thr 0.917 worker 2.83 alarms 8.9
+mec_restart  coll   0 close   1 thr 0.944 worker 2.60 alarms 7.3
+noisy_uwb    coll   0 close   1 thr 0.941 worker 3.12 alarms 12.6
+dense        coll   0 close   3 thr 0.952 worker 3.18 alarms 16.4
+attentive    coll   0 close   2 thr 0.957 worker 2.31 alarms 7.2
+## MEC restart, development seeds 64007+, 1500 episodes: v3 2 collisions (thr 0.947 est.), with latch:
+collisions 0 thr 0.9473

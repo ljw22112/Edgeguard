@@ -354,3 +354,38 @@ def test_firmware_tag_go_check(tmp_path):
     exe = tmp_path / "g"
     subprocess.run(["g++", "-std=c++17", "-I", os.path.join(ROOT, "firmware", "common"), str(src), "-o", str(exe)], check=True)
     assert subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() == "01100"
+
+
+def _aeb_creep_case(fl_on_own, fl_on_peer, cap):
+    """A truck brakes for a standing worker 2 m ahead, then rolls on slowly: it must stay stopped."""
+    out = []
+    fl_on_own(0.0, 0.0, 0.0, 1.5, 0.0)
+    fl_on_peer(0.0, 2.0, 0.2, 0.0, 0.0)
+    out.append(cap(0.05))                                    # collision course at 1.5 m/s: stop
+    fl_on_own(0.5, 0.6, 0.0, 0.3, 0.0)                       # rolling at 0.3 m/s, 1.4 m short of him
+    fl_on_peer(0.5, 2.0, 0.2, 0.0, 0.0)
+    out.append(cap(0.55))                                    # latched: still stopped
+    fl_on_peer(0.6, 2.0, 3.0, 0.0, 0.0)                      # he has stepped out of the path
+    fl_on_own(0.6, 0.6, 0.0, 0.0, 0.0)
+    out.append(cap(0.65))
+    return out
+
+
+def test_emergency_brake_holds_while_he_is_in_front():
+    fl = ForkliftLimit("coop")
+    fl.aeb = True
+    got = _aeb_creep_case(fl.on_own_state, lambda t, *a: fl.on_peer_state(t, "w", *a), fl.aeb_cap)
+    assert got == [0.0, 0.0, None]
+
+
+@pytest.mark.skipif(shutil.which("g++") is None, reason="no C++ compiler")
+def test_firmware_emergency_brake_latch(tmp_path):
+    src = tmp_path / "a.cpp"
+    src.write_text('#include <cstdio>\n#include "device_policy.h"\nint main(){policy::LocalGuard g; int r[3];'
+                   'g.onOwnState(0.0,0,0,1.5,0); g.onPeerState(0.0,1,2.0,0.2,0,0); r[0]=g.aebStop(0.05);'
+                   'g.onOwnState(0.5,0.6,0,0.3,0); g.onPeerState(0.5,1,2.0,0.2,0,0); r[1]=g.aebStop(0.55);'
+                   'g.onPeerState(0.6,1,2.0,3.0,0,0); g.onOwnState(0.6,0.6,0,0,0); r[2]=g.aebStop(0.65);'
+                   'std::printf("%d%d%d\\n", r[0], r[1], r[2]);}')
+    exe = tmp_path / "a"
+    subprocess.run(["g++", "-std=c++17", "-I", os.path.join(ROOT, "firmware", "common"), str(src), "-o", str(exe)], check=True)
+    assert subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() == "110"
