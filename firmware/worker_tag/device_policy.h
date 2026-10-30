@@ -39,6 +39,9 @@ const int LOCAL_TAGS = 8, LOCAL_HIST = 24;   // 1.5 s at 10 Hz + margin
 const double D2D_STALE_S = 0.5, CPA_HORIZON_S = 5.0;
 const double CPA_STOP_S = 2.5, CPA_STOP_D_M = 2.0, CPA_SLOW_S = 4.5, CPA_SLOW_D_M = 3.0;
 const double AEB_T_S = 1.5, AEB_D_M = 1.3;   // always-on D2D emergency brake (mirrors ForkliftLimit.aeb_cap())
+const bool AEB_LATCH = false;               // after an emergency stop, stay stopped while the person is in front
+const double AEB_HOLD_M = 3.0;
+const double AEB_NEAR_M = 0.0;              // closer than this, any closing speed counts (0 = off)
 const double CPA_STALE = -2.0;            // "no fresh D2D state for this peer"
 
 // 2-D closest point of approach between this device (own) and a peer, both constant velocity.
@@ -107,7 +110,15 @@ struct LocalGuard {
   void shift(int k) { for (int j = 1; j < n[k]; j++) { ht[k][j - 1] = ht[k][j]; hd[k][j - 1] = hd[k][j]; } n[k]--; }
 
   // always-on emergency brake: a peer on a collision course within AEB_T_S (closest approach < AEB_D_M)
-  bool aebStop(double t) const {
+  bool latched[LOCAL_TAGS] = {};
+  bool aheadInPath(double rx, double ry) const {
+    if (!hasWalk) return false;
+    double n = std::sqrt(walkV[0] * walkV[0] + walkV[1] * walkV[1]);
+    double ux = walkV[0] / n, uy = walkV[1] / n;
+    double ahead = rx * ux + ry * uy, lat = std::fabs(-rx * uy + ry * ux);
+    return ahead > 0.0 && ahead < AEB_HOLD_M && lat < AEB_D_M;
+  }
+  bool aebStop(double t) {
     if (own[0] < -1e8) return false;
     for (int k = 0; k < used; k++) {
       const double* p = peer[k];
@@ -116,9 +127,16 @@ struct LocalGuard {
       double ww = wx * wx + wy * wy;
       double tc = ww < 1e-9 ? 0.0 : -(rx * wx + ry * wy) / ww;
       if (tc < 0) tc = 0;
-      if (tc > AEB_T_S) continue;
       double cx = rx + wx * tc, cy = ry + wy * tc;
-      if (std::sqrt(cx * cx + cy * cy) < AEB_D_M && ww > 0.25) return true;
+      bool close = AEB_NEAR_M > 0 && rx * rx + ry * ry < AEB_NEAR_M * AEB_NEAR_M;
+      if (tc <= AEB_T_S && std::sqrt(cx * cx + cy * cy) < AEB_D_M && (ww > 0.25 || (close && ww > 0.01))) {
+        if (AEB_LATCH) latched[k] = true;
+        return true;
+      }
+      if (latched[k]) {
+        if (aheadInPath(rx, ry)) return true;
+        latched[k] = false;
+      }
     }
     return false;
   }
