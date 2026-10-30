@@ -164,7 +164,7 @@ def chart(d):
     site = d.get("site", {}).get("inattentive", {})
     if site:
         keys = [k for k in site if k != "edgeguard_v2"][::-1]           # top: no system ... bottom: EdgeGuard
-        name = {"edgeguard": "EdgeGuard (policy v3)", "edgeguard_prev": "EdgeGuard, previous policy"}
+        name = {"edgeguard": "EdgeGuard (policy v3.1)", "edgeguard_prev": "EdgeGuard, previous policy"}
         labels = [name.get(k, site[k]["label"]) for k in keys]
         col = ["#2a78d6" if k == "edgeguard" else "#9ec5f4" if k == "edgeguard_prev" else "#c9c8c1" for k in keys]
         fig, axs = plt.subplots(1, 2, figsize=(11, 3.9), sharey=True)
@@ -207,8 +207,8 @@ def chart(d):
         fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval.png"), dpi=150)
         plt.close(fig)
     rob = d.get("robust", {})
-    pols = [(n, lab, c) for n, lab, c in (("previous", "previous policy", "#9ec5f4"), ("robust_v2", "v2", "#5598e7"),
-                                          ("robust_v3", "v3 (adopted)", "#1c5cab")) if n in rob]
+    pols = [(n, lab, c) for n, lab, c in (("previous", "previous policy", "#c9e0fa"), ("robust_v2", "v2", "#9ec5f4"),
+                                          ("robust_v3", "v3", "#5598e7"), ("robust_v3_1", "v3.1 (adopted)", "#1c5cab")) if n in rob]
     if pols:
         scs = [k for k in rob[pols[0][0]] if k != "meta"]
         nice = {"normal": "normal", "comply_85": "85 % comply", "comply_70": "70 % comply", "bad_network": "bad network",
