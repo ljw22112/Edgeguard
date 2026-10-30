@@ -103,11 +103,11 @@ Same simulated floor and the **same 1,000 fresh episodes** for every system (8 w
 | UWB proximity alarm, 6 m / 3 m zones | 0 (< 1.1) | 48.3 % | 37.6 |
 | UWB proximity alarm, 4 m / 2 m zones | 49 (13.5 [10.3-17.9]) | 60.3 % | 25.7 |
 | EdgeGuard, previous policy | 1 (0.3) | 91.5 % | 6.3 |
-| **EdgeGuard (policy v3)** | **0 (< 1.1)** | **97.4 % [97.0-97.7]** | **7.0** |
+| **EdgeGuard (policy v3.1)** | **0 (< 1.1)** | **97.3 % [96.9-97.7]** | **7.0** |
 
 As safe as the wide proximity alarm with **2.0 x the throughput**, 81 % fewer alarms and half the worker waiting; against the narrowed alarm, **0 instead of 49 collisions and +37 points**. The worker yields and the truck brakes for **stop points** on its own.
 
-**Under exceptional conditions** (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): policy v3 had **2 collisions (0.06 per 1,000 conflicts, 95 % CI 0.02-0.21)**, v2 had 5, the previous policy 30, and v3 was **4.8-9.9 points faster in every condition** ([robustness](docs/robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)). Why it stays safe, claim by claim: [safety case](docs/safety-case.md).
+**Under exceptional conditions** (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): policy v3.1 had **no collision (95 % upper bound 0.11 per 1,000 conflicts)**, v3 had 2, v2 5, the previous policy 30, and v3.1 was **4.8-9.9 points faster in every condition**, with 41 % fewer close passes than v2 ([robustness](docs/robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)). Why it stays safe, claim by claim: [safety case](docs/safety-case.md).
 
 ![EdgeGuard vs site practice, 1,000 episodes](docs/img/large_eval.png)
 

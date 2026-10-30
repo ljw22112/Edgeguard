@@ -48,22 +48,23 @@ Counts of 0-5 in 1,200 episodes cannot separate policies. [`sim/large_eval.py`](
 
 ![Policies under exceptional conditions](img/large_eval_robust.png)
 
-| Scenario | Collisions: previous / v2 / **v3** | Throughput: previous / v2 / **v3** |
+| Scenario | Collisions: previous / v2 / v3 / **v3.1** | Throughput: previous / v2 / v3 / **v3.1** |
 |---|---|---|
-| normal | 0 / 0 / **0** | 91.6 % / 97.3 % / **97.3 %** |
-| comply 85 % | 0 / 0 / **0** | 87.4 % / 94.7 % / **94.7 %** |
-| comply 70 % | 1 / 0 / **0** | 83.0 % / 90.6 % / **90.7 %** |
-| bad network | 9 / 1 / **0** | 83.4 % / 91.0 % / **91.2 %** |
-| MEC restart | 9 / 4 / **2** | 87.6 % / 94.6 % / **94.6 %** |
-| noisy UWB | 3 / 0 / **0** | 83.2 % / 93.1 % / **93.1 %** |
-| dense (12 workers, 6 forklifts) | 6 / 0 / **0** | 87.4 % / 95.1 % / **95.1 %** |
-| attentive driver | 2 / 0 / **0** | 90.7 % / 95.5 % / **95.5 %** |
-| **all 34,644 conflicts** | **30 / 5 / 2** | |
-| per 1,000 conflicts (95 % CI) | 0.87 [0.61-1.24] / 0.14 [0.06-0.34] / **0.06 [0.02-0.21]** | |
+| normal | 0 / 0 / 0 / **0** | 91.6 % / 97.3 % / 97.3 % / **97.3 %** |
+| comply 85 % | 0 / 0 / 0 / **0** | 87.4 % / 94.7 % / 94.7 % / **94.6 %** |
+| comply 70 % | 1 / 0 / 0 / **0** | 83.0 % / 90.6 % / 90.7 % / **90.6 %** |
+| bad network | 9 / 1 / 0 / **0** | 83.4 % / 91.0 % / 91.2 % / **91.3 %** |
+| MEC restart | 9 / 4 / 2 / **0** | 87.6 % / 94.6 % / 94.6 % / **94.7 %** |
+| noisy UWB | 3 / 0 / 0 / **0** | 83.2 % / 93.1 % / 93.1 % / **93.1 %** |
+| dense (12 workers, 6 forklifts) | 6 / 0 / 0 / **0** | 87.4 % / 95.1 % / 95.1 % / **95.0 %** |
+| attentive driver | 2 / 0 / 0 / **0** | 90.7 % / 95.5 % / 95.5 % / **95.5 %** |
+| **all 34,644 conflicts** | **30 / 5 / 2 / 0** | mean 86.8 / 94.0 / 94.0 / **94.0 %** |
+| per 1,000 conflicts (95 % CI) | 0.87 [0.61-1.24] / 0.14 [0.06-0.34] / 0.06 [0.02-0.21] / **0 [0-0.11]** | |
+| close passes (< 1.5 m) | 190 / 238 / 185 / **141** | |
 
-- **v3 vs previous policy: 93 % fewer collisions** (intervals do not overlap) and **+4.8 to +9.9 points of throughput in every scenario**.
-- **v3 vs v2:** 2 collisions instead of 5, throughput unchanged (within ±0.2 points). The intervals overlap: v3 is at least as safe, and its two collisions are in the one scenario it was built for, MEC restart (4 -> 2).
-- Seven of the eight scenarios had no collision in 1,000 episodes each; for these the 95 % upper bound is about 1 collision per 1,000 conflicts (0.46 on the dense floor).
+- **v3.1 (adopted): no collision in 34,644 conflicts under all eight exceptional conditions.** The 95 % upper bound is 0.11 per 1,000 conflicts, 8 x below the previous policy's lower bound (0.61): **at least 87 % fewer collisions than the previous policy**, with **+4.8 to +9.9 points of throughput in every scenario**.
+- **v3.1 vs v2 / v3:** 5 -> 2 -> 0 collisions and 238 -> 185 -> **141 close passes (-41 % vs v2, -24 % vs v3)**, with throughput, worker time (2.65 s mean) and alarms unchanged (within ±0.2 points). The v2/v3.1 intervals barely overlap; the close passes show the same direction with far more events.
+- Every scenario had no collision in 1,000 episodes; per scenario the 95 % upper bound is about 1 per 1,000 conflicts (0.46 on the dense floor).
 
 Raw per-episode data: [`results/large_eval.json`](../results/large_eval.json), summary [`results/large_eval_report.txt`](../results/large_eval_report.txt).
 
@@ -83,7 +84,7 @@ Each row was found by tracing a collision of the scenario set ([`sim/collision_a
 
 ## Policy v3: the tag checks GO itself
 
-The large-scale test below found v2's weak spot: 4 of its 5 collisions in 8,000 episodes came after a MEC restart. Tracing them (and one on the dense floor) gave three mechanisms:
+The large-scale test above found v2's weak spot: 4 of its 5 collisions in 8,000 episodes came after a MEC restart. Tracing them (and one on the dense floor) gave three mechanisms:
 
 | Found | Change (v3) |
 |---|---|
@@ -105,6 +106,17 @@ Variants compared on development seeds 62,000+ (8 scenarios x 150 episodes; mean
 | **v3: ... and on the clear of an orphaned WAIT** | **0** | **15** | **95.0 %** | **2.58 s** |
 
 Checking every GO is as safe but makes workers wait 25 % longer: the MEC app's own GO check already covers the trucks it knows about, and the tag then also holds for trucks merely passing nearby. The variant that only checks WAITs running out had one collision on the validation seeds 11,000+ (the clear after a restart); v3 had none there (8 x 150 episodes, mean throughput 94.7 %, worker time 2.56 s). Raw output: [`results/tag_go_check_dev_val.txt`](../results/tag_go_check_dev_val.txt).
+
+## Policy v3.1: the emergency brake holds while the person is in front
+
+v3's two remaining collisions (both after a MEC restart) were traced the same way. In both, the D2D emergency brake did stop the truck - and then released it: a worker standing or barely moving right in front of the truck is no longer "closing fast", so the collision course test (closest approach within 1.5 s) went quiet, the truck pulled away and touched him.
+
+| Found | Change (v3.1) |
+|---|---|
+| After an emergency stop the truck drove off again while the worker still stood in its path | **Brake latch** (`AEB_LATCH`): after an emergency stop the truck stays at 0 as long as that person is ahead in its path (less than 3 m ahead, less than 1.3 m to the side, measured along the truck's last moving direction) |
+| A slow worker within arm's reach did not count as a collision course (closing speed below 0.25 m/s) | **Near-range rule** (`AEB_NEAR_M` = 1.8 m): within 1.8 m any closing speed counts |
+
+Both are in the Python reference and the firmware (`aeb_cap` / `aebStop`), with the same results in tests (`test_emergency_brake_holds_while_he_is_in_front`, `test_firmware_emergency_brake_latch`). Checked before the test seeds: MEC restart on development seeds 64,007+ (1,500 episodes) 2 -> 0 collisions at the same throughput (94.7 %); 8 scenarios x 150 episodes on development seeds 62,000+ and fresh validation seeds 19,000+: no collision, close passes 21 -> 16 on validation, mean throughput -0.1 point. Raw output: [`results/aeb_latch_dev_val.txt`](../results/aeb_latch_dev_val.txt).
 
 Rejected after validation (kept as options, off): STEP ASIDE only after 0.6 s of standing (`aside_still_s`, more collisions and less throughput), narrowing STEP ASIDE to workers inside r_safe (`aside_reach`, fixed the noisy-UWB case but added three elsewhere), buzzing a walker on an envelope alert (`env_buzz_walker`) and a worst-case GO direction (`go_unknown_worst`), no measurable effect.
 
