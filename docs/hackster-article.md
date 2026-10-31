@@ -37,13 +37,13 @@
 
 Korea recorded **2,559 forklift accident casualties in 2021–2022** (KOSHA). One workplace injury costs about **USD 116,000** once indirect costs are included (NSC Injury Facts, OSHA 3885). Proximity alarms exist, but they have three weaknesses:
 
-1. **They cry wolf.** A 5 m distance alarm also fires on every forklift that will pass safely. In our simulation, **85 %** of its alerts are false, and workers learn to ignore them.
+1. **Safe or productive, not both.** A distance alarm also fires on every forklift that will pass safely. Set wide (6 m warning / 3 m stop), it prevented every collision in our simulation but cut forklift throughput to **48 %** of nominal; narrowed to 4 m / 2 m to stop the nuisance, it let **49 collisions** through in 3,617 conflicts.
 2. **One buzz says "danger", not "what now".** In our first version, the remaining collisions came from workers who stopped at the buzz and then walked back into the lane before the forklift had passed.
 3. **No server, no safety.** When the network or the server fails, server-based systems go silent exactly when they are needed.
 
 ### Our solution in one sentence
 
-Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift slows only as much as needed.
+Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift keeps its speed as long as it can still stop short of the person, braking on its own for a **stop point** when it cannot. On 1,000 fresh simulated episodes: **0 collisions at 2.0× the throughput of a UWB proximity alarm**, and 0 in 34,644 conflicts under bad network, server restart, low compliance and noisy positioning.
 
 ### How it works
 
@@ -183,6 +183,12 @@ If a device hears no heartbeat from the MEC app for 2 s, it switches to local de
 | Total network outage (180 encounters that would collide) | **2** (v0.7 hold-then-stop: 180) | 57 % (stop-everything approach: 18 %) |
 | Worker or forklift in a coverage hole | **0 / 0** (was 16 / 19) | — |
 
+Two layers sit on the devices themselves, independent of the network and the MEC app:
+- **Tag GO check:** a WAIT that runs out without a word from the MEC app (for example after a restart) ends only if walking on at the worker's last pace would not meet a truck, judged from the device-to-device state broadcast alone.
+- **Always-on emergency brake** on the forklift module: a person on a collision course within 1.5 s stops the truck, and the truck **stays stopped while that person is in front of it**.
+
+Both run identically in the Python reference and the ESP32 firmware (equivalence tests in CI). Results under exceptional conditions are under Results below.
+
 ---
 
 ## Federated learning across sites (oneM2M TR-0084)
@@ -257,6 +263,10 @@ Sample recommendation from the CI run:
 | Forklift | GPIO 27 | motor driver PWM / EN; driver powered from a power bank |
 | Forklift | GPIO 26 | 220 Ω → LED → GND (beacon) |
 
+![Worker tag schematic](img/schematic_tag.png)
+
+![Forklift module schematic](img/schematic_forklift.png)
+
 *Status: the board kit and wiring are ready and the board demo is scheduled before the final; the CI evidence today is firmware-in-the-loop.* The firmware ([`firmware/`](../firmware/)) registers the device's own AE at boot and receives alerts as oneM2M notifications. It drives the outputs and writes confirmations to `<device>/status`, which appear on the dashboard as **HW ✓**. **Firmware-in-the-loop:** the same sketches compile unmodified for a PC, and CI runs them against a real CSE on every commit (6 of 6 checks). A phone can act as the tag: open `http://<MEC host>:9090/tag?worker=worker_01`.
 
 ![Firmware-in-the-loop and a phone as the worker tag](img/sil_phone.png)
@@ -265,22 +275,48 @@ Sample recommendation from the CI run:
 
 ## Results (closed-loop simulation)
 
-**Against our own v1.0 (vibration-only alert, same simulator):**
+All results come from a closed-loop simulator of a warehouse floor (8 workers and 4 forklifts per 25 s episode, randomised network delay and loss, UWB noise). The policy was trained and selected on separate seeds; **every number below is on fresh episodes that were never used to train, select or tune it**, with 95 % confidence intervals ([`sim/large_eval.py`](../sim/large_eval.py)).
 
-| | v1.0 | EdgeGuard |
+### Against what warehouses use today (1,000 episodes, 3,617 conflicts, nobody looks out)
+
+![Systems used on sites today vs EdgeGuard](img/large_eval.png)
+
+| System | Collisions (per 1,000 conflicts) | Forklift throughput | Alarms per episode |
+|---|---|---|---|
+| No system | 2,621 (725) | 99.9 % | 0 |
+| Speed zoning 5 km/h | 2,088 (577) | 75.1 % | 0 |
+| UWB proximity alarm, 6 m / 3 m | 0 (< 1.1) | 48.3 % | 37.6 |
+| UWB proximity alarm, 4 m / 2 m | 49 (13.5) | 60.3 % | 25.7 |
+| **EdgeGuard** | **0 (< 1.1)** | **97.3 % [96.9–97.7]** | **7.0** |
+
+- **As safe as the wide proximity alarm, at 2.0× its throughput**, with 81 % fewer alarms and half the worker waiting (2.1 s instead of 4.3 s per episode).
+- Against the narrowed alarm sites choose to cut nuisance alarms: **0 collisions instead of 49, and +37 points of throughput**.
+- With an attentive driver (brakes after 1 s for a person in front): EdgeGuard 0 collisions, 96.0 %; narrowed alarm 20 collisions.
+
+The proximity alarm follows commercial UWB systems: slow to walking speed in the warning zone, stop in the danger zone, vibrate the worker's tag ([comparison details](site-compare.md)).
+
+### When things go wrong (8,000 episodes, 34,644 conflicts)
+
+The same fresh episodes under eight conditions: normal, 85 % and 70 % of alerts obeyed, bad network (300–600 ms, up to 40 % loss), the MEC app restarting and losing its state, noisy UWB (0.35–0.6 m), a dense floor (12 workers, 6 forklifts) and attentive drivers.
+
+![Policies under exceptional conditions](img/large_eval_robust.png)
+
+| Policy | Collisions (per 1,000 conflicts, 95 % CI) | Close passes < 1.5 m | Throughput, per scenario |
+|---|---|---|---|
+| Previous policy | 30 (0.87 [0.61–1.24]) | 190 | 83.0–91.6 % |
+| **EdgeGuard v3.1** | **0 (0 [0–0.11])** | **141** | **90.6–97.3 %** |
+
+Each collision we found on the way was traced to its cause and fixed in both the Python reference and the firmware, then checked again on new seeds: stop points that crept with position noise, a sidestep that led into a second truck, a WAIT lost in a server restart, an emergency stop released while the person still stood in front of the truck ([robustness](robustness.md)). Why it stays safe, hazard by hazard, with the tests that are the evidence: [safety case](safety-case.md).
+
+### How it got here
+
+| | Collisions | Throughput |
 |---|---|---|
-| Collisions, many-to-many site (8 workers, 4 forklifts, 750 conflicts) | 100 | **4 (−96 %)** |
-| Forklift throughput on that site | 61.7 % | **86.0 %** |
-| Collisions in 1,207 one-to-one conflicts | 145 | **1** |
+| v1.0, vibration-only alert (many-to-many site, 750 conflicts) | 100 | 61.7 % |
+| WAIT → GO and STEP ASIDE | 4 | 86.0 % |
+| + learned policy, truck priority, stop points (1,000 episodes, 3,617 conflicts) | 0 | 97.3 % |
 
-**Against a 5 m proximity alarm:**
-
-| | 5 m alarm | EdgeGuard |
-|---|---|---|
-| Detected ≥ 1 s before contact | 76 % | **100 %**, median lead time 2.4 s |
-| False alarm rate | 85 % | **30 %** |
-
-Worker behaviour is modelled, so we report sensitivity: at 85 / 70 / 50 % WAIT compliance, collisions are 12 / 27 / 42 of 1,207 (v1.0: 145).
+*Limits: walkers and drivers follow models (nobody looks out unless stated), and the proximity-alarm settings are typical, not one product's. A board demo and a user study are planned; the CI evidence today is the simulator plus firmware-in-the-loop.*
 
 ---
 

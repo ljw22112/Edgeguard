@@ -12,14 +12,12 @@
 
 **Hardware components**
 
-| Component | Qty | Role |
-|---|---|---|
-| ESP32 development board (ESP32-WROOM DevKit) | 2 | worker tag, forklift module |
-| Qorvo DWM1000 UWB module (or an ESP32 UWB board) | 2+ | positioning, device-to-device ranging |
-| Coin vibration motor + NPN transistor (2N2222) + diode (1N4148) + 1 kΩ resistor | 1 set | the tag's haptic cue |
-| LEDs + 220 Ω resistors | 2 | tag WAIT light, forklift beacon |
-| Small DC motor + driver (L298N or MOSFET module) | 1 | stands in for the forklift drive, so the speed limit is visible |
-| Smartphone (optional) | 1 | a worker tag without any hardware (vibration, screen) |
+- **ESP32 development board (ESP32-WROOM DevKit)**: Qty: 2; Role: worker tag, forklift module
+- **Qorvo DWM1000 UWB module (or an ESP32 UWB board)**: Qty: 2+; Role: positioning, device-to-device ranging
+- **Coin vibration motor + NPN transistor (2N2222) + diode (1N4148) + 1 kΩ resistor**: Qty: 1 set; Role: the tag's haptic cue
+- **LEDs + 220 Ω resistors**: Qty: 2; Role: tag WAIT light, forklift beacon
+- **Small DC motor + driver (L298N or MOSFET module)**: Qty: 1; Role: stands in for the forklift drive, so the speed limit is visible
+- **Smartphone (optional)**: Qty: 1; Role: a worker tag without any hardware (vibration, screen)
 
 **Software apps and online services**
 
@@ -37,13 +35,13 @@
 
 Korea recorded **2,559 forklift accident casualties in 2021–2022** (KOSHA). One workplace injury costs about **USD 116,000** once indirect costs are included (NSC Injury Facts, OSHA 3885). Proximity alarms exist, but they have three weaknesses:
 
-1. **They cry wolf.** A 5 m distance alarm also fires on every forklift that will pass safely. In our simulation, **85 %** of its alerts are false, and workers learn to ignore them.
+1. **Safe or productive, not both.** A distance alarm also fires on every forklift that will pass safely. Set wide (6 m warning / 3 m stop), it prevented every collision in our simulation but cut forklift throughput to **48 %** of nominal; narrowed to 4 m / 2 m to stop the nuisance, it let **49 collisions** through in 3,617 conflicts.
 2. **One buzz says "danger", not "what now".** In our first version, the remaining collisions came from workers who stopped at the buzz and then walked back into the lane before the forklift had passed.
 3. **No server, no safety.** When the network or the server fails, server-based systems go silent exactly when they are needed.
 
 ### Our solution in one sentence
 
-Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift slows only as much as needed.
+Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift keeps its speed as long as it can still stop short of the person, braking on its own for a **stop point** when it cannot. On 1,000 fresh simulated episodes: **0 collisions at 2.0× the throughput of a UWB proximity alarm**, and 0 in 34,644 conflicts under bad network, server restart, low compliance and noisy positioning.
 
 ### How it works
 
@@ -124,14 +122,12 @@ SELECT ?d ?path WHERE { ?d a saref:Device ; egs:role "forklift" ;
 
 ### Protocols: each link uses what fits
 
-| Link | Protocol | Why |
-|---|---|---|
-| Device → CSE | oneM2M **MQTT binding over TLS** (firmware today: Mca over HTTP) | one open connection, no inbound port; broker password and an ACL that lets a device speak only as itself |
-| MEC app ↔ CSE | Mca over **HTTPS**, subscriptions / notifications | the CSE pushes every sample to the app; the CSE certificate is checked against the site CA |
-| Tags behind NAT | `<pollingChannel>` | the tag long-polls; zone alerts reach it without an inbound connection |
-| Zone MN-CSE ↔ IN-CSE | **Mcc** | edge to cloud, announcement of device AEs |
-| Device ↔ device | ESP-NOW + HMAC, UWB ranging | works with no access point and no CSE: the fallback when the network fails |
-| MEC services | ETSI MEC REST (MEC 013, MEC 012) | brought into oneM2M by a MEC-IPE |
+- **Device → CSE**: Protocol: oneM2M **MQTT binding over TLS**, in the firmware too (`M2M_MQTT=1`; device certificate on the mutual-TLS listener); Why: one open connection, no inbound port; broker password and an ACL that lets a device speak only as itself
+- **MEC app ↔ CSE**: Protocol: Mca over **HTTPS**, subscriptions / notifications; Why: the CSE pushes every sample to the app; the CSE certificate is checked against the site CA
+- **Tags behind NAT**: Protocol: `<pollingChannel>`; Why: the tag long-polls; zone alerts reach it without an inbound connection
+- **Zone MN-CSE ↔ IN-CSE**: Protocol: **Mcc**; Why: edge to cloud, announcement of device AEs
+- **Device ↔ device**: Protocol: ESP-NOW + HMAC, UWB ranging; Why: works with no access point and no CSE: the fallback when the network fails
+- **MEC services**: Protocol: ETSI MEC REST (MEC 013, MEC 012); Why: brought into oneM2M by a MEC-IPE
 
 ---
 
@@ -161,10 +157,8 @@ A large warehouse has several zones, each with its own MEC host and MN-CSE. When
 
 **Measured (CI, every commit):**
 
-| Handover | Prepared in | Service interruption | Samples lost |
-|---|---|---|---|
-| Location A → B | ≈ 115–140 ms (in the background) | **3–11 ms** | **0** |
-| Availability: zone B's CSE killed → back to A | ≈ 80 ms after detection | ≈ 306 ms | 3 (the detection window) |
+- **Location A → B**: Prepared in: ≈ 115–140 ms (in the background); Service interruption: **3–11 ms**; Samples lost: **0**
+- **Availability: zone B's CSE killed → back to A**: Prepared in: ≈ 80 ms after detection; Service interruption: ≈ 306 ms; Samples lost: 3 (the detection window)
 
 The subscribed application never re-subscribed. It kept receiving notifications, now sent by zone B's CSE (`/id-mn-b`).
 
@@ -178,10 +172,14 @@ The subscribed application never re-subscribed. It kept receiving notifications,
 
 If a device hears no heartbeat from the MEC app for 2 s, it switches to local decisions: UWB ranging between devices, direct state exchange over ESP-NOW (HMAC-signed), and alert relay to neighbours in coverage holes. It stops only when nothing else is known.
 
-| Condition | Collisions | Forklift throughput |
-|---|---|---|
-| Total network outage (180 encounters that would collide) | **2** (v0.7 hold-then-stop: 180) | 57 % (stop-everything approach: 18 %) |
-| Worker or forklift in a coverage hole | **0 / 0** (was 16 / 19) | — |
+- **Total network outage (180 encounters that would collide)**: Collisions: **2** (v0.7 hold-then-stop: 180); Forklift throughput: 57 % (stop-everything approach: 18 %)
+- **Worker or forklift in a coverage hole**: Collisions: **0 / 0** (was 16 / 19); Forklift throughput: —
+
+Two layers sit on the devices themselves, independent of the network and the MEC app:
+- **Tag GO check:** a WAIT that runs out without a word from the MEC app (for example after a restart) ends only if walking on at the worker's last pace would not meet a truck, judged from the device-to-device state broadcast alone.
+- **Always-on emergency brake** on the forklift module: a person on a collision course within 1.5 s stops the truck, and the truck **stays stopped while that person is in front of it**.
+
+Both run identically in the Python reference and the ESP32 firmware (equivalence tests in CI). Results under exceptional conditions are under Results below.
 
 ---
 
@@ -195,11 +193,9 @@ Worker trajectories are personal data. To learn how people really walk (decelera
 
 In the CI run, Incheon's MEC host fails in the middle of round 3, and the round is still aggregated from the other two sites. Daejeon registers before round 4 and is selected immediately.
 
-| 2 s prediction error (mean over 4 sites) | |
-|---|---|
-| Constant velocity (what the risk engine assumed) | 0.604 m |
-| Each site training alone | 0.521 m |
-| **Federated global model** | **0.486 m** |
+- **Constant velocity (what the risk engine assumed)**: 0.604 m
+- **Each site training alone**: 0.521 m
+- **Federated global model**: **0.486 m**
 
 **Aggregation is not delivery.** Each site's model manager subscribes to the model repository and handles every new version in three steps:
 1. **Canary:** the version is evaluated on the site's own held-out data and must beat the active model.
@@ -230,7 +226,7 @@ See [docs/estimed-mapping.md](https://github.com/ljw22112/Edgeguard/blob/main/do
 
 ## AI safety agent with MCP
 
-A safety manager wants a shift report, not raw resources. Our agent ([`agent/`](https://github.com/ljw22112/Edgeguard/blob/main/agent/)) talks to **four MCP servers**: one oneM2M server per CSE (the IN-CSE and both zone MN-CSEs) and one for ETSI MEC. It runs a multi-step workflow:
+A safety manager wants a shift report, not raw resources. Our agent ([`agent/`](https://github.com/ljw22112/Edgeguard/blob/main/agent)) talks to **four MCP servers**: one oneM2M server per CSE (the IN-CSE and both zone MN-CSEs) and one for ETSI MEC. It runs a multi-step workflow:
 
 1. Read its own state from oneM2M, so only new near misses are processed.
 2. Build the device inventory with SAREF semantic queries on every CSE.
@@ -250,14 +246,16 @@ Sample recommendation from the CI run:
 
 ## Hardware build
 
-| Board | Pin | Connection |
-|---|---|---|
-| Tag | GPIO 25 | 1 kΩ → transistor base; vibration motor on the collector (other end 3.3 V); diode across the motor |
-| Tag | GPIO 2 | 220 Ω → LED → GND (WAIT light) |
-| Forklift | GPIO 27 | motor driver PWM / EN; driver powered from a power bank |
-| Forklift | GPIO 26 | 220 Ω → LED → GND (beacon) |
+- **Tag**: Pin: GPIO 25; Connection: 1 kΩ → transistor base; vibration motor on the collector (other end 3.3 V); diode across the motor
+- **Tag**: Pin: GPIO 2; Connection: 220 Ω → LED → GND (WAIT light)
+- **Forklift**: Pin: GPIO 27; Connection: motor driver PWM / EN; driver powered from a power bank
+- **Forklift**: Pin: GPIO 26; Connection: 220 Ω → LED → GND (beacon)
 
-*Status: the board kit and wiring are ready and the board demo is scheduled before the final; the CI evidence today is firmware-in-the-loop.* The firmware ([`firmware/`](https://github.com/ljw22112/Edgeguard/blob/main/firmware/)) registers the device's own AE at boot and receives alerts as oneM2M notifications. It drives the outputs and writes confirmations to `<device>/status`, which appear on the dashboard as **HW ✓**. **Firmware-in-the-loop:** the same sketches compile unmodified for a PC, and CI runs them against a real CSE on every commit (6 of 6 checks). A phone can act as the tag: open `http://<MEC host>:9090/tag?worker=worker_01`.
+![Worker tag schematic](https://raw.githubusercontent.com/ljw22112/Edgeguard/main/docs/img/schematic_tag.png)
+
+![Forklift module schematic](https://raw.githubusercontent.com/ljw22112/Edgeguard/main/docs/img/schematic_forklift.png)
+
+*Status: the board kit and wiring are ready and the board demo is scheduled before the final; the CI evidence today is firmware-in-the-loop.* The firmware ([`firmware/`](https://github.com/ljw22112/Edgeguard/blob/main/firmware)) registers the device's own AE at boot and receives alerts as oneM2M notifications. It drives the outputs and writes confirmations to `<device>/status`, which appear on the dashboard as **HW ✓**. **Firmware-in-the-loop:** the same sketches compile unmodified for a PC, and CI runs them against a real CSE on every commit (6 of 6 checks). A phone can act as the tag: open `http://<MEC host>:9090/tag?worker=worker_01`.
 
 ![Firmware-in-the-loop and a phone as the worker tag](https://raw.githubusercontent.com/ljw22112/Edgeguard/main/docs/img/sil_phone.png)
 
@@ -265,22 +263,42 @@ Sample recommendation from the CI run:
 
 ## Results (closed-loop simulation)
 
-**Against our own v1.0 (vibration-only alert, same simulator):**
+All results come from a closed-loop simulator of a warehouse floor (8 workers and 4 forklifts per 25 s episode, randomised network delay and loss, UWB noise). The policy was trained and selected on separate seeds; **every number below is on fresh episodes that were never used to train, select or tune it**, with 95 % confidence intervals ([`sim/large_eval.py`](https://github.com/ljw22112/Edgeguard/blob/main/sim/large_eval.py)).
 
-| | v1.0 | EdgeGuard |
-|---|---|---|
-| Collisions, many-to-many site (8 workers, 4 forklifts, 750 conflicts) | 100 | **4 (−96 %)** |
-| Forklift throughput on that site | 61.7 % | **86.0 %** |
-| Collisions in 1,207 one-to-one conflicts | 145 | **1** |
+### Against what warehouses use today (1,000 episodes, 3,617 conflicts, nobody looks out)
 
-**Against a 5 m proximity alarm:**
+![Systems used on sites today vs EdgeGuard](https://raw.githubusercontent.com/ljw22112/Edgeguard/main/docs/img/large_eval.png)
 
-| | 5 m alarm | EdgeGuard |
-|---|---|---|
-| Detected ≥ 1 s before contact | 76 % | **100 %**, median lead time 2.4 s |
-| False alarm rate | 85 % | **30 %** |
+- **No system**: Collisions (per 1,000 conflicts): 2,621 (725); Forklift throughput: 99.9 %; Alarms per episode: 0
+- **Speed zoning 5 km/h**: Collisions (per 1,000 conflicts): 2,088 (577); Forklift throughput: 75.1 %; Alarms per episode: 0
+- **UWB proximity alarm, 6 m / 3 m**: Collisions (per 1,000 conflicts): 0 (< 1.1); Forklift throughput: 48.3 %; Alarms per episode: 37.6
+- **UWB proximity alarm, 4 m / 2 m**: Collisions (per 1,000 conflicts): 49 (13.5); Forklift throughput: 60.3 %; Alarms per episode: 25.7
+- **EdgeGuard**: Collisions (per 1,000 conflicts): **0 (< 1.1)**; Forklift throughput: **97.3 % [96.9–97.7]**; Alarms per episode: **7.0**
 
-Worker behaviour is modelled, so we report sensitivity: at 85 / 70 / 50 % WAIT compliance, collisions are 12 / 27 / 42 of 1,207 (v1.0: 145).
+- **As safe as the wide proximity alarm, at 2.0× its throughput**, with 81 % fewer alarms and half the worker waiting (2.1 s instead of 4.3 s per episode).
+- Against the narrowed alarm sites choose to cut nuisance alarms: **0 collisions instead of 49, and +37 points of throughput**.
+- With an attentive driver (brakes after 1 s for a person in front): EdgeGuard 0 collisions, 96.0 %; narrowed alarm 20 collisions.
+
+The proximity alarm follows commercial UWB systems: slow to walking speed in the warning zone, stop in the danger zone, vibrate the worker's tag ([comparison details](https://github.com/ljw22112/Edgeguard/blob/main/docs/site-compare.md)).
+
+### When things go wrong (8,000 episodes, 34,644 conflicts)
+
+The same fresh episodes under eight conditions: normal, 85 % and 70 % of alerts obeyed, bad network (300–600 ms, up to 40 % loss), the MEC app restarting and losing its state, noisy UWB (0.35–0.6 m), a dense floor (12 workers, 6 forklifts) and attentive drivers.
+
+![Policies under exceptional conditions](https://raw.githubusercontent.com/ljw22112/Edgeguard/main/docs/img/large_eval_robust.png)
+
+- **Previous policy**: Collisions (per 1,000 conflicts, 95 % CI): 30 (0.87 [0.61–1.24]); Close passes < 1.5 m: 190; Throughput, per scenario: 83.0–91.6 %
+- **EdgeGuard v3.1**: Collisions (per 1,000 conflicts, 95 % CI): **0 (0 [0–0.11])**; Close passes < 1.5 m: **141**; Throughput, per scenario: **90.6–97.3 %**
+
+Each collision we found on the way was traced to its cause and fixed in both the Python reference and the firmware, then checked again on new seeds: stop points that crept with position noise, a sidestep that led into a second truck, a WAIT lost in a server restart, an emergency stop released while the person still stood in front of the truck ([robustness](https://github.com/ljw22112/Edgeguard/blob/main/docs/robustness.md)). Why it stays safe, hazard by hazard, with the tests that are the evidence: [safety case](https://github.com/ljw22112/Edgeguard/blob/main/docs/safety-case.md).
+
+### How it got here
+
+- **v1.0, vibration-only alert (many-to-many site, 750 conflicts)**: Collisions: 100; Throughput: 61.7 %
+- **WAIT → GO and STEP ASIDE**: Collisions: 4; Throughput: 86.0 %
+- **+ learned policy, truck priority, stop points (1,000 episodes, 3,617 conflicts)**: Collisions: 0; Throughput: 97.3 %
+
+*Limits: walkers and drivers follow models (nobody looks out unless stated), and the proximity-alarm settings are typical, not one product's. A board demo and a user study are planned; the CI evidence today is the simulator plus firmware-in-the-loop.*
 
 ---
 
@@ -318,6 +336,7 @@ Full Docker stack with Mobius: `cd deploy && docker compose --profile demo up -d
 
 ## Links
 
+- Article on hackster.io: https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309
 - Code: https://github.com/ljw22112/Edgeguard
 - Video (2 min 34 s): https://youtu.be/P2JI5ZG6PIg
 - Demo videos in the repository: `results/edgeguard_final.mp4`, `results/edgeguard_demo_v1.3.mp4`, `results/edgeguard_firmware_in_the_loop.mp4`

@@ -32,6 +32,16 @@
 6. Code: GitHub 저장소 링크 · Video: 2번에서 올린 YouTube 링크
 7. 팀원(김기환) 추가 → **Publish** → 게시된 링크를 README의 Links에 추가
 
+## 3-1. hackster 기사 갱신 (10/31 원고 준비 완료) · 루브릭 4, 7
+
+원고가 v3.1 결과(현장 비교 1,000 에피소드 · 예외 상황 34,644건 충돌 0), 대규모 시험 차트 2장, 회로도 2장, 단말의 GO 확인 · 긴급제동 유지 설명으로 갱신됐습니다. 붙여넣기용 [`submissions/hackster_story.md`](submissions/hackster_story.md)는 `python tools/hackster_story.py`로 만들며, 링크 · 이미지는 GitHub 절대 주소, 표는 목록으로 바뀌어 있습니다.
+
+1. hackster 로그인 → 기사 **Edit**
+2. Story를 `hackster_story.md`의 "## Story"부터 끝까지로 교체(또는 바뀐 절만: 문제 1번 항목, 해결 한 문장, "When the network fails" 끝, Hardware build의 회로도, Results 전체)
+3. **Schematics** 칸에 `docs/img/schematic_tag.png`, `docs/img/schematic_forklift.png` 업로드
+4. **Team**에 김기환 추가(김기환 님 hackster 계정 필요)
+5. **Save / Publish**
+
 ## 4. 공개 포럼 활동 · 루브릭 8
 
 - ~~ACME 버그 2건 이슈 등록~~ 완료 (10/11): [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) (HTTP Content-Type), [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) (MQTT NameError). 초안: [forum/acme-issues.md](forum/acme-issues.md)
