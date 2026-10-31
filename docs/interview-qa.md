@@ -100,4 +100,27 @@ The same code runs on ACME and KETI Mobius.
 The board demo and the user study are next.
 
 **Q16. Why should a site adopt this rather than a proximity alarm?**
-In our simulation baseline, 85 % of the alerts from a 5 m proximity alarm are false, so workers learn to ignore them. EdgeGuard predicts the collision course and tells each person what to do (WAIT, STEP ASIDE, GO), and collisions drop from 100 to 4 at higher forklift throughput (61.7 → 86 %). Because the data are standard oneM2M resources, the site's WMS or dashboards can use them without integration work. [business.md](business.md), [adoption.md](adoption.md).
+Because a proximity alarm makes the site choose. On the same 1,000 fresh simulated episodes (3,617 conflicts), the wide alarm (6 m / 3 m) had 0 collisions but 48.3 % throughput; narrowed to 4 m / 2 m it had 49 collisions. EdgeGuard had 0 at 97.3 %, with 81 % fewer alarms and half the worker waiting. A distance alarm cannot tell a truck that will pass from one that will hit; EdgeGuard tests the collision course and tells each person what to do. Because alerts are standard oneM2M resources, a WMS or dashboard can use them without integration work. [site-compare.md](site-compare.md), [business.md](business.md).
+
+## Safety evidence
+
+**Q17. Zero collisions sounds too good. How do you know?**
+Three things. (1) The test episodes (seeds 21,000+ and 23,000+) were never used to train, select or tune the policy; training, validation and test seeds are separate, and a faster candidate that had 4 collisions on validation was rejected. (2) We report 95 % intervals, not only counts: 0 in 34,644 conflicts means an upper bound of 0.11 per 1,000 conflicts, and the previous policy's interval (0.61–1.24) lies well above it. (3) "Zero" is in simulation with modelled people; we say so on every chart. [large_eval.py](../sim/large_eval.py), [robustness.md](robustness.md).
+
+**Q18. What changed from v3 to v3.1, and why?**
+v3 had 2 collisions in 34,644 conflicts, both after a MEC restart. Traces showed the emergency brake stopped the truck and then released it: a person standing right in front is no longer "closing fast", so the collision-course test went quiet. v3.1 holds the brake while that person is ahead in the truck's path (3 m ahead, 1.3 m aside), and within 1.8 m any closing speed counts. Checked on development and validation seeds first, then on the test seeds: 0 collisions, close passes −24 %, same throughput. Same change in Python and firmware, equivalence tests in CI.
+
+**Q19. What if the network or the MEC app fails?**
+Four layers: the MEC app (standby takeover 0.73 s); stop points that the truck brakes for from its own position; device-to-device state, with the tag checking GO itself when the MEC app is silent; an always-on emergency brake on the forklift module. Under bad network (300–600 ms, up to 40 % loss) and MEC restart scenarios: 0 collisions in 7,492 conflicts. [safety-case.md](safety-case.md).
+
+**Q20. Is the comparison with the proximity alarm fair?**
+Same floor, same episodes, same sensing noise for every system. The alarm follows how commercial UWB systems work (warning zone: slow to walking speed and vibrate; danger zone: stop), with two zone settings sites use. Products differ and sites tune them, so we call these typical settings, not one product. With an attentive driver the picture is the same: EdgeGuard 0 collisions at 96.0 %, narrowed alarm 20. [site-compare.md](site-compare.md).
+
+**Q21. What does the worker experience? Is WAIT annoying?**
+About 7 alarms per episode against 38 for the wide proximity alarm, and 2.1 s of waiting per worker per episode against 4.3 s. WAIT holds only until the truck has passed, then GO; a standing worker in the lane gets STEP ASIDE to a side clear of every truck. A user study with real people is planned; today the behaviour is modelled, including workers who ignore 15 % or 30 % of alerts (still 0 collisions).
+
+**Q22. What does it cost, and when does it pay back?**
+About USD 15,100 up front for 10,000 m², 50 workers, 10 forklifts. Against a proximity alarm a forklift loses 1.38 s per encounter, with EdgeGuard 0.07 s: about KRW 6–18 million a year, payback 1.2–3.5 years on time alone. At a quiet site the time savings roughly cover the subscription, so the case there rests on safety; one prevented injury (about USD 116,000) pays the system 8 times. [business.md](business.md).
+
+**Q23. What would you do with three more months?**
+A board demo with ESP32 tags and modules, a user study (do people follow WAIT / GO, how long they wait), and a three-month site pilot measured with near-miss data. Technically: people running and people hidden from UWB (camera fusion), and the module's own diagnostics and watchdog for a product.
