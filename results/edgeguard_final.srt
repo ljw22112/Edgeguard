@@ -1,56 +1,64 @@
 1
-00:00:00,000 --> 00:00:04,000
-EdgeGuard: stop forklift accidents before they happen, with oneM2M and ETSI MEC.
+00:00:00,000 --> 00:00:07,164
+This is EdgeGuard. It stops forklift accidents before they happen, with oneM2M and ETSI MEC.
 
 2
-00:00:04,000 --> 00:00:10,000
-People and forklifts share aisles; proximity alarms are mostly false and do not say what to do.
+00:00:07,164 --> 00:00:22,751
+Workers and forklifts share the same aisles. In Korea there were over two thousand five hundred forklift casualties in two years. Proximity alarms make sites choose: set wide, trucks lose half their throughput; narrowed, collisions get through.
 
 3
-00:00:10,000 --> 00:00:16,000
-EdgeGuard predicts the collision 1 to 3 seconds ahead and tells each worker WAIT, STEP ASIDE or GO.
+00:00:22,751 --> 00:00:35,813
+EdgeGuard predicts the collision course one to three seconds ahead, on the MEC edge. It tells each worker WAIT, STEP ASIDE, or GO, and the forklift keeps its speed as long as it can still stop short of the person.
 
 4
-00:00:16,000 --> 00:00:23,000
-Each zone has a MEC host with an MN-CSE and the EdgeGuard MEC app; an IN-CSE in the cloud ties them together.
+00:00:35,813 --> 00:00:48,962
+Each warehouse zone has a MEC host, running a oneM2M MN-CSE and our MEC app. Tags and forklift modules register their own AEs. An IN-CSE in the cloud ties the zones together.
 
 5
-00:00:23,000 --> 00:00:25,500
-Live demo.
+00:00:48,962 --> 00:00:51,462
+Here it is, live.
 
 6
-00:00:25,500 --> 00:01:25,500
-Crossing, a worker in the lane, and two forklifts: the tag says WAIT, STEP ASIDE, then GO.
+00:00:51,462 --> 00:01:51,462
+The worker crossing gets WAIT, until the forklift has passed, then GO. A worker standing in the lane is told to step aside. With two forklifts, GO comes only after both have passed. Every position, and every alert, is a oneM2M resource.
 
 7
-00:01:25,500 --> 00:01:28,000
+00:01:51,462 --> 00:01:53,962
 Firmware in the loop.
 
 8
-00:01:28,000 --> 00:01:44,667
-The ESP32 firmware runs unmodified against a real oneM2M CSE; a phone is the worker tag.
+00:01:53,962 --> 00:02:10,629
+The ESP32 firmware runs unmodified against a real oneM2M CSE, and a phone acts as the worker tag. CI checks this on every commit.
 
 9
-00:01:44,667 --> 00:01:47,167
-Mobility via ETSI MEC.
+00:02:10,629 --> 00:02:13,561
+Mobility, through ETSI MEC.
 
 10
-00:01:47,167 --> 00:02:03,667
-A MEC zone event moves the forklift's twin to zone B's MN-CSE: 1.5 to 8 ms interruption, no sample lost; RSRP of both cells cross at the boundary.
+00:02:13,561 --> 00:02:30,061
+The MEC platform sees the forklift enter zone B. Our MEC-IPE writes the event into oneM2M, and the forklift's twin moves to zone B's CSE, with a few milliseconds of interruption, and no sample lost.
 
 11
-00:02:03,667 --> 00:02:13,667
-All four TR-0077 clause 7 gaps run as EdgeGuard features, measured in CI on every commit.
+00:02:30,061 --> 00:02:41,340
+All four ESTIMED gaps run as features: MEC interworking and orchestration, handover, federated learning with model delivery and rollback, and forklift swarm coordination.
 
 12
-00:02:13,667 --> 00:02:21,667
-oneM2M does the work: SDT twins, group fan-out, pollingChannel, access control with TLS, announcement, and an AI agent over MCP.
+00:02:41,340 --> 00:02:51,516
+oneM2M does the work: SDT twins with SAREF, group fan-out, polling channels, access control with TLS, and an AI agent over MCP.
 
 13
-00:02:21,667 --> 00:02:28,667
-In simulation: collisions 100 to 4, throughput 61.7 to 86 percent, and 180 to 2 collisions during a network outage.
+00:02:51,516 --> 00:03:04,201
+If the network or the MEC app fails, protection is layered: stop points the truck brakes for on its own, device-to-device state, a tag that checks GO by itself, and an always-on emergency brake.
 
 14
-00:02:28,667 --> 00:02:33,667
-EdgeGuard. Thank you.
+00:03:04,201 --> 00:03:14,923
+On one thousand fresh simulated episodes, EdgeGuard had zero collisions, like the wide proximity alarm, at twice its throughput, with eighty-one percent fewer alarms.
+
+15
+00:03:14,923 --> 00:03:26,109
+And on eight thousand episodes with a bad network, server restarts, low compliance and noisy positioning: zero collisions in thirty-four thousand conflicts, down from thirty.
+
+16
+00:03:26,109 --> 00:03:31,109
+EdgeGuard. Safe and productive. Thank you.
 

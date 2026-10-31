@@ -105,7 +105,7 @@ Variants compared on development seeds 62,000+ (8 scenarios x 150 episodes; mean
 | GO check when a WAIT runs out | 0 | 15 | 95.1 % | 2.57 s |
 | **v3: ... and on the clear of an orphaned WAIT** | **0** | **15** | **95.0 %** | **2.58 s** |
 
-Checking every GO is as safe but makes workers wait 25 % longer: the MEC app's own GO check already covers the trucks it knows about, and the tag then also holds for trucks merely passing nearby. The variant that only checks WAITs running out had one collision on the validation seeds 11,000+ (the clear after a restart); v3 had none there (8 x 150 episodes, mean throughput 94.7 %, worker time 2.56 s). Raw output: [`results/tag_go_check_dev_val.txt`](../results/tag_go_check_dev_val.txt).
+Checking every GO is as safe but makes workers wait 25 % longer: the MEC app's own GO check already covers the trucks it knows about, and the tag then also holds for trucks merely passing nearby. The variant that only checks WAITs running out had one collision on the validation seeds 11,000+ (the clear after a restart); v3 had none there (8 x 150 episodes, mean throughput 94.7 %, worker time 2.56 s). v2 had no collision on these seeds either, but 26 close passes against v3's 19 (8 against 2 after a MEC restart), at the same throughput: 1,200 episodes are too few to separate them, which is why the large-scale test above uses 8,000. Raw output: [`results/tag_go_check_dev_val.txt`](../results/tag_go_check_dev_val.txt).
 
 ## Policy v3.1: the emergency brake holds while the person is in front
 

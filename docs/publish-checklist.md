@@ -14,7 +14,7 @@
 
 ## 2. 영상 업로드 · 루브릭 5: 완료 (10/11, https://youtu.be/P2JI5ZG6PIg)
 
-- 파일: `results/edgeguard_final.mp4`(2분 34초, 자막 `results/edgeguard_final.srt`)
+- 파일: `results/edgeguard_final.mp4`(10/31 새 편집본 3분 31초, 영어 음성 내레이션 포함, 자막 `results/edgeguard_final.srt`). **YouTube에는 아직 이전 2분 34초본** — 같은 영상을 교체하거나 새로 올리고 기사 · README 링크 갱신
 - 내레이션 녹음(선택): [video-script.md](video-script.md) 대본을 읽어 녹음한 뒤 문서의 ffmpeg 명령으로 합칩니다.
 - YouTube 업로드: 공개 또는 일부 공개, 자막 파일(.srt)도 함께 올립니다.
 - 제목 예시: `EdgeGuard – Forklift collision prediction with oneM2M and ETSI MEC (2026 oneM2M Hackathon)`

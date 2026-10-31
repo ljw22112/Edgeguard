@@ -1,10 +1,12 @@
-"""Final hackathon video (about 2.5 min, 1920x1080, no audio track): title and result cards, the live demo,
-firmware-in-the-loop, and the mobility map playing a real run.
+"""Final hackathon video (about 3 min, 1920x1080): title and result cards, the live demo,
+firmware-in-the-loop, the mobility map playing a real run, and a spoken narration.
 
     python tools/mobility_map.py                 # docs/img/mobility_map.html from results/mobility.json
-    python tools/make_final_video.py             # results/edgeguard_final.mp4 (+ .srt, narration in docs/video-script.md)
+    python tools/make_final_video.py             # results/edgeguard_final.mp4 (+ .srt)
 
-Needs Playwright (Chromium) and ffmpeg.
+Needs Playwright (Chromium) and ffmpeg. Narration: Piper TTS (`pip install piper-tts`) with a voice model in
+$EG_VOICE (an .onnx file, e.g. en_US-lessac-high from rhasspy/piper-voices); without it the video is silent.
+Each card lasts at least as long as its narration; a clip's narration must fit the clip.
 """
 from __future__ import annotations
 
@@ -37,12 +39,12 @@ CARDS = {
 <p class="foot">Team EdgeGuard · Sejong University</p>""",
     "problem": """<p class="k">The problem</p><h2>People and forklifts share the same aisles</h2>
 <div class="row" style="margin-top:30px"><div class="c"><div class="n">2,559</div><div class="l">forklift accident casualties in Korea, 2021–2022 (KOSHA)</div></div>
-<div class="c"><div class="n">85 %</div><div class="l">of alerts from a 5 m proximity alarm are false, so people stop listening (our simulation baseline)</div></div>
-<div class="c"><div class="n">1 buzz</div><div class="l">says "danger" but not what to do, and server-based systems go silent when the network fails</div></div></div>""",
+<div class="c"><div class="n">48 %</div><div class="l">forklift throughput left by a wide UWB proximity alarm (6 m / 3 m)</div></div>
+<div class="c"><div class="n">49</div><div class="l">collisions let through when the alarm is narrowed to 4 m / 2 m (3,617 conflicts, simulation)</div></div></div>""",
     "solution": """<p class="k">EdgeGuard</p><h2>Predict the collision 1–3 s ahead on the MEC edge, and tell each person what to do</h2>
 <div class="row" style="margin-top:30px"><div class="c" style="border-top:10px solid #C62828"><div class="n" style="color:#FBFAF6">WAIT</div><div class="l">a forklift is coming: hold until it has passed</div></div>
 <div class="c" style="border-top:10px solid #B84A06"><div class="n" style="color:#FBFAF6">STEP ASIDE</div><div class="l">you are in its lane: move to the edge</div></div>
-<div class="c" style="border-top:10px solid #2E7D32"><div class="n" style="color:#FBFAF6">GO</div><div class="l">clear: go ahead. The forklift slows only as much as needed</div></div></div>""",
+<div class="c" style="border-top:10px solid #2E7D32"><div class="n" style="color:#FBFAF6">GO</div><div class="l">clear: go ahead. The forklift keeps its speed while it can still stop short of you</div></div></div>""",
     "arch": """<p class="k">Architecture</p><h2 style="font-size:56px">oneM2M + ETSI MEC: one MN-CSE and MEC app per zone, IN-CSE in the cloud</h2>
 <img src="file://{root}/docs/img/architecture_en.png" style="height:660px;width:auto;max-width:1640px;object-fit:contain;align-self:center;border-radius:14px;background:#fff">""",
     "label_demo": """<div style="margin-top:330px"><p class="k">Live demo</p><h2 style="font-size:84px">Devices → oneM2M CSE → MEC app → WAIT / STEP ASIDE / GO</h2></div>""",
@@ -60,35 +62,55 @@ CARDS = {
 <div class="row"><div class="c"><div class="l" style="font-size:34px;color:#FBFAF6"><b>Announcement + Mcc</b></div><div class="l">zone MN-CSEs under one IN-CSE; home records</div></div>
 <div class="c"><div class="l" style="font-size:34px;color:#FBFAF6"><b>AI agent over MCP</b></div><div class="l">shift safety reports from 4 MCP servers, state kept in oneM2M</div></div>
 <div class="c"><div class="l" style="font-size:34px;color:#FBFAF6"><b>Vendor-neutral</b></div><div class="l">same code on ACME and KETI Mobius</div></div></div>""",
-    "results": """<p class="k">Results (closed-loop simulation; baseline: our v1.0 vibration alert)</p><h2 style="font-size:60px">Fewer collisions, more throughput, still safe when the network fails</h2>
-<div class="row" style="margin-top:20px"><div class="c"><div class="n">100 → 4</div><div class="l">collisions, 8 workers · 4 forklifts, 750 conflicts</div></div>
-<div class="c"><div class="n">61.7 → 86.0 %</div><div class="l">forklift throughput, same site</div></div></div>
-<div class="row"><div class="c"><div class="n">180 → 2</div><div class="l">collisions during a total network outage (D2D fallback)</div></div>
-<div class="c"><div class="n">25 ms</div><div class="l">median alert latency on the edge (cloud only: 85 ms)</div></div></div>""",
+    "layers": """<p class="k">When things fail</p><h2 style="font-size:60px">No server, still safe: four layers on the devices and the edge</h2>
+<table><tr><td class="h">MEC app</td><td>collision course, WAIT / GO / STEP ASIDE, speed plans; standby takeover</td><td class="m">0.73 s</td></tr>
+<tr><td class="h">Stop points</td><td>the truck brakes for its point from its own position, every cycle</td><td class="m">no radio delay</td></tr>
+<tr><td class="h">Device-to-device</td><td>signed state broadcast; the tag checks GO itself when the MEC app is silent</td><td class="m">ESP-NOW</td></tr>
+<tr><td class="h">Emergency brake</td><td>a person on a collision course within 1.5 s stops the truck, held while he is in front</td><td class="m">always on</td></tr></table>""",
+    "site": """<p class="k">Results · same 1,000 fresh simulated episodes for every system</p><h2 style="font-size:60px">As safe as the wide proximity alarm, at 2.0× its throughput</h2>
+<img src="file://{root}/docs/img/large_eval.png" style="width:1640px;height:auto;align-self:center;border-radius:14px;background:#fff">
+<p style="font-size:34px">0 collisions in 3,617 conflicts · 97.3 % throughput vs 48.3 % · 81 % fewer alarms</p>""",
+    "robust": """<p class="k">Results · 8,000 episodes on bad days</p><h2 style="font-size:60px">30 collisions to 0 under eight exceptional conditions</h2>
+<img src="file://{root}/docs/img/large_eval_robust.png" style="width:1640px;height:auto;align-self:center;border-radius:14px;background:#fff">
+<p style="font-size:34px">0 collisions in 34,644 conflicts · +4.8 to +9.9 points of throughput</p>""",
     "closing": """<div class="bands"><div style="background:#C62828"></div><div style="background:#B84A06"></div><div style="background:#2E7D32"></div></div>
 <div style="margin-top:250px;display:flex;flex-direction:column;gap:34px;width:1350px"><h1 style="font-size:96px">EdgeGuard</h1>
-<p style="font-size:44px;color:#DCE3EA">Sense → coordinate → learn → deploy → improve,<br>on standard oneM2M resources at the MEC edge</p>
+<p style="font-size:44px;color:#DCE3EA">Safe and productive, not one or the other,<br>on standard oneM2M resources at the MEC edge</p>
 <p style="font-size:36px;color:#F2A900">github.com/ljw22112/Edgeguard</p></div>
 <p class="foot">Team EdgeGuard · Sejong University · thank you</p>""",
 }
 
-# (kind, source, seconds or (start, end, speed), caption for the .srt)
+# (kind, source, seconds or (start, end, speed), narration = caption for the .srt)
 TIMELINE = [
-    ("card", "title", 4, "EdgeGuard: stop forklift accidents before they happen, with oneM2M and ETSI MEC."),
-    ("card", "problem", 6, "People and forklifts share aisles; proximity alarms are mostly false and do not say what to do."),
-    ("card", "solution", 6, "EdgeGuard predicts the collision 1 to 3 seconds ahead and tells each worker WAIT, STEP ASIDE or GO."),
-    ("card", "arch", 7, "Each zone has a MEC host with an MN-CSE and the EdgeGuard MEC app; an IN-CSE in the cloud ties them together."),
-    ("card", "label_demo", 2.5, "Live demo."),
-    ("clip", "results/edgeguard_demo_v1.3.mp4", (8.0, 98.0, 1.5), "Crossing, a worker in the lane, and two forklifts: the tag says WAIT, STEP ASIDE, then GO."),
+    ("card", "title", 4, "This is EdgeGuard. It stops forklift accidents before they happen, with oneM2M and ETSI MEC."),
+    ("card", "problem", 6, "Workers and forklifts share the same aisles. In Korea there were over two thousand five hundred forklift casualties in two years. Proximity alarms make sites choose: set wide, trucks lose half their throughput; narrowed, collisions get through."),
+    ("card", "solution", 6, "EdgeGuard predicts the collision course one to three seconds ahead, on the MEC edge. It tells each worker WAIT, STEP ASIDE, or GO, and the forklift keeps its speed as long as it can still stop short of the person."),
+    ("card", "arch", 7, "Each warehouse zone has a MEC host, running a oneM2M MN-CSE and our MEC app. Tags and forklift modules register their own AEs. An IN-CSE in the cloud ties the zones together."),
+    ("card", "label_demo", 2.5, "Here it is, live."),
+    ("clip", "results/edgeguard_demo_v1.3.mp4", (8.0, 98.0, 1.5), "The worker crossing gets WAIT, until the forklift has passed, then GO. A worker standing in the lane is told to step aside. With two forklifts, GO comes only after both have passed. Every position, and every alert, is a oneM2M resource."),
     ("card", "label_fw", 2.5, "Firmware in the loop."),
-    ("clip", "results/edgeguard_firmware_in_the_loop.mp4", (2.0, 27.0, 1.5), "The ESP32 firmware runs unmodified against a real oneM2M CSE; a phone is the worker tag."),
-    ("card", "label_mob", 2.5, "Mobility via ETSI MEC."),
-    ("mobility", "docs/img/mobility_map.html", 17, "A MEC zone event moves the forklift's twin to zone B's MN-CSE: 1.5 to 8 ms interruption, no sample lost; RSRP of both cells cross at the boundary."),
-    ("card", "clause7", 10, "All four TR-0077 clause 7 gaps run as EdgeGuard features, measured in CI on every commit."),
-    ("card", "onem2m", 8, "oneM2M does the work: SDT twins, group fan-out, pollingChannel, access control with TLS, announcement, and an AI agent over MCP."),
-    ("card", "results", 7, "In simulation: collisions 100 to 4, throughput 61.7 to 86 percent, and 180 to 2 collisions during a network outage."),
-    ("card", "closing", 5, "EdgeGuard. Thank you."),
+    ("clip", "results/edgeguard_firmware_in_the_loop.mp4", (2.0, 27.0, 1.5), "The ESP32 firmware runs unmodified against a real oneM2M CSE, and a phone acts as the worker tag. CI checks this on every commit."),
+    ("card", "label_mob", 2.5, "Mobility, through ETSI MEC."),
+    ("mobility", "docs/img/mobility_map.html", 17, "The MEC platform sees the forklift enter zone B. Our MEC-IPE writes the event into oneM2M, and the forklift's twin moves to zone B's CSE, with a few milliseconds of interruption, and no sample lost."),
+    ("card", "clause7", 10, "All four ESTIMED gaps run as features: MEC interworking and orchestration, handover, federated learning with model delivery and rollback, and forklift swarm coordination."),
+    ("card", "onem2m", 8, "oneM2M does the work: SDT twins with SAREF, group fan-out, polling channels, access control with TLS, and an AI agent over MCP."),
+    ("card", "layers", 8, "If the network or the MEC app fails, protection is layered: stop points the truck brakes for on its own, device-to-device state, a tag that checks GO by itself, and an always-on emergency brake."),
+    ("card", "site", 8, "On one thousand fresh simulated episodes, EdgeGuard had zero collisions, like the wide proximity alarm, at twice its throughput, with eighty-one percent fewer alarms."),
+    ("card", "robust", 8, "And on eight thousand episodes with a bad network, server restarts, low compliance and noisy positioning: zero collisions in thirty-four thousand conflicts, down from thirty."),
+    ("card", "closing", 5, "EdgeGuard. Safe and productive. Thank you."),
 ]
+VOICE = os.environ.get("EG_VOICE", "")
+
+
+def speak(text, wav):
+    """Narration for one segment with Piper; returns its length in seconds, or 0 without a voice."""
+    if not VOICE or not os.path.exists(VOICE):
+        return 0.0
+    subprocess.run([sys.executable, "-m", "piper", "-m", VOICE, "-f", wav, "--sentence-silence", "0.25"],
+                   input=text.encode(), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", wav],
+                         capture_output=True, text=True, check=True).stdout
+    return float(out.strip())
 
 
 def run(cmd):
@@ -106,12 +128,15 @@ def enc(extra_in, vf, out, dur=None):
 def main():
     from playwright.sync_api import sync_playwright
     tmp = tempfile.mkdtemp(prefix="egvideo")
-    parts, srt, t = [], [], 0.0
+    parts, srt, voice, t = [], [], [], 0.0
     with sync_playwright() as p:
         b = p.chromium.launch()
         for i, (kind, src, spec, cap) in enumerate(TIMELINE):
             out = os.path.join(tmp, f"{i:02d}.mp4")
+            wav = os.path.join(tmp, f"{i:02d}.wav")
+            said = speak(cap, wav)
             if kind == "card":
+                spec = max(spec, said + 0.9) if said else spec
                 html = os.path.join(tmp, f"{src}.html")
                 open(html, "w").write(f"<!doctype html><meta charset=utf-8><style>{CSS}</style><body>{CARDS[src].replace('{root}', ROOT)}</body>")
                 png = html.replace(".html", ".png")
@@ -138,14 +163,35 @@ def main():
                 ctx.close()
                 dur = spec - 0.5
                 enc(["-ss", "0.5", "-i", vid], f"scale={W}:{H}:flags=lanczos", out, dur)
+            if said > dur:
+                print(f"warning: narration of segment {i} ({said:.1f} s) is longer than its picture ({dur:.1f} s)")
             parts.append(out)
+            voice.append((wav, said, dur))
             srt.append((t, t + dur, cap))
             t += dur
         b.close()
     lst = os.path.join(tmp, "list.txt")
     open(lst, "w").write("".join(f"file '{x}'\n" for x in parts))
     out = os.path.join(ROOT, "results", "edgeguard_final.mp4")
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", "-movflags", "+faststart", out])
+    silent = os.path.join(tmp, "silent.mp4")
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", silent])
+    if any(said for _, said, _ in voice):
+        pieces = []                                   # each segment's narration, 0.3 s in, padded to its length
+        for k, (wav, said, dur) in enumerate(voice):
+            seg = os.path.join(tmp, f"a{k:02d}.wav")
+            if said:
+                run(["ffmpeg", "-y", "-i", wav, "-af", f"adelay=300|300,apad,atrim=0:{dur:.3f}", "-ar", "22050", "-ac", "1", seg])
+            else:
+                run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono", "-t", f"{dur:.3f}", seg])
+            pieces.append(seg)
+        alst = os.path.join(tmp, "alist.txt")
+        open(alst, "w").write("".join(f"file '{x}'\n" for x in pieces))
+        track = os.path.join(tmp, "voice.wav")
+        run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", alst, "-c", "copy", track])
+        run(["ffmpeg", "-y", "-i", silent, "-i", track, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
+             "-movflags", "+faststart", out])
+    else:
+        run(["ffmpeg", "-y", "-i", silent, "-c", "copy", "-movflags", "+faststart", out])
 
     def ts(x):
         return f"{int(x // 3600):02d}:{int(x % 3600 // 60):02d}:{int(x % 60):02d},{int(round((x % 1) * 1000)):03d}"

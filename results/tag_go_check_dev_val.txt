@@ -62,3 +62,12 @@ mec_restart  coll   0 close   2 thr 0.950 worker 2.51 alarms 7.2
 noisy_uwb    coll   0 close   2 thr 0.944 worker 2.98 alarms 12.1
 dense        coll   0 close   5 thr 0.955 worker 2.97 alarms 15.5
 attentive    coll   0 close   2 thr 0.960 worker 2.21 alarms 7.1
+## validation seeds 11000+: v2 (for comparison, run 2026-10-31)
+normal       coll   0 close   2 thr 0.974 worker 2.11 alarms 7.0
+comply_85    coll   0 close   2 thr 0.950 worker 2.32 alarms 7.3
+comply_70    coll   0 close   1 thr 0.920 worker 2.61 alarms 7.5
+bad_network  coll   0 close   3 thr 0.922 worker 2.74 alarms 8.4
+mec_restart  coll   0 close   8 thr 0.945 worker 2.45 alarms 7.5
+noisy_uwb    coll   0 close   2 thr 0.945 worker 2.96 alarms 12.1
+dense        coll   0 close   6 thr 0.955 worker 2.97 alarms 15.6
+attentive    coll   0 close   2 thr 0.960 worker 2.21 alarms 7.1

@@ -3,6 +3,8 @@
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
 ## Unreleased — 2026-10-31
+- **Final video re-cut with spoken narration** (Piper TTS, built by `tools/make_final_video.py`): new problem card (the proximity-alarm trade-off), failure layers, and the two large-scale result charts; 3 min 31 s with captions.
+- v2 on validation seeds 11,000+ for comparison: 0 collisions, 26 close passes (v3: 0, 19).
 - **Final presentation**: 15-slide English deck (Slides artifact) with speaker notes, exported as [docs/final-presentation.md](docs/final-presentation.md) (~12 min); Q&A extended with safety-evidence questions Q17–Q23 and Q16 updated to the 1,000-episode comparison.
 - **Business case refreshed** against UWB proximity alarms (forklift time lost per encounter 1.38 / 1.06 s vs 0.07 s, from the 1,000-episode test): KRW 6.1–18.3 million a year for the example site, payback 1.2–3.5 years on time alone; subscription netted honestly.
 - **hackster article refreshed** with the large-scale results (site comparison, exceptional conditions, safety case), schematics and the device-side GO check / brake hold; `tools/hackster_story.py` makes the paste-ready version (absolute links, tables as lists).

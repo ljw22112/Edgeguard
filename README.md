@@ -23,7 +23,7 @@ Same 1,000 fresh simulated episodes for every system (8 workers, 4 forklifts, 3,
 | Collisions under bad network, MEC restart, 70-85 % compliance, noisy UWB, dense floor (34,644 conflicts) | — | — | **0** (previous policy 30) |
 
 > The figures come from simulation. Device behaviour is tested on every commit by running **the board firmware unmodified on a PC** against a real oneM2M CSE (CI, 6/6 checks), and a phone serves as the worker tag ([hardware demo](docs/hardware-demo.md)).
-> **Article: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **Final video: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2 min 34 s) · Demo videos: **`results/edgeguard_final.mp4`** (final, 2 min 34 s, captions; [storyboard](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
+> **Article: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **Final video: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2 min 34 s, earlier cut) · Demo videos: **`results/edgeguard_final.mp4`** (final, 3 min 31 s, spoken narration and captions, with the large-scale results; [storyboard](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
 
 ![Live demo: worker tag on WAIT, oneM2M resource panel](docs/img/demo_wait.png)
 

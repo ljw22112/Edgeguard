@@ -338,7 +338,7 @@ Full Docker stack with Mobius: `cd deploy && docker compose --profile demo up -d
 
 - Article on hackster.io: https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309
 - Code: https://github.com/ljw22112/Edgeguard
-- Video (2 min 34 s): https://youtu.be/P2JI5ZG6PIg
+- Video: https://youtu.be/P2JI5ZG6PIg · narrated 3 min 31 s cut with the large-scale results: `results/edgeguard_final.mp4`
 - Demo videos in the repository: `results/edgeguard_final.mp4`, `results/edgeguard_demo_v1.3.mp4`, `results/edgeguard_firmware_in_the_loop.mp4`
 - oneM2M: https://www.onem2m.org · [oneM2M specifications](https://www.onem2m.org/technical/published-specifications) (TS-0001 architecture, TS-0004 protocols, TS-0023 SDT)
 - ACME CSE: https://github.com/ankraft/ACME-oneM2M-CSE · KETI Mobius: https://github.com/IoTKETI/Mobius

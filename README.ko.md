@@ -23,7 +23,7 @@
 | 통신 불량 · MEC 재시작 · 준수율 70~85 % · 측위 오차 · 밀집에서 충돌 (충돌 상황 34,644건) | — | — | **0건** (이전 정책 30건) |
 
 > 수치는 시뮬레이션 결과입니다. 단말 동작은 **보드용 펌웨어를 그대로 PC에서 돌려** 실제 oneM2M CSE와 매 커밋 시험하고(CI 6/6), 휴대폰을 작업자 태그로 씁니다([실물 시연](docs/ko/hardware-demo.md)).
-> **기사: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **최종 영상: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2분 34초) · 데모 영상: **`results/edgeguard_final.mp4`** (최종, 2분 34초, 자막 · [스토리보드](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (라이브 데모 3장면, 약 1분 50초) · `results/edgeguard_firmware_in_the_loop.mp4` (펌웨어 + 휴대폰 태그, 약 30초).
+> **기사: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **최종 영상: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2분 34초, 이전 편집본) · 데모 영상: **`results/edgeguard_final.mp4`**(최종, 3분 31초, 음성 내레이션 · 자막, 대규모 시험 결과 포함 · [스토리보드](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (라이브 데모 3장면, 약 1분 50초) · `results/edgeguard_firmware_in_the_loop.mp4` (펌웨어 + 휴대폰 태그, 약 30초).
 
 ![라이브 데모: 작업자 태그 WAIT, oneM2M 리소스 패널](docs/img/demo_wait.png)
 
