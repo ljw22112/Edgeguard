@@ -42,6 +42,13 @@
 4. **Team**에 김기환 추가(김기환 님 hackster 계정 필요)
 5. **Save / Publish**
 
+## 제출 점검 (10/31)
+
+- 저장소 공개, MIT 라이선스 + 제3자 고지, About 설명 · 토픽 설정
+- README · docs의 상대 링크 깨짐 0개, 커밋된 파일에 키 · 토큰 · 개인키 없음(패턴 검사)
+- CI(test, stack) 통과, 심사위원 사이트(GitHub Pages) 응답 200
+- 남은 수동 작업: hackster 기사 갱신 · 팀원 추가(3-1), 새 영상 YouTube 업로드(2)
+
 ## 4. 공개 포럼 활동 · 루브릭 8
 
 - ~~ACME 버그 2건 이슈 등록~~ 완료 (10/11): [#199](https://github.com/ankraft/ACME-oneM2M-CSE/issues/199) (HTTP Content-Type), [#200](https://github.com/ankraft/ACME-oneM2M-CSE/issues/200) (MQTT NameError). 초안: [forum/acme-issues.md](forum/acme-issues.md)
