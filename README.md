@@ -13,12 +13,14 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 ## At a glance
 
-| | v1.0 (vibration alert) | **Now (v1.5)** |
-|---|---|---|
-| Collisions, many-to-many site (8 workers · 4 forklifts, 750 conflict pairs) | 100 | **4 (−96 %)** |
-| Forklift throughput (many-to-many) | 61.7 % | **86.0 %** |
-| Collisions, one-to-one encounters (1,207 conflicts) | 145 | **1** |
-| Collisions inside coverage holes (worker / forklift, 180 runs) | 16 / 19 | **0 / 0** |
+Same 1,000 fresh simulated episodes for every system (8 workers, 4 forklifts, 3,617 conflicts, nobody looks out; 95 % intervals in [Key results](#key-results)):
+
+| | UWB proximity alarm 6 m / 3 m | UWB proximity alarm 4 m / 2 m | **EdgeGuard (policy v3.1)** |
+|---|---|---|---|
+| Collisions | 0 | 49 | **0** |
+| Forklift throughput | 48.3 % | 60.3 % | **97.3 % (2.0×)** |
+| Alarms per episode | 37.6 | 25.7 | **7.0** |
+| Collisions under bad network, MEC restart, 70-85 % compliance, noisy UWB, dense floor (34,644 conflicts) | — | — | **0** (previous policy 30) |
 
 > The figures come from simulation. Device behaviour is tested on every commit by running **the board firmware unmodified on a PC** against a real oneM2M CSE (CI, 6/6 checks), and a phone serves as the worker tag ([hardware demo](docs/hardware-demo.md)).
 > **Article: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **Final video: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2 min 34 s) · Demo videos: **`results/edgeguard_final.mp4`** (final, 2 min 34 s, captions; [storyboard](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
@@ -115,7 +117,7 @@ As safe as the wide proximity alarm with **2.0 x the throughput**, 81 % fewer al
 
 The soak test in CI (burst of 2,000 notifications, camera churn, 10 s link outage, CSE state loss) found that after a CSE lost its state, the MEC app never sent another alert. Now: alerts back in **2.1 s**, device data back in 2.1 s (was 11.1 s), slowest `/health` 112 ms (was 358 ms), 14/14 checks (was 10/14).
 
-### Safety
+### Earlier milestones: detection and false alarms (v1.x, earlier simulator)
 
 | Metric | Result | Baseline |
 |---|---|---|
@@ -125,7 +127,7 @@ The soak test in CI (burst of 2,000 notifications, camera churn, 10 s link outag
 | Blind corners (site map) | collisions 17 → **11** of 80 | no map |
 | Worker WAIT compliance 85 / 70 / 50 % | collisions 12 / 27 / 42 of 1,207 | v1.0: 145 |
 
-### Productivity
+### Earlier milestones: productivity (v1.x, before truck priority and stop points; now 97.3 %, above)
 
 | Metric | Result | Baseline |
 |---|---|---|
@@ -149,7 +151,7 @@ The soak test in CI (burst of 2,000 notifications, camera churn, 10 s link outag
 |---|---|
 | Market | Global forklift collision avoidance systems: USD 1.18 billion (2024) → USD 5.11 billion (2034), CAGR 10.9 % |
 | Deployment cost (10,000 m² warehouse · 50 workers · 10 forklifts) | about USD 15,100 (KRW 21 million) up front (low-cost ESP32 + UWB devices, two edge servers for HA) |
-| Payback | 1.3–4 years from forklift time savings alone; immediate if one injury (about USD 116,000) is prevented |
+| Payback | 1.2–3.5 years from forklift time saved against a UWB proximity alarm (1.38 s vs 0.07 s lost per encounter); immediate if one injury (about USD 116,000) is prevented |
 | Business model | hardware kit + subscription software (KRW 30,000 ≈ USD 21 per forklift and KRW 5,000 ≈ USD 3.6 per worker per month) + MEC partnerships with mobile network operators |
 
 Details: [Cost, market and business model](docs/business.md)

@@ -3,6 +3,7 @@
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
 ## Unreleased — 2026-10-31
+- **Business case refreshed** against UWB proximity alarms (forklift time lost per encounter 1.38 / 1.06 s vs 0.07 s, from the 1,000-episode test): KRW 6.1–18.3 million a year for the example site, payback 1.2–3.5 years on time alone; subscription netted honestly.
 - **hackster article refreshed** with the large-scale results (site comparison, exceptional conditions, safety case), schematics and the device-side GO check / brake hold; `tools/hackster_story.py` makes the paste-ready version (absolute links, tables as lists).
 - **Policy v3.1: the emergency brake holds while the person is in front** ([docs](docs/robustness.md#policy-v31-the-emergency-brake-holds-while-the-person-is-in-front)): after an emergency stop the truck stays at 0 while that person is ahead in its path (`AEB_LATCH`, 3 m ahead / 1.3 m aside), and within 1.8 m any closing speed is a collision course (`AEB_NEAR_M`); Python + firmware, equivalence tests. Large-scale test (8,000 fresh episodes, 34,644 conflicts): **0 collisions** (95 % upper bound 0.11 per 1,000; v3 2, v2 5, previous 30), close passes 238 -> 141 vs v2, same throughput. Site comparison: 0 collisions, 97.3 % [96.9-97.7].
 
