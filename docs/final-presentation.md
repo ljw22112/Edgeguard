@@ -1,6 +1,6 @@
 # Final presentation: script
 
-[← README](../README.md) · deck: Slides artifact *EdgeGuard Final Presentation* (download as PPTX / PDF from the deck) · Q&A: [interview-qa.md](interview-qa.md)
+[← README](../README.md) · deck: Slides artifact *EdgeGuard Final Presentation* (download as PPTX / PDF from the deck) · Q&A: [interview-qa.md](interview-qa.md) · rehearsal pack (Korean): [ko/presentation-rehearsal.md](ko/presentation-rehearsal.md)
 
 Speaker notes of the 15 slides, about 11 minutes at 140 words per minute. Numbers match `results/large_eval.json`.
 Total: 1651 words, about 12 minutes.

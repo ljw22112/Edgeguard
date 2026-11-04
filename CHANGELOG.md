@@ -2,7 +2,10 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
-## Unreleased — 2026-10-31
+## Unreleased — 2026-11-04
+- **Rehearsal pack** ([docs/ko/presentation-rehearsal.md](docs/ko/presentation-rehearsal.md)): per-slide English script with Korean meaning, numbers to memorise, pronunciation, speaker split, 12 / 8–9 / 5-minute versions, 30-second Q&A answers.
+
+## 2026-10-31
 - **Final video re-cut with spoken narration** (Piper TTS, built by `tools/make_final_video.py`): new problem card (the proximity-alarm trade-off), failure layers, and the two large-scale result charts; 3 min 31 s with captions.
 - v2 on validation seeds 11,000+ for comparison: 0 collisions, 26 close passes (v3: 0, 19).
 - **Final presentation**: 15-slide English deck (Slides artifact) with speaker notes, exported as [docs/final-presentation.md](docs/final-presentation.md) (~12 min); Q&A extended with safety-evidence questions Q17–Q23 and Q16 updated to the 1,000-episode comparison.
