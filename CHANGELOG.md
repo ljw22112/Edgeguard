@@ -2,7 +2,8 @@
 
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
-## Unreleased — 2026-11-04
+## Unreleased — 2026-11-05
+- **TR-0086 developer guide mapping** ([docs/tr0086-mapping.md](docs/tr0086-mapping.md)): option C per zone, steps 5.2–5.6 and Annex A → EdgeGuard, with CI evidence; Q&A Q24; README and MEC sandbox notes no longer say TR-0086 is unpublished.
 - **Rehearsal pack** ([docs/ko/presentation-rehearsal.md](docs/ko/presentation-rehearsal.md)): per-slide English script with Korean meaning, numbers to memorise, pronunciation, speaker split, 12 / 8–9 / 5-minute versions, 30-second Q&A answers.
 
 ## 2026-10-31

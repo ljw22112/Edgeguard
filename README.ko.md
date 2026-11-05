@@ -229,6 +229,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [연합학습](docs/ko/federated-learning.md) | TR-0084 역할을 oneM2M 리소스로, 참여자 선택 · 이탈 · 늦은 참여, 결과 |
 | [AI 안전 에이전트](docs/ko/ai-agent.md) | MCP 서버(CSE별 oneM2M, ETSI MEC), 교대 리포트 워크플로, 라우팅, 상태 저장 |
 | [ESTIMED / TR-0077 매핑](docs/ko/estimed-mapping.md) | 배포 연속체(옵션 C), 7.1~7.4절 → EdgeGuard 기능 · 데모, 대체물 |
+| [TR-0086 개발자 가이드 대응표](docs/ko/tr0086-mapping.md) | 배치 옵션 C, 5.2~5.6단계와 부록 A 기본 요소 → EdgeGuard 구현 위치, CI 확인 |
 | [MEC 플랫폼 API](docs/ko/mec-platform.md) | MEC 011 Mp1, MEC 021 AMS 핸드오버 트리거, MEC 013 영역 · 거리 구독 |
 | [MEC 모빌리티](docs/ko/mobility.md) | 이벤트 기반 양방향 MEC-IPE, MEC SDT 클래스, 네트워크 트리거 핸드오버, 모빌리티 지도 |
 | [앱 오케스트레이션](docs/ko/orchestration.md) | 호스트 등록, 배포 의도, 수명주기, 프로비저닝, 재배치 |
@@ -297,7 +298,7 @@ results/     평가 결과 (JSON · 그림) · devices/ mec_mock/ scenarios/ mod
 
 **시스템**
 - 경로 공유는 지게차 관제(WMS) · 운전자 태블릿 연동이 필요한 선택 기능입니다.
-- UWB 실측 오차 · 펌웨어 타이밍은 시뮬레이션과 민감도 시험으로 대신했습니다. 공식 MEC-IPE(TR-0086)는 공개 전이라 `tools/mec_ipe.py`와 `edgeguard/mobility.py`가 같은 역할을 합니다. MEC 구역 이벤트 · RNIS 보고 · 호스트 수명주기 API는 `mec_mock`과 시뮬레이션 호스트가 제공합니다.
+- UWB 실측 오차 · 펌웨어 타이밍은 시뮬레이션과 민감도 시험으로 대신했습니다. MEC-IPE(`tools/mec_ipe.py`, `edgeguard/mobility.py`)는 TR-0086 개발자 가이드 공개(2026년 10월 말) 전에 직접 만들었고, 같은 옵션 C 구성을 따릅니다([TR-0086 대응표](docs/ko/tr0086-mapping.md)). 로컬 MEC Sandbox(STF_685)는 설치하지 않았습니다. MEC 구역 이벤트 · RNIS 보고 · 호스트 수명주기 API는 `mec_mock`과 시뮬레이션 호스트가 제공합니다.
 - 규모 시험은 2코어 PC 한 대에서 부하 생성기까지 함께 돌린 값이라 PC 성능에 따라 달라집니다. 클라우드 경로는 지연 주입으로만 비교했습니다.
 - D2D 키는 사이트 공용 사전 공유 키입니다(장치별 키 · 자동 교체 없음).
 - 이중화는 같은 CSE를 쓰는 MEC 앱 2개까지이며, CSE 자체 장애는 단말 로컬 규칙 · D2D가 맡습니다.

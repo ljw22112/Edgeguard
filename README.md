@@ -229,6 +229,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [Federated learning](docs/federated-learning.md) | TR-0084 roles as oneM2M resources, selection, dropout, late join, results |
 | [AI safety agent](docs/ai-agent.md) | MCP servers (oneM2M per CSE, ETSI MEC), shift report workflow, routing, persistent state |
 | [ESTIMED / TR-0077 mapping](docs/estimed-mapping.md) | deployment continuum (option C), clause 7.1–7.4 → EdgeGuard features and demos, stand-ins |
+| [TR-0086 developer guide mapping](docs/tr0086-mapping.md) | deployment option C, steps 5.2–5.6 and Annex A building blocks → where EdgeGuard does each, checked in CI |
 | [MEC platform APIs](docs/mec-platform.md) | MEC 011 Mp1, MEC 021 AMS handover trigger, MEC 013 area / distance subscriptions |
 | [Mobility via MEC](docs/mobility.md) | event-driven bidirectional MEC-IPE, MEC SDT classes, network-triggered handover, mobility map |
 | [App orchestration](docs/orchestration.md) | host registration, deployment intents, lifecycle, provisioning, re-placement |
@@ -296,7 +297,7 @@ The firmware is compiled unmodified for a PC and exchanges real messages with a 
 
 **System**
 - Route sharing is an optional feature that needs a forklift fleet system (WMS) or driver tablet integration.
-- Real UWB error and firmware timing were replaced by simulation and sensitivity tests. The official MEC-IPE (TR-0086) is not yet public, so `tools/mec_ipe.py` and `edgeguard/mobility.py` play that role. MEC zone events, RNIS reports and the host lifecycle API come from `mec_mock` and simulated hosts.
+- Real UWB error and firmware timing were replaced by simulation and sensitivity tests. We built our own MEC-IPE (`tools/mec_ipe.py`, `edgeguard/mobility.py`) before the TR-0086 developer guide was released (late October 2026); it follows the same option C layout ([TR-0086 mapping](docs/tr0086-mapping.md)). We did not install the local MEC Sandbox (STF_685). MEC zone events, RNIS reports and the host lifecycle API come from `mec_mock` and simulated hosts.
 - Scale tests ran on a single 2-core PC that also ran the load generator, so results vary with hardware. The cloud path was compared only by injecting latency.
 - The D2D key is a site-wide pre-shared key (no per-device keys, no automatic rotation).
 - HA covers up to two MEC apps sharing one CSE; a CSE failure is handled by the devices' local rules and D2D.

@@ -124,3 +124,6 @@ About USD 15,100 up front for 10,000 m², 50 workers, 10 forklifts. Against a pr
 
 **Q23. What would you do with three more months?**
 A board demo with ESP32 tags and modules, a user study (do people follow WAIT / GO, how long they wait), and a three-month site pilot measured with near-miss data. Technically: people running and people hidden from UWB (camera fusion), and the module's own diagnostics and watchdog for a product.
+
+**Q24. Which TR-0086 deployment option did you choose, and why?**
+Option C in each zone: the MN-CSE runs as a MEC app on the same MEC host as our MEC app and the MEC-IPE, with an IN-CSE in the cloud. A collision warning has a 1-3 s budget, so the CSE, the decision and the MEC data sit together: 25 ms median alert latency instead of 85 ms cloud-only, trajectories stay in the zone, and a zone keeps working if the cloud link fails. We also cover the guide's optional steps, 5.5 handover (triggered by MEC zone events, RNIS signal strength or AMS) and 5.6 location (MEC 013 plus the device's own UWB position). We used our own ACME MN-CSEs rather than the local MEC Sandbox. [tr0086-mapping.md](tr0086-mapping.md).

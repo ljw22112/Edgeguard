@@ -24,7 +24,7 @@ EdgeGuard asks a different question: not how close, but will they meet. The test
 
 ## 5. A MEC host per zone  (107 words, ~46 s)
 
-Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register their own application entities on that CSE. The EdgeGuard MEC app runs next to it as a container: it subscribes to positions, decides, and writes alerts back as oneM2M resources, which the CSE pushes to the tags and forklifts. A MEC interworking proxy brings ETSI MEC location and radio information into the same CSE. In the cloud, an IN-CSE holds home records for devices moving between zones, runs federated learning across sites, and hosts the AI safety agent. In ESTIMED terms this is deployment option C.
+Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register their own application entities on that CSE. The EdgeGuard MEC app runs next to it as a container: it subscribes to positions, decides, and writes alerts back as oneM2M resources, which the CSE pushes to the tags and forklifts. A MEC interworking proxy brings ETSI MEC location and radio information into the same CSE. In the cloud, an IN-CSE holds home records for devices moving between zones, runs federated learning across sites, and hosts the AI safety agent. In the TR-0086 developer guide this is deployment option C, and we also implemented the guide's optional steps: handover between MEC zones and location-aware devices.
 
 ## 6. The CSE does the work our own server would do  (144 words, ~62 s)
 

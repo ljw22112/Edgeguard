@@ -76,7 +76,7 @@ docker compose run --rm sandbox-check                                           
 - **위치 출처 = CSE (기본값)**: `mec_services.location_source: cse`. MEC 앱이 `<ipe.root>/location/*`, `<ipe.root>/rnis/*`
   컨테이너를 주기적으로 탐색(`fu=1&ty=3`)해 구독하고, 알림의 내용(MEC 013 UserInfo / MEC 012 cellInfo)을 그대로 씁니다.
   `direct`(API 직접 호출)는 비교·탐색용 옵션으로 남겼습니다. 앱 등록(MEC 011)은 하지 않습니다.
-- **MEC-IPE 대역** `tools/mec_ipe.py`: TR-0086이 공개 전이라, MEC API를 읽어 CSE에 쓰는 역할을 같은 형식으로 대신합니다.
+- **MEC-IPE 대역** `tools/mec_ipe.py`: TR-0086 개발자 가이드 공개 전에 만들었고, TR-0086 옵션 C의 MEC-IPE 역할(MEC API를 읽어 CSE에 씀)을 합니다([TR-0086 대응표](tr0086-mapping.md)).
   리소스 구조는 설정으로 바꿀 수 있어 실제 IPE가 공개되면 경로만 맞추면 됩니다.
 - **샌드박스 시나리오** `scenarios/edgeguard-warehouse.yaml` (`tools/sandbox_scenario.py`): 40×24 m 창고, 사설 5G 소형셀 2개, MEC 호스트 1개,
   지게차 2대·작업자 4명이 GeoJSON 경로를 일정 속도로 오가며 주기적으로 마주칩니다. AdvantEDGE 1.8.0 데이터 모델 스키마 검증 통과.

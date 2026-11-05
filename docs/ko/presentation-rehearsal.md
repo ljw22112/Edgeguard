@@ -80,9 +80,9 @@
 
 ### 5. 구역마다 MEC 호스트 · 약 45초 · jw
 
-> Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register their own application entities on that CSE. The EdgeGuard MEC app runs next to it as a container: it subscribes to positions, decides, and writes alerts back as oneM2M resources, which the CSE pushes to the tags and forklifts. A MEC interworking proxy brings ETSI MEC location and radio information into the same CSE. In the cloud, an IN-CSE holds home records for devices moving between zones, runs federated learning across sites, and hosts the AI safety agent. In ESTIMED terms this is deployment option C.
+> Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register their own application entities on that CSE. The EdgeGuard MEC app runs next to it as a container: it subscribes to positions, decides, and writes alerts back as oneM2M resources, which the CSE pushes to the tags and forklifts. A MEC interworking proxy brings ETSI MEC location and radio information into the same CSE. In the cloud, an IN-CSE holds home records for devices moving between zones, runs federated learning across sites, and hosts the AI safety agent. In the TR-0086 developer guide this is deployment option C, and we also implemented the guide's optional steps: handover between MEC zones and location-aware devices.
 
-**뜻:** 구역마다 MEC 호스트와 MN-CSE가 있고, 태그와 지게차 모듈이 각자 AE를 등록합니다. MEC 앱은 옆에서 컨테이너로 돌며 위치를 구독하고 판단해 경보를 oneM2M 리소스로 씁니다. MEC-IPE가 MEC 위치 · 무선 정보를 같은 CSE로 가져옵니다. 클라우드 IN-CSE는 구역 이동 기록, 연합학습, AI 에이전트를 맡습니다. ESTIMED 배치 옵션 C입니다.
+**뜻:** 구역마다 MEC 호스트와 MN-CSE가 있고, 태그와 지게차 모듈이 각자 AE를 등록합니다. MEC 앱은 옆에서 컨테이너로 돌며 위치를 구독하고 판단해 경보를 oneM2M 리소스로 씁니다. MEC-IPE가 MEC 위치 · 무선 정보를 같은 CSE로 가져옵니다. 클라우드 IN-CSE는 구역 이동 기록, 연합학습, AI 에이전트를 맡습니다. TR-0086 개발자 가이드의 배치 옵션 C이고, 가이드의 선택 과제(구역 간 핸드오버, 위치 인식 단말)도 구현했습니다.
 
 **화면:** 그림에서 구역 → MEC 앱 → IN-CSE 순서로 손으로 짚기 · **넘기는 말:** "Why oneM2M?"
 
@@ -213,6 +213,7 @@
 | What changed in v3.1? | "Our last two collisions came after an emergency stop released while the person still stood in front. The brake now holds while he is in the truck's path." | 긴급 정지 후 사람이 앞에 있는 동안 유지 |
 | Will workers obey WAIT? | "We modelled workers who ignore fifteen and thirty percent of alerts: still zero collisions. WAIT lasts only until the truck has passed, and alarms are eighty-one percent fewer, so less fatigue." | 15 · 30 % 무시해도 0, 경보 81 % 감소 |
 | How much, and payback? | "About fifteen thousand dollars for a ten-thousand-square-metre site. One to three and a half years on forklift time alone; one prevented injury pays for it eight times." | 약 1.5만 달러, 1~3.5년, 부상 1건이면 8배 |
+| Which TR-0086 option, and why? | "Option C in each zone: the CSE runs on the same MEC host as our app, so alerts take twenty-five milliseconds and data stays in the zone. We also did the guide's optional handover and location steps." | 구역마다 옵션 C, 지연 25 ms · 데이터 현장 유지, 가이드의 선택 과제 5.5 · 5.6도 구현 |
 | Privacy? | "Trajectories stay in the zone's edge CSE. Only alerts and near-miss events leave the site, and federated learning moves weights, not data." | 궤적은 엣지에, 경보 · 아차사고만 외부로, 연합학습은 가중치만 |
 
 ## 리허설 순서

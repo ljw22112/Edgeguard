@@ -76,7 +76,7 @@ Changes made accordingly:
 - **Location source = CSE (default)**: `mec_services.location_source: cse`. The MEC app periodically discovers (`fu=1&ty=3`) and subscribes to the
   `<ipe.root>/location/*` and `<ipe.root>/rnis/*` containers, and uses the notification content (MEC 013 UserInfo / MEC 012 cellInfo) as is.
   `direct` (calling the API directly) is kept as an option for comparison and exploration. No app registration (MEC 011) is performed.
-- **MEC-IPE stand-in** `tools/mec_ipe.py`: since TR-0086 is not yet published, it fills the same role — reading the MEC APIs and writing to the CSE — in the same format.
+- **MEC-IPE stand-in** `tools/mec_ipe.py`: written before the TR-0086 developer guide was released; it fills the MEC-IPE role of TR-0086 option C — reading the MEC APIs and writing to the CSE ([TR-0086 mapping](tr0086-mapping.md)).
   The resource structure is configurable, so once the real IPE is published only the paths need to be matched.
 - **Sandbox scenario** `scenarios/edgeguard-warehouse.yaml` (`tools/sandbox_scenario.py`): a 40×24 m warehouse, 2 private 5G small cells, 1 MEC host,
   2 forklifts and 4 workers moving along GeoJSON paths at constant speed and meeting periodically. Passes AdvantEDGE 1.8.0 data model schema validation.
