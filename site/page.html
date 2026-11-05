@@ -5,21 +5,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
+/* Hallmark · checked: 2026-11-05 · genre: modern-minimal (inferred)
+ * floor: 0 FAIL · fixed: 9 (7a, 19, 20, 34, 38iii, 48, 54, 63, 67) · structural: 1 printed (58)
+ * built: the project · redesign: polish · v2.0.0 */
+/* Hallmark · dismissed 58 · the judge page is the evidence index the rubric asks for, every section is read in turn */
+/* Hallmark · dismissed F7 · the floor, stepper, boxes and table wells are one surface family on purpose, a plain warehouse palette */
 /* Layout: a warehouse floor plan. Hazard-tape rules divide sections; the hero is a live floor with the oneM2M event log beside it. */
 :root{
   --bg:#e8ebe8; --surface:#f6f7f5; --ink:#15181b; --muted:#565d63; --line:#c9cfcb;
   --tape:#e2ad00; --tape-ink:#15181b; --stop:#cc3426; --go:#1b8248; --wait:#d97a00; --zone:#2f6f9f;
+  --on-go:#fdfdfc; --on-wait:#15181b; --on-stop:#fdfdfc; --code-bg:#15181b; --code-ink:#e8ebe8;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"IBM Plex Sans","IBM Plex Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111315; --surface:#1a1d20; --ink:#e6e9e5; --muted:#9aa29f; --line:#2e3337;
-  --tape:#f0c02c; --tape-ink:#111315; --stop:#ef5a4b; --go:#3cb672; --wait:#f29a2e; --zone:#5ea3d6; color-scheme:dark}}
+  --tape:#f0c02c; --tape-ink:#111315; --stop:#ef5a4b; --go:#3cb672; --wait:#f29a2e; --zone:#5ea3d6;
+  --on-go:#111315; --on-wait:#111315; --on-stop:#111315; --code-bg:#0b0c0e; --code-ink:#e6e9e5; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111315; --surface:#1a1d20; --ink:#e6e9e5; --muted:#9aa29f; --line:#2e3337;
-  --tape:#f0c02c; --tape-ink:#111315; --stop:#ef5a4b; --go:#3cb672; --wait:#f29a2e; --zone:#5ea3d6; color-scheme:dark}
+  --tape:#f0c02c; --tape-ink:#111315; --stop:#ef5a4b; --go:#3cb672; --wait:#f29a2e; --zone:#5ea3d6;
+  --on-go:#111315; --on-wait:#111315; --on-stop:#111315; --code-bg:#0b0c0e; --code-ink:#e6e9e5; color-scheme:dark}
 *{box-sizing:border-box}
+html,body{overflow-x:clip}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
@@ -34,69 +43,73 @@ h2{font-size:clamp(2rem,4.2vw,3rem);text-transform:uppercase}
 h3{font-size:1.35rem;text-transform:uppercase;letter-spacing:.03em}
 p{margin:0}
 .lede{max-width:66ch;color:var(--muted);font-size:1.05rem}
-.label{font:600 .74rem/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.label{font:600 .875rem/1.3 var(--body);color:var(--muted)}
 .mono{font-family:var(--mono);font-size:.86em}
 .tape{height:12px;background:repeating-linear-gradient(-45deg,var(--tape) 0 14px,var(--tape-ink) 14px 28px)}
 
 /* top bar */
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
-.bar .wrap{display:flex;align-items:center;gap:16px;padding-block:10px;flex-wrap:wrap}
-.brand{font:800 1.5rem/1 var(--display);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:10px;text-decoration:none}
+.bar .wrap{display:flex;align-items:center;gap:16px;padding-block:8px;flex-wrap:wrap}
+.brand{font:800 1.5rem/1 var(--display);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px;text-decoration:none}
 .brand i{width:22px;height:22px;background:repeating-linear-gradient(-45deg,var(--tape) 0 5px,var(--tape-ink) 5px 10px);display:inline-block;border-radius:2px}
-.nav{display:flex;gap:4px 18px;flex-wrap:wrap;font-size:.9rem;margin-left:auto}
+.nav{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:.9rem;margin-left:auto}
 .nav a{text-decoration:none;color:var(--muted)}
 .nav a:hover{color:var(--ink)}
-.toggles{display:flex;gap:6px}
-.btn{font:600 .8rem/1 var(--mono);letter-spacing:.06em;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 10px;border-radius:3px;cursor:pointer}
+.toggles{display:flex;gap:8px}
+.btn{font:600 .875rem/1 var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 8px;border-radius:3px;cursor:pointer}
 .btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:hover{border-color:var(--ink)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.cta a:active,.links a:active{transform:translateY(1px)}
 @media (max-width:760px){.nav{order:3;width:100%;margin-left:0;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.nav a{white-space:nowrap}.toggles{margin-left:auto}}
 
 /* hero */
 .hero{padding-block:40px 28px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:start}
 @media (max-width:920px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
-.kicker{display:inline-flex;gap:8px;align-items:center;font:600 .78rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--tape);color:var(--tape-ink);padding:6px 9px;border-radius:2px}
-.hero h1{font-size:clamp(2.6rem,6.4vw,4.8rem);overflow-wrap:anywhere;text-transform:uppercase;margin-top:14px}
-.hero h1 span{display:block;color:var(--muted);font-size:.42em;letter-spacing:.02em;margin-top:8px;font-weight:600}
+.kicker{display:inline-flex;gap:8px;align-items:center;font:600 .875rem/1.2 var(--body);background:var(--tape);color:var(--tape-ink);padding:8px 12px;border-radius:2px}
+.hero h1{font-size:clamp(2.6rem,6.4vw,4.8rem);overflow-wrap:anywhere;text-transform:uppercase;margin-top:16px}
+.hero .sub{color:var(--muted);font:600 clamp(1.1rem,2.6vw,2rem)/1.15 var(--display);text-transform:uppercase;margin-top:8px}
 .hero .lede{margin-top:16px}
-.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-.cta a{font:600 .9rem/1 var(--body);text-decoration:none;padding:12px 14px;border-radius:3px;border:1px solid var(--ink)}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.cta a{font:600 .9rem/1 var(--body);text-decoration:none;padding:12px 16px;border-radius:3px;border:1px solid var(--ink)}
 .cta a.primary{background:var(--ink);color:var(--bg)}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:28px}
-.stat{background:var(--surface);padding:14px}
+.stat{background:var(--surface);padding:16px}
 .stat b{display:block;font:700 2.1rem/1 var(--display);font-variant-numeric:tabular-nums}
-.stat small{display:block;color:var(--muted);font-size:.82rem;line-height:1.35;margin-top:6px}
+.stat small{display:block;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.82rem;line-height:1.35;margin-top:8px}
 @media (max-width:480px){.stats{grid-template-columns:minmax(0,1fr)}}
 
 /* live floor */
 .floor{background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.floor-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.floor-head .tag{display:flex;align-items:center;gap:8px;font:600 .8rem/1 var(--mono)}
-.lamp{min-width:84px;text-align:center;font:800 1.05rem/1 var(--display);letter-spacing:.08em;padding:7px 10px;border-radius:3px;color:#fff;background:var(--go)}
-.lamp.wait{background:var(--wait)} .lamp.stop{background:var(--stop)}
+.floor-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.floor-head .tag{display:flex;align-items:center;gap:8px;font:600 .875rem/1.2 var(--body)}
+.lamp{min-width:84px;text-align:center;font:800 1.05rem/1 var(--display);letter-spacing:.08em;padding:8px 12px;border-radius:3px;color:var(--on-go);background:var(--go)}
+.lamp.wait{background:var(--wait);color:var(--on-wait)} .lamp.stop{background:var(--stop);color:var(--on-stop)}
 canvas{display:block;width:100%;height:auto;aspect-ratio:8/3.4;max-width:100%;touch-action:pan-y}
-.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:.82rem}
+.controls{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.82rem}
 .ctl{display:grid;gap:4px;min-width:0}
 .ctl > span{color:var(--muted)} .ctl b{color:var(--ink);font-variant-numeric:tabular-nums}
 .ctl input[type=range]{width:min(140px,36vw);accent-color:var(--tape)}
-.ctl.chk{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ctl.chk{display:flex;align-items:center;gap:8px;cursor:pointer}
 .ctl.chk input{accent-color:var(--tape);width:16px;height:16px}
 .seg{display:flex}
-.seg .btn{border-radius:0;font-size:.74rem;padding:7px 9px}
+.seg .btn{border-radius:0;font-size:.8125rem;padding:8px 8px;white-space:nowrap}
 .seg .btn:first-child{border-radius:3px 0 0 3px} .seg .btn:last-child{border-radius:0 3px 3px 0;border-left:0}
 .seg .btn[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.seg #m-d2d[aria-checked="true"]{background:var(--stop);border-color:var(--stop);color:#fff}
-.counters{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 12px;border-top:1px solid var(--line);font:500 .78rem/1.3 var(--mono);color:var(--muted)}
+.seg #m-d2d[aria-checked="true"]{background:var(--stop);border-color:var(--stop);color:var(--on-stop)}
+.counters{display:flex;flex-wrap:wrap;gap:8px 16px;padding:8px 12px;border-top:1px solid var(--line);font:500 .8125rem/1.3 var(--mono);color:var(--muted)}
 .counters b{color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
-.counters .key{margin-left:auto;display:flex;align-items:center;gap:6px}
+.counters .key{margin-left:auto;display:flex;align-items:center;gap:8px}
 .counters .key i{display:inline-block;width:10px;height:10px;border-radius:50%}
 .floor.d2d{border-color:var(--stop)}
-.log{font:400 .76rem/1.55 var(--mono);height:154px;overflow:hidden;border-top:1px solid var(--line);padding:8px 12px;margin:0;list-style:none}
+.log{font:400 .8125rem/1.55 var(--mono);height:154px;overflow:hidden;border-top:1px solid var(--line);padding:8px 12px;margin:0;list-style:none}
 .log li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .log li b{color:var(--ink);font-weight:500}
 .log li .op{display:inline-block;min-width:4.6em;color:var(--zone)}
 .log li.hot .op{color:var(--stop)} .log li.ho .op{color:var(--go)} .log li.d2d .op{color:var(--wait)}
-.floor-foot{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.floor-foot{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;border-top:1px solid var(--line);font-size:.8125rem;color:var(--muted);flex-wrap:wrap}
 
 section{padding-block:56px}
 .sec-head{display:grid;gap:12px;margin-bottom:28px}
@@ -105,45 +118,45 @@ section{padding-block:56px}
 .steps{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:24px}
 @media (max-width:760px){.steps{grid-template-columns:minmax(0,1fr)}}
 .step-list{display:grid;gap:4px;align-content:start}
-.step-list button{display:grid;grid-template-columns:2.2em 1fr;gap:8px;align-items:center;text-align:left;font:500 .95rem/1.3 var(--body);color:var(--ink);background:transparent;border:1px solid transparent;border-left:3px solid var(--line);padding:10px 10px;cursor:pointer;border-radius:0 3px 3px 0}
+.step-list button{display:grid;grid-template-columns:2.2em 1fr;gap:8px;align-items:center;text-align:left;font:500 .95rem/1.3 var(--body);color:var(--ink);background:transparent;border:1px solid var(--line);padding:12px 12px;cursor:pointer;border-radius:3px}
 .step-list button span{font:700 1.2rem/1 var(--display);color:var(--muted)}
-.step-list button[aria-selected="true"]{background:var(--surface);border-color:var(--line);border-left-color:var(--tape)}
+.step-list button[aria-selected="true"]{background:var(--surface);border-color:var(--ink)}
 .step-list button[aria-selected="true"] span{color:var(--ink)}
-.step-panel{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px;display:grid;gap:14px;min-width:0}
-.step-panel pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:12px;overflow-x:auto;font:400 .8rem/1.55 var(--mono)}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{font:500 .74rem/1 var(--mono);padding:5px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+.step-panel{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:20px;display:grid;gap:16px;min-width:0}
+.step-panel pre{margin:0;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:12px;overflow-x:auto;font:400 .8125rem/1.55 var(--mono)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:500 .8125rem/1.1 var(--body);padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
 
 /* architecture */
-.arch{display:grid;gap:14px}
+.arch{display:grid;gap:16px}
 .tier{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr);gap:16px;align-items:stretch}
 @media (max-width:640px){.tier{grid-template-columns:minmax(0,1fr)}}
-.tier > .label{padding-top:10px}
-.boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
-.box{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px;display:grid;gap:6px;min-width:0}
-.box h4{margin:0;font:700 1.05rem/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.tier > h3{padding-top:12px;font-size:1.3rem;color:var(--muted)}
+.boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:8px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:0;padding:16px;display:grid;gap:8px;min-width:0}
+.box h4{margin:0;font:700 1.05rem/1.1 var(--display);text-transform:uppercase}
 .box p{font-size:.88rem;color:var(--muted)}
 .box.zone{border-top:4px solid var(--zone)}
 .box.cloud{border-top:4px solid var(--ink)}
 .box.dev{border-top:4px solid var(--tape)}
-.ref{font:500 .72rem/1.4 var(--mono);color:var(--zone)}
-.link-row{font:500 .78rem/1.4 var(--mono);color:var(--muted);text-align:center;padding:2px 0}
+.ref{font:500 .8125rem/1.4 var(--mono);color:var(--zone)}
+.link-row{font:500 .8125rem/1.4 var(--mono);color:var(--muted);text-align:center;padding:2px 0}
 
 /* standards table */
-.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font:600 .72rem/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.table-wrap{overflow-x:auto;padding:4px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 .8125rem/1.3 var(--body);color:var(--muted);background:var(--bg)}
 tr:last-child td{border-bottom:0}
 td.spec{font-family:var(--mono);font-size:.8rem;white-space:nowrap}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 @media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
 
 /* CI grid */
-.ci-bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:16px}
-.ci-bar .pill{font:600 .78rem/1 var(--mono);padding:7px 10px;border-radius:3px;background:var(--go);color:#fff}
-.ci{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:10px}
-.run{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline}
+.ci-bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:16px}
+.ci-bar .pill{font:600 .8125rem/1 var(--body);padding:8px 8px;border-radius:3px;background:var(--go);color:var(--on-go)}
+.ci{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:8px}
+.run{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:baseline}
 .run b{font-weight:600;font-size:.93rem;line-height:1.3}
 .run .n{font:700 1.2rem/1 var(--display);font-variant-numeric:tabular-nums;color:var(--go)}
 .run small{grid-column:1/-1;color:var(--muted);font-size:.8rem;line-height:1.4}
@@ -152,45 +165,45 @@ td.spec{font-family:var(--mono);font-size:.8rem;white-space:nowrap}
 /* results chart */
 .chart{display:grid;gap:16px}
 .metric{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:12px;align-items:center}
-@media (max-width:640px){.metric{grid-template-columns:minmax(0,1fr);gap:6px}}
+@media (max-width:640px){.metric{grid-template-columns:minmax(0,1fr);gap:8px}}
 .metric .name{font-size:.9rem;line-height:1.35}
-.bars{display:grid;gap:5px}
-.b{display:grid;grid-template-columns:minmax(0,1fr) 4.2em;gap:8px;align-items:center;font:500 .76rem/1 var(--mono)}
+.bars{display:grid;gap:4px}
+.b{display:grid;grid-template-columns:minmax(0,1fr) 4.2em;gap:8px;align-items:center;font:500 .8125rem/1 var(--mono)}
 .b i{display:block;height:14px;border-radius:2px;background:var(--line);min-width:2px}
 .b.new i{background:var(--tape)}
 .b span{text-align:right;font-variant-numeric:tabular-nums}
 .cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:8px}
-.cmp-card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px;display:grid;gap:8px;min-width:0}
-.cmp-card h4{margin:0;font:700 1rem/1.2 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.cmp-card{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:16px;display:grid;gap:8px;min-width:0}
+.cmp-card h4{margin:0;font:700 1rem/1.2 var(--display);text-transform:uppercase}
 .cmp-row{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 4.4em;gap:8px;align-items:center;font-size:.8rem}
 .cmp-row i{display:block;height:12px;border-radius:2px;background:var(--line);min-width:2px}
 .cmp-row.eg i{background:var(--tape)} .cmp-row.eg{font-weight:600}
-.cmp-row span:last-child{text-align:right;font:500 .78rem/1 var(--mono);font-variant-numeric:tabular-nums}
+.cmp-row span:last-child{text-align:right;font:500 .8125rem/1 var(--mono);font-variant-numeric:tabular-nums}
 .legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:8px}
 
 /* rubric */
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.rub{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:10px}
-.crit{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px 16px;display:grid;gap:8px;align-content:start}
-.crit header{display:flex;gap:10px;align-items:baseline}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.rub{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:8px}
+.crit{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:16px 16px;display:grid;gap:8px;align-content:start}
+.crit header{display:flex;gap:8px;align-items:baseline}
 .crit header span{font:700 1.5rem/1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;min-width:1.4em}
 .crit h3{font-size:1.15rem}
 .crit p{font-size:.88rem;color:var(--muted)}
-.crit .go{font:500 .78rem/1.4 var(--mono)}
-.crit .go a{margin-right:10px}
+.crit .go{font:500 .8125rem/1.4 var(--body)}
+.crit .go a{margin-right:8px}
 
 /* run it */
-.run-it pre{margin:0;background:var(--ink);color:var(--bg);border-radius:4px;padding:16px;overflow-x:auto;font:400 .82rem/1.65 var(--mono)}
+.run-it pre{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:4px;padding:16px;overflow-x:auto;font:400 .82rem/1.65 var(--mono)}
 .run-it pre .c{opacity:.6}
 .copy{margin-top:8px}
-.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px}
-.links a{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:14px;text-decoration:none}
-.links a b{font:700 1.15rem/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px}
+.links a{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:16px;text-decoration:none}
+.links a b{font:700 1.15rem/1.1 var(--display)}
 .links a small{color:var(--muted);font-size:.82rem}
 .links a:hover{border-color:var(--ink)}
 footer{padding-block:28px 40px;color:var(--muted);font-size:.85rem}
-footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-between}
+footer .wrap{display:flex;gap:8px 24px;flex-wrap:wrap;justify-content:space-between}
 .note{font-size:.82rem;color:var(--muted);max-width:75ch}
 </style>
 
@@ -218,17 +231,19 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <div class="wrap hero">
   <div class="hero-grid">
     <div>
-      <span class="kicker">oneM2M × ETSI MEC · 2026 Hackathon</span>
-      <h1>EdgeGuard<span class="en">Stops forklift accidents before they happen</span><span class="ko">지게차 사고를 일어나기 전에 막습니다</span></h1>
-      <p class="lede en">Worker tags and forklift modules publish their motion to oneM2M CSEs. A MEC application on each zone's edge host predicts collisions 1–3 seconds ahead and tells the worker <b>WAIT</b>, then <b>GO</b>, while the forklift slows only as much as needed. When the forklift drives into the next zone, its oneM2M presence moves with it.</p>
+      <span class="kicker">oneM2M × ETSI MEC, 2026 Hackathon</span>
+      <h1>EdgeGuard</h1>
+      <p class="sub"><span class="en">Stops forklift accidents before they happen</span><span class="ko">지게차 사고를 일어나기 전에 막습니다</span></p>
+      <p class="lede en">Worker tags and forklift modules publish their motion to oneM2M CSEs. A MEC application on each zone’s edge host predicts collisions 1 to 3 seconds ahead and tells the worker <b>WAIT</b>, then <b>GO</b>, while the forklift keeps its speed as long as it can still stop short of him. When the forklift drives into the next zone, its oneM2M presence moves with it.</p>
       <p class="lede ko">작업자 태그와 지게차 모듈이 움직임을 oneM2M CSE에 올립니다. 구역마다 엣지 호스트의 MEC 앱이 1~3초 앞의 충돌을 예측해 작업자에게 <b>WAIT</b>, 이어서 <b>GO</b>를 알리고, 지게차는 필요한 만큼만 감속합니다. 지게차가 다음 구역으로 가면 oneM2M 상의 존재도 함께 옮겨 갑니다.</p>
       <div class="cta">
-        <a class="primary" href="https://github.com/ljw22112/Edgeguard" target="_blank" rel="noopener">GitHub</a>
+        <a class="primary" href="demo/"><span class="en">Try the demo</span><span class="ko">데모 실행</span></a>
+        <a href="https://github.com/ljw22112/Edgeguard" target="_blank" rel="noopener">GitHub</a>
         <a href="https://youtu.be/P2JI5ZG6PIg" target="_blank" rel="noopener"><span class="en">Video</span><span class="ko">영상</span></a>
         <a href="https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309" target="_blank" rel="noopener"><span class="en">Article</span><span class="ko">기사</span></a>
       </div>
       <div class="stats">
-        <div class="stat"><b>0 · 2.0×</b><small class="en">collisions in 3,617 conflicts, at 2.0× the throughput of a UWB proximity alarm (1,000 fresh episodes, simulation)</small><small class="ko">충돌 상황 3,617건 중 충돌 0, UWB 근접 경보의 2.0배 처리량(새 에피소드 1,000개, 시뮬레이션)</small></div>
+        <div class="stat"><b>0 at 2.0×</b><small class="en">collisions in 3,617 conflicts, at 2.0× the throughput of a UWB proximity alarm (1,000 fresh episodes, simulation)</small><small class="ko">충돌 상황 3,617건 중 충돌 0, UWB 근접 경보의 2.0배 처리량(새 에피소드 1,000개, 시뮬레이션)</small></div>
         <div class="stat"><b>0</b><small class="en">samples lost across zone handovers (CI, every commit)</small><small class="ko">구역 핸드오버 중 유실된 샘플(매 커밋 CI)</small></div>
         <div class="stat"><b>21 / 21</b><small class="en">end-to-end demos green on ACME CSEs in CI</small><small class="ko">CI에서 ACME CSE 위 종단 데모 전부 통과</small></div>
       </div>
@@ -236,7 +251,7 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 
     <figure class="floor" style="margin:0" aria-label="Interactive warehouse floor simulation">
       <div class="floor-head">
-        <span class="label"><span class="en">Live floor · two zones</span><span class="ko">현장 · 두 구역</span></span>
+        <span class="label"><span class="en">Live floor, two zones</span><span class="ko">현장, 두 구역</span></span>
         <span class="tag"><span class="en">Workers on hold</span><span class="ko">대기 중 작업자</span> <span class="lamp" id="lamp">GO</span></span>
         <button class="btn" id="play" type="button" aria-pressed="true"><span class="en">Pause</span><span class="ko">일시정지</span></button>
       </div>
@@ -248,8 +263,8 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
         <div class="ctl mode" role="radiogroup" aria-label="Communication mode">
           <span><span class="en">Decided by</span><span class="ko">판단 주체</span></span>
           <div class="seg">
-            <button type="button" class="btn" id="m-mec" role="radio" aria-checked="true">MEC · oneM2M</button>
-            <button type="button" class="btn" id="m-d2d" role="radio" aria-checked="false"><span class="en">Network down · D2D</span><span class="ko">망 장애 · D2D</span></button>
+            <button type="button" class="btn" id="m-mec" role="radio" aria-checked="true">MEC, oneM2M</button>
+            <button type="button" class="btn" id="m-d2d" role="radio" aria-checked="false"><span class="en">Network down, D2D</span><span class="ko">망 장애, D2D</span></button>
           </div>
         </div>
         <label class="ctl chk" for="links"><input type="checkbox" id="links"> <span class="en">Show D2D links</span><span class="ko">D2D 링크 표시</span></label>
@@ -259,7 +274,7 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
         <span><b id="c-alerts">0</b> <span class="en">alerts</span><span class="ko">경보</span></span>
         <span><b id="c-aside">0</b> STEP ASIDE</span>
         <span><b id="c-ho">0</b> <span class="en">handovers</span><span class="ko">핸드오버</span></span>
-        <span><b id="c-d2d">–</b> <span class="en">D2D links</span><span class="ko">D2D 링크</span></span>
+        <span><b id="c-d2d">0</b> <span class="en">D2D links</span><span class="ko">D2D 링크</span></span>
         <span><b id="c-contact">0</b> <span class="en">contacts</span><span class="ko">접촉</span></span>
         <span class="key"><i style="background:var(--go)"></i>GO <i style="background:var(--wait)"></i>WAIT <i style="background:var(--stop)"></i>STEP ASIDE</span>
       </div>
@@ -278,7 +293,6 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="path">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Follow one alert</span><span class="ko">경보 하나 따라가기</span></span>
       <h2><span class="en">From a tag to a warning, through oneM2M</span><span class="ko">태그에서 경고까지, oneM2M을 거쳐</span></h2>
       <p class="lede en">No component talks to another directly. Every hop is a oneM2M request or notification, so any other application can subscribe to the same data with access control already in place.</p>
       <p class="lede ko">구성 요소끼리 직접 통신하지 않습니다. 모든 단계가 oneM2M 요청이나 알림이라, 다른 앱도 접근 제어가 갖춰진 상태로 같은 데이터를 구독할 수 있습니다.</p>
@@ -295,37 +309,36 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="arch">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Deployment · ESTIMED option C</span><span class="ko">배포 · ESTIMED 옵션 C</span></span>
       <h2><span class="en">One MEC host per zone, an IN-CSE above</span><span class="ko">구역마다 MEC 호스트, 그 위에 IN-CSE</span></h2>
-      <p class="lede en">Each zone's MEC host runs the zone MN-CSE, the EdgeGuard MEC app and the MEC interworking proxy together (TR-0077 clause 7, option C). The IN-CSE keeps global context: home records, announcements, the federated-learning coordinator, the orchestrator and the AI agent.</p>
-      <p class="lede ko">구역의 MEC 호스트마다 구역 MN-CSE, EdgeGuard MEC 앱, MEC 연동 프록시를 함께 둡니다(TR-0077 7절, 옵션 C). IN-CSE는 전역 컨텍스트를 맡습니다: 홈 레코드, 공지, 연합학습 코디네이터, 오케스트레이터, AI 에이전트.</p>
+      <p class="lede en">Each zone’s MEC host runs the zone MN-CSE, the EdgeGuard MEC app and the MEC interworking proxy together (option C in the TR-0086 developer guide). The IN-CSE keeps global context: home records, announcements, the federated-learning coordinator, the orchestrator and the AI agent.</p>
+      <p class="lede ko">구역의 MEC 호스트마다 구역 MN-CSE, EdgeGuard MEC 앱, MEC 연동 프록시를 함께 둡니다(TR-0086 개발자 가이드의 옵션 C). IN-CSE는 전역 컨텍스트를 맡습니다: 홈 레코드, 공지, 연합학습 코디네이터, 오케스트레이터, AI 에이전트.</p>
     </div>
     <div class="arch">
       <div class="tier">
-        <span class="label">Cloud / site DC</span>
+        <h3>Cloud or site DC</h3>
         <div class="boxes">
-          <div class="box cloud"><h4>IN-CSE</h4><p class="en">Home records, AEAnnc of moving devices, MEC-IPE resources</p><p class="ko">홈 레코드, 이동 디바이스의 AEAnnc, MEC-IPE 리소스</p><span class="ref">cse-in · id-in</span></div>
-          <div class="box cloud"><h4><span class="en">Orchestrator</span><span class="ko">오케스트레이터</span></h4><p class="en">One egs:depIn intent → discover, select, deploy, register, provision</p><p class="ko">egs:depIn 의도 하나 → 탐색 · 선택 · 배포 · 등록 · 프로비저닝</p><span class="ref">TR-0077 7.1</span></div>
-          <div class="box cloud"><h4><span class="en">FL coordinator</span><span class="ko">연합학습 코디네이터</span></h4><p class="en">Task, participants, rounds, model lineage as resources</p><p class="ko">작업 · 참여자 · 라운드 · 모델 계보를 리소스로</p><span class="ref">TR-0084 · 7.3</span></div>
-          <div class="box cloud"><h4><span class="en">AI safety agent</span><span class="ko">AI 안전 에이전트</span></h4><p class="en">MCP servers for IN, both MN-CSEs and ETSI MEC</p><p class="ko">IN · 두 MN-CSE · ETSI MEC용 MCP 서버</p><span class="ref">MCP</span></div>
+          <div class="box cloud"><h4>IN-CSE</h4><p class="en">Home records, AEAnnc of moving devices, MEC-IPE resources</p><p class="ko">홈 레코드, 이동 디바이스의 AEAnnc, MEC-IPE 리소스</p><span class="ref">cse-in, id-in</span></div>
+          <div class="box cloud"><h4><span class="en">Orchestrator</span><span class="ko">오케스트레이터</span></h4><p class="en">One egs:depIn intent → discover, select, deploy, register, provision</p><p class="ko">egs:depIn 의도 하나 → 탐색, 선택, 배포, 등록, 프로비저닝</p><span class="ref">TR-0077 7.1</span></div>
+          <div class="box cloud"><h4><span class="en">FL coordinator</span><span class="ko">연합학습 코디네이터</span></h4><p class="en">Task, participants, rounds, model lineage as resources</p><p class="ko">작업, 참여자, 라운드, 모델 계보를 리소스로</p><span class="ref">TR-0084, 7.3</span></div>
+          <div class="box cloud"><h4><span class="en">AI safety agent</span><span class="ko">AI 안전 에이전트</span></h4><p class="en">MCP servers for IN, both MN-CSEs and ETSI MEC</p><p class="ko">IN, 두 MN-CSE, ETSI MEC용 MCP 서버</p><span class="ref">MCP</span></div>
         </div>
       </div>
-      <div class="link-row">▲ Mcc &nbsp;·&nbsp; MEC 011 Mp1 &nbsp;·&nbsp; MEC 021 AMS ▼</div>
+      <div class="link-row">▲ Mcc ,  MEC 011 Mp1 ,  MEC 021 AMS ▼</div>
       <div class="tier">
-        <span class="label"><span class="en">Zone MEC hosts</span><span class="ko">구역 MEC 호스트</span></span>
+        <h3><span class="en">Zone MEC hosts</span><span class="ko">구역 MEC 호스트</span></h3>
         <div class="boxes">
-          <div class="box zone"><h4><span class="en">Zone A host</span><span class="ko">구역 A 호스트</span></h4><p class="en">MN-CSE · MEC app (track → predict → collision-course test → alert) · MEC-IPE</p><p class="ko">MN-CSE · MEC 앱(추적 → 예측 → 충돌 경로 판정 → 경보) · MEC-IPE</p><span class="ref">cse-mn-a · mep-a · cellA</span></div>
-          <div class="box zone"><h4><span class="en">Zone B host</span><span class="ko">구역 B 호스트</span></h4><p class="en">Same stack. Receives the forklift twin make-before-break when AMS or a zone event says it moved.</p><p class="ko">같은 구성. AMS나 구역 이벤트가 이동을 알리면 지게차 트윈을 make-before-break로 넘겨받습니다.</p><span class="ref">cse-mn-b · mep-b · cellB</span></div>
-          <div class="box zone"><h4><span class="en">MEC platform</span><span class="ko">MEC 플랫폼</span></h4><p class="en">Location (MEC 013), RNIS (MEC 012), service registry (MEC 011), app mobility (MEC 021)</p><p class="ko">위치(MEC 013), RNIS(MEC 012), 서비스 등록(MEC 011), 앱 이동(MEC 021)</p><span class="ref">mec_mock · ETSI Sandbox</span></div>
+          <div class="box zone"><h4><span class="en">Zone A host</span><span class="ko">구역 A 호스트</span></h4><p class="en">MN-CSE, MEC app (track → predict → collision-course test → alert), MEC-IPE</p><p class="ko">MN-CSE, MEC 앱(추적 → 예측 → 충돌 경로 판정 → 경보), MEC-IPE</p><span class="ref">cse-mn-a, mep-a, cellA</span></div>
+          <div class="box zone"><h4><span class="en">Zone B host</span><span class="ko">구역 B 호스트</span></h4><p class="en">Same stack. Receives the forklift twin make-before-break when AMS or a zone event says it moved.</p><p class="ko">같은 구성. AMS나 구역 이벤트가 이동을 알리면 지게차 트윈을 make-before-break로 넘겨받습니다.</p><span class="ref">cse-mn-b, mep-b, cellB</span></div>
+          <div class="box zone"><h4><span class="en">MEC platform</span><span class="ko">MEC 플랫폼</span></h4><p class="en">Location (MEC 013), RNIS (MEC 012), service registry (MEC 011), app mobility (MEC 021)</p><p class="ko">위치(MEC 013), RNIS(MEC 012), 서비스 등록(MEC 011), 앱 이동(MEC 021)</p><span class="ref">mec_mock, ETSI Sandbox</span></div>
         </div>
       </div>
-      <div class="link-row">▲ Mca: MQTT over TLS (mutual TLS) · HTTPS · pollingChannel ▼ &nbsp;·&nbsp; ESP-NOW D2D ↔</div>
+      <div class="link-row">▲ Mca: MQTT over TLS (mutual TLS), HTTPS, pollingChannel ▼ ,  ESP-NOW D2D ↔</div>
       <div class="tier">
-        <span class="label"><span class="en">Devices</span><span class="ko">디바이스</span></span>
+        <h3><span class="en">Devices</span><span class="ko">디바이스</span></h3>
         <div class="boxes">
-          <div class="box dev"><h4><span class="en">Worker tag</span><span class="ko">작업자 태그</span></h4><p class="en">ESP32 + UWB. Vibration and light: WAIT, GO, STEP ASIDE. Polls its channel behind NAT.</p><p class="ko">ESP32 + UWB. 진동 · 빛으로 WAIT · GO · STEP ASIDE. NAT 뒤에서 채널을 폴링.</p><span class="ref">egs:wrkTg</span></div>
-          <div class="box dev"><h4><span class="en">Forklift module</span><span class="ko">지게차 모듈</span></h4><p class="en">Position, speed, yaw rate; obeys the speed limit; plans shared with the swarm group.</p><p class="ko">위치 · 속도 · 요레이트, 속도 제한 준수, 스웜 그룹과 계획 공유.</p><span class="ref">egs:frklf · cod:bat</span></div>
-          <div class="box dev"><h4><span class="en">Fallback</span><span class="ko">장애 대비</span></h4><p class="en">If the network or MEC fails: device-to-device ranging and alert relay, then stop.</p><p class="ko">망이나 MEC가 멈추면 단말 간 거리 측정 · 경보 중계, 그다음 정지.</p><span class="ref">D2D · HMAC</span></div>
+          <div class="box dev"><h4><span class="en">Worker tag</span><span class="ko">작업자 태그</span></h4><p class="en">ESP32 + UWB. Vibration and light: WAIT, GO, STEP ASIDE. Polls its channel behind NAT.</p><p class="ko">ESP32 + UWB. 진동, 빛으로 WAIT, GO, STEP ASIDE. NAT 뒤에서 채널을 폴링.</p><span class="ref">egs:wrkTg</span></div>
+          <div class="box dev"><h4><span class="en">Forklift module</span><span class="ko">지게차 모듈</span></h4><p class="en">Position, speed, yaw rate; obeys the speed limit; plans shared with the swarm group.</p><p class="ko">위치, 속도, 요레이트, 속도 제한 준수, 스웜 그룹과 계획 공유.</p><span class="ref">egs:frklf, cod:bat</span></div>
+          <div class="box dev"><h4><span class="en">Fallback</span><span class="ko">장애 대비</span></h4><p class="en">If the network or MEC fails: device-to-device ranging and alert relay, then stop.</p><p class="ko">망이나 MEC가 멈추면 단말 간 거리 측정, 경보 중계, 그다음 정지.</p><span class="ref">D2D, HMAC</span></div>
         </div>
       </div>
     </div>
@@ -337,7 +350,6 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="standards">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Standards in use</span><span class="ko">사용한 표준</span></span>
       <h2><span class="en">What each specification does here</span><span class="ko">각 표준이 여기서 하는 일</span></h2>
     </div>
     <div class="two">
@@ -362,13 +374,12 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="ci">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Verified on every commit</span><span class="ko">매 커밋 검증</span></span>
       <h2><span class="en">Every claim on this page is a CI check</span><span class="ko">이 페이지의 주장은 모두 CI 검사입니다</span></h2>
       <p class="lede en">GitHub Actions starts ACME CSEs (IN, two zone MN-CSEs, a TLS CSE), a Mosquitto broker with mutual TLS and the MEC platform, then runs each demo. A demo fails the build if any of its checks fails.</p>
       <p class="lede ko">GitHub Actions가 ACME CSE(IN, 구역 MN-CSE 2개, TLS CSE), 상호 TLS Mosquitto 브로커, MEC 플랫폼을 띄우고 데모를 하나씩 실행합니다. 검사가 하나라도 실패하면 빌드가 실패합니다.</p>
     </div>
     <div class="ci-bar">
-      <span class="pill" id="ci-total">— checks passing</span>
+      <span class="pill" id="ci-total">All checks passing</span>
       <a class="mono" href="https://github.com/ljw22112/Edgeguard/actions" target="_blank" rel="noopener">github.com/ljw22112/Edgeguard/actions</a>
     </div>
     <div class="ci" id="ci-grid"></div>
@@ -380,7 +391,6 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="results">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Safety results · simulation</span><span class="ko">안전 결과 · 시뮬레이션</span></span>
       <h2><span class="en">Fewer collisions, less stopping</span><span class="ko">충돌은 줄이고, 멈춤도 줄이고</span></h2>
       <p class="lede en">Simulation with the same risk engine that runs in the MEC app. First, the earlier milestone v1.5 against our own v1.0 vibration alert (or a 5 m proximity alarm where noted); the current policy v3.1 against what sites use today follows below.</p>
       <p class="lede ko">MEC 앱과 같은 위험 엔진으로 돌린 시뮬레이션입니다. 먼저 이전 단계 v1.5를 우리 v1.0 진동 경보(표시한 곳은 5 m 근접 경보)와 비교하고, 아래에 현재 정책 v3.1을 현장 방식과 비교합니다.</p>
@@ -388,15 +398,15 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
     <div class="legend"><span><i style="background:var(--line)"></i><span class="en">baseline</span><span class="ko">기준선</span></span><span><i style="background:var(--tape)"></i>EdgeGuard v1.5</span></div>
     <div class="chart" id="chart" style="margin-top:16px"></div>
     <div class="sec-head" style="margin-top:44px">
-      <span class="label"><span class="en">Against site practice · same 1,000 episodes</span><span class="ko">현장 방식과 비교 · 같은 에피소드 1,000개</span></span>
+      <span class="label"><span class="en">Against site practice, same 1,000 episodes</span><span class="ko">현장 방식과 비교, 같은 에피소드 1,000개</span></span>
       <h3><span class="en">What sites use today, on the same floor</span><span class="ko">지금 현장에서 쓰는 방식, 같은 조건에서</span></h3>
-      <p class="lede en">8 workers, 4 forklifts, 3,617 conflicts in 1,000 fresh episodes never used to train, pick or tune EdgeGuard's policy (v3.1); nobody looks out, so this is what each system alone prevents. Proximity alarm parameters follow commercial UWB systems (warning zone: slow to walking speed, danger zone: stop).</p>
-      <p class="lede ko">작업자 8명 · 지게차 4대, 충돌 상황 3,617건(EdgeGuard 정책 v3.1의 학습 · 선택 · 조정에 쓰지 않은 새 에피소드 1,000개), 아무도 주의하지 않는 조건이라 각 방식이 혼자 막는 몫입니다. 근접 경보 설정은 상용 UWB 시스템을 따랐습니다(경고 구역: 보행 속도로 감속, 위험 구역: 정지).</p>
+      <p class="lede en">8 workers, 4 forklifts, 3,617 conflicts in 1,000 fresh episodes never used to train, pick or tune EdgeGuard’s policy (v3.1); nobody looks out, so this is what each system alone prevents. Proximity alarm parameters follow commercial UWB systems (warning zone: slow to walking speed, danger zone: stop).</p>
+      <p class="lede ko">작업자 8명, 지게차 4대, 충돌 상황 3,617건(EdgeGuard 정책 v3.1의 학습, 선택, 조정에 쓰지 않은 새 에피소드 1,000개), 아무도 주의하지 않는 조건이라 각 방식이 혼자 막는 몫입니다. 근접 경보 설정은 상용 UWB 시스템을 따랐습니다(경고 구역: 보행 속도로 감속, 위험 구역: 정지).</p>
     </div>
     <div class="cmp" id="cmp"></div>
     <p class="note en">95 % intervals: EdgeGuard 0 collisions (upper bound 1.1 per 1,000 conflicts), throughput 97.3 % [96.9-97.7]. Under exceptional conditions (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): previous policy 30 collisions, v2 5, v3 2, <b>v3.1 0 (95 % upper bound 0.11 per 1,000 conflicts)</b>, v3.1 4.8-9.9 points faster in every condition. <a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/safety-case.md" target="_blank" rel="noopener">Safety case ↗</a></p>
     <p class="note ko">95 % 신뢰구간: EdgeGuard 충돌 0(상한 충돌 상황 1,000건당 1.1), 처리량 97.3 % [96.9~97.7]. 예외 상황(통신 불량, MEC 재시작, 준수율 85 / 70 %, 측위 오차, 밀집, 주의 깊은 운전자; 새 에피소드 8,000개, 충돌 상황 34,644건): 이전 정책 30건, v2 5건, v3 2건, <b>v3.1 0건(95 % 상한 1,000건당 0.11)</b>, v3.1은 모든 조건에서 처리량 4.8~9.9 %p 향상. <a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/ko/safety-case.md" target="_blank" rel="noopener">안전성 논증 ↗</a></p>
-    <p class="note"><a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/site-compare.md" target="_blank" rel="noopener"><span class="en">Method, sources and limits ↗</span><span class="ko">방법 · 근거 · 한계 ↗</span></a></p>
+    <p class="note"><a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/site-compare.md" target="_blank" rel="noopener"><span class="en">Method, sources and limits ↗</span><span class="ko">방법, 근거, 한계 ↗</span></a></p>
   </div>
 </section>
 <div class="tape" aria-hidden="true"></div>
@@ -405,15 +415,14 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="criteria">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">For the judges</span><span class="ko">심사위원께</span></span>
       <h2><span class="en">Where to find each criterion</span><span class="ko">평가 항목별 근거 위치</span></h2>
-      <p class="lede en">The hackathon rubric's criteria, each with the evidence and the file to open.</p>
+      <p class="lede en">The hackathon rubric’s criteria, each with the evidence and the file to open.</p>
       <p class="lede ko">대회 루브릭 항목마다 근거와 열어 볼 파일을 정리했습니다.</p>
     </div>
     <div class="filters" role="group" aria-label="Filter criteria">
       <button class="btn" type="button" data-f="all" aria-pressed="true"><span class="en">All</span><span class="ko">전체</span></button>
       <button class="btn" type="button" data-f="onem2m" aria-pressed="false">oneM2M</button>
-      <button class="btn" type="button" data-f="mec" aria-pressed="false">MEC · AI</button>
+      <button class="btn" type="button" data-f="mec" aria-pressed="false">MEC, AI</button>
       <button class="btn" type="button" data-f="pres" aria-pressed="false"><span class="en">Presentation</span><span class="ko">발표 자료</span></button>
     </div>
     <div class="rub" id="rub"></div>
@@ -425,7 +434,6 @@ footer .wrap{display:flex;gap:10px 24px;flex-wrap:wrap;justify-content:space-bet
 <section id="run" class="run-it">
   <div class="wrap">
     <div class="sec-head">
-      <span class="label"><span class="en">Reproduce</span><span class="ko">재현</span></span>
       <h2><span class="en">Run it on your machine</span><span class="ko">직접 실행해 보기</span></h2>
       <p class="lede en">Python 3.11, no hardware needed. The scripts start ACME CSEs locally and print PASS / FAIL for each check.</p>
       <p class="lede ko">Python 3.11이면 되고 하드웨어는 필요 없습니다. 스크립트가 ACME CSE를 로컬에 띄우고 검사마다 PASS / FAIL을 출력합니다.</p>
@@ -447,7 +455,7 @@ python tools/fl_deploy_demo.py</pre>
       <a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/tutorial-onem2m.md" target="_blank" rel="noopener"><b><span class="en">oneM2M tutorial</span><span class="ko">oneM2M 튜토리얼</span></b><small class="en">A safety app in 10 minutes, plain HTTP</small><small class="ko">10분 안전 앱, HTTP만으로</small></a>
       <a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/estimed-mapping.md" target="_blank" rel="noopener"><b>TR-0077 map</b><small class="en">Clause 7 → code → CI demo</small><small class="ko">7절 → 코드 → CI 데모</small></a>
       <a href="https://github.com/ljw22112/Edgeguard/blob/main/docs/data-model.md" target="_blank" rel="noopener"><b><span class="en">Data model</span><span class="ko">데이터 모델</span></b><small class="en">SDT domain org.edgeguard.safety, SAREF</small><small class="ko">SDT 도메인 org.edgeguard.safety, SAREF</small></a>
-      <a href="https://youtu.be/P2JI5ZG6PIg" target="_blank" rel="noopener"><b><span class="en">Final video</span><span class="ko">최종 영상</span></b><small>YouTube · 2:34</small></a>
+      <a href="https://youtu.be/P2JI5ZG6PIg" target="_blank" rel="noopener"><b><span class="en">Final video</span><span class="ko">최종 영상</span></b><small>YouTube, 2:34</small></a>
       <a href="https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309" target="_blank" rel="noopener"><b>hackster.io</b><small class="en">Build article with hardware</small><small class="ko">하드웨어 포함 제작기</small></a>
     </div>
   </div>
@@ -456,8 +464,8 @@ python tools/fl_deploy_demo.py</pre>
 
 <footer>
   <div class="wrap">
-    <span class="en">EdgeGuard · Team EdgeGuard, Sejong University · 2026 oneM2M International Hackathon</span>
-    <span class="ko">EdgeGuard · 세종대학교 EdgeGuard 팀 · 2026 oneM2M 국제 해커톤</span>
+    <span class="en">EdgeGuard, Team EdgeGuard, Sejong University, 2026 oneM2M International Hackathon</span>
+    <span class="ko">EdgeGuard, 세종대학교 EdgeGuard 팀, 2026 oneM2M 국제 해커톤</span>
     <span class="note en">Collision figures come from simulation. Device behaviour is verified by running the unmodified board firmware on a PC against a oneM2M CSE. The MEC platform in CI is a mock of the ETSI APIs; the polling path was also run on the public ETSI MEC Sandbox.</span>
     <span class="note ko">충돌 수치는 시뮬레이션 결과입니다. 단말 동작은 원본 보드 펌웨어를 PC에서 oneM2M CSE에 붙여 검증합니다. CI의 MEC 플랫폼은 ETSI API를 흉내 낸 목업이며, 폴링 경로는 공개 ETSI MEC Sandbox에서도 실행했습니다.</span>
   </div>
@@ -485,17 +493,17 @@ python tools/fl_deploy_demo.py</pre>
 
   /* ---------- alert path ---------- */
   var STEPS = [
-    {t:L("Tag publishes its motion","태그가 움직임을 게시"), d:L("The worker tag is an AE on its zone's MN-CSE. It creates a contentInstance in its own kinematics container ten times a second, over the oneM2M MQTT binding with its own certificate.","작업자 태그는 구역 MN-CSE의 AE입니다. 자기 인증서로 oneM2M MQTT 바인딩을 통해 운동 컨테이너에 초당 10번 contentInstance를 만듭니다."),
+    {t:L("Tag publishes its motion","태그가 움직임을 게시"), d:L("The worker tag is an AE on its zone’s MN-CSE. It creates a contentInstance in its own kinematics container ten times a second, over the oneM2M MQTT binding with its own certificate.","작업자 태그는 구역 MN-CSE의 AE입니다. 자기 인증서로 oneM2M MQTT 바인딩을 통해 운동 컨테이너에 초당 10번 contentInstance를 만듭니다."),
      code:"MQTT  /oneM2M/req/SWorker01/id-mn-a/json   (TLS, client cert CN=SWorker01)\nop=1 (CREATE)  to=cse-mn-a/worker_01/kin  ty=4\npc  {\"m2m:cin\":{\"con\":{\"x\":31.2,\"y\":13.8,\"vx\":-0.1,\"vy\":-1.2,\"ts\":…}}}", chips:["TS-0010 MQTT binding","TS-0004 CREATE","ACP: own originator only"]},
     {t:L("The CSE notifies the MEC app","CSE가 MEC 앱에 알림"), d:L("The MEC app subscribed to every device twin it was provisioned for. Its ACP lets it read and subscribe, nothing else (accessControlObjectDetails, chty 23).","MEC 앱은 프로비저닝된 모든 디바이스 트윈을 구독합니다. ACP는 읽기와 구독만 허용합니다(accessControlObjectDetails, chty 23)."),
      code:"POST https://edgeguard-a:9443/onem2m      (HTTPS notification)\n{\"m2m:sgn\":{\"nev\":{\"rep\":{\"m2m:cin\":{…}},\"net\":3},\n            \"sur\":\"cse-mn-a/worker_01/kin/sub_app\"}}", chips:["subscription / notify","ACP + chty","HTTPS"]},
-    {t:L("The MEC app predicts","MEC 앱이 예측"), d:L("Kalman tracking, forklift turn prediction (CTRV) and a collision-course test: line-of-sight rate and closest point of approach, so passing traffic does not alarm. Positions also come from the MEC Location API through the MEC-IPE.","칼만 추적, 지게차 회전 예측(CTRV), 충돌 경로 판정(시선 각속도 · 최근접점)으로 스쳐 가는 교통에는 울리지 않습니다. 위치는 MEC-IPE를 거쳐 MEC Location API에서도 받습니다."),
+    {t:L("The MEC app predicts","MEC 앱이 예측"), d:L("Kalman tracking, forklift turn prediction (CTRV) and a collision-course test: line-of-sight rate and closest point of approach, so passing traffic does not alarm. Positions also come from the MEC Location API through the MEC-IPE.","칼만 추적, 지게차 회전 예측(CTRV), 충돌 경로 판정(시선 각속도, 최근접점)으로 스쳐 가는 교통에는 울리지 않습니다. 위치는 MEC-IPE를 거쳐 MEC Location API에서도 받습니다."),
      code:"pair worker_01 × forklift_01\n  CPA in 1.8 s at 0.6 m   LOS rate 0.02 rad/s   → DANGER\n  worker: WAIT (hold)      forklift: limit 1.2 m/s", chips:["MEC 013 Location","MEC 012 RNIS","egs:ueLoc twin"]},
-    {t:L("One request warns the zone","요청 하나로 구역 전체에 경고"), d:L("The MEC app keeps one oneM2M group per zone whose members are the alerts containers of the tags in it. One CREATE to the group's fanOutPoint writes the alert into all of them.","MEC 앱은 구역마다 oneM2M 그룹을 두고, 멤버는 그 구역 태그들의 alerts 컨테이너입니다. 그룹 fanOutPoint에 CREATE 한 번이면 모두에 경보가 기록됩니다."),
+    {t:L("One request warns the zone","요청 하나로 구역 전체에 경고"), d:L("The MEC app keeps one oneM2M group per zone whose members are the alerts containers of the tags in it. One CREATE to the group’s fanOutPoint writes the alert into all of them.","MEC 앱은 구역마다 oneM2M 그룹을 두고, 멤버는 그 구역 태그들의 alerts 컨테이너입니다. 그룹 fanOutPoint에 CREATE 한 번이면 모두에 경보가 기록됩니다."),
      code:"POST cse-in/EdgeGuard/zone_A/fopt   ty=4\n{\"m2m:cin\":{\"con\":{\"level\":\"DANGER\",\"cue\":\"WAIT\",\"forklift\":\"forklift_01\"}}}\n→ worker_01/alerts, worker_02/alerts, worker_04/alerts   (p50 8–19 ms)", chips:["group fanOutPoint","alerts ACP: create only"]},
-    {t:L("The tag polls and buzzes","태그가 폴링하고 진동"), d:L("Tags on Wi-Fi or LTE sit behind NAT and cannot take inbound calls. The CSE queues the notification in the tag's pollingChannel; the tag long-polls it and vibrates WAIT, then GO once the forklift has passed.","Wi-Fi나 LTE의 태그는 NAT 뒤에 있어 들어오는 연결을 받을 수 없습니다. CSE가 알림을 태그의 pollingChannel에 쌓고, 태그는 롱폴링으로 받아 WAIT, 지게차가 지나가면 GO로 진동합니다."),
+    {t:L("The tag polls and buzzes","태그가 폴링하고 진동"), d:L("Tags on Wi-Fi or LTE sit behind NAT and cannot take inbound calls. The CSE queues the notification in the tag’s pollingChannel; the tag long-polls it and vibrates WAIT, then GO once the forklift has passed.","Wi-Fi나 LTE의 태그는 NAT 뒤에 있어 들어오는 연결을 받을 수 없습니다. CSE가 알림을 태그의 pollingChannel에 쌓고, 태그는 롱폴링으로 받아 WAIT, 지게차가 지나가면 GO로 진동합니다."),
      code:"GET  cse-mn-a/worker_01/pch/pcu      (long poll, rr=false)\n← m2m:rqp  op=5 NOTIFY   alerts/cin  {cue: WAIT}\nPOST cse-mn-a/worker_01/pch/pcu      m2m:rsp rsc=2000", chips:["pollingChannel","NAT traversal"]},
-    {t:L("The forklift changes zone","지게차가 구역을 옮김"), d:L("MEC 021 tells the zone A app instance that forklift_01 is moving to mep-b. It hands the safety context to the zone B instance, and the forklift's twin moves make-before-break to MN-CSE B with its ACP, subscriptions and announcement. No sample is lost.","MEC 021이 구역 A 앱 인스턴스에 forklift_01이 mep-b로 간다고 알립니다. 인스턴스는 안전 컨텍스트를 구역 B 인스턴스에 넘기고, 지게차 트윈은 ACP · 구독 · 공지와 함께 make-before-break로 MN-CSE B로 옮겨 갑니다. 유실 샘플은 없습니다."),
+    {t:L("The forklift changes zone","지게차가 구역을 옮김"), d:L("MEC 021 tells the zone A app instance that forklift_01 is moving to mep-b. It hands the safety context to the zone B instance, and the forklift’s twin moves make-before-break to MN-CSE B with its ACP, subscriptions and announcement. No sample is lost.","MEC 021이 구역 A 앱 인스턴스에 forklift_01이 mep-b로 간다고 알립니다. 인스턴스는 안전 컨텍스트를 구역 B 인스턴스에 넘기고, 지게차 트윈은 ACP, 구독, 공지와 함께 make-before-break로 MN-CSE B로 옮겨 갑니다. 유실 샘플은 없습니다."),
      code:"AMS  → edgeguard-a  INTERHOST_MOVEOUT_TRIGGERED  target=edgeguard-b\nPOST edgeguard-b/ctx  {ue, last sample, risk}\nCREATE cse-mn-b/forklift_01 (+ kin, acp, sub)   AEAnnc at cse-in\nPUT  AMS  USER_CONTEXT_TRANSFER_COMPLETED  → INTERHOST_MOVEOUT_COMPLETED", chips:["MEC 021 AMS","announcement","handover 1.5–11 ms"]}
   ];
   var list=document.getElementById("steplist"), panel=document.getElementById("steppanel");
@@ -514,25 +522,25 @@ python tools/fl_deploy_demo.py</pre>
 
   /* ---------- standards ---------- */
   var ONEM2M=[
-    ["AE · container · contentInstance", L("Per-device data, decisions, alerts","디바이스별 데이터, 판단, 경보"), "TS-0001"],
+    ["AE, container, contentInstance", L("Per-device data, decisions, alerts","디바이스별 데이터, 판단, 경보"), "TS-0001"],
     ["subscription / notify", L("Positions to the MEC app, alerts to tags","위치는 MEC 앱으로, 경보는 태그로"), "TS-0001 §10.2"],
     ["accessControlPolicy + chty", L("Least privilege per device; app may only subscribe","디바이스별 최소 권한, 앱은 구독만"), "TS-0003"],
-    ["flexContainer (SDT)", L("Device, MEC, host, intent, model twins","디바이스 · MEC · 호스트 · 의도 · 모델 트윈"), "TS-0023"],
+    ["flexContainer (SDT)", L("Device, MEC, host, intent, model twins","디바이스, MEC, 호스트, 의도, 모델 트윈"), "TS-0023"],
     ["semanticDescriptor", L("SAREF query: forklifts that control speed in zone A","SAREF 질의: 구역 A에서 속도 제어 지게차"), "TS-0034"],
     ["group fanOutPoint", L("Zone broadcast; swarm context in one read","구역 방송, 스웜 컨텍스트 한 번에 읽기"), "TS-0001 §9.6.13"],
     ["pollingChannel", L("Tags behind NAT","NAT 뒤 태그"), "TS-0001 §9.6.21"],
     ["announcement", L("Moving devices visible at the IN-CSE","이동 디바이스를 IN-CSE에서 조회"), "TS-0001 §9.6.26"],
-    ["MQTT binding · HTTPS", L("Devices on MQTT/TLS, apps on HTTPS","디바이스는 MQTT/TLS, 앱은 HTTPS"), "TS-0010 · TS-0009"],
+    ["MQTT binding, HTTPS", L("Devices on MQTT/TLS, apps on HTTPS","디바이스는 MQTT/TLS, 앱은 HTTPS"), "TS-0010, TS-0009"],
     ["Mcc registration", L("Zone MN-CSEs under the IN-CSE","구역 MN-CSE를 IN-CSE 아래에"), "TS-0001"],
-    ["FL resources", L("Task, participant, round, model lineage","작업 · 참여자 · 라운드 · 모델 계보"), "TR-0084"],
-    ["MEC integration", L("Interworking, handover, FL, swarm (clause 7)","연동 · 핸드오버 · 연합학습 · 스웜(7절)"), "TR-0077"]
+    ["FL resources", L("Task, participant, round, model lineage","작업, 참여자, 라운드, 모델 계보"), "TR-0084"],
+    ["MEC integration", L("Interworking, handover, FL, swarm (clause 7)","연동, 핸드오버, 연합학습, 스웜(7절)"), "TR-0077"]
   ];
   var MEC=[
-    ["MEC 013 Location", L("Positions, zone events, geofences, worker–forklift distance","위치 · 구역 이벤트 · 지오펜스 · 작업자-지게차 거리"), "GS MEC 013"],
+    ["MEC 013 Location", L("Positions, zone events, geofences, worker–forklift distance","위치, 구역 이벤트, 지오펜스, 작업자-지게차 거리"), "GS MEC 013"],
     ["MEC 012 RNIS", L("Per-UE signal strength into egs:rdLnk","단말별 신호 세기를 egs:rdLnk로"), "GS MEC 012"],
-    ["MEC 011 Mp1", L("READY, service registry with a oneM2M pointer, discovery","READY, oneM2M 위치를 담은 서비스 등록 · 탐색"), "GS MEC 011"],
+    ["MEC 011 Mp1", L("READY, service registry with a oneM2M pointer, discovery","READY, oneM2M 위치를 담은 서비스 등록, 탐색"), "GS MEC 011"],
     ["MEC 021 AMS", L("App mobility as handover trigger, context transfer","앱 이동을 핸드오버 트리거로, 컨텍스트 전송"), "GS MEC 021"],
-    ["MEC 010-2 style LCM", L("Instantiate, query, terminate app instances (containers)","앱 인스턴스(컨테이너) 생성 · 조회 · 종료"), "GS MEC 010-2"],
+    ["MEC 010-2 style LCM", L("Instantiate, query, terminate app instances (containers)","앱 인스턴스(컨테이너) 생성, 조회, 종료"), "GS MEC 010-2"],
     ["AdvantEDGE scenario", L("Two-zone warehouse, 5G small cells","두 구역 창고, 5G 스몰셀"), "ETSI MEC Sandbox"]
   ];
   function fill(id, rows){ var tb=document.getElementById(id); rows.forEach(function(r){ tb.appendChild(el("tr",null,'<td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td class="spec">'+r[2]+'</td>')); }); }
@@ -540,31 +548,31 @@ python tools/fl_deploy_demo.py</pre>
 
   /* ---------- CI grid (results/*.json on main) ---------- */
   var CI=[
-    ["Firmware in the loop · HTTP",6,L("Unmodified ESP32 firmware compiled for a PC","원본 ESP32 펌웨어를 PC용으로 컴파일")],
-    ["Firmware · MQTT/TLS",8,L("Same firmware over the oneM2M MQTT binding","같은 펌웨어를 oneM2M MQTT 바인딩으로")],
-    ["Firmware · mutual TLS",8,L("Device certificate, no password","단말 인증서, 비밀번호 없음")],
-    ["SDT data model",7,L("Twins, label discovery, SAREF query, onboarding","트윈 · 라벨 탐색 · SAREF 질의 · 등록")],
+    ["Firmware in the loop, HTTP",6,L("Unmodified ESP32 firmware compiled for a PC","원본 ESP32 펌웨어를 PC용으로 컴파일")],
+    ["Firmware, MQTT/TLS",8,L("Same firmware over the oneM2M MQTT binding","같은 펌웨어를 oneM2M MQTT 바인딩으로")],
+    ["Firmware, mutual TLS",8,L("Device certificate, no password","단말 인증서, 비밀번호 없음")],
+    ["SDT data model",7,L("Twins, label discovery, SAREF query, onboarding","트윈, 라벨 탐색, SAREF 질의, 등록")],
     ["CSE handover",10,L("3–11 ms interruption, 0 lost","중단 3~11 ms, 유실 0")],
     ["Handover failover",8,L("Zone CSE dies → next zone ≈ 0.3 s","구역 CSE 장애 → 옆 구역 약 0.3초")],
     ["Mobility via MEC",10,L("Zone events trigger the handover; RSRP crossover","구역 이벤트가 핸드오버 트리거, RSRP 교차")],
     ["MEC platform APIs",10,L("Mp1, AMS handover, geofence, distance","Mp1, AMS 핸드오버, 지오펜스, 거리")],
-    ["AI safety agent · MCP",9,L("4 MCP servers, 15 validated tool calls","MCP 서버 4개, 검증된 도구 호출 15회")],
-    ["Federated learning",8,L("2 s error 0.604 → 0.486 m; dropout, late join","2초 오차 0.604 → 0.486 m, 이탈 · 늦은 참여")],
+    ["AI safety agent, MCP",9,L("4 MCP servers, 15 validated tool calls","MCP 서버 4개, 검증된 도구 호출 15회")],
+    ["Federated learning",8,L("2 s error 0.604 → 0.486 m; dropout, late join","2초 오차 0.604 → 0.486 m, 이탈, 늦은 참여")],
     ["FL deployed by orchestrator",9,L("Intent → deploy → train → aggregate → infer","의도 → 배포 → 학습 → 집계 → 추론")],
     ["Zone broadcast",9,L("One request to 3 tags behind NAT","NAT 뒤 태그 3개에 요청 한 번")],
-    ["Orchestration · threads",11,L("Placement, crash, re-placement","배치 · 장애 · 재배치")],
-    ["Orchestration · containers",12,L("One container per instance, ≈ 2–3 s recovery","인스턴스마다 컨테이너, 약 2~3초 복구")],
+    ["Orchestration, threads",11,L("Placement, crash, re-placement","배치, 장애, 재배치")],
+    ["Orchestration, containers",12,L("One container per instance, ≈ 2–3 s recovery","인스턴스마다 컨테이너, 약 2~3초 복구")],
     ["Forklift swarm",9,L("Same conflict-free schedule on every member","모든 멤버가 같은 무충돌 일정")],
-    ["Model delivery",8,L("Canary, activate, shadow, roll back","카나리 · 활성화 · 섀도 · 롤백")],
+    ["Model delivery",8,L("Canary, activate, shadow, roll back","카나리, 활성화, 섀도, 롤백")],
     ["Alerts over MQTT",6,L("CSE → tag notifications on the MQTT binding, p50 ≈ 10 ms","CSE → 태그 알림을 MQTT 바인딩으로, p50 약 10 ms")],
     ["oneM2M tutorial",5,L("Plain-HTTP safety app from the tutorial","튜토리얼의 HTTP 안전 앱")],
     ["Secured transport",10,L("MQTT/TLS + HTTPS; 6 attacks refused","MQTT/TLS + HTTPS, 공격 6종 거부")],
-    ["Device identity",7,L("Revoked, foreign and missing certs refused","폐기 · 외부 · 없는 인증서 거부")],
-    ["Soak test with faults",14,L("Burst, churn, outage, CSE state loss: alerts back in 2.1 s","폭주 · 변동 · 단절 · CSE 상태 유실: 경보 2.1초 만에 복구")]
+    ["Device identity",7,L("Revoked, foreign and missing certs refused","폐기, 외부, 없는 인증서 거부")],
+    ["Soak test with faults",14,L("Burst, churn, outage, CSE state loss: alerts back in 2.1 s","폭주, 변동, 단절, CSE 상태 유실: 경보 2.1초 만에 복구")]
   ];
   var grid=document.getElementById("ci-grid"), total=0;
   CI.forEach(function(c){ total+=c[1]; grid.appendChild(el("div",{"class":"run"},'<b>'+c[0]+'</b><span class="n">'+c[1]+'/'+c[1]+'</span><span class="bar-m" aria-hidden="true"></span><small>'+c[2]+'</small>')); });
-  document.getElementById("ci-total").innerHTML = L(total+" checks · "+CI.length+" demos passing", "검사 "+total+"개 · 데모 "+CI.length+"종 통과");
+  document.getElementById("ci-total").innerHTML = L(total+" checks, "+CI.length+" demos passing", "검사 "+total+"개, 데모 "+CI.length+"종 통과");
 
   /* ---------- results chart ---------- */
   var R=[
@@ -607,18 +615,18 @@ python tools/fl_deploy_demo.py</pre>
   var C=[
     [1,"onem2m","Innovative use of oneM2M",L("group fanOutPoint, pollingChannel, announcement, flexContainer history, semanticDescriptor, accessControlObjectDetails, label discovery, MQTT binding.","group fanOutPoint, pollingChannel, announcement, flexContainer 이력, semanticDescriptor, accessControlObjectDetails, 라벨 탐색, MQTT 바인딩."),[["README","README.md#onem2m-in-edgeguard"],["zones","docs/transport-security.md"]]],
     [2,"onem2m","Communication protocols",L("Devices on oneM2M MQTT over TLS down to the firmware, alerts back to tags as MQTT notifications, apps on HTTPS, NAT tags on pollingChannel, ESP-NOW D2D, MCP for the agent.","펌웨어까지 oneM2M MQTT over TLS, 태그 경보도 MQTT 알림으로, 앱은 HTTPS, NAT 태그는 pollingChannel, ESP-NOW D2D, 에이전트는 MCP."),[["transport","docs/transport-security.md"]]],
-    [3,"onem2m","Innovative scenarios",L("Many devices → CSE → many apps: MEC app, agent, FL, orchestrator, dashboard. Alert routing, onboarding, mobility and swarm use oneM2M features, not app code.","여러 단말 → CSE → 여러 앱(MEC 앱 · 에이전트 · 연합학습 · 오케스트레이터 · 대시보드). 경보 · 등록 · 이동 · 스웜을 앱 코드가 아닌 oneM2M 기능으로."),[["scenario","docs/estimed-mapping.md"]]],
-    [10,"onem2m","Security and privacy",L("Per-device certificates with mutual TLS, CRL revocation and rotation; per-originator broker ACL; ACP per device and app; trajectories stay on site.","단말별 인증서 + 상호 TLS, CRL 폐기 · 교체, 발신자별 브로커 ACL, 디바이스 · 앱별 ACP, 궤적은 현장에만."),[["security","docs/transport-security.md"]]],
+    [3,"onem2m","Innovative scenarios",L("Many devices → CSE → many apps: MEC app, agent, FL, orchestrator, dashboard. Alert routing, onboarding, mobility and swarm use oneM2M features, not app code.","여러 단말 → CSE → 여러 앱(MEC 앱, 에이전트, 연합학습, 오케스트레이터, 대시보드). 경보, 등록, 이동, 스웜을 앱 코드가 아닌 oneM2M 기능으로."),[["scenario","docs/estimed-mapping.md"]]],
+    [10,"onem2m","Security and privacy",L("Per-device certificates with mutual TLS, CRL revocation and rotation; per-originator broker ACL; ACP per device and app; trajectories stay on site.","단말별 인증서 + 상호 TLS, CRL 폐기, 교체, 발신자별 브로커 ACL, 디바이스, 앱별 ACP, 궤적은 현장에만."),[["security","docs/transport-security.md"]]],
     [11,"onem2m","Data interoperability",L("SDT domain org.edgeguard.safety plus standard cod:bat, SAREF semantic queries, devices onboarded by label.","SDT 도메인 org.edgeguard.safety + 표준 cod:bat, SAREF 시맨틱 질의, 라벨로 디바이스 등록."),[["data model","docs/data-model.md"]]],
-    [12,"onem2m","CSE handover",L("Location, availability, MEC zone-event and MEC 021 AMS triggers; state, subscriptions and ACP restored; 1.5–11 ms interruption, 0 lost.","위치 · 가용성 · MEC 구역 이벤트 · MEC 021 AMS 트리거, 상태 · 구독 · ACP 복원, 중단 1.5~11 ms, 유실 0."),[["handover","docs/handover.md"],["mobility","docs/mobility.md"]]],
-    [13,"mec","oneM2M–MEC app deployment",L("One intent resource → discover, select, deploy, register, provision; one container per instance; re-placed in ≈ 2–3 s after a host crash.","의도 리소스 하나 → 탐색 · 선택 · 배포 · 등록 · 프로비저닝, 인스턴스마다 컨테이너, 호스트 장애 후 약 2~3초에 재배치."),[["orchestration","docs/orchestration.md"]]],
-    [14,"mec","Federated learning (TR-0084)",L("Clients deployed by the orchestrator per site; discover, train, aggregate, infer at the edge; dropout, late join; canary and rollback into the risk engine.","사이트마다 오케스트레이터가 클라이언트 배포, 탐색 · 학습 · 집계 · 엣지 추론, 이탈 · 늦은 참여, 위험 엔진에 카나리 · 롤백."),[["FL","docs/federated-learning.md"],["delivery","docs/swarm-and-model-delivery.md"]]],
+    [12,"onem2m","CSE handover",L("Location, availability, MEC zone-event and MEC 021 AMS triggers; state, subscriptions and ACP restored; 1.5–11 ms interruption, 0 lost.","위치, 가용성, MEC 구역 이벤트, MEC 021 AMS 트리거, 상태, 구독, ACP 복원, 중단 1.5~11 ms, 유실 0."),[["handover","docs/handover.md"],["mobility","docs/mobility.md"]]],
+    [13,"mec","oneM2M–MEC app deployment",L("One intent resource → discover, select, deploy, register, provision; one container per instance; re-placed in ≈ 2–3 s after a host crash.","의도 리소스 하나 → 탐색, 선택, 배포, 등록, 프로비저닝, 인스턴스마다 컨테이너, 호스트 장애 후 약 2~3초에 재배치."),[["orchestration","docs/orchestration.md"]]],
+    [14,"mec","Federated learning (TR-0084)",L("Clients deployed by the orchestrator per site; discover, train, aggregate, infer at the edge; dropout, late join; canary and rollback into the risk engine.","사이트마다 오케스트레이터가 클라이언트 배포, 탐색, 학습, 집계, 엣지 추론, 이탈, 늦은 참여, 위험 엔진에 카나리, 롤백."),[["FL","docs/federated-learning.md"],["delivery","docs/swarm-and-model-delivery.md"]]],
     [15,"mec","Geolocation services",L("MEC 013 zone events, area geofences and worker–forklift distance subscriptions, requested from oneM2M and checked against ground truth.","MEC 013 구역 이벤트, 영역 지오펜스, 작업자-지게차 거리 구독을 oneM2M에서 요청하고 실제 위치와 대조."),[["MEC platform","docs/mec-platform.md"]]],
     [16,"mec","MEC services",L("Bidirectional MEC-IPE, RNIS signal strength as SDT, Mp1 service registry with a oneM2M pointer, AMS context transfer.","양방향 MEC-IPE, RNIS 신호 세기를 SDT로, oneM2M 위치를 담은 Mp1 서비스 등록, AMS 컨텍스트 전송."),[["MEC platform","docs/mec-platform.md"],["mobility","docs/mobility.md"]]],
-    [17,"mec","AI agents and MCP",L("Shift safety agent over 4 MCP servers (IN, two zones, ETSI MEC); multi-step workflow; state kept in oneM2M; partial report when a zone is down.","MCP 서버 4개(IN · 구역 2 · ETSI MEC) 위 근무조 안전 에이전트, 다단계 워크플로, 상태를 oneM2M에, 구역 장애 시 부분 보고."),[["agent","docs/ai-agent.md"]]],
+    [17,"mec","AI agents and MCP",L("Shift safety agent over 4 MCP servers (IN, two zones, ETSI MEC); multi-step workflow; state kept in oneM2M; partial report when a zone is down.","MCP 서버 4개(IN, 구역 2, ETSI MEC) 위 근무조 안전 에이전트, 다단계 워크플로, 상태를 oneM2M에, 구역 장애 시 부분 보고."),[["agent","docs/ai-agent.md"]]],
     [4,"pres","Quality of article",L("Published on hackster.io: hardware, resource design, protocols, measurements, oneM2M benefits, TR-0077 clause 7.","hackster.io 게시: 하드웨어, 리소스 설계, 프로토콜, 측정값, oneM2M 장점, TR-0077 7절."),[["hackster","https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309"]]],
-    [5,"pres","Quality of video",L("Narrated (3 min 31 s in the repository, 2 min 34 s on YouTube), captions: problem, architecture, live demo, firmware, mobility map, failure layers, large-scale results.","음성 내레이션(저장소 3분 31초, YouTube는 2분 34초), 자막: 문제 · 구조 · 라이브 데모 · 펌웨어 · 모빌리티 지도 · 장애 시 보호 · 대규모 결과."),[["YouTube","https://youtu.be/P2JI5ZG6PIg"]]],
-    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 21 demos in CI on every commit, contribution and security guides.","영문 · 한글 README, 빌드 · 실행 방법, 매 커밋 CI 데모 21종, 기여 · 보안 안내."),[["repository","README.md"]]],
+    [5,"pres","Quality of video",L("Narrated (3 min 31 s in the repository, 2 min 34 s on YouTube), captions: problem, architecture, live demo, firmware, mobility map, failure layers, large-scale results.","음성 내레이션(저장소 3분 31초, YouTube는 2분 34초), 자막: 문제, 구조, 라이브 데모, 펌웨어, 모빌리티 지도, 장애 시 보호, 대규모 결과."),[["YouTube","https://youtu.be/P2JI5ZG6PIg"]]],
+    [6,"pres","Quality of GitHub",L("English and Korean README, build and run steps, 21 demos in CI on every commit, contribution and security guides.","영문, 한글 README, 빌드, 실행 방법, 매 커밋 CI 데모 21종, 기여, 보안 안내."),[["repository","README.md"]]],
     [7,"pres","Promotion of oneM2M",L("Why oneM2M section, a 10-minute oneM2M tutorial run in CI, feature-to-spec tables, TR-0077 mapping, two ACME bugs reported and fixed upstream in 2026.05.3, this page.","oneM2M을 쓰는 이유, CI에서 도는 10분 oneM2M 튜토리얼, 기능-표준 표, TR-0077 매핑, ACME 버그 2건 보고 → 2026.05.3에서 수정, 이 페이지."),[["tutorial","docs/tutorial-onem2m.md"],["ACME #199","https://github.com/ankraft/ACME-oneM2M-CSE/issues/199"],["#200","https://github.com/ankraft/ACME-oneM2M-CSE/issues/200"]]]
   ];
   var rub=document.getElementById("rub");
@@ -842,7 +850,7 @@ python tools/fl_deploy_demo.py</pre>
     // zones
     ctx.strokeStyle=c.zone; ctx.lineWidth=2; ctx.setLineDash([4,5]); ctx.beginPath(); ctx.moveTo(X(40),Y(0)); ctx.lineTo(X(40),Y(H)); ctx.stroke(); ctx.setLineDash([]);
     ctx.font="600 14px "+mono; ctx.fillStyle=c.zone;
-    ctx.fillText("ZONE A · cse-mn-a", X(1), Y(H)+14); ctx.fillText("ZONE B · cse-mn-b", X(41), Y(H)+14);
+    ctx.fillText("ZONE A, cse-mn-a", X(1), Y(H)+14); ctx.fillText("ZONE B, cse-mn-b", X(41), Y(H)+14);
     if(d2d){ ctx.fillStyle=c.stop; ctx.fillText("MEC / NETWORK DOWN → D2D", X(52), Y(0)-6); }
     // D2D links
     var nLinks=0;

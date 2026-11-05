@@ -13,3 +13,10 @@ licenses apply to them, not to EdgeGuard.
 | FastAPI, Uvicorn, NumPy, Requests, PyYAML | MEC app and tools | MIT / BSD / Apache-2.0 | `requirements.txt` |
 | arduino-dw1000, ArduinoJson, ESP32 Arduino core | Firmware | Apache-2.0 / MIT / LGPL-2.1 | Build-time libraries of the sketches in `firmware/` |
 | Prometheus, Grafana | Optional monitoring profile | Apache-2.0 / AGPL-3.0 | Official images pulled unmodified by `deploy/docker-compose.yml` |
+
+## Design tools (used, not redistributed)
+
+The judge site and the browser demo were checked with these linters; no code from them is included in this repository.
+
+- **Hallmark** by Together AI, https://github.com/Nutlope/hallmark, MIT licence: `sloplint.mjs` and the Floor rules.
+- **Impeccable** by Paul Bakaus, https://github.com/pbakaus/impeccable, Apache License 2.0: `impeccable detect`.

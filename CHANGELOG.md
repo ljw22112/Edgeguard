@@ -3,6 +3,8 @@
 All notable changes. Versions follow the project's milestones; dates are 2026.
 
 ## Unreleased — 2026-11-05
+- **Browser demo** ([site/demo](https://ljw22112.github.io/Edgeguard/demo/)): the same workers and forklifts with a UWB proximity alarm and with EdgeGuard side by side; zone setting, playback speed, 15 % ignored alerts. A simplified JavaScript re-implementation, labelled as such (30 runs × 300 s: wide alarm 0 collisions at 46 %, narrowed 27 at 67 %, EdgeGuard 0 at 91 %).
+- **Design lint**: the judge site and the demo pass [Hallmark](https://github.com/Nutlope/hallmark) (MIT) `sloplint` with 0 FAIL and [Impeccable](https://github.com/pbakaus/impeccable) (Apache-2.0) `detect` with 0 anti-patterns: colour tokens, contrast on signal colours, labels in the body face, no eyebrows or middle-dot strings, 4px spacing scale, focus and active states, heading order.
 - **TR-0086 developer guide mapping** ([docs/tr0086-mapping.md](docs/tr0086-mapping.md)): option C per zone, steps 5.2–5.6 and Annex A → EdgeGuard, with CI evidence; Q&A Q24; README and MEC sandbox notes no longer say TR-0086 is unpublished.
 - **Rehearsal pack** ([docs/ko/presentation-rehearsal.md](docs/ko/presentation-rehearsal.md)): per-slide English script with Korean meaning, numbers to memorise, pronunciation, speaker split, 12 / 8–9 / 5-minute versions, 30-second Q&A answers.
 
