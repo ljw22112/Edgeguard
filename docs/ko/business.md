@@ -76,7 +76,7 @@
 
 - **표준 그대로 연동**: 디바이스마다 AE, 위험도 · 경보 · 아차사고를 oneM2M 리소스(`EdgeGuard/risk`, `alert`, `nearmiss`)로 공개하므로
   WMS · 스마트 팩토리 플랫폼 등 다른 oneM2M 앱이 구독만 하면 바로 씁니다.
-- **상호운용성 개선**: Mobius ↔ ACME 시험에서 문제 7건을 찾아 정리했고([상호운용성 노트](interop-notes.md)), ACME 측 수정 패치를 만들었습니다(`docs/acme-content-type.patch`).
+- **상호운용성 개선**: Mobius ↔ ACME ↔ tinyIoT 시험에서 문제 11건을 찾아 정리했고([상호운용성 노트](interop-notes.md)), ACME 측 수정 패치를 만들었습니다(`docs/acme-content-type.patch`).
 - **오픈소스 공개**: MIT 라이선스, 서드파티 라이선스 고지 포함. ETSI MEC Sandbox(AdvantEDGE)를 2026년 환경에서 설치하는 보정 스크립트도 공개합니다(`deploy/sandbox-host/`).
 - **표준 기반 AIoT 참조 사례**: oneM2M(데이터 · 접근제어) + ETSI MEC(위치 · 무선 정보) + 엣지 AI(예측)를 하나로 묶은 산업안전 참조 구현.
 

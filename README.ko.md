@@ -55,7 +55,7 @@
 - **데이터베이스가 아닌 허브** — 단말과 앱은 직접 통신하지 않습니다. 구독이 위치를 MEC 앱으로, 경보를 태그로 보내므로 브로커 · 폴링 코드가 없습니다.
 - **다른 앱에 열려 있음** — 경보 · 아차사고가 표준 리소스라 WMS · 리포트 도구 · 카메라 업체가 연동 작업 없이 구독할 수 있습니다.
 - **접근제어 내장** — 디바이스 AE마다 ACP로 최소 권한. CI가 매 커밋 Mobius에서 다른 단말의 위조 쓰기 차단을 확인합니다(8/8).
-- **벤더 중립, 엣지에서 클라우드까지** — 같은 코드가 KETI Mobius 3.0.1 · ACME에서 동작, 엣지 MN-CSE가 클라우드 IN-CSE에 Mcc로 등록. 상호운용성 문제 7건 정리.
+- **벤더 중립, 엣지에서 클라우드까지** — 같은 코드가 KETI Mobius 3.0.1 · ACME에서 동작하고, oneM2M 튜토리얼은 세종대 tinyIoT에서도 동작(CI). 엣지 MN-CSE가 클라우드 IN-CSE에 Mcc로 등록. 상호운용성 문제 11건 정리. EdgeGuard의 ETSI MEC 트래픽은 ETSI 공식 OpenAPI로 검증: 교환 19/19, 알림 160/160([생태계](docs/ko/ecosystem.md)).
 
 | oneM2M 기능 | 용도 | 상태 |
 |---|---|---|
@@ -229,6 +229,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [연합학습](docs/ko/federated-learning.md) | TR-0084 역할을 oneM2M 리소스로, 참여자 선택 · 이탈 · 늦은 참여, 결과 |
 | [AI 안전 에이전트](docs/ko/ai-agent.md) | MCP 서버(CSE별 oneM2M, ETSI MEC), 교대 리포트 워크플로, 라우팅, 상태 저장 |
 | [ESTIMED / TR-0077 매핑](docs/ko/estimed-mapping.md) | 배포 연속체(옵션 C), 7.1~7.4절 → EdgeGuard 기능 · 데모, 대체물 |
+| [생태계: tinyIoT, ETSI OpenAPI 검증, 커뮤니티 MCP](docs/ko/ecosystem.md) | 세 번째 CSE(tinyIoT, 기능 9/13, 튜토리얼 5/5), ETSI Forge OpenAPI 대비 MEC 트래픽 검증, 커뮤니티 onem2m-mcp 게이트웨이로 EdgeGuard 트윈 사용 |
 | [TR-0086 개발자 가이드 대응표](docs/ko/tr0086-mapping.md) | 배치 옵션 C, 5.2~5.6단계와 부록 A 기본 요소 → EdgeGuard 구현 위치, CI 확인 |
 | [MEC 플랫폼 API](docs/ko/mec-platform.md) | MEC 011 Mp1, MEC 021 AMS 핸드오버 트리거, MEC 013 영역 · 거리 구독 |
 | [MEC 모빌리티](docs/ko/mobility.md) | 이벤트 기반 양방향 MEC-IPE, MEC SDT 클래스, 네트워크 트리거 핸드오버, 모빌리티 지도 |

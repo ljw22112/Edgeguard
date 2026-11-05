@@ -1,0 +1,3258 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  contact:
+    url: https://forge.etsi.org/rep/mec/gs012-rnis-api
+  title: ETSI GS MEC 012 Radio Network Information API
+  description: The ETSI MEC ISG Radio Network Information API described using OpenAPI.
+  license:
+    name: BSD-3-Clause
+    url: https://forge.etsi.org/legal-matters
+  version: 2.2.1
+servers:
+- url: https://localhost/rni/v2
+paths:
+  /queries/rab_info:
+    get:
+      summary: Retrieve current status of Radio Access Bearer information .
+      description: The GET method is used to query information about the Radio Access Bearers.
+      operationId: QueriesRabinfoGET
+      tags:
+      - queries
+      parameters:
+      - $ref: '#/components/parameters/Query.App_ins_id'
+      - $ref: '#/components/parameters/Query.Cell_id'
+      - $ref: '#/components/parameters/Query.Ue_ipv4_address'
+      - $ref: '#/components/parameters/Query.Ue_ipv6_address'
+      - $ref: '#/components/parameters/Query.Nated_ip_address'
+      - $ref: '#/components/parameters/Query.Gtp_teid'
+      - $ref: '#/components/parameters/Query.Erab_id'
+      - $ref: '#/components/parameters/Query.Qci'
+      - $ref: '#/components/parameters/Query.Erab_mbr_dl'
+      - $ref: '#/components/parameters/Query.Erab_mbr_ul'
+      - $ref: '#/components/parameters/Query.Erab_gbr_dl'
+      - $ref: '#/components/parameters/Query.Erab_gbr_ul'
+      responses:
+        '200':
+          description: Upon success, a response body containing the Radio Access Bearer information is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  RabInfo:
+                    $ref: '#/components/schemas/RabInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+  /queries/plmn_info:
+    get:
+      summary: Retrieve current status of PLMN information.
+      description: The GET method is used to query information about the Mobile Network.
+      operationId: QueriesPlmninfoGET
+      tags:
+      - queries
+      parameters:
+      - $ref: '#/components/parameters/Query.App_ins_id1'
+      responses:
+        '200':
+          description: Upon success, a response body containing the array of Mobile Network information is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlmnInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+  /queries/s1_bearer_info:
+    get:
+      summary: Retrieve current status of S1 bearer information.
+      description: The GET method is used to query information about the S1 bearer(s).
+      operationId: QueriesS1BearerinfoGET
+      tags:
+      - queries
+      parameters:
+      - $ref: '#/components/parameters/Query.Temp_ue_id'
+      - $ref: '#/components/parameters/Query.Ue_ipv4_address'
+      - $ref: '#/components/parameters/Query.Ue_ipv6_address'
+      - $ref: '#/components/parameters/Query.Nated_ip_address'
+      - $ref: '#/components/parameters/Query.Gtp_teid'
+      - $ref: '#/components/parameters/Query.Cell_id'
+      - $ref: '#/components/parameters/Query.Erab_id1'
+      responses:
+        '200':
+          description: Upon success, a response body containing the UE S1-U bearer information is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  S1BearerInfo:
+                    $ref: '#/components/schemas/S1BearerInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+  /queries/layer2_meas:
+    get:
+      summary: Retrieve current status of layer 2 measurements information.
+      description: The GET method is used to query information about the layer 2 measurements.
+      operationId: QueriesLayer2MeasGET
+      tags:
+      - queries
+      parameters:
+      - $ref: '#/components/parameters/Query.App_ins_id'
+      - $ref: '#/components/parameters/Query.Cell_id1'
+      - $ref: '#/components/parameters/Query.Ue_ipv4_address'
+      - $ref: '#/components/parameters/Query.Ue_ipv6_address'
+      - $ref: '#/components/parameters/Query.Nated_ip_address'
+      - $ref: '#/components/parameters/Query.Gtp_teid'
+      - $ref: '#/components/parameters/Query.Dl_gbr_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Ul_gbr_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Dl_total_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Ul_total_prb_usage_cell'
+      - $ref: '#/components/parameters/Query.Received_dedicated_preambles_cell'
+      - $ref: '#/components/parameters/Query.Received_randomly_selecte_preambles_low_range_cell'
+      - $ref: '#/components/parameters/Query.Received_randomly_selected_preambles_high_range_cell'
+      - $ref: '#/components/parameters/Query.Number_of_active_ue_dl_gbr_cell'
+      - $ref: '#/components/parameters/Query.Number_of_active_ue_ul_gbr_cell'
+      - $ref: '#/components/parameters/Query.Number_of_active_ue_dl_nongbr_cell'
+      - $ref: '#/components/parameters/Query.Number_of_active_ue_ul_nongbr_cell'
+      - $ref: '#/components/parameters/Query.Dl_gbr_pdr_cell'
+      - $ref: '#/components/parameters/Query.Ul_gbr_pdr_cell'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_pdr_cell'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_pdr_cell'
+      - $ref: '#/components/parameters/Query.Dl_gbr_delay_ue'
+      - $ref: '#/components/parameters/Query.Ul_gbr_delay_ue'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_delay_ue'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_delay_ue'
+      - $ref: '#/components/parameters/Query.Dl_gbr_pdr_ue'
+      - $ref: '#/components/parameters/Query.Ul_gbr_pdr_ue'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_pdr_ue'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_pdr_ue'
+      - $ref: '#/components/parameters/Query.Dl_gbr_throughput_ue'
+      - $ref: '#/components/parameters/Query.Ul_gbr_throughput_ue'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_throughput_ue'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_throughput_ue'
+      - $ref: '#/components/parameters/Query.Dl_gbr_data_volume_ue'
+      - $ref: '#/components/parameters/Query.Ul_gbr_data_volume_ue'
+      - $ref: '#/components/parameters/Query.Dl_nongbr_data_volume_ue'
+      - $ref: '#/components/parameters/Query.Ul_nongbr_data_volume_ue'
+      responses:
+        '200':
+          description: Upon success, a response body containing the layer 2 measurements information is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  L2Meas:
+                    $ref: '#/components/schemas/L2Meas'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '414':
+          $ref: '#/components/responses/414'
+        '429':
+          $ref: '#/components/responses/429'
+  /subscriptions:
+    get:
+      summary: Retrieve a list of active subscriptions for this subscriber.
+      description: The GET method is used to request information about the subscriptions for this requestor. Upon success, the response contains entity body with the list of links to the subscriptions that are present for the requestor.
+      operationId: SubscriptionsGET
+      tags:
+      - subscriptions
+      parameters:
+      - $ref: '#/components/parameters/Query.Subscription_type'
+      responses:
+        '200':
+          description: Upon success, a response body containing the list of links to requestor's subscriptions is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  SubscriptionLinkList:
+                    $ref: '#/components/schemas/SubscriptionLinkList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+    post:
+      summary: Create a new subscription.
+      description: The POST method is used to create a new subscription to Radio Network Information notifications. Upon success, the response contains entity body describing the created subscription.
+      operationId: SubscriptionsPOST
+      tags:
+      - subscriptions
+      requestBody:
+        description: 'The entity body in the request contains data type of the specific RNI event subscription that is to be created, where the data type options are listed below and defined in clauses 6.3.2 through 6.3.9 and in clause 6.3.11:
+
+          CellChangeSubscription
+
+          RabEstSubscription
+
+          RabModSubscription
+
+          RabRelSubscription
+
+          MeasRepUeSubscription
+
+          NrMeasRepUeSubscription
+
+          MeasTaSubscription
+
+          CaReconfSubscription
+
+          S1BearerSubscription.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                CellChangeSubscription:
+                  $ref: '#/components/schemas/CellChangeSubscription'
+      responses:
+        '201':
+          description: 'Indicates successful resource creation, where the resource URI shall be returned in the HTTP Location header field.
+
+
+            In the returned NotificationSubscription structure, the created subscription is described using the appropriate data type from the list below and as defined in clauses 6.3.2 through 6.3.9 and in clause 6.3.11:
+
+            CellChangeSubscription
+
+            RabEstSubscription
+
+            RabModSubscription
+
+            RabRelSubscription
+
+            MeasRepUeSubscription
+
+            NrMeasRepUeSubscription
+
+            MeasTaSubscription
+
+            CaReconfSubscription
+
+            S1BearerSubscription.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  CellChangeSubscription:
+                    $ref: '#/components/schemas/CellChangeSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '415':
+          $ref: '#/components/responses/415'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+      callbacks:
+        notification:
+          '{$request.body#/callbackUri}':
+            post:
+              summary: Callback POST used to send a notification
+              description: Subscription notification
+              operationId: notificationPOST
+              requestBody:
+                description: Subscription notification
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        subscriptionNotification:
+                          oneOf:
+                          - $ref: '#/components/schemas/CellChangeSubscription'
+                          - $ref: '#/components/schemas/RabEstSubscription'
+                          - $ref: '#/components/schemas/RabModSubscription'
+                          - $ref: '#/components/schemas/RabRelSubscription'
+                          - $ref: '#/components/schemas/MeasRepUeSubscription'
+                          - $ref: '#/components/schemas/NrMeasRepUeSubscription'
+                          - $ref: '#/components/schemas/MeasTaSubscription'
+                          - $ref: '#/components/schemas/CaReconfSubscription'
+                          - $ref: '#/components/schemas/S1BearerSubscription'
+              responses:
+                '204':
+                  description: No content
+                '404':
+                  description: Not found
+      parameters: []
+  /subscriptions/{subscriptionId}:
+    get:
+      summary: Retrieve information on current specific subscription.
+      description: The GET method is used to retrieve information about this subscription. Upon success, the response contains entity body with the data type describing the subscription.
+      operationId: SubscriptionsGETSubscriptionid
+      tags:
+      - subscriptions
+      responses:
+        '200':
+          description: 'Upon success, a response body containing data type describing the specific RNI event subscription is returned. The allowed data types for subscriptions are defined in clauses 6.3.2 through 6.3.9 and in clause 6.3.11 and are as follows:
+
+            CellChangeSubscription
+
+            RabEstSubscription
+
+            RabModSubscription
+
+            RabRelSubscription
+
+            MeasRepUeSubscription
+
+            NrMeasRepUeSubscription
+
+            MeasTaSubscription
+
+            CaReconfSubscription
+
+            S1BearerSubscription.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  CellChangeSubscription:
+                    $ref: '#/components/schemas/CellChangeSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+    put:
+      summary: Modify existing subscription by sending a new data structure.
+      description: 'The PUT method is used to update the existing subscription. PUT method in this case has "replace" semantics. Upon successful operation, the target resource is updated with new Data Type received within the message body of the PUT request. '
+      operationId: SubscriptionsPUTSubscriptionid
+      tags:
+      - subscriptions
+      requestBody:
+        description: 'New NotificationSubscription is included as entity body of the request. The allowed data types for subscriptions are defined in clauses 6.3.2 through 6.3.9 and in clause 6.3.11 and are as follows:
+
+          CellChangeSubscription
+
+          RabEstSubscription
+
+          RabModSubscription
+
+          RabRelSubscription
+
+          MeasRepUeSubscription
+
+          NrMeasRepUeSubscription
+
+          MeasTaSubscription
+
+          CaReconfSubscription
+
+          S1BearerSubscription.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                CellChangeSubscription:
+                  $ref: '#/components/schemas/CellChangeSubscription'
+      responses:
+        '200':
+          description: 'Upon success, a response body containing data type describing the updated subscription is returned. The allowed data types for subscriptions are defined in clauses 6.3.2 through 6.3.9 and in clause 6.3.11 and are as follows:
+
+            CellChangeSubscription
+
+            RabEstSubscription
+
+            RabModSubscription
+
+            RabRelSubscription
+
+            MeasRepUeSubscription
+
+            NrMeasRepUeSubscription
+
+            MeasTaSubscription
+
+            CaReconfSubscription
+
+            S1BearerSubscription.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  CellChangeSubscription:
+                    $ref: '#/components/schemas/CellChangeSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '412':
+          $ref: '#/components/responses/412'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+    delete:
+      summary: Cancel the existing subscription.
+      description: The DELETE method is used to cancel the existing subscription. Cancellation can be made by deleting the resource that represents existing subscription.
+      operationId: SubscriptionsDELETESubscriptionid
+      tags:
+      - subscriptions
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+components:
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference according to IETF RFC 3986 that identifies the problem type
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          format: uint32
+          description: The HTTP status code for this occurrence of the problem
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence of the problem
+    Enum:
+      type: integer
+    CellId:
+      type: string
+      description: String representing the E-UTRAN Cell Identity. Encoded as a bit string (size (28)) as defined in ETSI TS 136 413 [i.3].
+    NrCellId:
+      type: string
+      description: String representing the NR Cell Identity. Encoded as a bit string (size (36)) as defined in ETSI TS 138 423 [i.17].
+    Trigger:
+      description: As defined in Ref ETSI TS 136 331 [i.7] <p>0 = NOT_AVAILABLE <p>1 = PERIODICAL_REPORT_STRONGEST_CELLS <p>2 = PERIODICAL_REPORT_STRONGEST_CELLS_FOR_SON <p>3 = PERIODICAL_REPORT_CGI <p>4 = INTRA_PERIODICAL_REPORT_STRONGEST_CELLS <p>5 = INTRA_PERIODICAL_REPORT_CGI <p>10 = EVENT_A1 <p>11 = EVENT_A2 <p>12 = EVENT_A3 <p>13 = EVENT_A4 <p>14 = EVENT_A5 <p>15 = EVENT_A6 <p>20 = EVENT_B1 <p>21 = EVENT_B2 <p>20 = EVENT_B1-NR <p>21 = EVENT_B2-NR <p>30 = EVENT_C1 <p>31 = EVENT_C2 <p>40 = EVENT_W1 <p>41 = EVENT_W2 <p>42 = EVENT_W3 <p>50 = EVENT_V1 <p>51 = EVENT_V2 <p>60 = EVENT_H1 <p>61 = EVENT_H2
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 20
+      - 21
+      - 30
+      - 31
+      - 40
+      - 41
+      - 42
+      - 50
+      - 51
+      - 60
+      - 61
+      type: integer
+    TriggerNr:
+      description: The enumeration Trigger represents specified triggers for a 5G UE Measurement Report. Full details can be found in ETSI TS 138 331 [i.13]). <p>0 = NOT_AVAILABLE <p>1 = NR_PERIODICAL <p>2 = NR_CGI <p>10 = EVENT_A1 <p>11 = EVENT_A2 <p>12 = EVENT_A3 <p>13 = EVENT_A4 <p>14 = EVENT_A5 <p>15 = EVENT_A6 <p>20 = INTER_RAT_PERIODICAL <p>21 = INTER_RAT_CGI <p>30 = EVENT_B1 <p>31 = EVENT_B2
+      enum:
+      - 0
+      - 1
+      - 2
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 20
+      - 21
+      - 30
+      - 31
+      type: integer
+    AssociateId1_:
+      properties:
+        type:
+          description: 'Numeric value (0-255) corresponding to specified type of identifier as following: <p>0 = reserved. <p>1 = UE_IPv4_ADDRESS. <p>2 = UE_IPV6_ADDRESS. <p>3 = NATED_IP_ADDRESS. <p>4 = GTP_TEID.'
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          type: integer
+        value:
+          description: Value for the identifier.
+          type: string
+    NRcgi:
+      type: object
+      properties:
+        plmn:
+          $ref: '#/components/schemas/Plmn'
+        nrCellId:
+          $ref: '#/components/schemas/NrCellId'
+      required:
+      - plmn
+      - nrCellId
+      description: New Radio Cell Global Identifier.
+    L2Meas1_:
+      properties:
+        cellInfo:
+          description: The per cell measurement information as defined below.
+          items:
+            type: object
+            properties:
+              dl_gbr_prb_usage_cell:
+                description: It indicates the PRB usage for downlink GBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS 136 423 [i.12].
+                type: integer
+              dl_nongbr_prb_usage_cell:
+                description: "It indicates (in percentage) the PRB usage for downlink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+                type: integer
+              dl_total_prb_usage_cell:
+                description: "It indicates (in percentage) the PRB usage for total downlink traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+                type: integer
+              ecgi:
+                $ref: '#/components/schemas/Ecgi'
+                description: E-UTRAN Cell Global Identifier.
+              ul_gbr_prb_usage_cell:
+                description: "It indicates (in percentage) the PRB usage for uplink GBR traffic, as defined in ETSI TS\_136\_314\_[i.11] and ETSI TS\_136 423 [i.12]."
+                type: integer
+              ul_nongbr_prb_usage_cell:
+                description: "It indicates (in percentage) the PRB usage for uplink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+                type: integer
+              ul_total_prb_usage_cell:
+                description: "It indicates (in percentage) the PRB usage for total uplink traffic, as defined in ETSI TS\_136\_314\_[i.11] and ETSI TS\_136\_423 [i.12]."
+                type: integer
+              received_dedicated_preambles_cell:
+                description: It indicates (in percentage) the received dedicated preamples, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              received_randomly_selected_preambles_high_range_cell:
+                description: It indicates (in percentage) the received randomly selected preambles in the high range, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              received_randomly_selected_preambles_low_range_cell:
+                description: It indicates (in percentage) the received randomly selected preambles in the low range, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              number_of_active_ue_dl_gbr_cell:
+                description: It indicates the number of active UEs with downlink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              number_of_active_ue_dl_nongbr_cell:
+                description: "It indicates the number of active UEs with downlink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11]."
+                type: integer
+              number_of_active_ue_ul_gbr_cell:
+                description: It indicates the number of active UEs with uplink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              number_of_active_ue_ul_nongbr_cell:
+                description: "It indicates the number of active UEs with uplink non-GBR traffic, as defined in ETSI TS\_136\_314\_[i.11]."
+                type: integer
+              dl_gbr_pdr_cell:
+                description: It indicates the packet discard rate in percentage of the downlink GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_nongbr_pdr_cell:
+                description: It indicates the packet discard rate in percentage of the downlink non-GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_gbr_pdr_cell:
+                description: It indicates the packet discard rate in percentage of the uplink GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_nongbr_pdr_cell:
+                description: It indicates the packet discard rate in percentage of the uplink non-GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+          required:
+          - ecgi
+          minItems: 0
+          type: array
+        cellUEInfo:
+          description: The per cell per UE layer 2 measurements information as defined below.
+          items:
+            type: object
+            properties:
+              associateId:
+                $ref: '#/components/schemas/AssociateId'
+                description: Identifier to associate the information for a specific UE or flow.
+              dl_gbr_delay_ue:
+                description: It indicates the packet delay of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_nongbr_delay_ue:
+                description: "It indicates the packet delay of the downlink non-GBR traffic of a UE, as defined in ETSI TS\_136\_314\_[i.11]."
+                type: integer
+              ecgi:
+                $ref: '#/components/schemas/Ecgi'
+                description: E-UTRAN Cell Global Identifier.
+              ul_gbr_delay_ue:
+                description: It indicates the packet delay of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_nongbr_delay_ue:
+                description: It indicates the packet delay of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_gbr_data_volume_ue:
+                description: It indicates the data volume of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_gbr_pdr_ue:
+                description: It indicates the packet discard rate in percentage of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_gbr_throughput_ue:
+                description: It indicates the scheduled throughput of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_nongbr_data_volume_ue:
+                description: "It indicates the data volume of the downlink non-GBR traffic of a UE, as defined in ETSI TS\_136\_314\_[i.11]."
+                type: integer
+              dl_nongbr_pdr_ue:
+                description: It indicates the packet discard rate in percentage of the downlink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              dl_nongbr_throughput_ue:
+                description: It indicates the scheduled throughput of the downlink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_gbr_data_volume_ue:
+                description: It indicates the data volume of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_gbr_pdr_ue:
+                description: It indicates the packet discard rate in percentage of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_gbr_throughput_ue:
+                description: It indicates the scheduled throughput of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_nongbr_data_volume_ue:
+                description: It indicates the data volume of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_nongbr_pdr_ue:
+                description: It indicates the packet discard rate in percentage of the uplink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+              ul_nongbr_throughput_ue:
+                description: It indicates the scheduled throughput of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+                type: integer
+          required:
+          - ecgi
+          - associateId
+          minItems: 0
+          type: array
+        timeStamp:
+          $ref: '#/components/schemas/TimeStamp'
+          description: Time stamp.
+      type: object
+      x-etsi-ref: 6.2.4a
+    InlineSubscription:
+      oneOf:
+      - $ref: '#/components/schemas/CellChangeSubscription'
+      - $ref: '#/components/schemas/RabEstSubscription'
+      - $ref: '#/components/schemas/RabModSubscription'
+      - $ref: '#/components/schemas/RabRelSubscription'
+      - $ref: '#/components/schemas/MeasRepUeSubscription'
+      - $ref: '#/components/schemas/NrMeasRepUeSubscription'
+      - $ref: '#/components/schemas/MeasTaSubscription'
+      - $ref: '#/components/schemas/CaReconfSubscription'
+      - $ref: '#/components/schemas/S1BearerSubscription'
+      discriminator:
+        propertyName: subscriptionType
+    InlineNotification:
+      oneOf:
+      - $ref: '#/components/schemas/CellChangeNotification'
+      - $ref: '#/components/schemas/RabEstNotification'
+      - $ref: '#/components/schemas/RabModNotification'
+      - $ref: '#/components/schemas/RabRelNotification'
+      - $ref: '#/components/schemas/MeasRepUeNotification'
+      - $ref: '#/components/schemas/NrMeasRepUeNotification'
+      - $ref: '#/components/schemas/MeasTaNotification'
+      - $ref: '#/components/schemas/CaReconfNotification'
+      - $ref: '#/components/schemas/S1BearerNotification'
+      discriminator:
+        propertyName: notificationType
+    PlmnInfo:
+      x-etsi-ref: 6.2.2
+      type: object
+      properties:
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        plmn:
+          description: Public Land Mobile Network Identity.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Plmn'
+      required:
+      - appInstanceId
+      - plmn
+    RabInfo:
+      x-etsi-ref: 6.2.3
+      type: object
+      properties:
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        requestId:
+          description: Unique identifier allocated by the service consumer for the RAB Information request.
+          type: string
+        cellUserInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellUserInfo'
+      required:
+      - appInstanceId
+      - requestId
+    S1BearerInfo:
+      description: S1 bearer information as defined below.
+      type: object
+      minItems: 1
+      properties:
+        erabId:
+          description: The attribute that uniquely identifies a S1 bearer for a specific UE, as defined in ETSI TS 136 413 [i.3].
+          type: integer
+        enbInfo:
+          $ref: '#/components/schemas/EnbInfo'
+        sGwInfo:
+          $ref: '#/components/schemas/SGwInfo'
+      required:
+      - erabId
+      - enbInfo
+      - sGwInfo
+    L2Meas:
+      x-etsi-ref: 6.2.4a
+      type: object
+      properties:
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        cellInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellInfo'
+        cellUEInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellUEInfo'
+    CellChangeSubscription:
+      x-etsi-ref: 6.3.2
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "CellChangeSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: 'Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause 6.12a. '
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaAssocHo:
+          $ref: '#/components/schemas/FilterCriteriaAssocHo'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaAssocHo
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    RabEstSubscription:
+      x-etsi-ref: 6.3.3
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "RabEstSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause\_6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaQci:
+          $ref: '#/components/schemas/FilterCriteriaQci'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaQci
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    RabModSubscription:
+      x-etsi-ref: 6.3.4
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "RabModSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause\_6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaQci:
+          $ref: '#/components/schemas/FilterCriteriaQci1'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaQci
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    RabRelSubscription:
+      x-etsi-ref: 6.3.5
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "RabRelSubscription".
+          type: string
+        callbackReference:
+          description: URI selected by the service consumer to receive notifications on the subscribed RNIS information. This shall be included both in the request and in response. If not present, the service consumer is requesting the use of a Websocket for notifications. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: 'Set to TRUE by the service consumer to request a test notification on the callbackReference URI to determine if it is reachable by RNIS for notifications. '
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications, either in place of the callbackReference URI or if it is not reachable via the test notification.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaQci:
+          $ref: '#/components/schemas/FilterCriteriaQci1'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaQci
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to select the method to be used for notifications and to return only that method in the response."
+    MeasRepUeSubscription:
+      x-etsi-ref: 6.3.6
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "MeasRepUeSubscription".
+          type: string
+        callbackReference:
+          description: URI selected by the service consumer to receive notifications on the subscribed RNIS information. This shall be included both in the request and in response. If not present, the service consumer is requesting the use of a Websocket for notifications. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: 'Set to TRUE by the service consumer to request a test notification on the callbackReference URI to determine if it is reachable by RNIS for notifications. '
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications, either in place of the callbackReference URI or if it is not reachable via the test notification.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaAssocTri:
+          $ref: '#/components/schemas/FilterCriteriaAssocTri'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaAssocTri
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to select the method to be used for notifications and to return only that method in the response."
+    MeasTaSubscription:
+      x-etsi-ref: 6.3.7
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "MeasTaSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: 'Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause 6.12a. '
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaAssoc:
+          $ref: '#/components/schemas/FilterCriteriaAssoc'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaAssoc
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    CaReconfSubscription:
+      x-etsi-ref: 6.3.8
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "CaReconfSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: 'Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause 6.12a. '
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaAssoc:
+          $ref: '#/components/schemas/FilterCriteriaAssoc'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaAssoc
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    S1BearerSubscription:
+      x-etsi-ref: 6.3.9
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "S1BearerSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [6], as described in clause\_6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        eventType:
+          description: "Description of the subscribed event. The event is included both in the request and in the response. \nFor the eventType, the following values are currently defined:\n0 = RESERVED.\n1 = S1_BEARER_ESTABLISH.\n2 = S1_BEARER_MODIFY.\n3 = S1_BEARER_RELEASE."
+          type: array
+          minItems: 1
+          items:
+            type: integer
+        S1BearerSubscriptionCriteria:
+          $ref: '#/components/schemas/S1BearerSubscriptionCriteria'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - eventType
+      - S1BearerSubscriptionCriteria
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    SubscriptionLinkList:
+      x-etsi-ref: 6.3.10
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/_links1'
+      required:
+      - _links
+    NrMeasRepUeSubscription:
+      x-etsi-ref: 6.3.11
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "NrMeasRepUeSubscription".
+          type: string
+        callbackReference:
+          description: URI exposed by the client on which to receive notifications via HTTP. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS\_MEC\_009\_[6], as described in clause 6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between RNIS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteriaNrMrs:
+          $ref: '#/components/schemas/FilterCriteriaNrMrs'
+        expiryDeadline:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - subscriptionType
+      - filterCriteriaNrMrs
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to RNIS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [6], as described in clause 6.12a."
+    WebsockNotifConfig:
+      x-etsi-ref: 6.3.12
+      type: object
+      properties:
+        websocketUri:
+          description: Set by RNIS to indicate to the service consumer the Websocket URI to be used for delivering notifications.
+          type: string
+          format: uri
+        requestWebsocketUri:
+          description: Set to true by the service consumer to indicate that Websocket delivery is requested.
+          type: boolean
+    CellChangeNotification:
+      x-etsi-ref: 6.4.2
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "CellChangeNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        srcEcgi:
+          description: E-UTRAN Cell Global Identifier of the source cell.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        trgEcgi:
+          description: E-UTRAN Cell Global Identifier of the target cell. See note.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        hoStatus:
+          type: integer
+          description: 'Indicate the status of the UE handover procedure. Values are defined as following:
+
+            1 = IN_PREPARATION.
+
+            2 = IN_EXECUTION.
+
+            3 = COMPLETED.
+
+            4 = REJECTED.
+
+            5 = CANCELLED.'
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+        tempUeId:
+          $ref: '#/components/schemas/TempUeId'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - srcEcgi
+      - trgEcgi
+      - hoStatus
+      - _links
+      - subscription
+      description: "|-\n  NOTE:\tCardinality N is valid only in case of statuses IN_PREPARATION, REJECTED and CANCELLED."
+    RabEstNotification:
+      x-etsi-ref: 6.4.3
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "RabEstNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: '0 to N identifiers to bind the event for a specific UE or flow. '
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        erabId:
+          description: The attribute that uniquely identifies a Radio Access bearer for specific UE as defined in ETSI TS 136 413 [i.3].
+          type: integer
+        erabQosParameters:
+          $ref: '#/components/schemas/ErabQosParameters1'
+        tempUeId:
+          $ref: '#/components/schemas/TempUeId1'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - erabId
+      - _links
+      - subscription
+    RabModNotification:
+      x-etsi-ref: 6.4.4
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "RabModNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: '0 to N identifiers to bind the event for a specific UE or flow. '
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        erabId:
+          description: The attribute that uniquely identifies a Radio Access bearer for specific UE as defined in ETSI TS 136 413 [i.3].
+          type: integer
+        erabQosParameters:
+          $ref: '#/components/schemas/ErabQosParameters2'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - erabId
+      - _links
+      - subscription
+    RabRelNotification:
+      x-etsi-ref: 6.4.5
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "RabRelNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: 0 to N identifiers to bind the event for a specific UE or flow as defined below.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        erabReleaseInfo:
+          $ref: '#/components/schemas/ErabReleaseInfo'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - erabReleaseInfo
+      - _links
+      - subscription
+    MeasRepUeNotification:
+      x-etsi-ref: 6.4.6
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "MeasRepUeNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier of the Primary serving Cell (PCell), as defined in ETSI TS 136 331 [i.7].
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        rsrp:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrpEx:
+          description: Extended Reference Signal Received Power, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        rsrq:
+          description: Reference Signal Received Quality as defined in ETSI TS 136 214 [i.5].
+          type: integer
+          format: uint8
+        rsrqEx:
+          description: Extended Reference Signal Received Quality, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        sinr:
+          description: "Reference Signal \"Signal to Interference plus Noise Ratio\", with value mapping defined in ETSI TS\_136\_133\_[i.16]."
+          type: integer
+          format: uint8
+        trigger:
+          description: Corresponds to a specific E-UTRAN UE Measurement Report trigger.
+          $ref: '#/components/schemas/Trigger'
+          type: object
+        eutranNeighbourCellMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/EutranNeighbourCellMeasInfo'
+        carrierAggregationMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarrierAggregationMeasInfo'
+        heightUe:
+          description: Indicates height of the UE in meters relative to the sea level as defined in ETSI TS 136 331 [i.7].
+          type: integer
+        newRadioMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewRadioMeasInfo'
+        newRadioMeasNeiInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewRadioMeasNeiInfo'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - rsrp
+      - rsrq
+      - trigger
+      - _links
+      - subscription
+    MeasTaNotification:
+      x-etsi-ref: 6.4.7
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "MeasTaNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        timingAdvance:
+          description: The timing advance as defined in ETSI TS 136 214 [i.5].
+          type: integer
+          format: uint32
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - timingAdvance
+      - _links
+      - subscription
+    CaReconfNotification:
+      x-etsi-ref: 6.4.8
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "CaReconfNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        secondaryCellAdd:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecondaryCellAdd'
+        secondaryCellRemove:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecondaryCellRemove'
+        carrierAggregationMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarrierAggregationMeasInfo1'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - ecgi
+      - _links
+      - subscription
+    ExpiryNotification:
+      x-etsi-ref: 6.4.9
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "ExpiryNotification"
+          type: string
+        timeStamp:
+          description: Time stamp of the notification.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        _links:
+          $ref: '#/components/schemas/_links2'
+        expiryDeadline:
+          description: Time stamp of the notification expiry.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+      required:
+      - notificationType
+      - _links
+      - expiryDeadline
+    S1BearerNotification:
+      x-etsi-ref: 6.4.10
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "S1BearerNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        s1Event:
+          type: string
+          description: The subscribed event that triggered this notification in S1BearerSubscription.
+          enum:
+          - SEE_DESCRIPTION
+        s1UeInfo:
+          $ref: '#/components/schemas/S1UeInfo1'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - s1Event
+      - s1UeInfo
+      - _links
+      - subscription
+    NrMeasRepUeNotification:
+      x-etsi-ref: 6.4.11
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "NrMeasRepUeNotification".
+          type: string
+        timeStamp:
+          description: Time stamp.
+          $ref: '#/components/schemas/TimeStamp'
+          type: object
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        triggerNr:
+          description: Corresponds to a specific 5G UE Measurement Report trigger.
+          $ref: '#/components/schemas/TriggerNr'
+          type: object
+        servCellMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServCellMeasInfo'
+        nrNeighCellMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NrNeighCellMeasInfo'
+        eutraNeighCellMeasInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/EutraNeighCellMeasInfo'
+        _links:
+          description: Links to resources related to this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/_links'
+        subscription:
+          description: A link to the related subscription.
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkType'
+      required:
+      - notificationType
+      - triggerNr
+      - _links
+      - subscription
+    TestNotification:
+      x-etsi-ref: 6.4.12
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "TestNotification".
+          type: string
+        _links:
+          $ref: '#/components/schemas/_links3'
+      required:
+      - notificationType
+      - _links
+    LinkType:
+      x-etsi-ref: 6.5.2
+      type: object
+      properties:
+        href:
+          description: URI referring to a resource
+          type: string
+          format: uri
+      required:
+      - href
+    TimeStamp:
+      x-etsi-ref: 6.5.3
+      type: object
+      properties:
+        seconds:
+          description: The seconds part of the time. Time is defined as Unixtime since January 1, 1970, 00:00:00 UTC.
+          type: integer
+          format: uint32
+        nanoSeconds:
+          description: The nanoseconds part of the time. Time is defined as Unix-time since January 1, 1970, 00:00:00 UTC.
+          type: integer
+          format: uint32
+      required:
+      - seconds
+      - nanoSeconds
+    AssociateId:
+      x-etsi-ref: 6.5.4
+      type: object
+      properties:
+        type:
+          type: integer
+          description: 'Numeric value (0-255) corresponding to specified type of identifier as following:
+
+            0 = reserved.
+
+            1= UE_IPv4_ADDRESS.
+
+            2 = UE_IPV6_ADDRESS.
+
+            3 = NATED_IP_ADDRESS.
+
+            4 = GTP_TEID.'
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        value:
+          description: Value for the identifier.
+          type: string
+      required:
+      - type
+      - value
+    Plmn:
+      x-etsi-ref: 6.5.5
+      type: object
+      properties:
+        mcc:
+          description: The Mobile Country Code part of PLMN Identity as defined in ETSI TS 136 413 [i.3].
+          type: string
+        mnc:
+          description: The Mobile Network Code part of PLMN Identity as defined in ETSI TS 136 413 [i.3].
+          type: string
+      required:
+      - mcc
+      - mnc
+    Ecgi:
+      x-etsi-ref: 6.5.6
+      type: object
+      properties:
+        plmn:
+          description: Public Land Mobile Network Identity.
+          $ref: '#/components/schemas/Plmn'
+          type: object
+        cellId:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/CellId'
+          type: object
+      required:
+      - plmn
+      - cellId
+    Nrcgi:
+      x-etsi-ref: 6.5.7
+      type: object
+      properties:
+        plmn:
+          description: Public Land Mobile Network Identity.
+          $ref: '#/components/schemas/Plmn'
+          type: object
+        nrCellId:
+          description: NR Cell Global Identifier.
+          $ref: '#/components/schemas/NrCellId'
+          type: object
+      required:
+      - plmn
+      - nrCellId
+    RsIndexResults:
+      x-etsi-ref: 6.5.8
+      type: object
+      properties:
+        resultsSsbIndexes:
+          description: Beam level measurement results based on SS/PBCH related measurements.
+          $ref: '#/components/schemas/ResultsPerSsbIndexList'
+          type: object
+        resultsCsiRsIndexes:
+          description: Beam level measurement results based on CSI-RS related measurements.
+          $ref: '#/components/schemas/ResultsPerCsiRsIndexList'
+          type: object
+      required:
+      - resultsSsbIndexes
+      - resultsCsiRsIndexes
+    ResultsPerSsbIndexList:
+      x-etsi-ref: 6.5.9
+      type: object
+      properties:
+        resultsPerSsbIndex:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultsPerSsbIndex'
+    ResultsPerCsiRsIndexList:
+      x-etsi-ref: 6.5.10
+      type: object
+      properties:
+        resultsPerCsiRsIndex:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultsPerCsiRsIndex'
+    MeasQuantityResultsNr:
+      x-etsi-ref: 6.5.11
+      type: object
+      properties:
+        rsrp:
+          description: "Reference Signal Received Power as defined in ETSI TS\_138 331 [i.13]."
+          type: integer
+          format: uint8
+        rsrq:
+          description: "Reference Signal Received Quality as defined in ETSI TS\_138 331 [i.13]."
+          type: integer
+          format: uint8
+        sinr:
+          description: Reference Signal to Interference & Noise Ratio as defined in ETSI TS 138 331 [i.13].
+          type: integer
+          format: uint8
+    QosInformation:
+      description: The QoS information for the E-RAB.
+      type: object
+      properties:
+        erabMbrDl:
+          description: This attribute indicates the maximum downlink ERAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabMbrUl:
+          description: This attribute indicates the maximum uplink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrDl:
+          description: This attribute indicates the guaranteed downlink ERAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrUl:
+          description: This attribute indicates the guaranteed uplink ERAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+      required:
+      - erabMbrDl
+      - erabMbrUl
+      - erabGbrDl
+      - erabGbrUl
+    ErabQosParameters:
+      description: QoS parameters for the E-RAB as defined below.
+      type: object
+      properties:
+        qci:
+          description: "QoS Class Identifier as defined in ETSI TS\_123\_401\_[i.4]."
+          type: integer
+        qosInformation:
+          $ref: '#/components/schemas/QosInformation'
+      required:
+      - qci
+    ErabInfo:
+      description: Information on E-RAB as defined below.
+      type: object
+      minItems: 1
+      properties:
+        erabId:
+          description: "The attribute that uniquely identifies a Radio Access bearer for specific UE as defined in ETSI TS\_136\_413\_[i.3]."
+          type: integer
+        erabQosParameters:
+          $ref: '#/components/schemas/ErabQosParameters'
+      required:
+      - erabId
+    UeInfo:
+      description: Information on UEs in the specific cell as defined below.
+      type: object
+      minItems: 1
+      properties:
+        associateId:
+          description: 0 to N identifiers to associate the event for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        erabInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErabInfo'
+      required:
+      - erabInfo
+    CellUserInfo:
+      description: The information on users per cell as defined below.
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        ueInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/UeInfo'
+      required:
+      - ecgi
+      - ueInfo
+    TempUeId:
+      description: The temporary identifier allocated for the specific UE as defined below.
+      type: object
+      properties:
+        mmec:
+          description: MMEC as defined in ETSI TS 136 413 [i.3].
+          type: string
+        mtmsi:
+          description: M-TMSI as defined in ETSI TS 136 413 [i.3].
+          type: string
+      required:
+      - mmec
+      - mtmsi
+    EnbInfo:
+      description: S1 bearer information on eNB side as defined below.
+      type: object
+      properties:
+        ipAddress:
+          description: eNB transport layer address of this S1 bearer.
+          type: string
+        tunnelId:
+          description: eNB GTP-U TEID of this S1 bearer.
+          type: string
+      required:
+      - ipAddress
+      - tunnelId
+    SGwInfo:
+      description: S1 bearer information on GW side as defined below.
+      type: object
+      properties:
+        ipAddress:
+          description: SGW transport layer address of this S1 bearer.
+          type: string
+        tunnelId:
+          description: SGW GTP-U TEID of this S1 bearer.
+          type: string
+      required:
+      - ipAddress
+      - tunnelId
+    S1BearerInfoDetailed:
+      description: S1 bearer information as defined below.
+      type: object
+      minItems: 1
+      properties:
+        erabId:
+          description: The attribute that uniquely identifies a S1 bearer for a specific UE, as defined in ETSI TS 136 413 [i.3].
+          type: integer
+        enbInfo:
+          $ref: '#/components/schemas/EnbInfo'
+        sGwInfo:
+          $ref: '#/components/schemas/SGwInfo'
+      required:
+      - erabId
+      - enbInfo
+      - sGwInfo
+    S1UeInfo:
+      description: Information on a specific UE as defined below.
+      type: object
+      minItems: 1
+      properties:
+        tempUeId:
+          $ref: '#/components/schemas/TempUeId'
+        associateId:
+          description: 1 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        s1BearerInfoDetailed:
+          type: array
+          items:
+            $ref: '#/components/schemas/S1BearerInfoDetailed'
+      required:
+      - associateId
+      - ecgi
+      - s1BearerInfoDetailed
+    CellInfo:
+      description: The per cell measurement information as defined below.
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        dl_gbr_prb_usage_cell:
+          description: It indicates the PRB usage for downlink GBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS 136 423 [i.12].
+          type: integer
+        ul_gbr_prb_usage_cell:
+          description: "It indicates (in percentage) the PRB usage for uplink GBR traffic, as defined in ETSI TS\_136\_314\_[i.11] and ETSI TS\_136 423 [i.12]."
+          type: integer
+        dl_nongbr_prb_usage_cell:
+          description: "It indicates (in percentage) the PRB usage for downlink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+          type: integer
+        ul_nongbr_prb_usage_cell:
+          description: "It indicates (in percentage) the PRB usage for uplink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+          type: integer
+        dl_total_prb_usage_cell:
+          description: "It indicates (in percentage) the PRB usage for total downlink traffic, as defined in ETSI TS\_136\_314 [i.11] and ETSI TS\_136 423 [i.12]."
+          type: integer
+        ul_total_prb_usage_cell:
+          description: "It indicates (in percentage) the PRB usage for total uplink traffic, as defined in ETSI TS\_136\_314\_[i.11] and ETSI TS\_136\_423 [i.12]."
+          type: integer
+        received_dedicated_preambles_cell:
+          description: It indicates (in percentage) the received dedicated preambles, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        received_randomly_selected _preambles_low_range_cell:
+          description: It indicates (in percentage) the received randomly selected preambles in the low range, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        received_randomly_selected _preambles_high_range_cell:
+          description: It indicates (in percentage) the received randomly selected preambles in the high range, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        number_of_active_ue_dl_gbr_cell:
+          description: It indicates the number of active UEs with downlink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        number_of_active_ue_ul_gbr_cell:
+          description: It indicates the number of active UEs with uplink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        number_of_active_ue_dl_nongbr_cell:
+          description: "It indicates the number of active UEs with downlink non-GBR traffic, as defined in ETSI TS\_136\_314 [i.11]."
+          type: integer
+        number_of_active_ue_ul_nongbr_cell:
+          description: "It indicates the number of active UEs with uplink non-GBR traffic, as defined in ETSI TS\_136\_314\_[i.11]."
+          type: integer
+        dl_gbr_pdr_cell:
+          description: It indicates the packet discard rate in percentage of the downlink GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_gbr_pdr_cell:
+          description: It indicates the packet discard rate in percentage of the uplink GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_nongbr_pdr_cell:
+          description: It indicates the packet discard rate in percentage of the downlink nonGBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_nongbr_pdr_cell:
+          description: It indicates the packet discard rate in percentage of the uplink nonGBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+      required:
+      - ecgi
+    CellUEInfo:
+      description: The per cell per UE layer 2 measurements information as defined below.
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        associateId:
+          description: Identifier to associate the information for a specific UE or flow.
+          $ref: '#/components/schemas/AssociateId'
+          type: object
+        dl_gbr_delay_ue:
+          description: It indicates the packet delay of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_gbr_delay_ue:
+          description: It indicates the packet delay of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_nongbr_delay_ue:
+          description: "It indicates the packet delay of the downlink non-GBR traffic of a UE, as defined in ETSI TS\_136\_314\_[i.11]."
+          type: integer
+        ul_nongbr_delay_ue:
+          description: It indicates the packet delay of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_gbr_pdr_ue:
+          description: It indicates the packet discard rate in percentage of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_gbr_pdr_ue:
+          description: It indicates the packet discard rate in percentage of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_nongbr_pdr_ue:
+          description: It indicates the packet discard rate in percentage of the downlink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_nongbr_pdr_ue:
+          description: It indicates the packet discard rate in percentage of the uplink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_gbr_throughput_ue:
+          description: It indicates the scheduled throughput of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_gbr_throughput_ue:
+          description: It indicates the scheduled throughput of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_nongbr_throughput_ue:
+          description: It indicates the scheduled throughput of the downlink nonGBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_nongbr_throughput_ue:
+          description: It indicates the scheduled throughput of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_gbr_data_volume_ue:
+          description: It indicates the data volume of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        ul_gbr_data_volume_ue:
+          description: It indicates the data volume of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+        dl_nongbr_data_volume_ue:
+          description: "It indicates the data volume of the downlink non-GBR traffic of a UE, as defined in ETSI TS\_136\_314\_[i.11]."
+          type: integer
+        ul_nongbr_data_volume_ue:
+          description: It indicates the data volume of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+          type: integer
+      required:
+      - ecgi
+      - associateId
+    _links:
+      description: Hyperlink related to the resource. This shall be only included in the HTTP responses and in HTTP PUT requests.
+      type: object
+      properties:
+        self:
+          description: Self-referring URI. The URI shall be unique within the RNI API as it acts as an ID for the subscription.
+          $ref: '#/components/schemas/LinkType'
+          type: object
+      required:
+      - self
+    FilterCriteriaAssocHo:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        associateId:
+          description: 0 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        hoStatus:
+          description: 'In case hoStatus is not included in the subscription request, the default value 3 = COMPLETED shall be used and included in the response:
+
+            1 = IN_PREPARATION.
+
+            2 = IN_EXECUTION.
+
+            3 = COMPLETED.
+
+            4 = REJECTED.
+
+            5 = CANCELLED.'
+          type: array
+          minItems: 0
+          items:
+            type: integer
+    FilterCriteriaQci:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        qci:
+          description: QoS Class Identifier as defined in ETSI TS 123 401 [i.4].
+          type: integer
+      required:
+      - qci
+    FilterCriteriaQci1:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        erabId:
+          description: The attribute that uniquely identifies a Radio Access bearer for specific UE as defined in ETSI TS 136 413 [i.3].
+          type: integer
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        qci:
+          description: QoS Class Identifier as defined in ETSI TS 123 401 [i.4].
+          type: integer
+      required:
+      - erabId
+      - qci
+    FilterCriteriaAssocTri:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        associateId:
+          description: 0 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        trigger:
+          description: Corresponds to a specific E-UTRAN UE Measurement Report trigger.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Trigger'
+    FilterCriteriaAssoc:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        associateId:
+          description: 0 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+    S1BearerSubscriptionCriteria:
+      description: As defined below.
+      type: object
+      properties:
+        associateId:
+          description: 0 to N identifiers to associate the events for a specific UE or a flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        erabId:
+          description: The attribute that uniquely identifies a S1 bearer for a specific UE, as defined in ETSI TS 136 413 [i.3].
+          type: array
+          minItems: 0
+          items:
+            type: integer
+    Subscription:
+      description: A link to a subscription.
+      type: object
+      minItems: 0
+      properties:
+        href:
+          description: The URI referring to the subscription.
+          type: string
+          format: uri
+        subscriptionType:
+          description: "Type of the subscription. The string shall be set according to the \"subscriptionType\" attribute of the associated subscription data type event defined in clause\_6.3."
+          type: string
+      required:
+      - href
+      - subscriptionType
+    _links1:
+      description: List of hyperlinks related to the resource.
+      type: object
+      properties:
+        self:
+          description: ''
+          $ref: '#/components/schemas/LinkType'
+          type: object
+        subscription:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subscription'
+      required:
+      - self
+    FilterCriteriaNrMrs:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Unique identifier for the MEC application instance.
+          type: string
+        associateId:
+          description: 0 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        nrcgi:
+          description: NR Cell Global Identifier.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/NRcgi'
+        triggerNr:
+          description: Corresponds to a specific 5G UE Measurement Report trigger.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/TriggerNr'
+    QosInformation1:
+      description: The QoS information for the E-RAB.
+      type: object
+      properties:
+        erabMbrDl:
+          description: This attribute indicates the maximum downlink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabMbrUl:
+          description: This attribute indicates the maximum uplink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrDl:
+          description: This attribute indicates the guaranteed downlink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrUl:
+          description: This attribute indicates the guaranteed uplink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+      required:
+      - erabMbrDl
+      - erabMbrUl
+      - erabGbrDl
+      - erabGbrUl
+    ErabQosParameters1:
+      description: QoS parameters for the E-RAB as defined below.
+      type: object
+      properties:
+        qci:
+          description: QoS Class Identifier as defined in ETSI TS 123 401 [i.4].
+          type: integer
+        qosInformation:
+          $ref: '#/components/schemas/QosInformation1'
+      required:
+      - qci
+    TempUeId1:
+      description: 'The temporary identifier allocated for the specific UE as defined below. '
+      type: object
+      properties:
+        mmec:
+          description: MMEC as defined in ETSI TS 136 413 [i.3].
+          type: string
+        mtmsi:
+          description: M-TMSI as defined in ETSI TS 136 413 [i.3].
+          type: string
+      required:
+      - mmec
+      - mtmsi
+    QosInformation2:
+      description: The QoS Information for the E-RAB as defined below.
+      type: object
+      properties:
+        erabMbrDl:
+          description: This attribute indicates the maximum downlink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabMbrUl:
+          description: This attribute indicates the maximum uplink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrDl:
+          description: This attribute indicates the guaranteed downlink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+        erabGbrUl:
+          description: This attribute indicates the guaranteed uplink E-RAB Bit Rate as defined in ETSI TS 123 401 [i.4] for this bearer.
+          type: integer
+      required:
+      - erabMbrDl
+      - erabMbrUl
+      - erabGbrDl
+      - erabGbrUl
+    ErabQosParameters2:
+      description: The QoS parameters for the E-RAB as defined below.
+      type: object
+      properties:
+        qci:
+          description: QoS Class Identifier as defined in ETSI TS 123 401 [i.4].
+          type: integer
+        qosInformation:
+          $ref: '#/components/schemas/QosInformation2'
+      required:
+      - qci
+    ErabReleaseInfo:
+      description: The release information for the E-RAB as defined below.
+      type: object
+      properties:
+        erabId:
+          description: The attribute that uniquely identifies a Radio Access bearer for specific UE as defined in ETSI TS 136 413 [i.3].
+          type: integer
+      required:
+      - erabId
+    EutranNeighbourCellMeasInfo:
+      description: This parameter can be repeated to contain information of all the neighbouring cells up to N.
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        rsrp:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrpEx:
+          description: Extended Reference Signal Received Power, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        rsrq:
+          description: "Reference Signal Received Quality as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrqEx:
+          description: Extended Reference Signal Received Quality, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        sinr:
+          description: "Reference Signal \"Signal to Interference plus Noise Ratio\", with value mapping defined in ETSI TS\_136\_133\_[i.16]."
+          type: integer
+          format: uint8
+      required:
+      - ecgi
+    CarrierAggregationMeasInfo:
+      description: This parameter can be repeated to contain information of all the carriers assign for Carrier Aggregation up to N.
+      type: object
+      minItems: 0
+      properties:
+        cellIdSrv:
+          description: E-UTRAN Cell Identity of a Secondary serving Cell (SCell), as defined in ETSI TS 136 331 [i.7].
+          $ref: '#/components/schemas/CellId'
+          type: object
+        rsrpSrv:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrpSrvEx:
+          description: Extended Reference Signal Received Power, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        rsrqSrv:
+          description: "Reference Signal Received Quality as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrqSrvEx:
+          description: Extended Reference Signal Received Quality, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        sinrSrv:
+          description: "Reference Signal \"Signal to Interference plus Noise Ratio\", with value mapping defined in ETSI TS\_136\_133\_[i.16]."
+          type: integer
+          format: uint8
+        cellIdNei:
+          description: E-UTRAN Cell Identity of the best neighbouring cell (NCell) associated with the SCell, as defined in ETSI TS 136 331 [i.7].
+          $ref: '#/components/schemas/CellId'
+          type: object
+        rsrpNei:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrpNeiEx:
+          description: Extended Reference Signal Received Power, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        rsrqNei:
+          description: "Reference Signal Received Quality as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint8
+        rsrqNeiEx:
+          description: Extended Reference Signal Received Quality, with value mapping defined in ETSI TS 136 133 [i.16].
+          type: integer
+          format: uint8
+        sinrNei:
+          description: "Reference Signal \"Signal to Interference plus Noise Ratio\", with value mapping defined in ETSI TS\_136\_133\_[i.16]."
+          type: integer
+          format: uint8
+      required:
+      - cellIdSrv
+    NrSCellInfo:
+      description: Secondary serving cell(s) info.
+      type: object
+      minItems: 1
+      properties:
+        nrSCellPlmn:
+          description: Public land mobile network identities.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Plmn'
+        nrSCellGId:
+          description: Cell Global Identifier, as defined in ETSI TS 138 331 [i.13].
+          $ref: '#/components/schemas/NrCellId'
+          type: object
+      required:
+      - nrSCellPlmn
+      - nrSCellGId
+    NrSCs:
+      description: Measurement quantities concerning the secondary serving cells.
+      type: object
+      properties:
+        nrSCellInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NrSCellInfo'
+        nrSCellRsrp:
+          description: Reference Signal Received Power measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrSCellRsrq:
+          description: Reference Signal Received Quality measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrSCellRssi:
+          description: Reference signal SINR measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+      required:
+      - nrSCellInfo
+    NrBNCellInfo:
+      description: Best neighbours of the secondary serving cell(s) info.
+      type: object
+      minItems: 1
+      properties:
+        nrBNCellPlmn:
+          description: Public land mobile network identities.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Plmn'
+        nrBNCellGId:
+          description: Cell Global Identifier, as defined in ETSI TS 138 331 [i.13].
+          $ref: '#/components/schemas/NrCellId'
+          type: object
+      required:
+      - nrBNCellPlmn
+      - nrBNCellGId
+    NrBNCs:
+      description: Measurement quantities concerning the best neighbours of the secondary serving cells.
+      type: object
+      properties:
+        nrBNCellInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NrBNCellInfo'
+        nrBNCellRsrp:
+          description: Reference Signal Received Power measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrBNCellRsrq:
+          description: Reference Signal Received Quality measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrBNCellRssi:
+          description: Reference signal SINR measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+      required:
+      - nrBNCellInfo
+    NewRadioMeasInfo:
+      description: 5G New Radio secondary serving cells measurement information.
+      type: object
+      minItems: 0
+      properties:
+        nrCarrierFreq:
+          description: "ARFCN applicable for a downlink, uplink or bi-directional (TDD) NR carrier frequency, as defined in ETSI TS\_138\_101 [i.15]."
+          type: integer
+          format: uint32
+        nrSCs:
+          $ref: '#/components/schemas/NrSCs'
+        nrBNCs:
+          $ref: '#/components/schemas/NrBNCs'
+      required:
+      - nrCarrierFreq
+      - nrSCs
+    NrNCellInfo:
+      description: 5G NR neighbour cell info.
+      type: object
+      minItems: 1
+      properties:
+        nrNCellPlmn:
+          description: Public land mobile network identities.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Plmn'
+        nrNCellGId:
+          description: Cell Global Identifier, as defined in ETSI TS 138 331 [i.13].
+          $ref: '#/components/schemas/NrCellId'
+          type: object
+      required:
+      - nrNCellPlmn
+      - nrNCellGId
+    NewRadioMeasNeiInfo:
+      description: Measurement quantities concerning the 5G NR neighbours.
+      type: object
+      minItems: 0
+      properties:
+        nrNCellInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/NrNCellInfo'
+        nrNCellRsrp:
+          description: Reference Signal Received Power measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrNCellRsrq:
+          description: Reference Signal Received Quality measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        nrNCellRssi:
+          description: Reference signal SINR measurement according to mapping table in ETSI TS 138 133 [i.14].
+          type: integer
+          format: uint8
+        rsIndexResults:
+          description: Beam level measurements results of a NR cell.
+          $ref: '#/components/schemas/RsIndexResults'
+          type: object
+      required:
+      - nrNCellInfo
+    SecondaryCellAdd:
+      description: ''
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+      required:
+      - ecgi
+    SecondaryCellRemove:
+      description: ''
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+      required:
+      - ecgi
+    CarrierAggregationMeasInfo1:
+      description: This parameter can be repeated to contain information of all the carriers assign for Carrier Aggregation up to N.
+      type: object
+      minItems: 0
+      properties:
+        cellIdSrv:
+          description: E-UTRAN Cell Identity of a Carrier Aggregation serving cell.
+          $ref: '#/components/schemas/CellId'
+          type: object
+        rsrpSrv:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint32
+        rsrqSrv:
+          description: Reference Signal Received Quality as defined in ETSI TS 136 214 [i.5].
+          type: integer
+          format: uint32
+        cellIdNei:
+          description: E-UTRAN Cell Identity of the best neighbouring cell associated with the Carrier Aggregation serving cell.
+          $ref: '#/components/schemas/CellId'
+          type: object
+        rsrpNei:
+          description: "Reference Signal Received Power as defined in ETSI TS\_136 214 [i.5]."
+          type: integer
+          format: uint32
+        rsrqNei:
+          description: Reference Signal Received Quality as defined in ETSI TS 136 214 [i.5].
+          type: integer
+          format: uint32
+      required:
+      - cellIdSrv
+      - cellIdNei
+    _links2:
+      description: List of hyperlinks related to the resource.
+      type: object
+      properties:
+        subscription:
+          description: URI identifying the subscription which has expired.
+          $ref: '#/components/schemas/LinkType'
+          type: object
+      required:
+      - subscription
+    S1UeInfo1:
+      description: Information on specific UE that matches the criteria in S1BearerSubscription as defined below.
+      type: object
+      properties:
+        tempUeId:
+          $ref: '#/components/schemas/TempUeId'
+        associateId:
+          description: 0 to N identifiers to associate the information for a specific UE or flow.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Ecgi'
+        s1BearerInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/S1BearerInfo'
+      required:
+      - ecgi
+      - s1BearerInfo
+    SCell:
+      description: Measurement information relating to this serving cell.
+      type: object
+      properties:
+        measQuantityResultsSsbCell:
+          description: Measurement quantity results relating to the Synchronization Signal Block.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        measQuantityResultsCsiRsCell:
+          description: Measurement quantity results relating to the Channel State Information Reference Signal.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        rsIndexResults:
+          description: Beam level measurement information
+          $ref: '#/components/schemas/RsIndexResults'
+          type: object
+    NCell:
+      description: Measurement information relating to the best neighbour of this serving cell.
+      type: object
+      properties:
+        measQuantityResultsSsbCell:
+          description: Measurement quantity results relating to the Synchronization Signal Block.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        measQuantityResultsCsiRsCell:
+          description: Measurement quantity results relating to the Channel State Information Reference Signal.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        rsIndexResults:
+          description: Beam level measurement information
+          $ref: '#/components/schemas/RsIndexResults'
+          type: object
+    ServCellMeasInfo:
+      description: This parameter can be repeated to contain information of all the serving cells up to N.
+      type: object
+      minItems: 0
+      properties:
+        nrcgi:
+          description: NR Cell Global Identifier.
+          $ref: '#/components/schemas/Nrcgi'
+          type: object
+        sCell:
+          $ref: '#/components/schemas/SCell'
+        nCell:
+          $ref: '#/components/schemas/NCell'
+      required:
+      - nrcgi
+      - sCell
+    NrNeighCellMeasInfo:
+      description: This parameter can be repeated to contain measurement information of all the neighbouring cells up to N. It shall not be included if eutraNeighCellMeasInfo is included.
+      type: object
+      minItems: 0
+      properties:
+        nrcgi:
+          description: NR Cell Global Identifier.
+          $ref: '#/components/schemas/Nrcgi'
+          type: object
+        measQuantityResultsSsbCell:
+          description: Measurement quantity results relating to the Synchronization Signal Block of the neighbouring cells.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        measQuantityResultsCsiRsCell:
+          description: Measurement quantity results relating to the Channel State Information Reference Signal of the neighbouring cells.
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+        rsIndexResults:
+          description: Beam level measurement information.
+          $ref: '#/components/schemas/RsIndexResults'
+          type: object
+      required:
+      - nrcgi
+    EutraNeighCellMeasInfo:
+      description: This parameter can be repeated to contain measurement information of all the neighbouring cells up to N. It shall not be included if nrNeighCellMeasInfo is included.
+      type: object
+      minItems: 0
+      properties:
+        ecgi:
+          description: E-UTRAN Cell Global Identifier.
+          $ref: '#/components/schemas/Ecgi'
+          type: object
+        rsrp:
+          description: "Reference Signal Received Power as defined in ETSI TS\_138 331 [i.13]."
+          type: integer
+          format: uint8
+        rsrq:
+          description: Reference Signal Received Quality as defined in ETSI TS 138 331 [i.13].
+          type: integer
+          format: uint8
+        sinr:
+          description: "Reference Signal plus Interference Noise Ratio as defined in ETSI TS\_138\_331\_[i.13]."
+          type: integer
+          format: uint8
+      required:
+      - ecgi
+    _links3:
+      description: 'Hyperlink related to the resource. '
+      type: object
+      properties:
+        subscription:
+          description: URI identifying the subscription for the test notification.
+          $ref: '#/components/schemas/LinkType'
+          type: object
+      required:
+      - subscription
+    ResultsPerSsbIndex:
+      description: ''
+      type: object
+      minItems: 0
+      properties:
+        ssbIndex:
+          description: ''
+          type: integer
+          format: uint8
+        ssbResults:
+          description: ''
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+      required:
+      - ssbIndex
+    ResultsPerCsiRsIndex:
+      description: ''
+      type: object
+      minItems: 0
+      properties:
+        csiRsIndex:
+          description: ''
+          type: integer
+          format: uint8
+        csiRsResults:
+          description: ''
+          $ref: '#/components/schemas/MeasQuantityResultsNr'
+          type: object
+      required:
+      - csiRsIndex
+  responses:
+    '200':
+      description: OK
+    '204':
+      description: No Content
+    '400':
+      description: 'Bad Request: used to indicate that incorrect parameters were passed to the request.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '401':
+      description: 'Unauthorized: used when the client did not submit credentials.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '403':
+      description: 'Forbidden: operation is not allowed given the current status of the resource.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '404':
+      description: 'Not Found: used when a client provided a URI that cannot be mapped to a valid resource URI.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '406':
+      description: 'Not Acceptable: used to indicate that the server cannot provide the any of the content formats supported by the client.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '412':
+      description: 'Precondition failed: used when a condition has failed during conditional requests, e.g. when using ETags to avoid write conflicts when using PUT'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '414':
+      description: 'URI Too Long: used to indicate that the server is refusing to process the request because the request URI is longer than the server is willing or able to process.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '415':
+      description: 'Unsupported Media Type: used to indicate that the server or the client does not support the content type of the entity body.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '422':
+      description: 'Unprocessable Entity: used to indicate that the server understands the content type of the request entity and that the syntax of the request entity is correct but that the server is unable to process the contained instructions. This error condition can occur if an JSON request body is syntactically correct but semantically incorrect, for example if the target area for the request is considered too large. This error condition can also occur if the capabilities required by the request are not supported.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '429':
+      description: 'Too Many Requests: used when a rate limiter has triggered.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  parameters:
+    Query.App_ins_id:
+      description: Comma separated list of application instance identifiers.
+      name: app_ins_id
+      in: query
+      required: false
+      x-exportParamName: Query.App_ins_id
+      schema:
+        type: string
+    Query.Cell_id:
+      description: Comma separated list of E-UTRAN Cell Identities.
+      name: cell_id
+      in: query
+      required: false
+      x-exportParamName: Query.Cell_id
+      schema:
+        $ref: '#/components/schemas/CellId'
+    Query.Ue_ipv4_address:
+      description: Comma separated list of IE IPv4 addresses as defined for the type for AssociateId in clause 6.5.4.
+      name: ue_ipv4_address
+      in: query
+      required: false
+      x-exportParamName: Query.Ue_ipv4_address
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Ue_ipv6_address:
+      description: Comma separated list of IE IPv6 addresses as defined for the type for AssociateId in clause 6.5.4.
+      name: ue_ipv6_address
+      in: query
+      required: false
+      x-exportParamName: Query.Ue_ipv6_address
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Nated_ip_address:
+      description: Comma separated list of NATed IP addresses as defined for the type for AssociateId in clause 6.5.4.
+      name: nated_ip_address
+      in: query
+      required: false
+      x-exportParamName: Query.Nated_ip_address
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Gtp_teid:
+      description: Comma separated list of GTP TEID addresses as defined for the type for AssociateId in clause 6.5.4.
+      name: gtp_teid
+      in: query
+      required: false
+      x-exportParamName: Query.Gtp_teid
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Erab_id:
+      description: E-RAB identifier.
+      name: erab_id
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_id
+      schema:
+        type: integer
+    Query.Qci:
+      description: QoS Class Identifier as defined in ETSI TS 123 401 [i.4].
+      name: qci
+      in: query
+      required: false
+      x-exportParamName: Query.Qci
+      schema:
+        type: integer
+    Query.Erab_mbr_dl:
+      description: "Maximum downlink E-RAB Bit Rate as defined in ETSI TS\_123\_401 [i.4]."
+      name: erab_mbr_dl
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_mbr_dl
+      schema:
+        type: integer
+    Query.Erab_mbr_ul:
+      description: "Maximum uplink E-RAB Bit Rate as defined in ETSI TS\_123\_401\_[i.4]."
+      name: erab_mbr_ul
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_mbr_ul
+      schema:
+        type: integer
+    Query.Erab_gbr_dl:
+      description: "Guaranteed downlink E-RAB Bit Rate as defined in ETSI TS\_123\_401 [i.4]."
+      name: erab_gbr_dl
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_gbr_dl
+      schema:
+        type: integer
+    Query.Erab_gbr_ul:
+      description: "Guaranteed uplink E-RAB Bit Rate as defined in ETSI TS\_123\_401 [i.4]."
+      name: erab_gbr_ul
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_gbr_ul
+      schema:
+        type: integer
+    Query.App_ins_id1:
+      description: Comma separated list of application instance identifiers.
+      name: app_ins_id
+      in: query
+      required: true
+      x-exportParamName: Query.App_ins_id1
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Temp_ue_id:
+      description: Comma separated list of temporary identifiers allocated for the specific UEs as defined in ETSI TS 136 413 [i.3].
+      name: temp_ue_id
+      in: query
+      required: false
+      x-exportParamName: Query.Temp_ue_id
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Erab_id1:
+      description: Comma separated list of E-RAB identifiers.
+      name: erab_id
+      in: query
+      required: false
+      x-exportParamName: Query.Erab_id1
+      schema:
+        type: array
+        items:
+          type: integer
+    Query.Cell_id1:
+      description: "Comma separated list of E-UTRAN Cell Identities each defined as a bit string (size (28)), as defined in ETSI TS\_136\_413 [i.3]."
+      name: cell_id
+      in: query
+      required: false
+      x-exportParamName: Query.Cell_id1
+      schema:
+        type: array
+        items:
+          type: string
+    Query.Dl_gbr_prb_usage_cell:
+      description: "It indicates the PRB usage for downlink GBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS\_136\_423\_[i.12]."
+      name: dl_gbr_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_prb_usage_cell
+      schema:
+        type: integer
+    Query.Ul_gbr_prb_usage_cell:
+      description: "It indicates (in percentage) the PRB usage for uplink GBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS\_136\_423\_[i.12]."
+      name: ul_gbr_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_prb_usage_cell
+      schema:
+        type: integer
+    Query.Dl_nongbr_prb_usage_cell:
+      description: It indicates (in percentage) the PRB usage for downlink nonGBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS 136 423 [i.12].
+      name: dl_nongbr_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_prb_usage_cell
+      schema:
+        type: integer
+    Query.Ul_nongbr_prb_usage_cell:
+      description: "It indicates (in percentage) the PRB usage for uplink nonGBR traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS\_136\_423 [i.12]."
+      name: ul_nongbr_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_prb_usage_cell
+      schema:
+        type: integer
+    Query.Dl_total_prb_usage_cell:
+      description: "It indicates (in percentage) the PRB usage for total downlink traffic, as defined in ETSI TS 136 314 [i.11] and ETSI TS\_136\_423 [i.12]."
+      name: dl_total_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_total_prb_usage_cell
+      schema:
+        type: integer
+    Query.Ul_total_prb_usage_cell:
+      description: "It indicates (in percentage) the PRB usage for total uplink traffic, as defined in ETSI TS 136 314 [i.11] and \nETSI\_TS\_136\_423 [i.12]."
+      name: ul_total_prb_usage_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_total_prb_usage_cell
+      schema:
+        type: integer
+    Query.Received_dedicated_preambles_cell:
+      description: It indicates (in percentage) the received dedicated preamples, as defined in ETSI TS 136 314 [i.11].
+      name: received_dedicated_preambles_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Received_dedicated_preambles_cell
+      schema:
+        type: integer
+    Query.Received_randomly_selecte_preambles_low_range_cell:
+      description: "It indicates (in percentage) the received randomly selected preambles in the low range, as defined in ETSI TS\_136\_314\_[i.11]."
+      name: received_randomly_selecte_preambles_low_range_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Received_randomly_selecte_preambles_low_range_cell
+      schema:
+        type: integer
+    Query.Received_randomly_selected_preambles_high_range_cell:
+      description: "It indicates (in percentage) the received randomly selected preambles in the high range, as defined in ETSI TS\_136\_314\_[i.11]."
+      name: received_randomly_selected_preambles_high_range_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Received_randomly_selected_preambles_high_range_cell
+      schema:
+        type: integer
+    Query.Number_of_active_ue_dl_gbr_cell:
+      description: It indicates the number of active UEs with downlink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+      name: number_of_active_ue_dl_gbr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Number_of_active_ue_dl_gbr_cell
+      schema:
+        type: integer
+    Query.Number_of_active_ue_ul_gbr_cell:
+      description: It indicates the number of active UEs with uplink GBR traffic, as defined in ETSI TS 136 314 [i.11].
+      name: number_of_active_ue_ul_gbr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Number_of_active_ue_ul_gbr_cell
+      schema:
+        type: integer
+    Query.Number_of_active_ue_dl_nongbr_cell:
+      description: It indicates the number of active UEs with downlink non-GBR traffic, as defined in ETSI TS 136 314 [i.11].
+      name: number_of_active_ue_dl_nongbr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Number_of_active_ue_dl_nongbr_cell
+      schema:
+        type: integer
+    Query.Number_of_active_ue_ul_nongbr_cell:
+      description: It indicates the number of active UEs with uplink non-GBR traffic, as defined in ETSI TS 136 314 [i.11].
+      name: number_of_active_ue_ul_nongbr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Number_of_active_ue_ul_nongbr_cell
+      schema:
+        type: integer
+    Query.Dl_gbr_pdr_cell:
+      description: "It indicates the packet discard rate in percentage of the downlink GBR traffic in a cell, as defined in ETSI TS\_136\_314\_[i.11]."
+      name: dl_gbr_pdr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_pdr_cell
+      schema:
+        type: integer
+    Query.Ul_gbr_pdr_cell:
+      description: It indicates the packet discard rate in percentage of the uplink GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+      name: ul_gbr_pdr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_pdr_cell
+      schema:
+        type: integer
+    Query.Dl_nongbr_pdr_cell:
+      description: "It indicates the packet discard rate in percentage of the downlink non-GBR traffic in a cell, as defined in ETSI TS\_136\_314 [i.11]."
+      name: dl_nongbr_pdr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_pdr_cell
+      schema:
+        type: integer
+    Query.Ul_nongbr_pdr_cell:
+      description: It indicates the packet discard rate in percentage of the uplink non-GBR traffic in a cell, as defined in ETSI TS 136 314 [i.11].
+      name: ul_nongbr_pdr_cell
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_pdr_cell
+      schema:
+        type: integer
+    Query.Dl_gbr_delay_ue:
+      description: It indicates the packet delay of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_gbr_delay_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_delay_ue
+      schema:
+        type: integer
+    Query.Ul_gbr_delay_ue:
+      description: It indicates the packet delay of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_gbr_delay_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_delay_ue
+      schema:
+        type: integer
+    Query.Dl_nongbr_delay_ue:
+      description: It indicates the packet delay of the downlink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_nongbr_delay_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_delay_ue
+      schema:
+        type: integer
+    Query.Ul_nongbr_delay_ue:
+      description: It indicates the packet delay of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_nongbr_delay_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_delay_ue
+      schema:
+        type: integer
+    Query.Dl_gbr_pdr_ue:
+      description: "It indicates the packet discard rate in percentage of the downlink GBR traffic of a UE, as defined in ETSI TS\_136\_314\_[i.11]."
+      name: dl_gbr_pdr_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_pdr_ue
+      schema:
+        type: integer
+    Query.Ul_gbr_pdr_ue:
+      description: It indicates the packet discard rate in percentage of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_gbr_pdr_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_pdr_ue
+      schema:
+        type: integer
+    Query.Dl_nongbr_pdr_ue:
+      description: "It indicates the packet discard rate in percentage of the downlink non-GBR traffic of a UE, as defined in ETSI TS\_136\_314 [i.11]."
+      name: dl_nongbr_pdr_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_pdr_ue
+      schema:
+        type: integer
+    Query.Ul_nongbr_pdr_ue:
+      description: It indicates the packet discard rate in percentage of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_nongbr_pdr_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_pdr_ue
+      schema:
+        type: integer
+    Query.Dl_gbr_throughput_ue:
+      description: It indicates the scheduled throughput of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_gbr_throughput_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_throughput_ue
+      schema:
+        type: integer
+    Query.Ul_gbr_throughput_ue:
+      description: It indicates the scheduled throughput of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_gbr_throughput_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_throughput_ue
+      schema:
+        type: integer
+    Query.Dl_nongbr_throughput_ue:
+      description: It indicates the scheduled throughput of the downlink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_nongbr_throughput_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_throughput_ue
+      schema:
+        type: integer
+    Query.Ul_nongbr_throughput_ue:
+      description: It indicates the scheduled throughput of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_nongbr_throughput_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_throughput_ue
+      schema:
+        type: integer
+    Query.Dl_gbr_data_volume_ue:
+      description: It indicates the data volume of the downlink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_gbr_data_volume_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_gbr_data_volume_ue
+      schema:
+        type: integer
+    Query.Ul_gbr_data_volume_ue:
+      description: It indicates the data volume of the uplink GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_gbr_data_volume_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_gbr_data_volume_ue
+      schema:
+        type: integer
+    Query.Dl_nongbr_data_volume_ue:
+      description: It indicates the data volume of the downlink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: dl_nongbr_data_volume_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Dl_nongbr_data_volume_ue
+      schema:
+        type: integer
+    Query.Ul_nongbr_data_volume_ue:
+      description: It indicates the data volume of the uplink non-GBR traffic of a UE, as defined in ETSI TS 136 314 [i.11].
+      name: ul_nongbr_data_volume_ue
+      in: query
+      required: false
+      x-exportParamName: Query.Ul_nongbr_data_volume_ue
+      schema:
+        type: integer
+    Query.Subscription_type:
+      description: "Query parameter to filter on a specific subscription type. Permitted values:\ncell_change\tCell Change \nrab_est\tRAB Establishment\nrab_mod\tRAB Modification\nrab_rel\tRAB Release\nmeas_rep_ue\tUE Measurement Report\nnr_meas_rep_ue\t5G UE Measurement Report\ntiming_advance_ue\tUE Timing Advance\nca_reconf\tCarrier Aggregation Reconfig\ns1_bearer\tS1 Bearer Notification ."
+      name: subscription_type
+      in: query
+      required: false
+      x-exportParamName: Query.Subscription_type
+      schema:
+        type: string
+

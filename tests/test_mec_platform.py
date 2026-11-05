@@ -69,11 +69,11 @@ def test_ams_moveout_trigger_and_completion(mec):
     mec["put"]("fk", 45, 10, "zoneB")
     platform.step(mec["last"])
     (url, n), = mec["sent"]
-    assert url == "http://cb/a" and n["mobilityStatus"] == "INTERHOST_MOVEOUT_TRIGGERED"
+    assert url == "http://cb/a" and n["mobilityStatus"] == 1                       # INTERHOST_MOVEOUT_TRIGGERED (ETSI MEC 021 code)
     assert n["targetAppInfo"]["appInstanceId"] == "edgeguard-b"
     assert n["targetAppInfo"]["commInterface"]["ipAddresses"][0] == {"host": "10.0.0.2", "port": 9000}
     a.context_transferred("fk")
-    assert mec["sent"][-1][1]["mobilityStatus"] == "INTERHOST_MOVEOUT_COMPLETED"
+    assert mec["sent"][-1][1]["mobilityStatus"] == 2      # INTERHOST_MOVEOUT_COMPLETED
     # a's subscription filters on its own instance: b's move back is not sent to a
     mec["put"]("fk", 30, 10, "zoneA")
     platform.step(mec["last"])
@@ -112,6 +112,6 @@ def test_area_enter_leave_and_distance(mec):
     area = [(x, b["userAreaNotification"]["userLocationEvent"]) for x, u, b in events if u == "http://cb/area"]
     dist = [(x, b["userDistanceNotification"]["distanceEvent"]) for x, u, b in events if u == "http://cb/dist"]
     assert area == [(54, "ENTERING_AREA_EVENT"), (67, "LEAVING_AREA_EVENT")]
-    assert dist == [(26, "ALL_WITHIN_DISTANCE")]    # once on entering 5 m, not again while within
+    assert dist == [(26, "AllWithinDistance")]    # once on entering 5 m, not again while within
     tc.delete(area_href)
     assert len(platform.GEO_SUBS) == 1

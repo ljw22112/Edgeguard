@@ -328,7 +328,7 @@ Each collision we found on the way was traced to its cause and fixed in both the
 - **One model from the device to the cloud:** SDT flexContainers, labels and SAREF semantics make devices discoverable (on ACME), and the same application code runs on Mobius and ACME.
 - **Mobility as a service feature:** announcement, home records and portable subscriptions let a device change CSEs while applications keep receiving data.
 
-Along the way we found and documented **7 interoperability issues** between CSEs, including a Content-Type parsing fix for ACME ([interoperability notes](interop-notes.md)).
+Along the way we found and documented **11 interoperability issues** between three CSEs (ACME, Mobius, tinyIoT), checked our ETSI MEC traffic against the official ETSI OpenAPI definitions (19/19 exchanges, 160/160 notifications after fixes), including a Content-Type parsing fix for ACME ([interoperability notes](interop-notes.md)).
 
 ---
 

@@ -19,7 +19,7 @@ jobs:
           cache: pip
       - name: Python deps (CPU torch for the LSTM test)
         run: |
-          pip install -r requirements.txt pytest httpx hypothesis
+          pip install -r requirements.txt pytest httpx hypothesis openapi-core
           pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: ArduinoJson for the firmware type-check
         run: git clone --depth 1 https://github.com/bblanchon/ArduinoJson.git /tmp/arduinojson
@@ -43,6 +43,21 @@ jobs:
       - name: oneM2M tutorial (plain HTTP safety app, docs/tutorial-onem2m.md)
         run: python tools/tutorial_safety_app.py
 
+      - name: Third CSE - the same tutorial on tinyIoT (Sejong University sesLab, C, SQLite)
+        run: |
+          sudo apt-get install -y -q libwebsockets-dev libssl-dev pkg-config >/dev/null
+          git init -q /tmp/tinyiot && git -C /tmp/tinyiot fetch -q --depth 1 https://github.com/seslabSJU/tinyIoT.git c140495622a6271fe16c8cf92315c2892c803003 && git -C /tmp/tinyiot checkout -q FETCH_HEAD
+          sed -i 's/^#define DB_TYPE DB_POSTGRESQL/#define DB_TYPE DB_SQLITE/' /tmp/tinyiot/source/server/config.h
+          make -s -C /tmp/tinyiot/source/server -j4
+          (cd /tmp/tinyiot/source/server && ./server > /tmp/tinyiot.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf -H "X-M2M-Origin: CAdmin" -H "X-M2M-RI: 1" -H "X-M2M-RVI: 3" http://127.0.0.1:3000/TinyIoT >/dev/null && break; sleep 1; done
+          CSE=http://127.0.0.1:3000 CSE_RN=TinyIoT python tools/tutorial_safety_app.py | tee results/tinyiot_tutorial.txt
+          python tools/cse_probe.py --cse http://127.0.0.1:3000 --rn TinyIoT --name tinyIoT
+          python tools/cse_probe.py --cse http://127.0.0.1:8080 --rn cse-in --name ACME
+
+      - name: ETSI MEC conformance (EdgeGuard's MEC 011 / 012 / 013 / 021 traffic against the ETSI Forge OpenAPI files)
+        run: python tools/mec_conformance.py
+
       - name: SDT data model (flexContainer twins, label discovery, SAREF semantic query, onboarding)
         env:
           EDGEGUARD_CONFIG: config/site.yaml
@@ -54,6 +69,11 @@ jobs:
           python tools/setup_resources.py --reset
           sleep 10
           python deploy/check_sdt.py --onboard
+
+      - name: Community oneM2M MCP server (onem2m-mcp, BSD-3) on EdgeGuard's twins - least privilege first
+        run: |
+          python3.13 -m venv /tmp/mcpv && /tmp/mcpv/bin/pip install -q onem2m-mcp
+          /tmp/mcpv/bin/python tools/onem2m_mcp_check.py
 
       - name: CSE handover between zone MN-CSEs (location trigger, then availability failover)
         run: |

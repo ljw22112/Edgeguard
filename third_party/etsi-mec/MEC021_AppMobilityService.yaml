@@ -1,0 +1,1216 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  contact:
+    url: https://forge.etsi.org/rep/mec/gs021-amsi-api
+  title: ETSI GS MEC 021 Application Mobility Service API
+  description: The ETSI MEC ISG Mobility Service API described using OpenAPI.
+  license:
+    name: BSD-3-Clause
+    url: https://forge.etsi.org/legal-matters
+  version: 2.2.1
+servers:
+- url: https://localhost/amsi/v1
+paths:
+  /app_mobility_services:
+    get:
+      summary: Query multiple Application Mobility Service resources.
+      description: The GET method is to retrieve information about the registered Application Mobility Service. Upon success, the response contains entity body with the list of application mobility services that are present for the requestor.
+      operationId: AppmobilityservicesGET
+      tags:
+      - app_mobility_services
+      parameters:
+      - $ref: '#/components/parameters/Query.Filter'
+      - $ref: '#/components/parameters/Query.All_fields'
+      - $ref: '#/components/parameters/Query.Fields'
+      - $ref: '#/components/parameters/Query.Exclude_fields'
+      - $ref: '#/components/parameters/Query.Exclude_default'
+      responses:
+        '200':
+          description: 'Information about zero or more application mobility services was queried successfully.
+
+
+            The response body shall contain in an array the representations of zero or more application mobility services.'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistrationInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+    post:
+      summary: Create an Application Mobility Service resource.
+      description: The POST method is used to create a new application mobility service for the service requester. Upon success, the response contains entity body of created application mobility service with the service ID.
+      operationId: AppmobilityservicesPOST
+      tags:
+      - app_mobility_services
+      requestBody:
+        description: The POST method is to create an application mobility service resource.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                RegistrationInfo:
+                  $ref: '#/components/schemas/RegistrationInfo'
+      responses:
+        '201':
+          description: 'An application mobility service with a service identifier was created successfully.
+
+
+            The HTTP response shall include a "Location" HTTP header that contains the resource URI of the created application instance.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  RegistrationInfo:
+                    $ref: '#/components/schemas/RegistrationInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters: []
+  /app_mobility_services/{appMobilityServiceId}:
+    get:
+      summary: Read an Application Mobility Service resource.
+      description: The GET method is used to retrieve information about this individual application mobility service. Upon success, the response contains entity body with the data type describing the registered Application Mobility Service.
+      operationId: AppmobilityservicesGETAppmobilityserviceid
+      tags:
+      - app_mobility_services
+      responses:
+        '200':
+          description: Information about application mobility service was queried successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  RegistrationInfo:
+                    $ref: '#/components/schemas/RegistrationInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appMobilityServiceId
+        in: path
+        required: true
+        description: The unique identifier of the appMobilityServiceId.
+        schema:
+          type: string
+    put:
+      summary: Update an individual Application Mobility Service resource.
+      description: The PUT method is used to update the existing individual application mobility service. PUT method in this case has "replace" semantics. Upon successful operation, the target resource is updated with new Data Type received within the message body of the PUT request.
+      operationId: AppmobilityservicesPUTAppmobilityserviceid
+      tags:
+      - app_mobility_services
+      requestBody:
+        description: The updated information for the registered application mobility service resource.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                RegistrationInfo:
+                  $ref: '#/components/schemas/RegistrationInfo'
+      responses:
+        '200':
+          description: Upon success, a response body containing data type describing the updated application mobility service.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  RegistrationInfo:
+                    $ref: '#/components/schemas/RegistrationInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '412':
+          $ref: '#/components/responses/412'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appMobilityServiceId
+        in: path
+        required: true
+        description: The unique identifier of the appMobilityServiceId.
+        schema:
+          type: string
+    delete:
+      summary: Delete an individual Application Mobility Service resource.
+      description: The DELETE method is used to deregister the individual application mobility service, and delete the resource that represents the individual application mobility service.
+      operationId: AppmobilityservicesDELETEAppmobilityserviceid
+      tags:
+      - app_mobility_services
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appMobilityServiceId
+        in: path
+        required: true
+        description: The unique identifier of the appMobilityServiceId.
+        schema:
+          type: string
+  /app_mobility_services/{appMobilityServiceId}/deregister_task:
+    post:
+      summary: Timer based individual deregistration of an Application Mobility Service resource.
+      description: 'The POST method is to trigger deregistration of the application mobility service on expiry of the timer associated with the service. '
+      operationId: AppmobilityservicesDeregistertaskPOSTAppmobilityserviceid
+      tags:
+      - app_mobility_services
+      responses:
+        '204':
+          description: 'The request is acknowledged.
+
+
+            The response body shall be empty.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appMobilityServiceId
+        in: path
+        required: true
+        description: The unique identifier of the appMobilityServiceId.
+        schema:
+          type: string
+  /subscriptions:
+    get:
+      summary: Retrieve information of multiple subscriptions to notifications of Application Mobility Service event.
+      description: The GET method is used to retrieve information about the subscriptions for this requestor. Upon success, the response contains entity body with the list of links to the subscriptions that are present for the requestor.
+      operationId: SubscriptionsGET
+      tags:
+      - subscriptions
+      parameters:
+      - $ref: '#/components/parameters/Query.Subscriptiontype'
+      responses:
+        '200':
+          description: Upon success, a response body containing the list of links to requestor's subscriptions is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  SubscriptionLinkList:
+                    $ref: '#/components/schemas/SubscriptionLinkList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+    post:
+      summary: Subscribe to notifications of Application Mobility Service event.
+      description: The POST method is used to create a new subscription to Application Mobility Service notifications. Upon success, the response contains entity body describing the created subscription.
+      operationId: SubscriptionsPOST
+      tags:
+      - subscriptions
+      requestBody:
+        description: 'The entity body in the request contains data type of the specific AMS event subscription that is to be created, where the data type options are listed below and defined in clauses 7.3.2 through 7.3.4:
+
+          MobilityProcedureSubscription.
+
+          AdjacentAppInfoSubscription.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                MobilityProcedureSubscription:
+                  $ref: '#/components/schemas/MobilityProcedureSubscription'
+      responses:
+        '201':
+          description: "Indicates successful resource creation, where the resource URI shall be returned in the HTTP Location header field.\n\nIn the returned NotificationSubscription structure, the created subscription is described using the appropriate data type from the list below and as defined in clauses\_7.3.2 through 7.3.4:\nMobilityProcedureSubscription.\nAdjacentAppInfoSubscription."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  MobilityProcedureSubscription:
+                    $ref: '#/components/schemas/MobilityProcedureSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '415':
+          $ref: '#/components/responses/415'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+      callbacks:
+        notification:
+          '{$request.body#/callbackUri}':
+            post:
+              summary: Callback POST used to send a notification
+              description: Subscription notification
+              operationId: notificationPOST531833
+              requestBody:
+                description: Subscription notification
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        subscriptionNotification:
+                          oneOf:
+                          - $ref: '#/components/schemas/MobilityProcedureSubscription'
+                          - $ref: '#/components/schemas/AdjacentAppInfoSubscription'
+              responses:
+                '204':
+                  description: No content
+                '404':
+                  description: Not found
+      parameters: []
+  /subscriptions/{subscriptionId}:
+    get:
+      summary: Read information of subscription of Application Mobility Service.
+      description: The GET method is used to retrieve information about this subscription. Upon success, the response contains entity body with the data type describing the subscription.
+      operationId: SubscriptionsGETSubscriptionid
+      tags:
+      - subscriptions
+      responses:
+        '200':
+          description: 'Upon success, a response body containing data type describing the specific AMS event subscription is returned. The allowed data types for subscriptions are defined in clauses 7.3.2 and 7.3.3 as follows:
+
+            MobilityProcedureSubscription.
+
+            AdjacentAppInfoSubscription.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  MobilityProcedureSubscription:
+                    $ref: '#/components/schemas/MobilityProcedureSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+    put:
+      summary: Update an individual subscription to notification of Application Mobility Service event.
+      description: The PUT method is used to update the existing individual subscription. PUT method in this case has "replace" semantics. Upon successful operation, the target resource is updated with new subscription parameters received within the message body of the PUT request.
+      operationId: SubscriptionsPUTSubscriptionid
+      tags:
+      - subscriptions
+      requestBody:
+        description: 'Updated NotificationSubscription is included as entity body of the request. The allowed data types for subscriptions are defined in clauses 7.3.2 and 7.3.3 as follows:
+
+          MobilityProcedureSubscription.
+
+          AdjacentAppInfoSubscription.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                MobilityProcedureSubscription:
+                  $ref: '#/components/schemas/MobilityProcedureSubscription'
+      responses:
+        '200':
+          description: 'Upon success, a response body containing data type describing the updated subscription is returned. The allowed data types for subscriptions are defined in clauses 7.3.2 and 7.3.3 as follows:
+
+            MobilityProcedureSubscription.
+
+            AdjacentAppInfoSubscription.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  MobilityProcedureSubscription:
+                    $ref: '#/components/schemas/MobilityProcedureSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '412':
+          $ref: '#/components/responses/412'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+    delete:
+      summary: Terminate an individual subscription to notification of Application Mobility Service event.
+      description: The DELETE method is used to cancel the existing individual subscription. Cancellation can be made by deleting the resource that represents existing individual subscription.
+      operationId: SubscriptionsDELETESubscriptionid
+      tags:
+      - subscriptions
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+  /queries/adjacent_app_instances:
+    get:
+      summary: Read information of adjacent application instance(s).
+      description: The GET method is to retrieve the information of adjacent application instances. Upon success, the response contains entity body with the list of available application instance information.
+      operationId: QueriesAdjacentappinstancesGET
+      tags:
+      - adjacent_app_instances
+      parameters:
+      - $ref: '#/components/parameters/Query.Filter1'
+      - $ref: '#/components/parameters/Query.All_fields'
+      - $ref: '#/components/parameters/Query.Fields'
+      - $ref: '#/components/parameters/Query.Exclude_fields1'
+      - $ref: '#/components/parameters/Query.Exclude_default1'
+      responses:
+        '200':
+          description: 'Information about zero or more adjacent application instances was queried successfully.
+
+
+            The response body shall contain in an array the representations of zero or more adjacent application instance information.'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdjacentAppInstanceInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '406':
+          $ref: '#/components/responses/406'
+        '429':
+          $ref: '#/components/responses/429'
+  /user_defined_notification:
+    post:
+      summary: Delivers a notification from the application lifecycle management resource to the subscriber.
+      description: The POST method delivers a notification from the AMS resource to the subscriber.
+      operationId: UserdefinednotificationPOST
+      tags:
+      - notifications
+      requestBody:
+        description: 'A notification of an event related to the specific AMS event, where the data type options are listed below and defined in clauses 7.4.2 through 7.4.4:
+
+          MobilityProcedureNotification.
+
+          AdjacentAppInfoNotification.
+
+          ExpiryNotification.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                MobilityProcedureNotification:
+                  $ref: '#/components/schemas/MobilityProcedureNotification'
+      responses:
+        '204':
+          description: The notification was delivered successfully. The response body shall be empty.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters: []
+components:
+  schemas:
+    MobilityStatus1_:
+      type: object
+      properties:
+        status:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'Indicate the status of the UE mobility:
+
+            1 = INTERHOST_MOVEOUT_TRIGGERED
+
+            2 = INTERHOST_MOVEOUT_COMPLETED
+
+            3 = INTERHOST_MOVEOUT_FAILED
+
+            '
+          x-enum-descriptions:
+          - 1 = INTERHOST_MOVEOUT_TRIGGERED
+          - 2 = INTERHOST_MOVEOUT_COMPLETED
+          - 3 = INTERHOST_MOVEOUT_FAILED
+      required:
+      - status
+    AssociateId:
+      type: string
+      description: The data type of AssociateId is defined in ETSI GS MEC 012 [6].
+    AppMobilityServiceLevel1_:
+      type: object
+      properties:
+        serviceLevel:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'This attribute provides an option for the application instance (server) to communicate with the application client before relocating this application instance to another MEC host:
+
+            1 = APP_MOBILITY_NOT_ALLOWED
+
+            2 = APP_MOBILITY_WITH_CONFIRMATION
+
+            3 = APP_MOBILITY_WITHOUT_CONFIRMATION
+
+            '
+          x-enum-descriptions:
+          - 1 = APP_MOBILITY_NOT_ALLOWED
+          - 2 = APP_MOBILITY_WITH_CONFIRMATION
+          - 3 = APP_MOBILITY_WITHOUT_CONFIRMATION
+      required:
+      - serviceLevel
+      x-etsi-notes: "APP_MOBILITY_NOT_ALLOWED: the current serving application instance continues to deliver the service to the device. The AMS will inform the MEP to perform the traffic steering to the device when the UE moves cross MEC hosts. \u2212 APP_MOBILITY_WITH_CONFIRMATION: the serving application instance is allowed to change with the confirmation by the application once the device mobility happens. The AMS then will inform the MEP to update the traffic routing to the target application instance and clean up the previous resource allocated to the application instance serving to the device after the serving application instance has been changed. \u2212 APP_MOBILITY_WITHOUT_CONFIRMATION: the serving application instance is allowed to change without confirmation from the application instance when the device mobility happens. The AMS will notify to the MEP to update the traffic routing to the target application instance and clean up the previous resource allocated to the application instance serving to the device after the serving application instance has been changed.\n"
+    contextTransferState1_:
+      type: string
+      description: If present, it represents the state of transferring the user context to another application instance.
+      enum:
+      - NOT_TRANSFERRED
+      - USER_CONTEXT_TRANSFER_COMPLETED
+    subscriptionType1_:
+      type: object
+      properties:
+        subscriptionType:
+          type: integer
+          enum:
+          - 0
+          - 1
+          - 2
+          description: 'Numeric value (0 - 255) corresponding to specified type of subscription:
+
+            0 = RESERVED
+
+            1 = MOBILITY_PROCEDURE
+
+            2 = ADJACENT_APPINFO
+
+            '
+          x-enum-descriptions:
+          - 0 = RESERVED
+          - 1 = MOBILITY_PROCEDURE
+          - 2 = ADJACENT_APPINFO
+      required:
+      - subscriptionType
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference according to IETF RFC 3986 that identifies the problem type
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          format: uint32
+          description: The HTTP status code for this occurrence of the problem
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence of the problem
+    RegistrationInfo:
+      x-etsi-ref: 7.2.2
+      type: object
+      properties:
+        appMobilityServiceId:
+          description: 'The identifier of registered Application Mobility Service.
+
+            Shall be absent in POST requests, and present otherwise.'
+          type: string
+        serviceConsumerId:
+          $ref: '#/components/schemas/ServiceConsumerId'
+        deviceInformation:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceInformation'
+        expiryTime:
+          description: 'If present, it indicates the time of Application Mobility Service expiration from the time of registration accepted.
+
+            The value "0" means infinite time, i.e. no expiration.
+
+            The unit of expiry time is one second.'
+          type: integer
+          format: uint32
+      required:
+      - serviceConsumerId
+      description: "|-\n  NOTE:\tThe data type of AssociateId is defined in ETSI GS MEC 012 [6]."
+    AdjacentAppInstanceInfo:
+      x-etsi-ref: 7.2.3
+      type: object
+      properties:
+        appInstanceId:
+          description: Identifier of the application instance.
+          type: string
+        appDId:
+          description: Identifier of the application descriptor.
+          type: string
+        appInstanceCommLink:
+          description: It specifies the communication interface of application instance.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CommunicationInterface'
+        mecHostInformation:
+          description: The MEC host where the application instance is running on.
+          $ref: '#/components/schemas/MECHostInformation'
+        registeredInstanceId:
+          description: Identifier of the application instance that registers to the AMS, which is instantiated from the application descriptor identified by the attribute "appDId".
+          type: string
+      required:
+      - appInstanceId
+      - appDId
+      - appInstanceCommLink
+    MobilityProcedureSubscription:
+      x-etsi-ref: 7.3.2
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "MobilityProcedureSubscription".
+          type: string
+        callbackReference:
+          description: URI selected by the service consumer to receive notifications on the subscribed Application Mobility Service. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [4], as described in clause\_6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between AMS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteria:
+          $ref: '#/components/schemas/FilterCriteria'
+        expiryDeadline:
+          description: Identifies a boundary after which the subscription will expire.
+          $ref: '#/components/schemas/TimeStamp'
+      required:
+      - subscriptionType
+      - filterCriteria
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to AMS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [4], as described in clause 6.12a."
+    AdjacentAppInfoSubscription:
+      x-etsi-ref: 7.3.3
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "AdjacentAppInfoSubscription".
+          type: string
+        callbackReference:
+          description: URI selected by the service consumer to receive notifications on the subscribed Application Mobility Service. See note.
+          type: string
+          format: uri
+        requestTestNotification:
+          description: "Shall be set to TRUE by the service consumer to request a test notification via HTTP on the callbackReference URI, specified in ETSI GS MEC 009 [4], as described in clause\_6.12a. "
+          type: boolean
+        websockNotifConfig:
+          description: Provides details to negotiate and signal the use of a Websocket connection between AMS and the service consumer for notifications. See note.
+          $ref: '#/components/schemas/WebsockNotifConfig'
+        _links:
+          $ref: '#/components/schemas/_links'
+        filterCriteria:
+          $ref: '#/components/schemas/FilterCriteria1'
+        expiryDeadline:
+          description: Identifies a boundary after which the subscription will expire.
+          $ref: '#/components/schemas/TimeStamp'
+      required:
+      - subscriptionType
+      - filterCriteria
+      description: "|-\n  NOTE:\tAt least one of callbackReference and websockNotifConfig shall be provided by the service consumer. If both are provided, it is up to AMS to choose an alternative and return only that alternative in the response, specified in ETSI GS MEC 009 [4], as described in clause 6.12a."
+    SubscriptionLinkList:
+      x-etsi-ref: 7.3.4
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/_links1'
+      required:
+      - _links
+    MobilityProcedureNotification:
+      x-etsi-ref: 7.4.2
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "MobilityProcedureNotification".
+          type: string
+        timeStamp:
+          description: Date and time of the generation of the notification.
+          $ref: '#/components/schemas/TimeStamp'
+        associateId:
+          description: 1 to N identifiers to associate the information for specific UE(s) and flow(s).
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        mobilityStatus:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'Indicate the status of the UE mobility. Values are defined as following:
+
+            1 = INTERHOST_MOVEOUT_TRIGGERED.
+
+            2 = INTERHOST_MOVEOUT_COMPLETED.
+
+            3 = INTERHOST_MOVEOUT_FAILED.
+
+            Other values are reserved.'
+        targetAppInfo:
+          $ref: '#/components/schemas/TargetAppInfo'
+        _links:
+          $ref: '#/components/schemas/_links2'
+      required:
+      - notificationType
+      - associateId
+      - mobilityStatus
+      - _links
+    ExpiryNotification:
+      x-etsi-ref: 7.4.4
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "ExpiryNotification".
+          type: string
+        timeStamp:
+          description: Date and time of the generation of the notification.
+          $ref: '#/components/schemas/TimeStamp'
+        _links:
+          $ref: '#/components/schemas/_links3'
+        expiryDeadline:
+          description: The boundary value setting in the subscription request.
+          $ref: '#/components/schemas/TimeStamp'
+      required:
+      - notificationType
+      - _links
+      - expiryDeadline
+    AppMobilityServiceLevel:
+      x-etsi-ref: 7.4.5
+      type: object
+      properties:
+        appMobilityServiceLevel:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'This attribute provides an option for the application instance (server) to communicate with the application client before relocating this application instance to another MEC host. The applicable values of this attribute are:
+
+            1 = APP_MOBILITY_NOT_ALLOWED
+
+            2 = APP_MOBILITY_WITH_CONFIRMATION
+
+            3 = APP_MOBILITY_WITHOUT_CONFIRMATION.
+
+            Other values are reserved.
+
+            See note.'
+      required:
+      - appMobilityServiceLevel
+      description: "|-\n  NOTE:\nAPP_MOBILITY_NOT_ALLOWED: the current serving application instance continues to deliver the service to the device. The AMS will inform the MEP to perform the traffic steering to the device when the UE moves cross MEC hosts.\nAPP_MOBILITY_WITH_CONFIRMATION: the serving application instance is allowed to change with the confirmation by the application once the device mobility happens. The AMS then will inform the MEP to update the traffic routing to the target application instance and clean up the previous resource allocated to the application instance serving to the device after the serving application instance has been changed.\nAPP_MOBILITY_WITHOUT_CONFIRMATION: the serving application instance is allowed to change without confirmation from the application instance when the device mobility happens. The AMS will notify to the MEP to update the traffic routing to the target application instance and clean up the previous resource allocated to the application instance serving to the device after the serving application instance has been changed."
+    TestNotification:
+      x-etsi-ref: 7.4.6
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "TestNotification".
+          type: string
+        _links:
+          $ref: '#/components/schemas/_links4'
+      required:
+      - notificationType
+      - _links
+    CommunicationInterface:
+      x-etsi-ref: 7.5.2
+      type: object
+      properties:
+        ipAddresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/IpAddresses'
+    TimeStamp:
+      x-etsi-ref: 7.5.3
+      type: object
+      properties:
+        seconds:
+          description: "The seconds part of the Time. Time is defined as Unix-time since January\_1, 1970, 00:00:00 UTC."
+          type: integer
+          format: uint32
+        nanoSeconds:
+          description: The nanoseconds part of the Time. Time is defined as Unix-time since January 1, 1970, 00:00:00 UTC.
+          type: integer
+          format: uint32
+      required:
+      - seconds
+      - nanoSeconds
+    LinkType:
+      x-etsi-ref: 7.5.4
+      type: object
+      properties:
+        href:
+          description: URI referring to a resource
+          type: string
+          format: uri
+      required:
+      - href
+    MECHostInformation:
+      x-etsi-ref: 7.5.5
+      type: object
+      properties:
+        hostName:
+          description: Human-readable name of MEC host.
+          type: string
+        hostId:
+          description: Deployment-specific information to identify a MEC host. See note.
+          type: object
+      required:
+      - hostId
+      description: "|-\n  NOTE: \tThis information can be structured to cater for host identification schemes that are more complex than a simple identifier, e.g. when referring to the structure of an NFVI."
+    WebsockNotifConfig:
+      x-etsi-ref: 7.5.7
+      type: object
+      properties:
+        websocketUri:
+          description: Set by AMS to indicate to the service consumer the Websocket URI to be used for delivering notifications.
+          type: string
+          format: uri
+        requestWebsocketUri:
+          description: Set to true by the service consumer to indicate that Websocket delivery is requested.
+          type: boolean
+    ServiceConsumerId:
+      description: The identifier of service consumer requesting the Application Mobility Service, i.e. either the application instance ID or the MEC platform ID.
+      type: object
+      properties:
+        appInstanceId:
+          description: If present, it represents the identifier of the application instance registering the Application Mobility Service.
+          type: string
+        mepId:
+          description: If present, it represents the identifier of the MEC platform registering the Application Mobility Service.
+          type: string
+    DeviceInformation:
+      description: 'If present, it specifies the device served by the application instance which is registering the Application Mobility Service. '
+      type: object
+      properties:
+        associateId:
+          description: Represents the identifier of the device. See note.
+          $ref: '#/components/schemas/AssociateId'
+        appMobilityServiceLevel:
+          description: If the application is stateful, this attribute shall be included.
+          $ref: '#/components/schemas/AppMobilityServiceLevel'
+        contextTransferState:
+          type: integer
+          enum:
+          - 0
+          - 1
+          description: 'If present, it represents the state of transferring the user context to another application instance. The applicable values of this attribute are:
+
+            0 = NOT_TRANSFERRED (default value)
+
+            1 = USER_CONTEXT_TRANSFER_COMPLETED
+
+            In the initial application mobility registration, this attribute shall be set to the default value.'
+      required:
+      - associateId
+    _links:
+      description: Hyperlink related to the resource. This shall be only included in the HTTP responses and in HTTP PUT requests.
+      type: object
+      properties:
+        self:
+          description: Self-referring URI. The URI shall be unique within the AMS API as it acts as an ID for the subscription.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - self
+    FilterCriteria:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Identifier of the application instance that registers the Application Mobility Service.
+          type: string
+        associateId:
+          description: 0 to N identifiers to associate the information for specific UE(s) and flow(s).
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/AssociateId'
+        mobilityStatus:
+          description: 'In case mobilityStatus is not included in the subscription request, the default value 1 = INTER_HOST_MOBILITY_TRIGGERED shall be used and included in the response.
+
+            1 = INTERHOST_MOVEOUT_TRIGGERED.
+
+            2 = INTERHOST_MOVEOUT_COMPLETED.
+
+            3 = INTERHOST_MOVEOUT_FAILED.'
+          type: array
+          minItems: 0
+          items:
+            type: integer
+    FilterCriteria1:
+      description: List of filtering criteria for the subscription. Any filtering criteria from below, which is included in the request, shall also be included in the response.
+      type: object
+      properties:
+        appInstanceId:
+          description: Identifier of the application instance that registers to the Application Mobility Service.
+          type: string
+    Subscription:
+      description: The service consumer's subscriptions.
+      type: object
+      properties:
+        href:
+          description: The URI referring to the subscription.
+          type: string
+          format: uri
+        subscriptionType:
+          description: "Type of the subscription. The string shall be set according to the \"subscriptionType\" attribute of the associated subscription data type defined in clauses\_7.3.2 and 7.3.3:\n\"MobilityProcedureSubscription\"\n\"AdjacentAppInfoSubscription\""
+          type: string
+      required:
+      - href
+      - subscriptionType
+    _links1:
+      description: Hyperlinks related to the resource.
+      type: object
+      properties:
+        self:
+          description: URI of this resource.
+          $ref: '#/components/schemas/LinkType'
+        subscription:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subscription'
+      required:
+      - self
+    TargetAppInfo:
+      description: Identifiers to associate the information of target application instance.
+      type: object
+      properties:
+        appInstanceId:
+          description: Identifiers of the target application instance.
+          type: string
+        commInterface:
+          description: If present, it specifies the communication interface of the application instance.
+          $ref: '#/components/schemas/CommunicationInterface'
+      required:
+      - appInstanceId
+    _links2:
+      description: Object containing hyperlinks related to the resource.
+      type: object
+      properties:
+        subscription:
+          description: Link to the related subscription.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - subscription
+    _links3:
+      description: Object containing hyperlinks related to the resource.
+      type: object
+      properties:
+        subscription:
+          description: Link to the expired subscription.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - subscription
+    _links4:
+      description: 'Hyperlink related to the resource. '
+      type: object
+      properties:
+        subscription:
+          description: URI identifying the subscription for the test notification.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - subscription
+    IpAddresses:
+      description: Entry point information of the service as one or more pairs of IP address and port.
+      type: object
+      properties:
+        host:
+          description: Host portion of the address.
+          type: string
+        port:
+          description: Port portion of the address.
+          type: integer
+      required:
+      - host
+      - port
+  responses:
+    '200':
+      description: OK
+    '204':
+      description: No Content
+    '400':
+      description: 'Bad Request: used to indicate that incorrect parameters were passed to the request.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '401':
+      description: 'Unauthorized: used when the client did not submit credentials.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '403':
+      description: 'Forbidden: operation is not allowed given the current status of the resource.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '404':
+      description: 'Not Found: used when a client provided a URI that cannot be mapped to a valid resource URI.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '406':
+      description: 'Not Acceptable: used to indicate that the server cannot provide the any of the content formats supported by the client.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '412':
+      description: 'Precondition failed: used when a condition has failed during conditional requests, e.g. when using ETags to avoid write conflicts when using PUT'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '415':
+      description: 'Unsupported Media Type: used to indicate that the server or the client does not support the content type of the entity body.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '422':
+      description: 'Unprocessable Entity: used to indicate that the server understands the content type of the request entity and that the syntax of the request entity is correct but that the server is unable to process the contained instructions. This error condition can occur if an JSON request body is syntactically correct but semantically incorrect, for example if the target area for the request is considered too large. This error condition can also occur if the capabilities required by the request are not supported.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '429':
+      description: 'Too Many Requests: used when a rate limiter has triggered.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  parameters:
+    Query.Filter:
+      description: 'Attribute-based filtering parameters according to ETSI GS MEC 009 [4].
+
+        The API producer shall support receiving filtering parameters as part of the URI query string.
+
+        All attribute names that appear in the RegistrationInfo and in data types referenced from it shall be supported in attribute-based filtering parameters.
+
+        See clause 6.19 in ETSI GS MEC 009 [4] for details.'
+      name: filter
+      in: query
+      required: false
+      x-exportParamName: Query.Filter
+      schema:
+        type: string
+    Query.All_fields:
+      description: "Include all complex attributes in the response. See clause 6.18 in ETSI GS\_MEC\_009 [4] for details. The API producer shall support this parameter."
+      name: all_fields
+      in: query
+      required: false
+      x-exportParamName: Query.All_fields
+      schema:
+        type: string
+    Query.Fields:
+      description: "Complex attributes to be included into the response. See clause 6.18 in ETSI GS\_MEC 009 [4] for details. The API producer should support this parameter."
+      name: fields
+      in: query
+      required: false
+      x-exportParamName: Query.Fields
+      schema:
+        type: string
+    Query.Exclude_fields:
+      description: "Complex attributes to be excluded from the response. See clause 6.18 in ETSI GS\_MEC 009 [4] for details. The API producer should support this parameter."
+      name: exclude_fields
+      in: query
+      required: false
+      x-exportParamName: Query.Exclude_fields
+      schema:
+        type: string
+    Query.Exclude_default:
+      description: 'Indicates to exclude the following complex attributes from the response. See clause 6.18 in ETSI GS MEC 009 [4] for details. The API producer shall support this parameter.
+
+        The following attributes shall be excluded from the RegistrationInfo structure in the response body if this parameter is provided, or none of the parameters "all_fields", "fields", "exclude_fields", "exclude_default" are provided:
+
+        n/a.'
+      name: exclude_default
+      in: query
+      required: false
+      x-exportParamName: Query.Exclude_default
+      schema:
+        type: string
+    Query.Subscriptiontype:
+      description: "Query parameter to filter on a specific subscription type. Permitted values:\nmobility_proc\tMobility Procedure\nadj_app_info\tAdjacent Application Info."
+      name: subscriptiontype
+      in: query
+      required: false
+      x-exportParamName: Query.Subscriptiontype
+      schema:
+        type: string
+    Query.Filter1:
+      description: 'Attribute-based filtering parameters according to ETSI GS MEC 009 [4].
+
+        The API producer shall support receiving filtering parameters as part of the URI query string.
+
+        All attribute names that appear in the AdjacentAppInstanceInfo and in data types referenced from it shall be supported in attribute-based filtering parameters.
+
+        See clause 6.19 in ETSI GS MEC 009 [4] for details.'
+      name: filter
+      in: query
+      required: false
+      x-exportParamName: Query.Filter1
+      schema:
+        type: string
+    Query.Exclude_fields1:
+      description: Complex attributes to be excluded from the response. See clause 6.18 in ETSI GS MEC 009 [4] for details. The API producer should support this parameter.
+      name: exclude_fields
+      in: query
+      required: false
+      x-exportParamName: Query.Exclude_fields1
+      schema:
+        type: string
+    Query.Exclude_default1:
+      description: 'Indicates to exclude the following complex attributes from the response.
+
+        See clause 6.18 in ETSI GS MEC 009 [4] for details. The API producer shall support this parameter.
+
+        The following attributes shall be excluded from the AdjacentAppInstanceInfo structure in the response body if this parameter is provided, or none of the parameters "all_fields", "fields", "exclude_fields", "exclude_default" are provided:
+
+        n/a.'
+      name: exclude_default
+      in: query
+      required: false
+      x-exportParamName: Query.Exclude_default1
+      schema:
+        type: string
+

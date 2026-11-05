@@ -78,7 +78,7 @@
 
 - **Standards-native integration**: each device is an AE, and risk, alerts and near misses are exposed as oneM2M resources (`EdgeGuard/risk`, `alert`, `nearmiss`), so
   other oneM2M apps such as WMS and smart factory platforms can use them simply by subscribing.
-- **Interoperability improvements**: Mobius ↔ ACME testing found and documented seven issues ([interoperability notes](interop-notes.md)), and we produced a fix patch for ACME (`docs/acme-content-type.patch`).
+- **Interoperability improvements**: Mobius ↔ ACME ↔ tinyIoT testing found and documented eleven issues ([interoperability notes](interop-notes.md)), and we produced a fix patch for ACME (`docs/acme-content-type.patch`).
 - **Open source**: MIT licence, with third-party licence notices. We also publish the fix-up scripts for installing the ETSI MEC Sandbox (AdvantEDGE) in a 2026 environment (`deploy/sandbox-host/`).
 - **Standards-based AIoT reference case**: an industrial safety reference implementation combining oneM2M (data, access control) + ETSI MEC (location, radio information) + edge AI (prediction).
 

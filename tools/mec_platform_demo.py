@@ -35,6 +35,7 @@ import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+from edgeguard import mec_codes  # noqa: E402
 from edgeguard.handover import HandoverClient, Zone, setup_home             # noqa: E402
 from edgeguard.mec_platform import AmsClient, Mp1Client                      # noqa: E402
 from edgeguard.mobility import MecIpe, MecServiceClient                      # noqa: E402
@@ -170,7 +171,7 @@ def run():
     def on_ams(z):
         def h(body):
             ue = (body.get("associateId") or [{}])[0].get("value")
-            st = body.get("mobilityStatus")
+            st = mec_codes.name(mec_codes.MOBILITY_STATUS, body.get("mobilityStatus"))
             rec = {"t": time.time(), "instance": INSTANCES[z][0], "ue": ue, "status": st,
                    "target": (body.get("targetAppInfo") or {}).get("appInstanceId")}
             moves.append(rec)
@@ -255,7 +256,7 @@ def run():
             and all((r["dist_to_centre_m"] <= AREA["r"]) == (r["event"] == "ENTERING_AREA_EVENT")
                     and abs(r["dist_to_centre_m"] - AREA["r"]) <= 2.0 for r in area_rows),
         f"MEC 013 distance (via oneM2M): worker_01 and forklift_01 within {NEAR_M:g} m, true gap <= {NEAR_M + 1:g} m":
-            bool(dist_rows) and all(r["event"] == "ALL_WITHIN_DISTANCE" and r["gap_m"] <= NEAR_M + 1 for r in dist_rows),
+            bool(dist_rows) and all(r["event"] == "AllWithinDistance" and r["gap_m"] <= NEAR_M + 1 for r in dist_rows),
         "all MEC 013 subscriptions removed through oneM2M":
             r_un.get("ok") and not plat["subscriptions"]["geo"],
     }

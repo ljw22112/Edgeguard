@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import requests
 
+from . import mec_codes
+
 
 class Mp1Client:
     def __init__(self, base, app_instance_id, timeout=3.0):
@@ -29,7 +31,7 @@ class Mp1Client:
         info = {"serName": name, "serCategory": {"href": "", "id": category.lower(), "name": category, "version": version},
                 "version": version, "state": "ACTIVE",
                 "transportInfo": {"id": f"{name}-rest", "name": "REST", "type": "REST_HTTP", "protocol": "HTTP",
-                                  "version": "1.1", "endpoint": {"uris": [uri]}},
+                                  "version": "1.1", "endpoint": {"uris": [uri]}, "security": {}},
                 "serializer": "JSON", "scopeOfLocality": "MEC_HOST", "consumedLocalOnly": True, "isLocal": True}
         if onem2m:
             info["transportInfo"]["implSpecificInfo"] = {"oneM2M": onem2m}
@@ -71,7 +73,7 @@ class AmsClient:
     def register(self, ues, comm=None):
         """The UEs this instance serves, with context transfer; `comm` = where a source instance sends context."""
         self.reg = {"serviceConsumerId": {"appInstanceId": self.app, "mecHost": self.host},
-                    "deviceInformation": [{"associateId": {"type": "UE_IPv4_ADDRESS", "value": u},
+                    "deviceInformation": [{"associateId": mec_codes.ue_id(u),
                                            "appMobilityServiceLevel": "APP_MOBILITY_PERMITTED_WITH_CONTEXT_TRANSFER",
                                            "contextTransferState": "NOT_TRANSFERRED"} for u in ues]}
         if comm:
@@ -83,7 +85,8 @@ class AmsClient:
 
     def subscribe(self, callback, statuses=("INTERHOST_MOVEOUT_TRIGGERED", "INTERHOST_MOVEOUT_COMPLETED")):
         body = {"subscriptionType": "MobilityProcedureSubscription", "callbackReference": callback,
-                "filterCriteria": {"appInstanceId": self.app, "mobilityStatus": list(statuses)}}
+                "filterCriteria": {"appInstanceId": self.app,
+                                   "mobilityStatus": [mec_codes.code(mec_codes.MOBILITY_STATUS, s) for s in statuses]}}
         r = requests.post(f"{self.base}/amsi/v1/subscriptions", json=body, timeout=self.t)
         r.raise_for_status()
         href = ((r.json().get("_links") or {}).get("self") or {}).get("href", "")

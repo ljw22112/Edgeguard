@@ -27,6 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import requests
 
+from . import mec_codes
 from .onem2m import ALL_OPS, CREATE, DISCOVERY, NOTIFY, RETRIEVE, OneM2MClient, OneM2MError, parse_notification
 
 UE_TP, LOC_TP, RAD_TP = "egs:mecUe", "egs:ueLoc", "egs:rdLnk"
@@ -128,21 +129,20 @@ class MecIpe:
                 for z in con.get("zones") or []:
                     body = {"zoneLocationEventSubscription": {
                         "subscriptionType": "ZoneLocationEventSubscription",
-                        "callbackReference": {"notifyURL": f"{self.cb}/mec/zone"}, "zoneId": z,
+                        "callbackReference": f"{self.cb}/mec/zone", "zoneId": z,
                         "locationEventCriteria": con.get("events") or ["ENTERING_AREA_EVENT", "LEAVING_AREA_EVENT"],
                         **({"addressList": con["addresses"]} if con.get("addresses") else {})}}
                     ids.append(self._subscribe(f"{self.loc_api}/subscriptions/zones", body))
                 result = {"subscriptions": ids}
             elif op == "radio_subscribe":
                 body = {"subscriptionType": "MeasRepUeSubscription", "callbackReference": f"{self.cb}/mec/rnis",
-                        "filterCriteriaAssocTri": {"associateId": [{"type": "UE_IPv4_ADDRESS", "value": u}
-                                                                   for u in con.get("ues") or []],
-                                                   "trigger": ["PERIODICAL_REPORT_STRONGEST_CELLS"]}}
+                        "filterCriteriaAssocTri": {"associateId": [mec_codes.ue_id(u) for u in con.get("ues") or []],
+                                                   "trigger": [mec_codes.RNIS_TRIGGER["PERIODICAL_REPORT_STRONGEST_CELLS"]]}}
                 result = {"subscriptions": [self._subscribe(f"{self.rnis_api}/subscriptions", body)]}
             elif op == "area_subscribe":         # circle geofence (MEC 013 UserAreaSubscription)
                 body = {"userAreaSubscription": {
                     "subscriptionType": "UserAreaSubscription",
-                    "callbackReference": {"notifyURL": f"{self.cb}/mec/area/{con.get('name', 'area')}"},
+                    "callbackReference": f"{self.cb}/mec/area/{con.get('name', 'area')}",
                     "addressList": con.get("addresses") or [],
                     "areaDefine": {"shape": 1, "points": [{"latitude": con["lat"], "longitude": con["lon"]}],
                                    "radius": con["radius"]},
@@ -152,9 +152,9 @@ class MecIpe:
             elif op == "distance_subscribe":     # two UEs closer than a distance (MEC 013 UserDistanceSubscription)
                 body = {"userDistanceSubscription": {
                     "subscriptionType": "UserDistanceSubscription",
-                    "callbackReference": {"notifyURL": f"{self.cb}/mec/distance/{con.get('name', 'distance')}"},
+                    "callbackReference": f"{self.cb}/mec/distance/{con.get('name', 'distance')}",
                     "monitoredAddress": con["addresses"], "distance": con["distance"],
-                    "criteria": "ALL_WITHIN_DISTANCE", "checkImmediate": True,
+                    "criteria": mec_codes.distance("ALL_WITHIN_DISTANCE"), "checkImmediate": True,
                     "trackingAccuracy": con.get("accuracy", 1)}}
                 result = {"subscriptions": [self._subscribe(f"{self.loc_api}/subscriptions/distance", body)]}
             elif op == "location":
@@ -236,7 +236,7 @@ class MecIpe:
             ev = {"kind": "area", "ue": n.get("address"), "event": n.get("userLocationEvent")}
         else:
             ev = {"kind": "distance", "ues": [u.get("address") for u in (n.get("monitoredUsers") or {}).get("user") or []],
-                  "event": n.get("distanceEvent")}
+                  "event": mec_codes.distance(n.get("distanceEvent"))}
         ev.update(mec_ts=mec_t, ipe_ts=int(t_rx * 1000))
         self.c.create_cin(f"{self.root}/geoEvents", ev)
         self.stats["geo_events"] = self.stats.get("geo_events", 0) + 1

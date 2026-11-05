@@ -1,0 +1,4 @@
+gs011-app-enablement-api 1c3fd0e6b36036b08078e9c6ade9dbad0197c054
+gs012-rnis-api 51e52f2315f2eacaa29edaf7df5998c042e38498
+gs013-location-api 355c73ee5e126aca93a93a73a11fabe0c25a0069
+gs021-amsi-api 7ff81b6d90bbab8080da109f465167bc85166f90

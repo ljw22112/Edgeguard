@@ -1,0 +1,1283 @@
+{
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/location/v3/subscriptions/zones",
+   "status": 201,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/location/v3/subscriptions/zones",
+   "status": 201,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/rni/v2/subscriptions",
+   "status": 201,
+   "api": "MEC 012 RNIS 2.2.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/location/v3/subscriptions/area",
+   "status": 201,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/location/v3/subscriptions/distance",
+   "status": 201,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "GET",
+   "path": "/location/v3/queries/users",
+   "status": 200,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/mec_app_support/v2/applications/edgeguard-a/confirm_ready",
+   "status": 204,
+   "api": "MEC 011 Application support 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/mec_service_mgmt/v1/applications/edgeguard-a/subscriptions",
+   "status": 201,
+   "api": "MEC 011 Service management 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/mec_service_mgmt/v1/applications/edgeguard-b/services",
+   "status": 201,
+   "api": "MEC 011 Service management 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "GET",
+   "path": "/mec_service_mgmt/v1/services",
+   "status": 200,
+   "api": "MEC 011 Service management 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/amsi/v1/app_mobility_services",
+   "status": 201,
+   "api": "MEC 021 AMS 2.2.1",
+   "errors": []
+  },
+  {
+   "method": "POST",
+   "path": "/amsi/v1/subscriptions",
+   "status": 201,
+   "api": "MEC 021 AMS 2.2.1",
+   "errors": []
+  },
+  {
+   "method": "PUT",
+   "path": "/amsi/v1/app_mobility_services/ams8",
+   "status": 200,
+   "api": "MEC 021 AMS 2.2.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/location/v3/subscriptions/zones/sub1",
+   "status": 204,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/location/v3/subscriptions/zones/sub2",
+   "status": 204,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/rni/v2/subscriptions/sub3",
+   "status": 204,
+   "api": "MEC 012 RNIS 2.2.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/location/v3/subscriptions/area/area4",
+   "status": 204,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/location/v3/subscriptions/distance/dist5",
+   "status": 204,
+   "api": "MEC 013 Location 3.1.1",
+   "errors": []
+  },
+  {
+   "method": "DELETE",
+   "path": "/mec_service_mgmt/v1/applications/edgeguard-b/services/ser7",
+   "status": 204,
+   "api": "MEC 011 Service management 3.1.1",
+   "errors": []
+  }
+ ],
+ "notifications": [
+  {
+   "path": "/ser",
+   "notificationType": "SerAvailabilityNotification",
+   "schema": "ETSI GS MEC 011 Edge Platform Application Enablement 3.1.1: ServiceAvailabilityNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/distance/pair",
+   "notificationType": "UserDistanceNotification",
+   "schema": "ETSI GS MEC 013 - Location API 3.1.1: UserDistanceNotification",
+   "wrapped": true,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/area/dock",
+   "notificationType": "UserAreaNotification",
+   "schema": "ETSI GS MEC 013 - Location API 3.1.1: UserAreaNotification",
+   "wrapped": true,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/zone",
+   "notificationType": "ZoneLocationEventNotification",
+   "schema": "ETSI GS MEC 013 - Location API 3.1.1: ZoneLocationEventNotification",
+   "wrapped": true,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/zone",
+   "notificationType": "ZoneLocationEventNotification",
+   "schema": "ETSI GS MEC 013 - Location API 3.1.1: ZoneLocationEventNotification",
+   "wrapped": true,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/area/dock",
+   "notificationType": "UserAreaNotification",
+   "schema": "ETSI GS MEC 013 - Location API 3.1.1: UserAreaNotification",
+   "wrapped": true,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/ams",
+   "notificationType": "MobilityProcedureNotification",
+   "schema": "ETSI GS MEC 021 Application Mobility Service API 2.2.1: MobilityProcedureNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/mec/rnis",
+   "notificationType": "MeasRepUeNotification",
+   "schema": "ETSI GS MEC 012 Radio Network Information API 2.2.1: MeasRepUeNotification",
+   "wrapped": false,
+   "errors": []
+  },
+  {
+   "path": "/ser",
+   "notificationType": "SerAvailabilityNotification",
+   "schema": "ETSI GS MEC 011 Edge Platform Application Enablement 3.1.1: ServiceAvailabilityNotification",
+   "wrapped": false,
+   "errors": []
+  }
+ ],
+ "notes": [
+  "MEC 013 Location: EdgeGuard uses /location/v3; the definition (3.1.1) declares https://localhost/location/v2",
+  "MEC 011 Application support: EdgeGuard uses /mec_app_support/v2; the definition (3.1.1) declares https://localhost:8081/mec_app_support/v1"
+ ],
+ "spec_fixes": [
+  "MEC021_AppMobilityService.yaml: AssociateId is a string placeholder 'as defined in MEC 012'; MEC 012 AssociateId used",
+  "MecAppSupportApi.yaml: confirm_ready defines no success response; 204 No Content added (GS MEC 011 clause 7.2.11.3.4)",
+  "MecServiceMgmtApi.yaml: changeType enum is the placeholder SEE_DESCRIPTION; the four values of its description used",
+  "RniAPI.yaml: 80 `type` keys next to `$ref` dropped (3.0 meaning of $ref)"
+ ],
+ "summary": {
+  "exchanges": 19,
+  "exchanges_conformant": 19,
+  "notifications": 160,
+  "notifications_conformant": 160,
+  "notification_types": [
+   "MeasRepUeNotification",
+   "MobilityProcedureNotification",
+   "SerAvailabilityNotification",
+   "UserAreaNotification",
+   "UserDistanceNotification",
+   "ZoneLocationEventNotification"
+  ]
+ }
+}

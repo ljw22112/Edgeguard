@@ -68,3 +68,24 @@ EdgeGuard는 같은 코드로 두 oneM2M 구현체(ACME CSE, KETI Mobius)에 붙
 
 - `acpi`에 구조적 경로(`Mobius/EdgeGuard/acp_worker_01`)를 넣으면 동작하고, Mobius는 `/Mobius/...` 형태로 돌려줍니다.
   `edgeguard/onem2m.py`의 `set_acpi`는 구조적 경로를 먼저 쓰고, 실패하면 리소스 ID로 다시 시도합니다.
+
+## 세 번째 CSE: tinyIoT (세종대학교 sesLab)
+
+[tinyIoT](https://github.com/seslabSJU/tinyIoT)는 C로 만든 oneM2M CSE(BSD-3-Clause)입니다. CI가 고정 커밋을 SQLite로 빌드해 [oneM2M 튜토리얼](tutorial-onem2m.md)을 돌리고, ACME와 같이 **5개 점검 모두 통과**합니다. `tools/cse_probe.py`로 EdgeGuard가 쓰는 기능 13개를 CSE마다 확인한 결과는 **ACME 13/13, tinyIoT 9/13**입니다(`results/cse_probe_*.json`).
+
+### 8. tinyIoT: contentInstance content는 문자열만
+
+- `con`에 JSON 객체를 넣으면 400(`invalid attribute : con`), 같은 JSON을 문자열로 넣으면 받습니다. ACME와 Mobius는 둘 다 받습니다.
+  튜토리얼은 첫 400 이후 JSON을 문자열로 보내고, 읽을 때는 두 형태를 모두 처리합니다.
+
+### 9. tinyIoT: accessControlObjectDetails(`acod`, `chty`) 미지원
+
+- `acod: [{chty: [23]}]`가 있는 ACP 규칙은 400(`invalid attribute : pv`)입니다. 빼면 받지만 모든 자식 종류를 허용하게 되어, "MEC 앱은 구독만 만들 수 있다"는 최소 권한 규칙을 표현할 수 없습니다. 튜토리얼은 `acod` 없이 다시 시도하고 안내를 출력합니다.
+
+### 10. tinyIoT: 탐색 시 CSE 루트의 DISCOVER 권한 확인
+
+- 대상 리소스에 DISCOVER 권한이 있는 AE라도 CSE 루트에서 탐색하면 빈 목록이 옵니다. tinyIoT 기본 ACP는 모든 originator에게 CSE의 CREATE만 줍니다. ACME는 같은 요청에 그 originator가 탐색할 수 있는 리소스를 돌려줍니다. 운영자가 기본 ACP에 DISCOVER를 추가합니다(튜토리얼은 `CAdmin`으로 처리).
+
+### 11. tinyIoT: pollingChannel, semanticDescriptor 미지원
+
+- 둘 다 400이며 tinyIoT 문서에도 미지원으로 적혀 있습니다. tinyIoT에서는 NAT 뒤 태그에 다른 경로(MQTT)가 필요하고 SAREF 시맨틱 쿼리를 쓸 수 없습니다. 표준 SDT flexContainer(`cod:bat`)는 동작하며, EdgeGuard 자체 SDT 도메인(`egs:`)은 tinyIoT에 specialization 프로파일을 넣어야 합니다.

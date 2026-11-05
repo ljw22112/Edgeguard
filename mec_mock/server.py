@@ -17,6 +17,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
+
+from edgeguard import mec_codes
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
@@ -204,14 +206,14 @@ def _event_loop(period=0.2):
                             _pool.submit(_post, s["callback"], {"zoneLocationEventNotification": {
                                 "notificationType": "ZoneLocationEventNotification", "timeStamp": ts, "address": a,
                                 "zoneId": zone, "accessPointId": cur[1], "userLocationEvent": ev,
-                                "_links": {"subscription": {"href": s["url"]}}}})
+                                "_links": {"self": {"href": s["url"]}, "subscription": {"href": s["url"]}}}})
                 for s in list(SUBS.values()):
                     b = s["body"]
                     if s["kind"] == "user" and b.get("address") == a:
                         _pool.submit(_post, s["callback"], {"userLocationEventNotification": {
                             "notificationType": "UserLocationEventNotification", "timeStamp": ts, "address": a,
                             "zoneId": cur[0], "accessPointId": cur[1], "userLocationEvent": "TRANSFERRING_EVENT",
-                            "_links": {"subscription": {"href": s["url"]}}}})
+                            "_links": {"self": {"href": s["url"]}, "subscription": {"href": s["url"]}}}})
             if PLAYER and now - last_rep >= PLAYER.period:
                 last_rep = now
                 rad = PLAYER.radio()
@@ -229,10 +231,11 @@ def _event_loop(period=0.2):
                         nb = [c for c in cells if c != serving]
                         _pool.submit(_post, s["callback"], {
                             "notificationType": "MeasRepUeNotification", "timeStamp": _ts(),
-                            "associateId": [{"type": "UE_IPv4_ADDRESS", "value": a}],
+                            "associateId": [mec_codes.ue_id(a)],
                             "ecgi": {"cellId": serving, "plmn": {"mcc": "001", "mnc": "001"}},
                             "rsrp": rsrp_index(cells[serving]), "rsrq": rsrq_index(cells[serving], [cells[c] for c in nb]),
-                            "trigger": "PERIODICAL_REPORT_STRONGEST_CELLS",
+                            "trigger": mec_codes.RNIS_TRIGGER["PERIODICAL_REPORT_STRONGEST_CELLS"],
+                            "_links": [{"self": {"href": s["url"]}}], "subscription": [{"href": s["url"]}],
                             "eutranNeighbourCellMeasInfo": [{"ecgi": {"cellId": c, "plmn": {"mcc": "001", "mnc": "001"}},
                                                              "rsrp": rsrp_index(cells[c]),
                                                              "rsrq": rsrq_index(cells[c], [cells[o] for o in cells if o != c])}

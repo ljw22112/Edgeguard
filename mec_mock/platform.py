@@ -19,6 +19,8 @@ import threading
 import time
 
 from fastapi import APIRouter, Request
+
+from edgeguard import mec_codes
 from fastapi.responses import JSONResponse, Response
 
 router = APIRouter()
@@ -87,8 +89,16 @@ def deregister_service(app: str, sid: str):
 
 @router.get("/mec_service_mgmt/v1/services")
 def discover(ser_name: str | None = None):
-    return [{k: v for k, v in s.items() if not k.startswith("_")} for s in SERVICES.values()
-            if ser_name is None or s.get("serName") == ser_name]
+    return [_service_view(s) for s in SERVICES.values() if ser_name is None or s.get("serName") == ser_name]
+
+
+def _service_view(s):
+    """ServiceInfo as MEC 011 returns it: with its own link and a security block in the transport."""
+    out = {k: v for k, v in s.items() if not k.startswith("_")}
+    if isinstance(out.get("transportInfo"), dict):
+        out["transportInfo"] = {"security": {}, **out["transportInfo"]}
+    out["_links"] = {"self": {"href": f"/mec_service_mgmt/v1/services/{s['serInstanceId']}"}}
+    return out
 
 
 @router.post("/mec_service_mgmt/v1/applications/{app}/subscriptions", status_code=201)
@@ -101,14 +111,15 @@ async def ser_subscribe(app: str, req: Request):
 
 def _availability(s, change):
     names = None
-    for sub in SER_SUBS.values():
+    for sid, sub in SER_SUBS.items():
         names = ((sub.get("filteringCriteria") or {}).get("serNames")) or None
         if names and s.get("serName") not in names:
             continue
         _notify(sub.get("callbackReference"), {"notificationType": "SerAvailabilityNotification",
                                                "serviceReferences": [{"serName": s.get("serName"),
                                                                       "serInstanceId": s["serInstanceId"],
-                                                                      "state": s.get("state"), "changeType": change}]},
+                                                                      "state": s.get("state"), "changeType": change}],
+                                               "_links": {"subscription": {"href": f"/mec_service_mgmt/v1/applications/{sub.get('_app')}/subscriptions/{sid}"}}},
                 "ser_availability")
 
 
@@ -155,14 +166,17 @@ def _instances_for(ue):
 
 
 def _mobility(ue, status, source_app, target):
-    for sub in AMS_SUBS.values():
+    for sid, sub in AMS_SUBS.items():
         fc = sub.get("filterCriteria") or {}
         if fc.get("appInstanceId") and fc["appInstanceId"] != source_app:
             continue
-        if fc.get("mobilityStatus") and status not in fc["mobilityStatus"]:
+        wanted = [mec_codes.name(mec_codes.MOBILITY_STATUS, x) for x in fc.get("mobilityStatus") or []]
+        if wanted and status not in wanted:
             continue
         body = {"notificationType": "MobilityProcedureNotification", "timeStamp": _ts(),
-                "associateId": [{"type": "UE_IPv4_ADDRESS", "value": ue}], "mobilityStatus": status}
+                "associateId": [mec_codes.ue_id(ue)],
+                "mobilityStatus": mec_codes.code(mec_codes.MOBILITY_STATUS, status),
+                "_links": {"subscription": {"href": f"/amsi/v1/subscriptions/{sid}"}}}
         if target:
             body["targetAppInfo"] = target
         _notify(sub.get("callbackReference"), body, "ams")
@@ -233,14 +247,14 @@ def step(last_zone):
         inst = _instances_for(ue)
         src = next((a for a, h in inst.items() if h == src_host), None)
         dst = next((a for a, h in inst.items() if h == dst_host), None)
-        if src:
+        if src and dst:
             target = {"appInstanceId": dst, "mecHost": dst_host}
             reg = next((r for r in AMS_REG.values() if (r.get("serviceConsumerId") or {}).get("appInstanceId") == dst), None)
             if reg and reg.get("commInterface"):
                 target["commInterface"] = reg["commInterface"]
             _mobility(ue, "INTERHOST_MOVEOUT_TRIGGERED", src, target)
     # MEC 013 geofences
-    for g in list(GEO_SUBS.values()):
+    for gid, g in list(GEO_SUBS.items()):
         b = g["body"]
         cb = (b.get("callbackReference") or {}).get("notifyURL") if isinstance(b.get("callbackReference"), dict) \
             else b.get("callbackReference")
@@ -261,7 +275,9 @@ def step(last_zone):
                 if ev in (b.get("locationEventCriteria") or [ev]):
                     _notify(cb, {"userAreaNotification": {
                         "notificationType": "UserAreaNotification", "timeStamp": _ts(), "address": a,
-                        "userLocationEvent": ev, "locationInfo": {"latitude": [u["lat"]], "longitude": [u["lon"]]}}},
+                        "userLocationEvent": ev,
+                        "locationInfo": {"latitude": [u["lat"]], "longitude": [u["lon"]], "shape": 2},
+                        "_links": {"self": {"href": f"/location/v3/subscriptions/area/{gid}"}, "subscription": {"href": f"/location/v3/subscriptions/area/{gid}"}}}},
                         "area")
         else:
             mon = b.get("monitoredAddress") or []
@@ -272,8 +288,11 @@ def step(last_zone):
             if within and not g["within"]:
                 _notify(cb, {"userDistanceNotification": {
                     "notificationType": "UserDistanceNotification", "timeStamp": _ts(),
-                    "distanceEvent": "ALL_WITHIN_DISTANCE",
-                    "monitoredUsers": {"user": [{"address": a, "locationInfo": {
-                        "latitude": [users[a]["lat"]], "longitude": [users[a]["lon"]]}} for a in mon]},
+                    "distanceEvent": mec_codes.distance(b.get("criteria") or "ALL_WITHIN_DISTANCE"),
+                    "monitoredUsers": {"resourceURL": "/location/v3/queries/users", "user": [{
+                        "address": a, "accessPointId": users[a].get("poa") or "ap-site01", "zoneId": users[a].get("zone") or "zone01",
+                        "resourceURL": f"/location/v3/queries/users?address={a}", "timestamp": _ts(),
+                        "locationInfo": {"latitude": [users[a]["lat"]], "longitude": [users[a]["lon"]], "shape": 2}} for a in mon]},
+                    "_links": {"self": {"href": f"/location/v3/subscriptions/distance/{gid}"}, "subscription": {"href": f"/location/v3/subscriptions/distance/{gid}"}},
                     "_distance_m": round(d, 2)}}, "distance")
             g["within"] = within

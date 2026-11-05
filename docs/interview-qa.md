@@ -127,3 +127,10 @@ A board demo with ESP32 tags and modules, a user study (do people follow WAIT / 
 
 **Q24. Which TR-0086 deployment option did you choose, and why?**
 Option C in each zone: the MN-CSE runs as a MEC app on the same MEC host as our MEC app and the MEC-IPE, with an IN-CSE in the cloud. A collision warning has a 1-3 s budget, so the CSE, the decision and the MEC data sit together: 25 ms median alert latency instead of 85 ms cloud-only, trajectories stay in the zone, and a zone keeps working if the cloud link fails. We also cover the guide's optional steps, 5.5 handover (triggered by MEC zone events, RNIS signal strength or AMS) and 5.6 location (MEC 013 plus the device's own UWB position). We used our own ACME MN-CSEs rather than the local MEC Sandbox. [tr0086-mapping.md](tr0086-mapping.md).
+
+**Q25. Your MEC platform is a stand-in. How do you know your MEC integration is right?**
+We check EdgeGuard's own MEC traffic against the official ETSI Forge OpenAPI files in CI: every request, response and notification of MEC 011, 012, 013 and 021 that our clients exchange. The first run found real mismatches (a v2-style callbackReference, names where ETSI uses integer codes, missing `_links`); after fixing them, 19 of 19 exchanges and 160 of 160 notifications conform. Where the published files themselves are inconsistent, the validator records it instead of bending our code. The polling path also ran against the public ETSI MEC Sandbox. [ecosystem.md](ecosystem.md).
+
+**Q26. Does it only work on the CSEs you chose?**
+The application code runs on ACME and KETI Mobius, and the oneM2M tutorial runs on a third, independent CSE, tinyIoT, in CI. A feature probe shows what each CSE supports (ACME 13 of 13, tinyIoT 9 of 13), and every difference is documented with what EdgeGuard does about it. [interop-notes.md](interop-notes.md).
+

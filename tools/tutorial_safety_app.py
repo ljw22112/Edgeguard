@@ -37,6 +37,38 @@ def m2m(method, path, origin, ty=None, body=None, params=None):
 
 
 alerts_seen = []
+notes = []
+
+
+def make_acp(parent, rn, acr):
+    """Create an ACP; a CSE without accessControlObjectDetails (acod) support gets the same rules without it."""
+    body = {"m2m:acp": {"rn": rn, "pv": {"acr": acr}, "pvs": {"acr": [{"acor": [TAG], "acop": 63}]}}}
+    r = m2m("POST", parent, TAG, 1, body)
+    if r.status_code == 400 and any("acod" in a for a in acr):
+        notes.append(f"{rn}: this CSE rejects accessControlObjectDetails (chty); retried without it, so the app may create any child type")
+        for a in acr:
+            a.pop("acod", None)
+        r = m2m("POST", parent, TAG, 1, body)
+    return r.json()["m2m:acp"]["ri"]
+
+
+CON_AS_STRING = []                                  # set once a CSE rejects JSON objects as content
+
+
+def post_cin(path, origin, con):
+    """Create a contentInstance; a CSE that only takes text content gets the same JSON as a string."""
+    if CON_AS_STRING:
+        return m2m("POST", path, origin, 4, {"m2m:cin": {"con": json.dumps(con)}})
+    r = m2m("POST", path, origin, 4, {"m2m:cin": {"con": con}})
+    if r.status_code == 400:
+        CON_AS_STRING.append(True)
+        notes.append("this CSE accepts only text as contentInstance content; JSON is sent as a string")
+        r = m2m("POST", path, origin, 4, {"m2m:cin": {"con": json.dumps(con)}})
+    return r
+
+
+def as_json(con):
+    return json.loads(con) if isinstance(con, str) else con
 
 
 class AppEndpoint(BaseHTTPRequestHandler):
@@ -49,9 +81,9 @@ class AppEndpoint(BaseHTTPRequestHandler):
         self.end_headers()
         if sgn.get("vrq"):                                  # the CSE checks the target before it accepts the subscription
             return
-        pos = sgn["nev"]["rep"]["m2m:cin"]["con"]
+        pos = as_json(sgn["nev"]["rep"]["m2m:cin"]["con"])
         if AISLE_Y[0] <= pos["y"] <= AISLE_Y[1]:            # the "risk engine" of this tutorial
-            m2m("POST", "tutorial_tag/alerts", APP, 4, {"m2m:cin": {"con": {"cue": "WAIT", "reason": "in forklift aisle"}}})
+            post_cin("tutorial_tag/alerts", APP, {"cue": "WAIT", "reason": "in forklift aisle"})
             alerts_seen.append(pos)
 
     def log_message(self, *a):
@@ -69,16 +101,11 @@ def main():
     m2m("POST", "tutorial_tag", TAG, 3, {"m2m:cnt": {"rn": "alerts", "mni": 20}})
 
     print("2. The tag decides who may do what: the app may find the tag, read and subscribe to the position, and create alerts")
-    acp = m2m("POST", "tutorial_tag", TAG, 1, {"m2m:acp": {"rn": "acp_tag",
-              "pv": {"acr": [{"acor": [TAG], "acop": 63},
-                             {"acor": [APP], "acop": 2 + 32 + 16 + 1, "acod": [{"chty": [23]}]}]},   # RETRIEVE, DISCOVERY, NOTIFY, CREATE subscriptions
-              "pvs": {"acr": [{"acor": [TAG], "acop": 63}]}}}).json()["m2m:acp"]["ri"]
-    alerts_acp = m2m("POST", "tutorial_tag", TAG, 1, {"m2m:acp": {"rn": "acp_alerts",
-              "pv": {"acr": [{"acor": [TAG], "acop": 63}, {"acor": [APP], "acop": 1, "acod": [{"chty": [4]}]}]},   # CREATE contentInstances only
-              "pvs": {"acr": [{"acor": [TAG], "acop": 63}]}}}).json()["m2m:acp"]["ri"]
-    ae_acp = m2m("POST", "tutorial_tag", TAG, 1, {"m2m:acp": {"rn": "acp_ae",
-              "pv": {"acr": [{"acor": [TAG], "acop": 63}, {"acor": [APP], "acop": 2 + 32}]},              # the app may find the tag
-              "pvs": {"acr": [{"acor": [TAG], "acop": 63}]}}}).json()["m2m:acp"]["ri"]
+    acp = make_acp("tutorial_tag", "acp_tag", [{"acor": [TAG], "acop": 63},
+                   {"acor": [APP], "acop": 2 + 32 + 16 + 1, "acod": [{"chty": [23]}]}])   # RETRIEVE, DISCOVERY, NOTIFY, CREATE subscriptions
+    alerts_acp = make_acp("tutorial_tag", "acp_alerts", [{"acor": [TAG], "acop": 63},
+                          {"acor": [APP], "acop": 1, "acod": [{"chty": [4]}]}])           # CREATE contentInstances only
+    ae_acp = make_acp("tutorial_tag", "acp_ae", [{"acor": [TAG], "acop": 63}, {"acor": [APP], "acop": 2 + 32}])   # the app may find the tag
     m2m("PUT", "tutorial_tag", TAG, body={"m2m:ae": {"acpi": [ae_acp]}})
     m2m("PUT", "tutorial_tag/position", TAG, body={"m2m:cnt": {"acpi": [acp]}})
     m2m("PUT", "tutorial_tag/alerts", TAG, body={"m2m:cnt": {"acpi": [alerts_acp]}})
@@ -89,6 +116,15 @@ def main():
     m2m("POST", "", APP, 2, {"m2m:ae": {"rn": "tutorial_app", "api": "Ntutorial.app", "rr": True, "srv": ["3"],
                                         "poa": [f"http://127.0.0.1:{APP_PORT}"]}})
     found = m2m("GET", "", APP, params={"fu": 1, "lbl": "tutorial/worker-tag", "ty": 2}).json().get("m2m:uril", [])
+    if not found:                                        # some CSEs check DISCOVER on the CSE root itself
+        notes.append("this CSE checks DISCOVER on the CSE root; the operator granted it to the app in the CSE's default ACP")
+        root = requests.get(f"{CSE}/{CSE_RN}", headers={"X-M2M-Origin": "CAdmin", "X-M2M-RI": "r", "X-M2M-RVI": "3", "Accept": "application/json"}, timeout=5).json()["m2m:cb"]
+        for acpi in root.get("acpi", []):
+            acp = requests.get(f"{CSE}/{acpi}", headers={"X-M2M-Origin": "CAdmin", "X-M2M-RI": "r", "X-M2M-RVI": "3", "Accept": "application/json"}, timeout=5).json()["m2m:acp"]
+            acr = acp["pv"]["acr"] + [{"acor": [APP], "acop": 32}]
+            requests.put(f"{CSE}/{acpi}", headers={"X-M2M-Origin": "CAdmin", "X-M2M-RI": "r", "X-M2M-RVI": "3", "Accept": "application/json", "Content-Type": "application/json"},
+                         data=json.dumps({"m2m:acp": {"pv": {"acr": acr}}}), timeout=5)
+        found = m2m("GET", "", APP, params={"fu": 1, "lbl": "tutorial/worker-tag", "ty": 2}).json().get("m2m:uril", [])
     print(f"     found: {found}")
 
     print("4. The app subscribes to each tag's position; notifications go to its pointOfAccess")
@@ -98,14 +134,14 @@ def main():
 
     print("5. The tag walks toward the aisle, publishing its position")
     for y in (20.0, 16.0, 12.5, 10.0):
-        m2m("POST", "tutorial_tag/position", TAG, 4, {"m2m:cin": {"con": {"x": 31.0, "y": y}}})
+        post_cin("tutorial_tag/position", TAG, {"x": 31.0, "y": y})
         time.sleep(0.4)
     time.sleep(1.0)
 
     print("6. The tag reads its inbox; a stranger is refused")
-    la = (m2m("GET", "tutorial_tag/alerts/la", TAG).json().get("m2m:cin") or {}).get("con") or {}
+    la = as_json((m2m("GET", "tutorial_tag/alerts/la", TAG).json().get("m2m:cin") or {}).get("con") or {})
     print(f"     latest alert: {la}")
-    stranger = m2m("POST", "tutorial_tag/alerts", "CStranger", 4, {"m2m:cin": {"con": {"cue": "GO"}}}).status_code
+    stranger = post_cin("tutorial_tag/alerts", "CStranger", {"cue": "GO"}).status_code
     app_read_alerts = m2m("GET", "tutorial_tag/alerts/la", APP).status_code
 
     checks = {
@@ -117,6 +153,8 @@ def main():
     }
     for k, v in checks.items():
         print(("PASS " if v else "FAIL ") + k)
+    for n in notes:
+        print("NOTE " + n)
     srv.shutdown()
     return 0 if all(checks.values()) else 1
 

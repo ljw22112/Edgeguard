@@ -70,3 +70,24 @@ This note records the issues found during testing and how we handled them.
 
 - Putting a structured path (`Mobius/EdgeGuard/acp_worker_01`) in `acpi` works, and Mobius returns it in the form `/Mobius/...`.
   `set_acpi` in `edgeguard/onem2m.py` tries the structured path first and, if that fails, retries with the resource ID.
+
+## A third CSE: tinyIoT (Sejong University sesLab)
+
+[tinyIoT](https://github.com/seslabSJU/tinyIoT) is a C oneM2M CSE (BSD-3-Clause). CI builds it (pinned commit, SQLite) and runs the [oneM2M tutorial](tutorial-onem2m.md) on it: **5/5 checks pass**, the same as on ACME. `tools/cse_probe.py` checks the 13 features EdgeGuard uses on each CSE: **ACME 13/13, tinyIoT 9/13** (`results/cse_probe_*.json`).
+
+### 8. tinyIoT: contentInstance content must be text
+
+- `con` as a JSON object returns 400 (`invalid attribute : con`); the same JSON as a string is accepted. ACME and Mobius accept both.
+  The tutorial sends JSON as a string after the first 400 and parses either form.
+
+### 9. tinyIoT: no accessControlObjectDetails (`acod`, `chty`)
+
+- An ACP rule with `acod: [{chty: [23]}]` returns 400 (`invalid attribute : pv`). Without it the rule is accepted, but it then allows every child type, not only subscriptions: the least-privilege rule "the MEC app may only create subscriptions" cannot be expressed. The tutorial retries without `acod` and prints a note.
+
+### 10. tinyIoT: discovery checks DISCOVER on the CSE root
+
+- A discovery from the CSE root by an AE that has DISCOVER on the matching resources returns an empty list; tinyIoT's default ACP gives every originator only CREATE on the CSE. On ACME the same request returns the resources the originator may discover. The operator grants DISCOVER in the default ACP (the tutorial does this through `CAdmin`).
+
+### 11. tinyIoT: no pollingChannel, no semanticDescriptor
+
+- Both return 400; tinyIoT documents them as not supported. On tinyIoT, tags behind NAT need another path (MQTT), and the SAREF semantic query is not available. Standard SDT flexContainers (`cod:bat`) work; EdgeGuard's own SDT domain (`egs:`) would need a specialization profile loaded into tinyIoT.

@@ -1,0 +1,58 @@
+{
+ "tools": [
+  "add_content",
+  "agent_identity",
+  "annotate_resource",
+  "create_container",
+  "create_subscription",
+  "cse_info",
+  "delete_resource",
+  "discover_resources",
+  "get_latest_content",
+  "get_notifications",
+  "get_semantic_description",
+  "register_ae",
+  "retrieve_resource",
+  "semantic_query",
+  "send_onem2m_primitive",
+  "stop_watching",
+  "watch_resource"
+ ],
+ "calls": [
+  {
+   "tool": "cse_info",
+   "args": {},
+   "error": false,
+   "result": "{\n  \"rsc\": 2000,\n  \"rscName\": \"OK\",\n  \"result\": {\n    \"m2m:cb\": {\n      \"ri\": \"id-in\",\n      \"rn\": \"cse-in\",\n      \"csi\": \"/id-in\",\n      \"spi\": \"//acme.example.com\",\n      \"csz\": [\n        \"application/json\",\n        \"application/vnd.onem2m-res+json\",\n        \"application/cbor\",\n        \"application/vnd.onem2m-res+cbor\"\n      ],\n      \"acpi\": [\n        \"/id-in/acpCreateRootResources\"\n      ],\n      \"poa\": [\n        \"http://127.0.0.1:8080\"\n      ],\n      \"cst\": 1,\n      \"srt\": [\n        1,\n        2,\n        3,\n        4,\n        5,\n        9,\n        10,\n        13,\n        14,\n        15,\n  "
+  },
+  {
+   "tool": "discover_resources",
+   "args": {
+    "label": "egs:module/kinematics"
+   },
+   "error": false,
+   "result": "{\n  \"rsc\": 2000,\n  \"rscName\": \"OK\",\n  \"result\": {\n    \"m2m:uril\": []\n  }\n}"
+  },
+  {
+   "tool": "discover_resources",
+   "args": {
+    "label": "egs:module/kinematics"
+   },
+   "error": false,
+   "result": "{\n  \"rsc\": 2000,\n  \"rscName\": \"OK\",\n  \"result\": {\n    \"m2m:uril\": [\n      \"cse-in/worker_01/tag/kinematics\",\n      \"cse-in/worker_01/tag/kinematics/kinematics_0\"\n    ]\n  }\n}"
+  },
+  {
+   "tool": "retrieve_resource",
+   "args": {
+    "resource_id": "cse-in/worker_01/tag/kinematics"
+   },
+   "error": false,
+   "result": "{\n  \"rsc\": 2000,\n  \"rscName\": \"OK\",\n  \"result\": {\n    \"egs:kinSt\": {\n      \"rn\": \"kinematics\",\n      \"cnd\": \"org.edgeguard.safety.moduleclass.kinematicState\",\n      \"posX\": 0.0,\n      \"posY\": 0.0,\n      \"smpTe\": 0,\n      \"lbl\": [\n        \"egs:site/site-1\",\n        \"egs:role/worker\",\n        \"egs:id/worker_01\",\n        \"egs:module/kinematics\"\n      ],\n      \"fcied\": true,\n      \"mni\": 100,\n      \"cs\": 20,\n      \"st\": 1,\n      \"pi\": \"wrkTgiaZY7ATGrp\",\n      \"ri\": \"kinStW7wScnehQl\",\n      \"ty\": 28,\n      \"ct\": \"20261105T113023,017090\",\n      \"lt\": \"20261105T113023,041391\",\n      \"et\": \"20311104T1"
+  }
+ ],
+ "agent": "CmcpAgent",
+ "before_grant_found": false,
+ "found_twin": true,
+ "read_twin": true,
+ "package": "onem2m-mcp 0.4.1 (BSD-3-Clause)"
+}

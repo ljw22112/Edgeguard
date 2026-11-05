@@ -1,0 +1,57 @@
+{
+ "cse": "ACME",
+ "checks": {
+  "AE registration": {
+   "ok": true,
+   "detail": "201"
+  },
+  "container with maxNrOfInstances": {
+   "ok": true,
+   "detail": "201"
+  },
+  "contentInstance with a JSON object as content": {
+   "ok": true,
+   "detail": "201"
+  },
+  "contentInstance with text content": {
+   "ok": true,
+   "detail": "201"
+  },
+  "latest (la)": {
+   "ok": true,
+   "detail": "200"
+  },
+  "discovery by label": {
+   "ok": true,
+   "detail": "200"
+  },
+  "subscription and notification to the AE's pointOfAccess": {
+   "ok": true,
+   "detail": "201"
+  },
+  "ACP under an AE": {
+   "ok": true,
+   "detail": "201"
+  },
+  "ACP with accessControlObjectDetails (chty)": {
+   "ok": true,
+   "detail": "201"
+  },
+  "group and fanOutPoint (one request to every member)": {
+   "ok": true,
+   "detail": "group 201, fopt 200"
+  },
+  "flexContainer, standard SDT class cod:bat": {
+   "ok": true,
+   "detail": "201"
+  },
+  "pollingChannel (devices behind NAT)": {
+   "ok": true,
+   "detail": "201"
+  },
+  "semanticDescriptor": {
+   "ok": true,
+   "detail": "201"
+  }
+ }
+}

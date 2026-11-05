@@ -20,3 +20,13 @@ The judge site and the browser demo were checked with these linters; no code fro
 
 - **Hallmark** by Together AI, https://github.com/Nutlope/hallmark, MIT licence: `sloplint.mjs` and the Floor rules.
 - **Impeccable** by Paul Bakaus, https://github.com/pbakaus/impeccable, Apache License 2.0: `impeccable detect`.
+
+## ETSI MEC OpenAPI definitions (redistributed)
+
+`third_party/etsi-mec/` holds unmodified copies of the ETSI Forge OpenAPI files for GS MEC 011 (3.1.1), MEC 012 (2.2.1), MEC 013 (3.1.1) and MEC 021 (2.2.1), Copyright ETSI, BSD 3-Clause licence (`third_party/etsi-mec/LICENSE`); source commits in `third_party/etsi-mec/SOURCES.txt`. `tools/mec_conformance.py` validates EdgeGuard's MEC traffic against them; fixes for defects in the files are applied in memory and listed in its report.
+
+## Used in CI, not redistributed
+
+- **tinyIoT**, Software Engineering and Security Lab, Sejong University, https://github.com/seslabSJU/tinyIoT, BSD 3-Clause: built from a pinned commit to run the oneM2M tutorial and the feature probe.
+- **onem2m-mcp**, Rostan Technologies, https://pypi.org/project/onem2m-mcp/, BSD 3-Clause: the community oneM2M MCP gateway in `tools/onem2m_mcp_check.py`.
+- **openapi-core**, https://github.com/python-openapi/openapi-core, BSD 3-Clause: OpenAPI request and response validation.

@@ -1,0 +1,40 @@
+1. The tag registers (AE) with a label, then creates its containers
+  POST   /TinyIoT/  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 201 rsc=2001
+2. The tag decides who may do what: the app may find the tag, read and subscribe to the position, and create alerts
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 400 rsc=4000
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 400 rsc=4000
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag  (CTutorialTag) -> 201 rsc=2001
+  PUT    /TinyIoT/tutorial_tag  (CTutorialTag) -> 200 rsc=2004
+  PUT    /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 200 rsc=2004
+  PUT    /TinyIoT/tutorial_tag/alerts  (CTutorialTag) -> 200 rsc=2004
+3. The app registers with a pointOfAccess and finds tags by label (discovery)
+  POST   /TinyIoT/  (CTutorialApp) -> 201 rsc=2001
+  GET    /TinyIoT/  (CTutorialApp) -> 200 rsc=2000
+     found: ['TinyIoT/tutorial_tag']
+4. The app subscribes to each tag's position; notifications go to its pointOfAccess
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialApp) -> 201 rsc=2001
+5. The tag walks toward the aisle, publishing its position
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 400 rsc=4000
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag/alerts  (CTutorialApp) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag/position  (CTutorialTag) -> 201 rsc=2001
+  POST   /TinyIoT/tutorial_tag/alerts  (CTutorialApp) -> 201 rsc=2001
+6. The tag reads its inbox; a stranger is refused
+  GET    /TinyIoT/tutorial_tag/alerts/la  (CTutorialTag) -> 200 rsc=2000
+     latest alert: {'cue': 'WAIT', 'reason': 'in forklift aisle'}
+  POST   /TinyIoT/tutorial_tag/alerts  (CStranger) -> 403 rsc=4103
+  GET    /TinyIoT/tutorial_tag/alerts/la  (CTutorialApp) -> 403 rsc=4103
+PASS tag found by label discovery
+PASS alerts written by the app for both positions inside the aisle
+PASS the tag received WAIT in its own inbox
+PASS a stranger cannot write the tag's alerts (403)
+PASS the app may create alerts but not read them (403)
+NOTE acp_tag: this CSE rejects accessControlObjectDetails (chty); retried without it, so the app may create any child type
+NOTE acp_alerts: this CSE rejects accessControlObjectDetails (chty); retried without it, so the app may create any child type
+NOTE this CSE accepts only text as contentInstance content; JSON is sent as a string

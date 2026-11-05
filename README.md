@@ -55,7 +55,7 @@ Same 1,000 fresh simulated episodes for every system (8 workers, 4 forklifts, 3,
 - **A hub, not a database** — devices and apps never talk directly; subscriptions push positions to the MEC app and alerts to the tags, so there is no custom broker or polling code.
 - **Open to other applications** — alerts and near misses are standard resources; a WMS, a reporting tool or a camera vendor can subscribe without integration work.
 - **Access control built in** — one ACP per device AE gives least privilege; CI checks on every commit, on Mobius, that a forged write from another device is rejected (8/8).
-- **Vendor-neutral, edge to cloud** — the same code runs on KETI Mobius 3.0.1 and ACME; the edge MN-CSE registers with a cloud IN-CSE over Mcc. 7 interoperability issues documented.
+- **Vendor-neutral, edge to cloud** — the same code runs on KETI Mobius 3.0.1 and ACME, and the oneM2M tutorial also on Sejong University's tinyIoT (CI); the edge MN-CSE registers with a cloud IN-CSE over Mcc. 11 interoperability issues documented. EdgeGuard's ETSI MEC traffic is checked against the official ETSI OpenAPI files: 19/19 exchanges, 160/160 notifications ([ecosystem](docs/ecosystem.md)).
 
 | oneM2M feature | Used for | Status |
 |---|---|---|
@@ -229,6 +229,7 @@ docker compose --profile monitoring up -d               # + Prometheus :9095 · 
 | [Federated learning](docs/federated-learning.md) | TR-0084 roles as oneM2M resources, selection, dropout, late join, results |
 | [AI safety agent](docs/ai-agent.md) | MCP servers (oneM2M per CSE, ETSI MEC), shift report workflow, routing, persistent state |
 | [ESTIMED / TR-0077 mapping](docs/estimed-mapping.md) | deployment continuum (option C), clause 7.1–7.4 → EdgeGuard features and demos, stand-ins |
+| [Ecosystem: tinyIoT, ETSI OpenAPI conformance, community MCP](docs/ecosystem.md) | a third CSE (tinyIoT, 9/13 features, tutorial 5/5), MEC traffic against the ETSI Forge OpenAPI files, the community onem2m-mcp gateway on EdgeGuard's twins |
 | [TR-0086 developer guide mapping](docs/tr0086-mapping.md) | deployment option C, steps 5.2–5.6 and Annex A building blocks → where EdgeGuard does each, checked in CI |
 | [MEC platform APIs](docs/mec-platform.md) | MEC 011 Mp1, MEC 021 AMS handover trigger, MEC 013 area / distance subscriptions |
 | [Mobility via MEC](docs/mobility.md) | event-driven bidirectional MEC-IPE, MEC SDT classes, network-triggered handover, mobility map |

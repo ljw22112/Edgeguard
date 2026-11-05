@@ -1,0 +1,1495 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  contact:
+    url: https://forge.etsi.org/rep/mec/gs011-app-enablement-api
+  title: ETSI GS MEC 011 Edge Platform Application Enablement
+  description: 'The present document focuses on the functionalities enabled via the Mp1 reference point between MEC applications and MEC platform, which allows these applications to interact with the MEC system. Service management functionality includes registration/deregistration, discovery and event notifications. Application support functionality includes application start-up, registration and termination, traffic rules, DNS and time of day. It describes the information flows, required information, and specifies the necessary operations, data models and API definitions.
+
+    '
+  license:
+    name: BSD-3-Clause
+    url: https://forge.etsi.org/legal-matters
+  version: 3.1.1
+servers:
+- url: https://localhost:8081/mec_app_support/v1
+paths:
+  /applications/{appInstanceId}/subscriptions:
+    get:
+      summary: Retrieve information about a list of mecAppSupportSubscription resources for this subscriber.
+      description: The GET method may be used to request information about all subscriptions for this requestor. Upon success, the response contains message content with all the subscriptions for the requestor.
+      operationId: ApplicationsSubscriptionsGETAppinstanceid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing the list of links to the requested subscriptions is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  SubscriptionLinkList:
+                    $ref: '#/components/schemas/SubscriptionLinkList'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+    post:
+      summary: Create a mecAppSupportSubscription resource.
+      description: 'The POST method may be used to create a new subscription. One example use case is to create a new subscription to the MEC application termination notifications. Upon success, the response contains message content describing the created subscription. '
+      operationId: ApplicationsSubscriptionsPOSTAppinstanceid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: Message content in the request contains a subscription to the MEC application termination notifications that is to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AppTerminationNotificationSubscription:
+                  $ref: '#/components/schemas/AppTerminationNotificationSubscription'
+      responses:
+        '201':
+          description: Upon success, the HTTP response shall include a "Location" HTTP header that contains the resource URI of the created subscription resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AppTerminationNotificationSubscription:
+                    $ref: '#/components/schemas/AppTerminationNotificationSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      callbacks:
+        notification:
+          '{$request.body#/callbackUri}':
+            post:
+              summary: Callback POST used to send a notification
+              description: Subscription notification
+              operationId: notificationPOST637029
+              requestBody:
+                description: Subscription notification
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        subscriptionNotification:
+                          $ref: '#/components/schemas/AppTerminationNotificationSubscription'
+              responses:
+                '204':
+                  description: No content
+                '404':
+                  description: Not found
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/subscriptions/{subscriptionId}:
+    get:
+      summary: Retrieve information about a mecAppSupportSubscription resource for this subscriber.
+      description: The GET method requests information about a subscription for this requestor. Upon success, the response contains message content with the subscription for the requestor.
+      operationId: ApplicationsSubscriptionsGETAppinstanceidSubscriptionid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing the requested subscription is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AppTerminationNotificationSubscription:
+                    $ref: '#/components/schemas/AppTerminationNotificationSubscription'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+    delete:
+      summary: Delete a mecAppSupportSubscription resource.
+      description: This method deletes a mecAppSupportSubscription. This method is typically used in "Unsubscribing from event notifications" procedure as described in clause 5.2.6.3. Figure 7.2.4.3.5-1 shows the example message flows using DELETE method.
+      operationId: ApplicationsSubscriptionsDELETEAppinstanceidSubscriptionid
+      tags:
+      - applicationSupport
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: subscriptionId
+        in: path
+        required: true
+        description: The unique identifier of the subscriptionId.
+        schema:
+          type: string
+  /timing/timing_caps:
+    get:
+      summary: Retrieve information about the mecTimingCaps resource.
+      description: This method retrieves the information of the platform's timing capabilities which corresponds to the timing capabilities query as described in clause 5.2.10.3. Figure 7.2.5.3.1-1 shows the example message flow for retrieving timing capabilities using GET method.
+      operationId: TimingTimingcapsGET
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: It is used to indicate nonspecific success. The response message content contains a representation of the resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  TimingCaps:
+                    $ref: '#/components/schemas/TimingCaps'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters: []
+  /timing/current_time:
+    get:
+      summary: Retrieve information about the mecCurrentTime resource.
+      description: This method retrieves the information of the platform's current time which corresponds to the get platform time procedure as described in clause 5.2.10.2. Figure 7.2.6.3.1-1 shows message flow for retrieving current time using GET method.
+      operationId: TimingCurrenttimeGET
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: It is used to indicate nonspecific success. The response message content contains a representation of the resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  CurrentTime:
+                    $ref: '#/components/schemas/CurrentTime'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters: []
+  /applications/{appInstanceId}/traffic_rules:
+    get:
+      summary: Retrieve information about a list of mecTrafficRule resources for an application instance.
+      description: This method retrieves information about all the traffic rules associated with a MEC application instance.
+      operationId: ApplicationsTrafficrulesGETAppinstanceid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing an array of the TrafficRules is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrafficRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/traffic_rules/{trafficRuleId}:
+    get:
+      summary: Retrieve information about a mecTrafficRule resource.
+      description: This method retrieves information about a traffic rule associated with a MEC application instance.
+      operationId: ApplicationsTrafficrulesGETAppinstanceidTrafficruleid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing the TrafficRules is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  TrafficRule:
+                    $ref: '#/components/schemas/TrafficRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: trafficRuleId
+        in: path
+        required: true
+        description: The unique identifier of the trafficRuleId.
+        schema:
+          type: string
+    put:
+      summary: Update the information about a mecTrafficRule resource.
+      description: PUT HTTP method shall comply with the URI query parameters, request and response data structures, and response codes, as specified in tables 7.2.8.3.2-1 and 7.2.8.3.2-2.
+      operationId: ApplicationsTrafficrulesPUTAppinstanceidTrafficruleid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: "One or more updated attributes that are allowed to be changed (i.e.\_\"state\" or other attributes based on definition in clause 7.1.2.2) are included in the TrafficRule data structure in the message content of the request."
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                TrafficRule:
+                  $ref: '#/components/schemas/TrafficRule'
+      responses:
+        '200':
+          description: Upon success, a response message content containing data type describing the updated TrafficRule is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  TrafficRule:
+                    $ref: '#/components/schemas/TrafficRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+        '412':
+          $ref: '#/components/responses/412'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: trafficRuleId
+        in: path
+        required: true
+        description: The unique identifier of the trafficRuleId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/dns_rules:
+    get:
+      summary: Retrieve information about a list of mecDnsRule resources for an application instance.
+      description: This method retrieves information about all the DNS rules associated with a MEC application instance.
+      operationId: ApplicationsDnsrulesGETAppinstanceid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing an array of the DnsRules is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DnsRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/dns_rules/{dnsRuleId}:
+    get:
+      summary: Retrieve information about a mecDnsRule resource.
+      description: 'This method retrieves information about a DNS rule associated with a MEC application instance. '
+      operationId: ApplicationsDnsrulesGETAppinstanceidDnsruleid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing the DnsRules is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  DnsRule:
+                    $ref: '#/components/schemas/DnsRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: dnsRuleId
+        in: path
+        required: true
+        description: The unique identifier of the dnsRuleId.
+        schema:
+          type: string
+    put:
+      summary: Update the information about a mecDnsRule resource.
+      description: PUT HTTP method shall comply with the URI query parameters, request and response data structures, and response codes, as specified in tables 7.2.10.3.2-1 and 7.2.10.3.2-2.
+      operationId: ApplicationsDnsrulesPUTAppinstanceidDnsruleid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: The updated "state" is included in the message content of the request.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                DnsRule:
+                  $ref: '#/components/schemas/DnsRule'
+      responses:
+        '200':
+          description: Upon success, a response message content containing data type describing the updated DnsRule is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  DnsRule:
+                    $ref: '#/components/schemas/DnsRule'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+        '412':
+          $ref: '#/components/responses/412'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+      - name: dnsRuleId
+        in: path
+        required: true
+        description: The unique identifier of the dnsRuleId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/confirm_termination:
+    post:
+      summary: Confirm the application level termination of an App instance.
+      description: 'Table 7.2.11.3.4-1: URI query parameters supported by the POST method on this resource'
+      operationId: ApplicationsConfirmterminationPOSTAppinstanceid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: Message content in the request contains the operational action the application instance is responding to.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AppTerminationConfirmation:
+                  $ref: '#/components/schemas/AppTerminationConfirmation'
+      responses:
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+  /applications/{appInstanceId}/confirm_ready:
+    post:
+      summary: Confirm the application instance is up and running.
+      description: The POST method may be used by the MEC application instance to notify the MEC platform that it is up and running. POST HTTP method shall support the URI query parameters, request and response data structures, and response codes, as specified in tables 7.2.12.3.4-1 and 7.2.12.3.4-2.
+      operationId: ApplicationsConfirmreadyPOSTAppinstanceid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: Message content in the request contains the indication that the application instance is up and running.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AppReadyConfirmation:
+                  $ref: '#/components/schemas/AppReadyConfirmation'
+      responses:
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+  /registrations:
+    post:
+      summary: Register the MEC application instance to the MEC platform.
+      description: 'The POST method may be used by the MEC application instance to request its registration to the MEC platform. Upon success, the response contains message content describing the created registration. '
+      operationId: RegistrationsPOST
+      tags:
+      - applicationSupport
+      requestBody:
+        description: The message content in the request contains the profile of the MEC application instance, calling the MEC platform to register the MEC application instance. .
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AppInfo:
+                  $ref: '#/components/schemas/AppInfo'
+      responses:
+        '201':
+          description: Indicates successful resource creation for registration of the MEC application instance to the MEC platform. The resource URI shall be returned in the HTTP Location header field.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AppInfo:
+                    $ref: '#/components/schemas/AppInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      parameters: []
+  /registrations/{appInstanceId}:
+    get:
+      summary: Retrieve information about the MEC application instance registration to the MEC platform.
+      description: The GET method may be used by the MEC application instance to retrieve information about the existing MEC application instance registration to the MEC platform. GET HTTP method shall comply with the URI query parameters, request and response data structures, and response codes, as specified in tables 7.2.14.3.1-1 and 7.2.14.3.1-2.
+      operationId: RegistrationsGETAppinstanceid
+      tags:
+      - applicationSupport
+      responses:
+        '200':
+          description: Upon success, a response message content containing the AppInfo is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AppInfo:
+                    $ref: '#/components/schemas/AppInfo'
+        '400':
+          $ref: '#/components/responses/400'
+        '404':
+          $ref: '#/components/responses/404'
+        '403':
+          $ref: '#/components/responses/403'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+    put:
+      summary: Update the existing registration of that MEC application instance to the MEC platform.
+      description: The PUT method may be used by the MEC application instance to update its registration to the MEC platform. PUT HTTP method shall comply with the URI query parameters, request and response data structures, and response codes, as specified in tables 7.2.14.3.2-1 and 7.2.14.3.2-2.
+      operationId: RegistrationsPUTAppinstanceid
+      tags:
+      - applicationSupport
+      requestBody:
+        description: Message content in the request contains the profile of the application, calling the MEC platform to update the existing MEC application instance registration.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AppInfo:
+                  $ref: '#/components/schemas/AppInfo'
+      responses:
+        '204':
+          description: Upon success, a response 204 No Content without any response message content is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+    delete:
+      summary: Request deregistration of the application instance from the MEC platform.
+      description: "The DELETE method is used to cancel the existing MEC application instance registration. Cancellation can be made by deleting the resource that represents the existing MEC application instance registration. DELETE HTTP method shall comply with the URI query parameters, request and response data structures, and response codes, as specified in tables\_7.2.14.3.5-1 and 7.2.14.3.5-2."
+      operationId: RegistrationsDELETEAppinstanceid
+      tags:
+      - applicationSupport
+      responses:
+        '204':
+          $ref: '#/components/responses/204'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      parameters:
+      - name: appInstanceId
+        in: path
+        required: true
+        description: The unique identifier of the appInstanceId.
+        schema:
+          type: string
+components:
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference according to IETF RFC 3986 that identifies the problem type
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          format: uint32
+          description: The HTTP status code for this occurrence of the problem
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence of the problem
+    TransportDescriptor:
+      x-etsi-ref: 6.2.1.19
+      type: object
+      properties:
+        name:
+          description: The name of this transport.
+          type: string
+        description:
+          description: Human-readable description of this transport.
+          type: string
+        type:
+          description': Type of the transport, as defined in the TransportTypes type in ETSI GS MEC 011 [17].
+          $ref: '#/components/schemas/TransportTypes'
+        protocol:
+          description: The name of the protocol used. Shall be set to "HTTP" for a REST API.
+          type: string
+        version:
+          description: The version of the protocol used.
+          type: string
+        security:
+          description': Information about the security used by the transport in ETSI GS MEC 011 [17].
+          $ref: '#/components/schemas/SecurityInfo'
+        implSpecificInfo:
+          description: Additional implementation specific details of the transport.
+          type: object
+      required:
+      - name
+      - type
+      - protocol
+      - version
+      - security
+    SecurityInfo:
+      x-etsi-ref: 8.1.5.4
+      type: object
+      properties:
+        oAuth2Info:
+          $ref: '#/components/schemas/OAuth2Info'
+        (extensions):
+          description: Extensions for alternative transport mechanisms. These extensions depend on the actual transport, and are out of scope of the present document. For instance, such extensions may be used to signal the necessary parameters for the client to use TLS-based authorization defined for alternative transports (see ETSI GS MEC 009 [5] for more information).
+    SerializerType:
+      x-etsi-ref: 8.1.6.3
+      type: string
+      enum:
+      - JSON
+      - XML
+      - PROTOBUF3
+      x-etsi-mec-extensible: true
+      x-etsi-mec-enumeration-table:
+      - value: JSON
+        description: Javascript object notation [9]
+      - value: XML
+        description: eXtensible Mark-up Language version 1.1 [10]
+      - value: PROTOBUF3
+        description: Protocol buffers version 3 [i.3]
+    OAuth2Info:
+      description: Parameters related to use of OAuth 2.0. Shall be present in case OAuth 2.0 (see IETF RFC 6749 [13]) is supported to secure the provision of the service over the transport.
+      type: object
+      properties:
+        grantTypes:
+          description: "List of supported OAuth 2.0 grant types. Each entry shall be one of the following permitted values: \u2022 OAUTH2_AUTHORIZATION_CODE (Authorization code grant type) \u2022 OAUTH2_IMPLICIT_GRANT (Implicit grant type) \u2022 OAUTH2_RESOURCE_OWNER (Resource owner password credentials grant type) \u2022 OAUTH2_CLIENT_CREDENTIALS (Client credentials grant type) Only the value \"OAUTH2_CLIENT_CREDENTIALS\" is supported in the present document."
+          type: array
+          minItems: 0
+          items:
+            type: string
+            enum:
+            - SEE_DESCRIPTION
+        tokenEndpoint:
+          description: The token endpoint. Shall be present unless the grant type is OAUTH2_IMPLICIT_GRANT.
+          type: string
+          format: uri
+      required:
+      - grantTypes
+    TransportTypes:
+      x-etsi-ref: 8.1.6.4
+      type: string
+      enum:
+      - REST_HTTP
+      - MB_TOPIC_BASED
+      - MB_ROUTING
+      - MB_PUBSUB
+      - RPC
+      - RPC_STREAMING
+      - WEBSOCKET
+      description: The enumeration TransportType represents types of transports.
+      x-etsi-mec-extensible: true
+      x-etsi-mec-enumeration-table:
+      - value: REST_HTTP
+        description: RESTful API using HTTP (as defined in IETF RFC 9110 [11]).
+      - value: MB_TOPIC_BASED
+        description: Topic-based message bus which routes messages to receivers based on subscriptions, if a pattern passed on subscription matches the topic of the message. EXAMPLE MQTT (see [i.4]).
+      - value: MB_ROUTING
+        description: Routing-based message bus which routes messages to receivers based on subscriptions, if a key passed on subscription is equal to the key of the message.
+      - value: MB_PUBSUB
+        description: Publish-subscribe based message bus which distributes messages to all subscribers.
+      - value: RPC
+        description: Remote procedure call. EXAMPLE GRPC (see [i.5]).
+      - value: RPC_STREAMING
+        description: Remote procedure call supporting streams of requests and responses. EXAMPLE GRPC (see [i.5]).
+      - value: WEBSOCKET
+        description: Websockets as defined in IETF RFC 6455 [12].
+    AppProfile:
+      description: 'Can be mapped to EAS profile as defined in ETSI TS 129 558 [19].
+
+        '
+    TransportDependency:
+      x-etsi-ref: 6.2.1.18
+      type: object
+      properties:
+        transport:
+          description': Information about the transport in this transport binding.
+          $ref: '#/components/schemas/TransportDescriptor'
+        serializers:
+          description: Information about the serializers in this transport binding, as defined in the SerializerType type in ETSI GS MEC 011 [17]. Support for at least one of the entries is required in conjunction with the transport.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SerializerType'
+        labels:
+          description: Set of labels that allow to define groups of transport bindings. The mechanism of the grouping is defined below this table.
+          type: array
+          minItems: 1
+          items:
+            type: string
+      required:
+      - transport
+      - serializers
+      - labels
+    ServiceDependency:
+      x-etsi-ref: 6.2.1.17
+      type: object
+      properties:
+        serName:
+          description: The name of the service, for example, RNIS, LocationService, AMS, etc.
+          type: string
+        serCategory:
+          description': A Category reference of the service.
+          $ref: '#/components/schemas/CategoryRef'
+        version:
+          description: The version of the service.
+          type: string
+        serTransportDependencies:
+          description: Indicates transport and serialization format dependencies of consuming the service. Defaults to REST + JSON if absent. See note.
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/TransportDependency'
+        requestedPermissions:
+          description: 'Requested permissions regarding the access of the application to the service. See clause 7.2 of ETSI GS MEC 009 [4].
+
+            The format of this attribute is left for the data model design stage.'
+      required:
+      - serName
+      - version
+      x-etsi-notes: "NOTE:\tThis attribute indicates groups of transport bindings that a service-consuming MEC application supports for the consumption of the MEC service defined by this ServiceDependency structure. If at least one of the indicated groups is supported by the service it may be consumed by the application."
+    Uint32:
+      type: integer
+      format: uint32
+    FeatureDependency:
+      x-etsi-ref: 6.2.1.8
+      type: object
+      properties:
+        featureName:
+          description: The name of the feature, for example, UserApps, UEIdentity, etc.
+          type: string
+        version:
+          description: The version of the feature.
+          type: string
+      required:
+      - featureName
+      - version
+    SubscriptionLinkList:
+      x-etsi-ref: 6.2.2
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/_links'
+      required:
+      - _links
+    LinkType:
+      x-etsi-ref: 6.3.2
+      type: object
+      properties:
+        href:
+          description: URI referring to a resource
+          type: string
+          format: uri
+      required:
+      - href
+    TrafficRule:
+      x-etsi-ref: 7.1.2.2
+      type: object
+      properties:
+        trafficRuleId:
+          description: Identify the traffic rule.
+          type: string
+        filterType:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: 'Definition of filter per FLOW or PACKET.
+
+            If FLOW, the filter matches upstream (e.g. UEEPC) packets and upstream (e.g. EPCUE) packets are handled in the same context.'
+        priority:
+          description: Priority of this traffic rule within the range 0 to 255. If traffic rules conflict, the one with higher priority take precedence. See note 1.
+          type: integer
+        trafficFilter:
+          description: The filter used to identify specific packets that need to be handled by the MEC host.
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/TrafficFilter'
+        action:
+          type: string
+          enum:
+          - DUPLICATE_ENCAPSULATED
+          description: 'The action of the MEC host data plane when a packet matches the trafficFilter, the following actions are defined:
+
+            DROP
+
+            FORWARD_DECAPSULATED
+
+            FORWARD_ENCAPSULATED
+
+            PASSTHROUGH
+
+            DUPLICATE_DECAPSULATED
+
+            DUPLICATE_ENCAPSULATED'
+        dstInterface:
+          description: Describes the destination interface information. If the action is FORWARD_DECAPSULATED, FORWARD_ENCAPSULATED or PASSTHROUGH one value shall be provided. If the action is DUPLICATE_DECAPSULATED or DUPLICATE_ENCAPSULATED, two values shall be provided. See note 2. If the action is DROP, no value shall be provided.
+          $ref: '#/components/schemas/DestinationInterface'
+        state:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: 'Contains the traffic rule state: ACTIVE, INACTIVE.
+
+            This attribute may be updated using HTTP PUT method.'
+      required:
+      - trafficRuleId
+      - filterType
+      - priority
+      - trafficFilter
+      - action
+      - state
+      description: "|-\n  NOTE 1:\tValue indicates the priority in descending order, i.e. with 0 as the highest priority and 255 as the lowest priority.\nNOTE 2:\tSome applications (like inline/tap) require two interfaces. The first interface in the case of inline/tap is on the client (e.g. UE) side and the second on the core network (e.g. EPC) side."
+    DnsRule:
+      x-etsi-ref: 7.1.2.3
+      type: object
+      properties:
+        dnsRuleId:
+          description: Identifies the DNS Rule.
+          type: string
+        domainName:
+          description: FQDN resolved by the DNS rule.
+          type: string
+        ipAddressType:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: 'Specify the IP address type, value: IP_V6, IP_V4.'
+        ipAddress:
+          description: IP address associated with the FQDN resolved by the DNS rule.
+          type: string
+        ttl:
+          description: Time to live value, in seconds.
+          type: integer
+        state:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: 'Contains the DNS rule state: ACTIVE, INACTIVE. This attribute may be updated using HTTP PUT method.'
+      required:
+      - dnsRuleId
+      - domainName
+      - ipAddressType
+      - ipAddress
+      - state
+      description: "|-\n  NOTE:\tIf no ttl value is provided, the DnsRule shall not expire."
+    TimingCaps:
+      x-etsi-ref: 7.1.2.4
+      type: object
+      properties:
+        timeStamp:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeStamp'
+        ntpServers:
+          type: array
+          items:
+            $ref: '#/components/schemas/NtpServers'
+        ptpMasters:
+          type: array
+          items:
+            $ref: '#/components/schemas/PtpMasters'
+      required:
+      - timeStamp
+      - ntpServers
+      - ptpMasters
+    CurrentTime:
+      x-etsi-ref: 7.1.2.5
+      type: object
+      properties:
+        seconds:
+          description: The seconds part of the Time. Time is defined as Unix-time since January 1, 1970, 00:00:00 UTC
+          type: integer
+          format: uint32
+        nanoSeconds:
+          description: The nanoseconds part of the Time. Time is defined as Unix-time since January 1, 1970, 00:00:00 UTC
+          type: integer
+          format: uint32
+        timeSourceStatus:
+          type: string
+          enum:
+          - source
+          description: 'Platform Time Source status with the following permitted values:
+
+            TRACEABLE - time source is locked to the UTC time source
+
+            NONTRACEABLE - time source is not locked to the UTC time source'
+      required:
+      - seconds
+      - nanoSeconds
+      - timeSourceStatus
+    AppInfo:
+      x-etsi-ref: 7.1.2.6
+      type: object
+      properties:
+        appName:
+          description: Name of the application. It shall be consistent with the appName in the AppD, if an AppD is available.
+          type: string
+        appProvider:
+          description: 'Provider of the application. It shall be consistent with the appProvider in the AppD, if an AppD is available.
+
+            See note 1.'
+          type: string
+        appCategory:
+          description: Category of the application.
+          $ref: '#/components/schemas/CategoryRef'
+        appDId:
+          description: The application descriptor identifier. It is managed by the application provider to identify the application descriptor in a globally unique way. Shall be present if the application instance is instantiated by the MEC Management.
+          type: string
+        appInstanceId:
+          description: Identifier of the application instance. Shall be present if the application instance is instantiated by the MEC Management.
+          type: string
+        endpoint:
+          description: Endpoint information (e.g. URI, FQDN, IP address) of the application server, which is part of the application functionalities. Shall be present when isInsByMec is FALSE. See note 2.
+          $ref: '#/components/schemas/EndPointInfo'
+        appServiceRequired:
+          description: "Describes services a MEC application requires to run. ServiceDependency is defined in ETSI GS\_MEC\_0102\_[4]. It shall not be provided if an AppD is available."
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/ServiceDependency'
+        appServiceOptional:
+          description: "Describes services a MEC application may use if available. ServiceDependency is defined in ETSI GS\_MEC 010-2 [4]. It shall not be provided if an AppD is available."
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/ServiceDependency'
+        appFeatureRequired:
+          description: "Describes features a MEC application requires to run. FeatureDependency is defined in ETSI GS\_MEC\_0102\_[4]. It shall not be provided if an AppD is available."
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/FeatureDependency'
+        appFeatureOptional:
+          description: "Describes features a MEC application may use if available. FeatureDependency is defined in ETSI GS\_MEC 010-2 [4]. It shall not be provided if an AppD is available."
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/FeatureDependency'
+        isInsByMec:
+          description: 'Indicate whether the application instance is instantiated by the MEC Management.
+
+            Default to FALSE if absent.'
+          type: boolean
+        appProfile:
+          description: Can be mapped to EAS profile as defined in ETSI TS 129 558 [19]. More information can be found in the informative Annex C. See note 1 and note 2.
+          $ref: '#/components/schemas/AppProfile'
+      required:
+      - appName
+      description: "|-\n  NOTE 1:\tIf appProfile is present, appProvider shall be consistent with provId provided in EAS profile data type, i.e. the same.\nNOTE 2:\tIf appProfile is present, endpoint shall refer to the same end point as endPt provided in EAS profile data type."
+    AppTerminationNotificationSubscription:
+      x-etsi-ref: 7.1.3.2
+      type: object
+      properties:
+        subscriptionType:
+          description: Shall be set to "AppTerminationNotificationSubscription".
+          type: string
+        callbackReference:
+          description: URI selected by the MEC application instance to receive notifications on the subscribed MEC application instance management information. This shall be included in both the request and the response.
+          type: string
+          format: uri
+        _links:
+          $ref: '#/components/schemas/_links1'
+        appInstanceId:
+          description: It is used as the filtering criterion for the subscribed events.
+          type: string
+      required:
+      - subscriptionType
+      - callbackReference
+      - appInstanceId
+    AppTerminationNotification:
+      x-etsi-ref: 7.1.4.2
+      type: object
+      properties:
+        notificationType:
+          description: Shall be set to "AppTerminationNotification".
+          type: string
+        operationAction:
+          type: string
+          enum:
+          - TERMINATING
+          description: 'Operation that is being performed on the MEC application instance:
+
+            STOPPING
+
+            TERMINATING'
+        maxGracefulTimeout:
+          description: Maximum non-zero timeout value in seconds for graceful termination or graceful stop of an application instance.
+          type: integer
+          format: uint32
+        _links:
+          $ref: '#/components/schemas/_links2'
+      required:
+      - notificationType
+      - operationAction
+      - maxGracefulTimeout
+      - _links
+    AppTerminationConfirmation:
+      x-etsi-ref: 7.1.4.3
+      type: object
+      properties:
+        operationAction:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: 'Operation that is being performed on the MEC application instance:
+
+            STOPPPING
+
+            TERMINATING
+
+            The value shall match that sent in the corresponding AppTerminationNotification.'
+      required:
+      - operationAction
+    AppReadyConfirmation:
+      x-etsi-ref: 7.1.4.4
+      type: object
+      properties:
+        indication:
+          description: 'Indication about the MEC application instance:
+
+            READY'
+          type: string
+      required:
+      - indication
+    TrafficFilter:
+      x-etsi-ref: 7.1.5.2
+      type: object
+      properties:
+        srcAddress:
+          description: 'An IP address or a range of IP address.
+
+            For IPv4, the IP address could be an IP address plus mask, or an individual IP address, or a range of IP addresses.
+
+            For IPv6, the IP address could be an IP prefix, or a range of IP prefixes.'
+          type: array
+          minItems: 0
+          items:
+            type: string
+        dstAddress:
+          description: 'An IP address or a range of IP address.
+
+            For IPv4, the IP address could be an IP address plus mask, or an individual IP address, or a range of IP addresses.
+
+            For IPv6, the IP address could be an IP prefix, or a range of IP prefixes.'
+          type: array
+          minItems: 0
+          items:
+            type: string
+        srcPort:
+          description: A port or a range of ports.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        dstPort:
+          description: A port or a range of ports.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        protocol:
+          description: Specify the protocol of the traffic filter.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        tag:
+          description: Used for tag based traffic rule.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        srcTunnelAddress:
+          description: Used for GTP tunnel based traffic rule.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        tgtTunnelAddress:
+          description: Used for GTP tunnel based traffic rule.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        srcTunnelPort:
+          description: Used for GTP tunnel based traffic rule.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        dstTunnelPort:
+          description: Used for GTP tunnel based traffic rule.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        qCI:
+          description: Used to match all packets that have the same QCI.
+          type: integer
+        dSCP:
+          description: Used to match all IPv4 packets that have the same DSCP.
+          type: integer
+        tC:
+          description: Used to match all IPv6 packets that have the same TC.
+          type: integer
+    DestinationInterface:
+      x-etsi-ref: 7.1.5.3
+      type: object
+      properties:
+        interfaceType:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: Type of the interface, e.g. TUNNEL, MAC, IP, etc.
+        tunnelInfo:
+          description: Included only if the destination interface type is "tunnel".
+          $ref: '#/components/schemas/TunnelInfo'
+        srcMacAddress:
+          description: If the interface type is "MAC", source address identifies the MAC address of the interface.
+          type: string
+        dstMacAddress:
+          description: If the interface type is "MAC", destination address identifies the MAC address of the interface. Only used for dstInterface.
+          type: string
+        dstIpAddress:
+          description: If the interface type is "IP", destination address identifies the IP address of the remote destination. Only used for dstInterface.
+          type: string
+      required:
+      - interfaceType
+    TunnelInfo:
+      x-etsi-ref: 7.1.5.4
+      type: object
+      properties:
+        tunnelType:
+          type: string
+          enum:
+          - SEE_DESCRIPTION
+          description: Type of the tunnel, e.g. GTP_U, GRE, etc.
+        tunnelDstAddress:
+          description: Destination address of the tunnel
+          type: string
+        tunnelSrcAddress:
+          description: Source address of the tunnel
+          type: string
+      required:
+      - tunnelType
+    CategoryRef:
+      x-etsi-ref: 8.1.5.2
+      type: object
+      properties:
+        href:
+          description: Reference of the catalogue.
+          type: string
+          format: uri
+        id:
+          description: Unique identifier of the category.
+          type: string
+        name:
+          description: Name of the category.
+          type: string
+        version:
+          description: Category version.
+          type: string
+      required:
+      - href
+      - id
+      - name
+      - version
+    EndPointInfo:
+      x-etsi-ref: 8.1.5.3
+      type: object
+      properties:
+        uris:
+          description: Entry point information of the service as string, formatted according to URI syntax (see IETF RFC 3986 [8]). Shall be used for REST APIs. See note.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        fqdn:
+          description: Fully Qualified Domain Name of the service. See note.
+          type: array
+          minItems: 0
+          items:
+            type: string
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Addresses'
+        alternative:
+          description: "Entry point information of the service in a format defined by an implementation, or in an external specification. See\_note."
+          type: object
+      description: "|-\n  NOTE:\tExactly one of \"uris\", \"fqdn\", \"addresses\" or \"alternative\" shall be present."
+    Subscriptions:
+      description: The MEC application instance's subscriptions.
+      type: object
+      properties:
+        href:
+          description: URI referring to the subscription.
+          type: string
+          format: uri
+        subscriptionType:
+          description: Type of the subscription. The values are as defined in the "subscriptionType" attribute for each different Mp1 event subscription data type.
+          type: string
+      required:
+      - href
+      - subscriptionType
+    _links:
+      description: Object containing hyperlinks related to the resource.
+      type: object
+      properties:
+        self:
+          description: Self-referring URI.
+          $ref: '#/components/schemas/LinkType'
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subscriptions'
+      required:
+      - self
+    TimeStamp:
+      description: 0..1
+      type: object
+      properties:
+        seconds:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+        nanoSeconds:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+      required:
+      - seconds
+      - nanoSeconds
+    NtpServers:
+      description: 0..N
+      type: object
+      properties:
+        ntpServerAddrType:
+          description: '1'
+          type: array
+          items:
+            type: string
+        ntpServerAddr:
+          description: '1'
+          type: array
+          items:
+            type: string
+        minPollingInterval:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+        maxPollingInterval:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+        localPriority:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+        authenticationOption:
+          description: '1'
+          type: array
+          items:
+            type: string
+        authenticationKeyNum:
+          description: 0..1
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+      required:
+      - ntpServerAddrType
+      - ntpServerAddr
+      - minPollingInterval
+      - maxPollingInterval
+      - localPriority
+      - authenticationOption
+      - authenticationKeyNum
+    PtpMasters:
+      description: 0..N
+      type: object
+      properties:
+        ptpMasterIpAddress:
+          description: '1'
+          type: array
+          items:
+            type: string
+        ptpMasterLocalPriority:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+        delayReqMaxRate:
+          description: '1'
+          type: array
+          format: uint32
+          items:
+            $ref: '#/components/schemas/Uint32'
+      required:
+      - ptpMasterIpAddress
+      - ptpMasterLocalPriority
+      - delayReqMaxRate
+    _links1:
+      description: Object containing hyperlinks related to the resource. This shall only be included in the HTTP responses.
+      type: object
+      properties:
+        self:
+          description: Self-referring URI.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - self
+    _links2:
+      description: Object containing hyperlinks related to the resource.
+      type: object
+      properties:
+        subscription:
+          description: A link to the related subscription.
+          $ref: '#/components/schemas/LinkType'
+        confirmTermination:
+          description: Link to the task resource where to confirm termination/stop in case the application is ready to be terminated, or to be considered stopped by the MEC Platform, before expiry of the timeout.
+          $ref: '#/components/schemas/LinkType'
+      required:
+      - subscription
+    Addresses:
+      description: Entry point information of the service as one or more pairs of IP address and port. See note.
+      type: object
+      properties:
+        host:
+          description: Host portion of the address.
+          type: string
+        port:
+          description: Port portion of the address.
+          type: integer
+      required:
+      - host
+      - port
+  responses:
+    '200':
+      description: OK
+    '204':
+      description: No Content
+    '400':
+      description: 'Bad Request: used to indicate that incorrect parameters were passed to the request.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '401':
+      description: 'Unauthorized: used when the client did not submit credentials.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '403':
+      description: 'Forbidden: operation is not allowed given the current status of the resource.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '404':
+      description: 'Not Found: used when a client provided a URI that cannot be mapped to a valid resource URI.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '409':
+      description: 'Conflict: The operation cannot be executed currently, due to a conflict with the state of the resource. .'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '412':
+      description: 'Precondition failed: used when a condition has failed during conditional requests, e.g. when using ETags to avoid write conflicts when using PUT'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '414':
+      description: 'URI Too Long: used to indicate that the server is refusing to process the request because the request URI is longer than the server is willing or able to process.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    '429':
+      description: 'Too Many Requests: used when a rate limiter has triggered.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  parameters: {}
+
