@@ -58,7 +58,29 @@ With an attentive driver: EdgeGuard 0 collisions, 96.0 % [95.5-96.3]; proximity 
 - **Against the narrowed alarm sites choose to cut nuisance alarms: 0 collisions instead of 49** (its interval starts at 10 per 1,000) and **+37 points of throughput**.
 - v3.2, v3.1 and v2 give the same result here (0 collisions, 97.2 / 97.3 / 97.4 %, within the interval); the v3 / v3.1 / v3.2 changes matter under exceptional conditions ([robustness.md](robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)).
 
-Reproduce: `python -m sim.large_eval site --episodes 1000 --offset 21000`, then `python -m sim.large_eval report` (raw data [`results/large_eval.json`](../results/large_eval.json)).
+Reproduce: `python -m sim.large_eval site --episodes 1000 --offset 21000`
+
+### With social-force walkers
+
+The same comparison with the second walker model ([robustness.md](robustness.md#policy-v32-and-a-second-walker-model): people drift, change pace, hesitate and avoid each other; still nobody looks out), same seeds, 3,739 conflicts. Raw data [`results/large_eval_social.json`](../results/large_eval_social.json), summary [`results/large_eval_social_report.txt`](../results/large_eval_social_report.txt).
+
+![Systems used on sites today vs EdgeGuard, social-force walkers](img/large_eval_social.png)
+
+| Nobody looks out | Collisions in 3,739 conflicts | per 1,000 (95 % CI) | Throughput (95 % CI) | Worker time lost | Alarms per episode |
+|---|---|---|---|---|---|
+| No system | 2,732 | 731 [716-745] | 99.9 % | 0.5 s | 0 |
+| Speed zoning 5 km/h | 2,149 | 575 [559-591] | 75.1 % [74.6-75.6] | 0.5 s | 0 |
+| UWB proximity 6 m / 3 m | 0 | 0 [0-1.03] | 46.6 % [45.6-47.5] | 5.3 s | 38.5 |
+| UWB proximity 4 m / 2 m | 10 | 2.7 [1.5-4.9] | 58.8 % [57.7-60.0] | 4.2 s | 27.1 |
+| EdgeGuard, previous policy | 2 | 0.54 [0.15-1.95] | 90.3 % [89.7-90.9] | 3.4 s | 7.1 |
+| **EdgeGuard (policy v3.2)** | **0** | **0 [0-1.03]** | **96.9 % [96.5-97.3]** | **3.0 s** | **7.6** |
+
+With an attentive driver: EdgeGuard 0 collisions, 95.5 % [95.1-95.9]; proximity 6/3 m 0, 46.3 %; proximity 4/2 m 6, 58.4 %.
+
+- The ranking holds: as safe as the wide alarm at **2.1 x its throughput** (96.9 % vs 46.6 %), 80 % fewer alarms, 44 % less worker waiting.
+- The narrowed alarm lets fewer collisions through than with straight walkers (10 instead of 49): people who slow down and hesitate give its 2 m stop zone more time. It still costs 38 points of throughput against EdgeGuard.
+- Everyone waits about 1 s longer per episode with these walkers, EdgeGuard included (3.0 s instead of 2.1 s).
+, then `python -m sim.large_eval report` (raw data [`results/large_eval.json`](../results/large_eval.json)).
 
 ## How the policy was learned ([`sim/train_multi.py`](../sim/train_multi.py))
 

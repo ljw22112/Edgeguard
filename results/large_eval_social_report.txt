@@ -1,0 +1,40 @@
+Site comparison, 1000 episodes from seed offset 21000
+  inattentive       No system                    2732/3739  730.68 [716.23-744.65]/1000  thr 99.9 % [99.9-100.0]  worker 0.54 s  alarms 0.0
+  inattentive       Speed zoning 5 km/h          2149/3739  574.75 [558.84-590.51]/1000  thr 75.1 % [74.6-75.6]  worker 0.54 s  alarms 0.0
+  inattentive       UWB proximity 6/3 m             0/3739  0.00 [0.00-1.03]/1000  thr 46.6 % [45.6-47.5]  worker 5.29 s  alarms 38.5
+  inattentive       UWB proximity 4/2 m            10/3739  2.67 [1.45-4.92]/1000  thr 58.8 % [57.7-60.0]  worker 4.20 s  alarms 27.05
+  inattentive       EdgeGuard (previous policy)     2/3739  0.54 [0.15-1.95]/1000  thr 90.3 % [89.7-90.9]  worker 3.38 s  alarms 7.14
+  inattentive       EdgeGuard v3.2                  0/3739  0.00 [0.00-1.03]/1000  thr 96.9 % [96.5-97.3]  worker 2.98 s  alarms 7.64
+  attentive driver  No system                    1999/3739  534.63 [518.62-550.58]/1000  thr 85.5 % [84.8-86.2]  worker 0.64 s  alarms 0.0
+  attentive driver  Speed zoning 5 km/h          1157/3739  309.44 [294.83-324.45]/1000  thr 63.3 % [62.6-63.9]  worker 0.60 s  alarms 0.0
+  attentive driver  UWB proximity 6/3 m             0/3739  0.00 [0.00-1.03]/1000  thr 46.3 % [45.3-47.2]  worker 5.15 s  alarms 38.04
+  attentive driver  UWB proximity 4/2 m             6/3739  1.60 [0.74-3.50]/1000  thr 58.4 % [57.3-59.5]  worker 3.98 s  alarms 26.14
+  attentive driver  EdgeGuard (previous policy)     0/3739  0.00 [0.00-1.03]/1000  thr 89.9 % [89.3-90.5]  worker 3.28 s  alarms 7.27
+  attentive driver  EdgeGuard v3.2                  0/3739  0.00 [0.00-1.03]/1000  thr 95.5 % [95.1-95.9]  worker 3.03 s  alarms 7.64
+Robust robust_v3_1: 4 collisions in 35248 conflicts (8000 episodes), 95 % [0.04, 0.29] per 1000
+  normal         0/3814  [0.00-1.01]  thr 97.0 % [96.6-97.4]
+  comply_85      0/3814  [0.00-1.01]  thr 94.3 % [93.7-94.9]
+  comply_70      2/3814  [0.14-1.91]  thr 90.4 % [89.6-91.2]
+  bad_network    1/3814  [0.05-1.48]  thr 91.8 % [91.1-92.4]
+  mec_restart    0/3814  [0.00-1.01]  thr 93.9 % [93.4-94.5]
+  noisy_uwb      1/3814  [0.05-1.48]  thr 93.0 % [92.5-93.5]
+  dense          0/8550  [0.00-0.45]  thr 94.8 % [94.4-95.3]
+  attentive      0/3814  [0.00-1.01]  thr 95.4 % [95.0-95.8]
+Robust previous: 21 collisions in 35248 conflicts (8000 episodes), 95 % [0.39, 0.91] per 1000
+  normal         3/3814  [0.27-2.31]  thr 90.6 % [90.0-91.1]
+  comply_85      3/3814  [0.27-2.31]  thr 87.0 % [86.3-87.7]
+  comply_70      2/3814  [0.14-1.91]  thr 82.6 % [81.7-83.4]
+  bad_network    4/3814  [0.41-2.69]  thr 82.8 % [82.0-83.6]
+  mec_restart    4/3814  [0.41-2.69]  thr 86.8 % [86.2-87.4]
+  noisy_uwb      2/3814  [0.14-1.91]  thr 82.4 % [81.7-83.2]
+  dense          1/8550  [0.02-0.66]  thr 86.5 % [85.9-87.0]
+  attentive      2/3814  [0.14-1.91]  thr 90.0 % [89.4-90.5]
+Robust robust_v3_2: 4 collisions in 35248 conflicts (8000 episodes), 95 % [0.04, 0.29] per 1000
+  normal         0/3814  [0.00-1.01]  thr 96.9 % [96.5-97.3]
+  comply_85      0/3814  [0.00-1.01]  thr 94.3 % [93.7-94.9]
+  comply_70      2/3814  [0.14-1.91]  thr 89.8 % [89.0-90.7]
+  bad_network    1/3814  [0.05-1.48]  thr 91.7 % [91.1-92.3]
+  mec_restart    0/3814  [0.00-1.01]  thr 93.9 % [93.4-94.4]
+  noisy_uwb      1/3814  [0.05-1.48]  thr 92.1 % [91.5-92.6]
+  dense          0/8550  [0.00-0.45]  thr 94.6 % [94.1-95.1]
+  attentive      0/3814  [0.00-1.01]  thr 95.4 % [95.0-95.8]
