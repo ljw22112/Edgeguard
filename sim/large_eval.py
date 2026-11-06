@@ -116,6 +116,8 @@ def run_robust(a):
     d["robust"].setdefault("meta", {})[name] = {"episodes": a.episodes, "seed_offset": a.offset, "policy": a.policy}
     with Pool(os.cpu_count() or 1) as pool:
         for sc in SCENARIOS:
+            if a.only and sc not in a.only:
+                continue
             eps = pool.map(_robust_job, [(s, sc, over) for s in seeds], chunksize=8)
             d["robust"].setdefault(name, {})[sc] = {"summary": summarize(eps), "episodes": eps}
             s = d["robust"][name][sc]["summary"]
