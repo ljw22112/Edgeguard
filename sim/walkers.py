@@ -29,7 +29,10 @@ HESITATE_S = (0.6, 2.0)    # how long a hesitation lasts
 def _psf():
     """Import PySocialForce without its side effects (a DEBUG console logger and a file.log in the cwd)."""
     os.environ.setdefault("MPLBACKEND", "Agg")
-    import matplotlib.pyplot  # noqa: F401  - imported first, so its import-time debug lines are not printed
+    try:
+        import matplotlib.pyplot  # noqa: F401  - if present, imported first so its import-time debug lines stay quiet
+    except ImportError:
+        pass
 
     class _NoFile(logging.NullHandler):
         def __init__(self, *a, **k):
