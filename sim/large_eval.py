@@ -24,7 +24,7 @@ from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "results", "large_eval.json")
+OUT = os.environ.get("EG_LARGE_EVAL_OUT") or os.path.join(ROOT, "results", "large_eval.json")
 KEEP = ("collisions", "conflicts", "near", "forklift_m", "forklift_nominal_m", "worker_wait_s", "alarms", "_w")
 
 

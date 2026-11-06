@@ -30,3 +30,4 @@ The judge site and the browser demo were checked with these linters; no code fro
 - **tinyIoT**, Software Engineering and Security Lab, Sejong University, https://github.com/seslabSJU/tinyIoT, BSD 3-Clause: built from a pinned commit to run the oneM2M tutorial and the feature probe.
 - **onem2m-mcp**, Rostan Technologies, https://pypi.org/project/onem2m-mcp/, BSD 3-Clause: the community oneM2M MCP gateway in `tools/onem2m_mcp_check.py`.
 - **openapi-core**, https://github.com/python-openapi/openapi-core, BSD 3-Clause: OpenAPI request and response validation.
+- **PySocialForce**, Yuxiang Gao, https://github.com/yuxiang-gao/PySocialForce, MIT licence: the social force walker model in `sim/walkers.py` (installed from PyPI, not redistributed).

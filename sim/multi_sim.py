@@ -32,8 +32,10 @@ from edgeguard.risk import RiskEngine                              # noqa: E402
 from edgeguard.tracking import Track                               # noqa: E402
 from sim.failsafe_eval import site_cfg                             # noqa: E402
 from sim.online_sim import Mover, Path, R_COLLIDE, R_CONTACT       # noqa: E402
+from sim import walkers as _walkers                                 # noqa: E402
 
 DT, T_END = 0.1, 25.0
+WALKER = os.environ.get("EG_WALKER", "straight")      # walker model, sim/walkers.py: straight | social
 AISLES_Y, AISLES_X = (-8.0, 0.0, 8.0), (-12.0, 0.0, 12.0)
 HALF_W, HALF_H = 18.0, 12.0
 
@@ -58,7 +60,8 @@ def _forklift(rng, times):
     return pts, [(th, 1, 0.0)] * len(times)
 
 
-def _worker(rng, times):
+def _worker_spec(rng):
+    """Who walks where: start, direction, length, speed, start time (sim/walkers.py turns it into positions)."""
     v, t0 = rng.uniform(0.8, 1.4), rng.uniform(0.0, 12.0)
     kind = rng.random()
     if kind < 0.15:                                           # picker standing at a pick face
@@ -66,7 +69,7 @@ def _worker(rng, times):
             p = (rng.uniform(-HALF_W, HALF_W), rng.choice(AISLES_Y) + rng.choice((-1, 1)) * rng.uniform(1.8, 2.6))
         else:
             p = (rng.choice(AISLES_X) + rng.choice((-1, 1)) * rng.uniform(1.8, 2.6), rng.uniform(-HALF_H, HALF_H))
-        return [p] * len(times)
+        return {"start": p, "u": (0.0, 0.0), "length": 0.0, "v": 0.0, "t0": 0.0, "standing": True}
     if kind < 0.7:                                            # crossing an aisle
         if rng.random() < 0.5:
             y = rng.choice(AISLES_Y)
@@ -87,11 +90,11 @@ def _worker(rng, times):
             d = rng.choice((-1, 1))
             start, u = (x, rng.uniform(-HALF_H, HALF_H)), (0.0, d)
         length = rng.uniform(6, 12)
-    out = []
-    for t in times:
-        s = min(length, v * max(0.0, t - t0))
-        out.append((start[0] + u[0] * s, start[1] + u[1] * s))
-    return out
+    return {"start": start, "u": u, "length": length, "v": v, "t0": t0, "standing": False}
+
+
+def _worker(rng, times):
+    return _walkers.straight(_worker_spec(rng), times)
 
 
 # --- systems used on sites today (sim/site_compare.py), on the same floor and episodes -------------------
@@ -107,7 +110,7 @@ UNNEEDED_M = 4.0           # an alarm for a pair that would not have come closer
 
 
 def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstacles=True, min_move=None, over=None,
-                trace=None, system="edgeguard", attentive=False, stress=None, d2d=False):
+                trace=None, system="edgeguard", attentive=False, stress=None, d2d=False, walker=None):
     """d2d: the devices also broadcast their state peer to peer (ESP-NOW / sidelink, 10 Hz, 25 m, 5 % loss) and
     apply the cooperative local rule while the MEC app is silent (edgeguard/device_policy.py, mode "coop") -
     trucks on the closest point of approach, tags vibrate their worker."""
@@ -145,7 +148,10 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     if "mec_down_s" in stress:                 # the MEC app is silent (restart / host fault) for this long
         t0 = srng.uniform(3.0, 15.0)
         mec_down = (t0, t0 + stress["mec_down_s"])
-    wp = {f"w{i}": _worker(rng, times) for i in range(n_w)}
+    walker = walker or WALKER
+    specs = [_worker_spec(rng) for _ in range(n_w)]       # same draws for every walker model
+    paths = _walkers.social(specs, times, seed) if walker == "social" else [_walkers.straight(sp, times) for sp in specs]
+    wp = {f"w{i}": p for i, p in enumerate(paths)}
     fp = {f"f{j}": _forklift(rng, times) for j in range(n_f)}
     movers = {k: Mover(k, "worker", Path(p)) for k, p in wp.items()}
     movers.update({k: Mover(k, "forklift", Path(p, m)) for k, (p, m) in fp.items()})
