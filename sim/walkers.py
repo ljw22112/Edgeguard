@@ -28,14 +28,21 @@ HESITATE_S = (0.6, 2.0)    # how long a hesitation lasts
 
 def _psf():
     """Import PySocialForce without its side effects (a DEBUG console logger and a file.log in the cwd)."""
+    os.environ.setdefault("MPLBACKEND", "Agg")
+    import matplotlib.pyplot  # noqa: F401  - imported first, so its import-time debug lines are not printed
+
+    class _NoFile(logging.NullHandler):
+        def __init__(self, *a, **k):
+            super().__init__()
+
     root = logging.getLogger()                   # pysocialforce configures logging.getLogger("root"), i.e. the root logger
     level, handlers = root.level, list(root.handlers)
-    real_file, real_stream = logging.FileHandler, logging.StreamHandler
-    logging.FileHandler = logging.StreamHandler = lambda *a, **k: logging.NullHandler()
+    real_file = logging.FileHandler
+    logging.FileHandler = _NoFile
     try:
         import pysocialforce as psf
     finally:
-        logging.FileHandler, logging.StreamHandler = real_file, real_stream
+        logging.FileHandler = real_file
         root.handlers[:] = handlers
         root.setLevel(level)
     return psf
