@@ -9,7 +9,9 @@ import pytest
 from sim import multi_sim as m
 from sim import walkers as W
 
-psf = pytest.importorskip("pysocialforce")
+import importlib.util
+
+pytestmark = pytest.mark.skipif(importlib.util.find_spec("pysocialforce") is None, reason="pysocialforce not installed")
 
 
 def _specs(seed, n=8):
