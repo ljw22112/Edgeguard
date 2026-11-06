@@ -167,6 +167,7 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
     confirm = getattr(cfg, "plan_confirm", False) and system == "edgeguard"
     wanted, resend, crng = {}, [], random.Random(seed ^ 0xACC)
     states, pending, actual = {}, [], {k: 1e9 for k in nominal}
+    impact = {}
     last_hb = -1e9
     alarms = {"total": 0, "unneeded": 0}
     prox_in, prox_buzz = {}, {}
@@ -319,6 +320,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
         for (w, f) in actual:
             d_wf = math.hypot(pos[w][0] - pos[f][0], pos[w][1] - pos[f][1])
             actual[(w, f)] = min(actual[(w, f)], d_wf)
+            if d_wf < R_COLLIDE and (w, f) not in impact:
+                impact[(w, f)] = round(movers[f].v, 2)          # forklift speed at first contact (severity)
             if trace is not None and d_wf < 8.0:
                 mw, mf = movers[w], movers[f]
                 trace.append({"t": round(t, 2), "type": "pair", "w": w, "f": f, "d": round(d_wf, 2),
@@ -407,7 +410,8 @@ def run_episode(seed, n_w, n_f, ux="hold", per_pair=True, comply=1.0, see_obstac
             "pairs_close": sum(d < 4.0 for d in nominal.values()),
             "alarms": alarms["total"], "alarms_unneeded": alarms["unneeded"],
             "near": sum(actual[k] < R_CONTACT for k in nominal),                   # closer than 1.5 m (incl. collisions)
-            "shortfall_m": round(sum(max(0.0, R_CONTACT - actual[k]) for k in nominal), 3)}
+            "shortfall_m": round(sum(max(0.0, R_CONTACT - actual[k]) for k in nominal), 3),
+            "impact_mps": sorted(impact.values())}
 
 
 def _nominal_s(path):

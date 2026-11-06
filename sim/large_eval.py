@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.environ.get("EG_LARGE_EVAL_OUT") or os.path.join(ROOT, "results", "large_eval.json")
-KEEP = ("collisions", "conflicts", "near", "forklift_m", "forklift_nominal_m", "worker_wait_s", "alarms", "_w")
+KEEP = ("collisions", "conflicts", "near", "forklift_m", "forklift_nominal_m", "worker_wait_s", "alarms", "_w", "impact_mps")
 
 
 def wilson(k, n, z=1.96):
@@ -50,7 +50,8 @@ def bootstrap_ratio(num, den, b=2000, seed=1):
 
 
 def summarize(eps):
-    tot = {k: sum(e[k] for e in eps) for k in KEEP}
+    tot = {k: sum(e[k] for e in eps) for k in KEEP if k != "impact_mps"}
+    impacts = sorted(v for e in eps for v in e.get("impact_mps", []))
     lo, hi = wilson(tot["collisions"], tot["conflicts"])
     thr = tot["forklift_m"] / tot["forklift_nominal_m"]
     tlo, thi = bootstrap_ratio([e["forklift_m"] for e in eps], [e["forklift_nominal_m"] for e in eps])
@@ -61,7 +62,7 @@ def summarize(eps):
             "per_1000_ci95": [round(1000 * lo, 3), round(1000 * hi, 3)],
             "close_passes": tot["near"], "throughput": round(thr, 4), "throughput_ci95": [round(tlo, 4), round(thi, 4)],
             "worker_lost_s": round(wl, 3), "worker_lost_ci95": [round(wlo, 3), round(whi, 3)],
-            "alarms_per_episode": round(tot["alarms"] / len(eps), 2)}
+            "alarms_per_episode": round(tot["alarms"] / len(eps), 2), "impact_mps": impacts}
 
 
 def _site_job(a):
