@@ -106,8 +106,8 @@ def test_firmware_coop_matches_python(tmp_path):
     rng = random.Random(23)
     for case in range(300):
         fl, lines, expect, t = ForkliftLimit("coop"), ["M 1", "C 1"], [], 0.0
-        if case % 2:                                     # half of the cases with the always-on emergency brake
-            fl.aeb = True
+        fl.aeb = bool(case % 2)                          # half of the cases with the always-on emergency brake
+        if fl.aeb:                                       # (set both ways: a simulation run leaves ForkliftLimit.AEB on)
             lines.append("B 1")
         own = [0.0, 0.0, rng.uniform(-2.5, 2.5), rng.uniform(-2.5, 2.5)]
         peers = {tg: [rng.uniform(-12, 12), rng.uniform(-12, 12), rng.uniform(-1.5, 1.5), rng.uniform(-1.5, 1.5)]

@@ -43,7 +43,7 @@ Korea recorded **2,559 forklift accident casualties in 2021–2022** (KOSHA). On
 
 ### Our solution in one sentence
 
-Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift keeps its speed as long as it can still stop short of the person, braking on its own for a **stop point** when it cannot. On 1,000 fresh simulated episodes: **0 collisions at 2.0× the throughput of a UWB proximity alarm**, and 0 in 34,644 conflicts under bad network, server restart, low compliance and noisy positioning.
+Tags and forklift modules publish their positions into **oneM2M**. An **ETSI MEC** application next to the CSE predicts collision courses. Each worker gets **WAIT → GO**, or **STEP ASIDE** when standing in the lane, and the forklift keeps its speed as long as it can still stop short of the person, braking on its own for a **stop point** when it cannot. On 1,000 fresh simulated episodes: **0 collisions at 2.0× the throughput of a UWB proximity alarm**, and under bad network, server restart, low compliance and noisy positioning 1 collision in 34,644 conflicts, with a truck that had already stopped. With more human walkers (social force model) no moving truck touched anyone.
 
 ### How it works
 
@@ -287,7 +287,7 @@ All results come from a closed-loop simulator of a warehouse floor (8 workers an
 | Speed zoning 5 km/h | 2,088 (577) | 75.1 % | 0 |
 | UWB proximity alarm, 6 m / 3 m | 0 (< 1.1) | 48.3 % | 37.6 |
 | UWB proximity alarm, 4 m / 2 m | 49 (13.5) | 60.3 % | 25.7 |
-| **EdgeGuard** | **0 (< 1.1)** | **97.3 % [96.9–97.7]** | **7.0** |
+| **EdgeGuard** | **0 (< 1.1)** | **97.2 % [96.8–97.6]** | **7.0** |
 
 - **As safe as the wide proximity alarm, at 2.0× its throughput**, with 81 % fewer alarms and half the worker waiting (2.1 s instead of 4.3 s per episode).
 - Against the narrowed alarm sites choose to cut nuisance alarms: **0 collisions instead of 49, and +37 points of throughput**.
@@ -304,9 +304,22 @@ The same fresh episodes under eight conditions: normal, 85 % and 70 % of alerts 
 | Policy | Collisions (per 1,000 conflicts, 95 % CI) | Close passes < 1.5 m | Throughput, per scenario |
 |---|---|---|---|
 | Previous policy | 30 (0.87 [0.61–1.24]) | 190 | 83.0–91.6 % |
-| **EdgeGuard v3.1** | **0 (0 [0–0.11])** | **141** | **90.6–97.3 %** |
+| EdgeGuard v3.1 | 0 (0 [0–0.11]) | 141 | 90.6–97.3 % |
+| **EdgeGuard v3.2 (adopted)** | **1, truck already stopped (0.03 [0.01–0.16])** | **76** | **90.5–97.2 %** |
 
-Each collision we found on the way was traced to its cause and fixed in both the Python reference and the firmware, then checked again on new seeds: stop points that crept with position noise, a sidestep that led into a second truck, a WAIT lost in a server restart, an emergency stop released while the person still stood in front of the truck ([robustness](robustness.md)). Why it stays safe, hazard by hazard, with the tests that are the evidence: [safety case](safety-case.md).
+Each collision we found on the way was traced to its cause and fixed in both the Python reference and the firmware, then checked again on new seeds: stop points that crept with position noise, a sidestep that led into a second truck, a WAIT lost in a server restart, an emergency stop released while the person still stood in front of the truck, an emergency brake that triggered a little late ([robustness](robustness.md)). Why it stays safe, hazard by hazard, with the tests that are the evidence: [safety case](safety-case.md).
+
+### With more human walkers
+
+Simulated people who walk straight lines are easy to protect. We re-ran the same 8,000 episodes with Helbing's social force model ([PySocialForce](https://github.com/yuxiang-gao/PySocialForce)): people drift sideways, change pace, hesitate and avoid each other, and still do not look out for trucks. Every collision records the truck's speed at contact.
+
+| Policy (35,248 conflicts) | Collisions | With the truck moving | Close passes | Mean throughput |
+|---|---|---|---|---|
+| Previous policy | 21 | 5 (up to 0.69 m/s) | 179 | 86.1 % |
+| EdgeGuard v3.1 | 4 | 1 (0.03 m/s) | 225 | 93.8 % |
+| **EdgeGuard v3.2** | **4** | **0** | **131** | **93.6 %** |
+
+The 4 remaining collisions are people walking into a truck that already stands still; only the warning can prevent those ([details](robustness.md#policy-v32-and-a-second-walker-model)).
 
 ### How it got here
 

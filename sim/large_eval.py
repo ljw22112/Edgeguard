@@ -164,10 +164,12 @@ def chart(d):
     ink, muted, grid = "#1f1f1e", "#6b6a64", "#e4e3de"
     plt.rcParams.update({"font.size": 9, "text.color": ink, "axes.labelcolor": ink, "xtick.color": muted,
                          "ytick.color": ink, "axes.edgecolor": "#bdbcb5"})
+    social = os.path.basename(OUT) != "large_eval.json"
+    sfx, walkers = ("_social", ", social-force walkers") if social else ("", "")
     site = d.get("site", {}).get("inattentive", {})
     if site:
-        keys = [k for k in site if k != "edgeguard_v2"][::-1]           # top: no system ... bottom: EdgeGuard
-        name = {"edgeguard": "EdgeGuard (policy v3.1)", "edgeguard_prev": "EdgeGuard, previous policy"}
+        keys = [k for k in site if k not in ("edgeguard_v2", "edgeguard_v3_1")][::-1]   # top: no system ... bottom: EdgeGuard
+        name = {"edgeguard": "EdgeGuard (policy v3.2)", "edgeguard_prev": "EdgeGuard, previous policy"}
         labels = [name.get(k, site[k]["label"]) for k in keys]
         col = ["#2a78d6" if k == "edgeguard" else "#9ec5f4" if k == "edgeguard_prev" else "#c9c8c1" for k in keys]
         fig, axs = plt.subplots(1, 2, figsize=(11, 3.9), sharey=True)
@@ -205,13 +207,14 @@ def chart(d):
         axs[0].set_yticklabels(labels)
         m = d["site"]["meta"]
         fig.suptitle(f"Same {m['episodes']:,} fresh simulated episodes for every system, nobody looks out "
-                     f"(8 workers, 4 forklifts)", fontsize=10.5, x=0.01, ha="left")
+                     f"(8 workers, 4 forklifts){walkers}", fontsize=10.5, x=0.01, ha="left")
         fig.tight_layout()
-        fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval.png"), dpi=150)
+        fig.savefig(os.path.join(ROOT, "docs", "img", f"large_eval{sfx}.png"), dpi=150)
         plt.close(fig)
     rob = d.get("robust", {})
     pols = [(n, lab, c) for n, lab, c in (("previous", "previous policy", "#c9e0fa"), ("robust_v2", "v2", "#9ec5f4"),
-                                          ("robust_v3", "v3", "#5598e7"), ("robust_v3_1", "v3.1 (adopted)", "#1c5cab")) if n in rob]
+                                          ("robust_v3", "v3", "#7aaeee"), ("robust_v3_1", "v3.1", "#3a7fd8"),
+                                          ("robust_v3_2", "v3.2 (adopted)", "#174d93")) if n in rob]
     if pols:
         scs = [k for k in rob[pols[0][0]] if k != "meta"]
         nice = {"normal": "normal", "comply_85": "85 % comply", "comply_70": "70 % comply", "bad_network": "bad network",
@@ -239,21 +242,23 @@ def chart(d):
             v = 1000.0 * coll / conf
             ax.barh(len(pols) - 1 - j, v, color=c, height=0.6)
             ax.plot([1000 * lo, 1000 * hi], [len(pols) - 1 - j] * 2, color=ink, lw=1.2)
-            ax.text(1000 * hi + 0.03, len(pols) - 1 - j, f"{coll} in {conf:,}  ({v:.2f} per 1,000)", va="center",
+            imp = [x for e in eps for x in e.get("impact_mps", [])]
+            moving = f"; truck moving: {sum(1 for x in imp if x > 0)}" if len(imp) == coll and coll else ""
+            ax.text(1000 * hi + 0.03, len(pols) - 1 - j, f"{coll} in {conf:,}  ({v:.2f} per 1,000){moving}", va="center",
                     fontsize=8, color=ink)
             lab_y = lab
         ax.set_yticks(range(len(pols)))
         ax.set_yticklabels([lab for _, lab, _ in pols][::-1])
-        ax.set_xlim(0, 1.9)
+        ax.set_xlim(0, 2.4)
         ax.set_title("All 8 scenarios: per 1,000 conflicts (95 % CI)", fontsize=9.5, loc="left")
         for ax in axs:
             ax.grid(axis="y" if ax is axs[0] else "x", color=grid, lw=0.8)
             ax.set_axisbelow(True)
             ax.spines[["top", "right"]].set_visible(False)
-        fig.suptitle("Exceptional conditions: same fresh simulated episodes for every policy", fontsize=10.5,
+        fig.suptitle(f"Exceptional conditions: same fresh simulated episodes for every policy{walkers}", fontsize=10.5,
                      x=0.01, ha="left")
         fig.tight_layout()
-        fig.savefig(os.path.join(ROOT, "docs", "img", "large_eval_robust.png"), dpi=150)
+        fig.savefig(os.path.join(ROOT, "docs", "img", f"large_eval_robust{sfx}.png"), dpi=150)
         plt.close(fig)
 
 

@@ -48,23 +48,23 @@ Counts of 0-5 in 1,200 episodes cannot separate policies. [`sim/large_eval.py`](
 
 ![Policies under exceptional conditions](img/large_eval_robust.png)
 
-| Scenario | Collisions: previous / v2 / v3 / **v3.1** | Throughput: previous / v2 / v3 / **v3.1** |
+| Scenario | Collisions: previous / v2 / v3 / v3.1 / **v3.2** | Throughput: previous / v2 / v3 / v3.1 / **v3.2** |
 |---|---|---|
-| normal | 0 / 0 / 0 / **0** | 91.6 % / 97.3 % / 97.3 % / **97.3 %** |
-| comply 85 % | 0 / 0 / 0 / **0** | 87.4 % / 94.7 % / 94.7 % / **94.6 %** |
-| comply 70 % | 1 / 0 / 0 / **0** | 83.0 % / 90.6 % / 90.7 % / **90.6 %** |
-| bad network | 9 / 1 / 0 / **0** | 83.4 % / 91.0 % / 91.2 % / **91.3 %** |
-| MEC restart | 9 / 4 / 2 / **0** | 87.6 % / 94.6 % / 94.6 % / **94.7 %** |
-| noisy UWB | 3 / 0 / 0 / **0** | 83.2 % / 93.1 % / 93.1 % / **93.1 %** |
-| dense (12 workers, 6 forklifts) | 6 / 0 / 0 / **0** | 87.4 % / 95.1 % / 95.1 % / **95.0 %** |
-| attentive driver | 2 / 0 / 0 / **0** | 90.7 % / 95.5 % / 95.5 % / **95.5 %** |
-| **all 34,644 conflicts** | **30 / 5 / 2 / 0** | mean 86.8 / 94.0 / 94.0 / **94.0 %** |
-| per 1,000 conflicts (95 % CI) | 0.87 [0.61-1.24] / 0.14 [0.06-0.34] / 0.06 [0.02-0.21] / **0 [0-0.11]** | |
-| close passes (< 1.5 m) | 190 / 238 / 185 / **141** | |
+| normal | 0 / 0 / 0 / 0 / **0** | 91.6 / 97.3 / 97.3 / 97.3 / **97.2 %** |
+| comply 85 % | 0 / 0 / 0 / 0 / **0** | 87.4 / 94.7 / 94.7 / 94.6 / **94.4 %** |
+| comply 70 % | 1 / 0 / 0 / 0 / **0** | 83.0 / 90.6 / 90.7 / 90.6 / **90.5 %** |
+| bad network | 9 / 1 / 0 / 0 / **0** | 83.4 / 91.0 / 91.2 / 91.3 / **90.9 %** |
+| MEC restart | 9 / 4 / 2 / 0 / **0** | 87.6 / 94.6 / 94.6 / 94.7 / **94.6 %** |
+| noisy UWB | 3 / 0 / 0 / 0 / **0** | 83.2 / 93.1 / 93.1 / 93.1 / **92.4 %** |
+| dense (12 workers, 6 forklifts) | 6 / 0 / 0 / 0 / **0** | 87.4 / 95.1 / 95.1 / 95.0 / **95.0 %** |
+| attentive driver | 2 / 0 / 0 / 0 / **1 (truck standing)** | 90.7 / 95.5 / 95.5 / 95.5 / **95.6 %** |
+| **all 34,644 conflicts** | **30 / 5 / 2 / 0 / 1** | mean 86.8 / 94.0 / 94.0 / 94.0 / **93.8 %** |
+| per 1,000 conflicts (95 % CI) | 0.87 [0.61-1.24] / 0.14 [0.06-0.34] / 0.06 [0.02-0.21] / 0 [0-0.11] / **0.03 [0.01-0.16]** | |
+| close passes (< 1.5 m) | 190 / 238 / 185 / 141 / **76** | |
 
-- **v3.1 (adopted): no collision in 34,644 conflicts under all eight exceptional conditions.** The 95 % upper bound is 0.11 per 1,000 conflicts, 8 x below the previous policy's lower bound (0.61): **at least 87 % fewer collisions than the previous policy**, with **+4.8 to +9.9 points of throughput in every scenario**.
-- **v3.1 vs v2 / v3:** 5 -> 2 -> 0 collisions and 238 -> 185 -> **141 close passes (-41 % vs v2, -24 % vs v3)**, with throughput, worker time (2.65 s mean) and alarms unchanged (within ±0.2 points). The v2/v3.1 intervals barely overlap; the close passes show the same direction with far more events.
-- Every scenario had no collision in 1,000 episodes; per scenario the 95 % upper bound is about 1 per 1,000 conflicts (0.46 on the dense floor).
+- **v3.1: no collision in 34,644 conflicts under all eight exceptional conditions.** The 95 % upper bound is 0.11 per 1,000 conflicts, 8 x below the previous policy's lower bound (0.61): **at least 87 % fewer collisions than the previous policy**, with **+4.8 to +9.9 points of throughput in every scenario**.
+- **v3.1 vs v2 / v3:** 5 -> 2 -> 0 collisions and 238 -> 185 -> **141 close passes (-41 % vs v2, -24 % vs v3)**, with throughput, worker time (2.65 s mean) and alarms unchanged (within ±0.2 points).
+- **v3.2 (adopted, [below](#policy-v32-and-a-second-walker-model)):** close passes **141 -> 76 (-46 %)** for 0.2 points of throughput. Its one collision is a contact with a **standing** truck: the truck had braked to a stop, and the worker, still walking, came to a stop 1.0 m from its centre point, right on the collision radius. Neither v3.1 nor v3.2 had a collision with a moving truck.
 
 Raw per-episode data: [`results/large_eval.json`](../results/large_eval.json), summary [`results/large_eval_report.txt`](../results/large_eval_report.txt).
 
@@ -119,6 +119,39 @@ v3's two remaining collisions (both after a MEC restart) were traced the same wa
 Both are in the Python reference and the firmware (`aeb_cap` / `aebStop`), with the same results in tests (`test_emergency_brake_holds_while_he_is_in_front`, `test_firmware_emergency_brake_latch`). Checked before the test seeds: MEC restart on development seeds 64,007+ (1,500 episodes) 2 -> 0 collisions at the same throughput (94.7 %); 8 scenarios x 150 episodes on development seeds 62,000+ and fresh validation seeds 19,000+: no collision, close passes 21 -> 16 on validation, mean throughput -0.1 point. Raw output: [`results/aeb_latch_dev_val.txt`](../results/aeb_latch_dev_val.txt).
 
 Rejected after validation (kept as options, off): STEP ASIDE only after 0.6 s of standing (`aside_still_s`, more collisions and less throughput), narrowing STEP ASIDE to workers inside r_safe (`aside_reach`, fixed the noisy-UWB case but added three elsewhere), buzzing a walker on an envelope alert (`env_buzz_walker`) and a worst-case GO direction (`go_unknown_worst`), no measurable effect.
+
+## Policy v3.2 and a second walker model
+
+**Why a second walker model.** Every earlier result uses one walker model: each worker walks a straight line at one constant speed. Real people drift, change pace, stop for a moment and step around each other. [`sim/walkers.py`](../sim/walkers.py) adds a second model built on [PySocialForce](https://github.com/yuxiang-gao/PySocialForce) (MIT; Helbing's social force model with Moussaïd's pedestrian interaction). The people, starts, goals and start times are the same, but each one heads for a waypoint offset 0.3-1.2 m sideways before the goal, relaxes toward their own desired speed, avoids the others, gets a random push each step (Helbing's fluctuation term) and now and then hesitates for 0.6-2 s. Nobody avoids forklifts in either model. `EG_WALKER=social` selects it; the straight walker stays the default and reproduces every earlier number ([`tests/test_walkers.py`](../tests/test_walkers.py)).
+
+![Straight vs social-force walkers](img/walkers.png)
+
+On 40 test-seed episodes (320 people): spread of walking speed (coefficient of variation) 0.17 -> 0.26, path straightness 1.00 -> 0.95, mean walking speed 1.05 -> 0.90 m/s.
+
+**v3.2.** With social walkers the development seeds gave one collision that v3.1 did not prevent (70 % compliance, seed 764182554). v3.2 widens the emergency brake's closest-approach threshold from 1.3 to **1.5 m** (`AEB_D_M`, Python and firmware; the brake hold's width to the side uses the same value, so it widens too), which removes it; nothing else changed. Development seeds 62,000+ (8 x 150 episodes, social walkers): close passes 23 -> 9 for -0.2 points of throughput. Validation seeds 19,000+: no collision for either, close passes 31 -> 26. v3.2 was adopted before it was run on the test seeds.
+
+**Test seeds 23,000+, social walkers** (the same 8 x 1,000 episodes, 35,248 conflicts, [`results/large_eval_social.json`](../results/large_eval_social.json)). Every collision now also records the truck's speed at first contact (`impact_mps`):
+
+![Policies under exceptional conditions, social-force walkers](img/large_eval_robust_social.png)
+
+| Scenario | Collisions: previous / v3.1 / **v3.2** | Truck speed at contact, m/s: previous / v3.1 / v3.2 | Throughput: previous / v3.1 / **v3.2** |
+|---|---|---|---|
+| normal | 3 / 0 / **0** | 0, 0, 0.13 / - / - | 90.6 / 97.0 / **96.9 %** |
+| comply 85 % | 3 / 0 / **0** | 0, 0, 0 / - / - | 87.0 / 94.3 / **94.3 %** |
+| comply 70 % | 2 / 2 / **2** | 0, 0 / 0, 0 / 0, 0 | 82.6 / 90.4 / **89.9 %** |
+| bad network | 4 / 1 / **1** | 0, 0, 0.18, 0.45 / 0 / 0 | 82.8 / 91.8 / **91.7 %** |
+| MEC restart | 4 / 0 / **0** | 0, 0, 0, 0.69 / - / - | 86.8 / 93.9 / **93.9 %** |
+| noisy UWB | 2 / 1 / **1** | 0, 0 / 0.03 / 0 | 82.4 / 93.0 / **92.1 %** |
+| dense | 1 / 0 / **0** | 0 / - / - | 86.5 / 94.8 / **94.6 %** |
+| attentive driver | 2 / 0 / **0** | 0, 0.13 / - / - | 90.0 / 95.4 / **95.4 %** |
+| **all 35,248 conflicts** | **21 / 4 / 4** | | mean 86.1 / 93.8 / **93.6 %** |
+| **of which the truck was moving** | **5 / 1 / 0** | | |
+| close passes (< 1.5 m) | 179 / 225 / **131** | | |
+
+- **Under v3.2 no moving truck touched anyone** in 35,248 conflicts with people who drift, change pace and hesitate. The previous policy had 5 such contacts (up to 0.69 m/s); v3.1 had one, at 0.03 m/s.
+- **v3.2's 4 collisions are all at 0 m/s**: the truck had already stopped and a worker who does not look out walked into it. The simulator treats the truck as a point and counts any centre distance under 1.0 m. Braking cannot prevent this; only the warning can (the tag buzzes). They are reported as collisions, not removed.
+- Close passes: v3.2 has 42 % fewer than v3.1 (225 -> 131) and 27 % fewer than the previous policy.
+- Cost: with social walkers throughput is about 0.2 points lower than with straight ones, and v3.2 costs another 0.2 points against v3.1. Workers lose about 0.8 s more per episode (they hesitate and drift into alerts).
 
 ## Tried on top of v2, not adopted (development seeds 60000+, 8 scenarios x 100 episodes)
 
@@ -176,7 +209,8 @@ A third round (same seeds, 800 episodes each):
 
 ## Limits
 
-- Simulation. One collision in 1,200 stressed test episodes is not zero; with counts this small, 1 vs 3 is not a significant difference - what the table shows is that the new policy is not less safe while being 5-9 points faster in every condition.
+- Simulation, with two walker models (straight and social force). Neither models a person who sees the truck and steps back, nor the truck's footprint: the collision test is a 1.0 m radius around its centre point.
+- One collision in 1,200 stressed test episodes is not zero; with counts this small, 1 vs 3 is not a significant difference - what the table shows is that the new policy is not less safe while being 5-9 points faster in every condition.
 - The noisy-UWB collision: a sidestep planned from a position 0.4-0.6 m off. Positioning quality is a deployment requirement (anchor layout, NLOS mitigation), not something the policy can fully make up for.
 - The plan confirmation and message ordering need the devices' plan report and the alert's `mec_tx_ts`; the emergency brake needs the D2D state broadcast (ESP-NOW / sidelink) on both devices.
 

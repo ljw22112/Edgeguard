@@ -20,11 +20,12 @@
 | 2,559 | 한국 지게차 사고 사상자(2021~2022) | two thousand five hundred fifty-nine |
 | $116k | 부상 1건 총비용(간접비 포함) | about one hundred sixteen thousand dollars |
 | 48 % / 49 | 넓은 근접 경보 처리량 / 좁힌 경보 충돌 | forty-eight percent / forty-nine collisions |
-| 0 · 97.3 % · 2.0× | EdgeGuard 충돌 · 처리량 · 근접 경보 대비 | zero, ninety-seven point three, twice |
+| 0 · 97.2 % · 2.0× | EdgeGuard 충돌 · 처리량 · 근접 경보 대비 | zero, ninety-seven point two, twice |
 | −81 % | 경보 수 감소 | eighty-one percent fewer alarms |
-| 30 → 0 | 예외 상황 충돌(이전 정책 → v3.1) | thirty to zero |
+| 30 → 1 | 예외 상황 충돌(이전 정책 → v3.2, 1건은 멈춘 지게차) | thirty to one |
+| 5 → 0 | 사회적 힘 보행자, 움직이는 지게차 접촉(이전 → v3.2) | five to zero |
 | 34,644 | 예외 상황 충돌 상황 수 | thirty-four thousand six hundred forty-four |
-| 0.11 | 95 % 상한, 1,000건당 | upper bound zero point one one per thousand |
+| 0.16 | v3.2의 95 % 상한, 1,000건당 | upper bound zero point one six per thousand |
 | 25 ms | 엣지 경보 지연 중앙값(클라우드 85 ms) | twenty-five milliseconds |
 | 1.38 → 0.07 s | 조우당 지게차 손실(근접 경보 → EdgeGuard) | one point four seconds to under a tenth |
 
@@ -112,25 +113,25 @@
 
 ### 9. 넓은 경보만큼 안전, 처리량은 두 배 · 약 40초 · 김기환
 
-> Now the evidence. Every system ran on the same one thousand simulated episodes: eight workers, four forklifts, three thousand six hundred seventeen conflicts, and nobody looks out, so this is what each system alone prevents. These episodes were never used to train, select or tune our policy. EdgeGuard had zero collisions, like the wide proximity alarm, but trucks kept ninety-seven point three percent of their throughput, twice the alarm's forty-eight. It raised eighty-one percent fewer alarms and halved the time workers spent waiting. Against the narrowed alarm, it is zero collisions instead of forty-nine and thirty-seven points more throughput.
+> Now the evidence. Every system ran on the same one thousand simulated episodes: eight workers, four forklifts, three thousand six hundred seventeen conflicts, and nobody looks out, so this is what each system alone prevents. These episodes were never used to train, select or tune our policy. EdgeGuard had zero collisions, like the wide proximity alarm, but trucks kept ninety-seven point two percent of their throughput, twice the alarm's forty-eight. It raised eighty-one percent fewer alarms and halved the time workers spent waiting. Against the narrowed alarm, it is zero collisions instead of forty-nine and thirty-seven points more throughput.
 
-**뜻:** 모든 방식을 같은 시뮬레이션 에피소드 1,000개(작업자 8, 지게차 4, 충돌 상황 3,617건, 아무도 주의 안 함)로 돌렸고, 정책 학습 · 선택 · 조정에 쓰지 않은 에피소드입니다. EdgeGuard는 넓은 경보처럼 충돌 0인데 처리량 97.3 %로 두 배, 경보 81 % 감소, 대기 시간 절반. 좁힌 경보 대비 충돌 49 → 0, 처리량 +37 %p.
+**뜻:** 모든 방식을 같은 시뮬레이션 에피소드 1,000개(작업자 8, 지게차 4, 충돌 상황 3,617건, 아무도 주의 안 함)로 돌렸고, 정책 학습 · 선택 · 조정에 쓰지 않은 에피소드입니다. EdgeGuard는 넓은 경보처럼 충돌 0인데 처리량 97.2 %로 두 배, 경보 81 % 감소, 대기 시간 절반. 좁힌 경보 대비 충돌 49 → 0, 처리량 +37 %p.
 
 **강조:** "never used to train, select or tune" · **넘기는 말:** "But a safety system has to hold up on bad days."
 
-### 10. 예외 상황 30건 → 0건 · 약 45초 · 김기환
+### 10. 예외 상황 30건 → 1건, 움직이는 지게차 0건 · 약 55초 · 김기환
 
-> A safety system has to hold up on bad days. We ran eight thousand more fresh episodes under eight conditions: a bad network with up to six hundred milliseconds of delay and forty percent loss, the MEC app restarting and losing its state, workers who ignore fifteen or thirty percent of alerts, noisy positioning, a dense floor and attentive drivers. Our previous policy had thirty collisions in thirty-four thousand six hundred forty-four conflicts. The current version, 3.1, had none; the upper bound of the ninety-five percent interval is about one in nine thousand conflicts. And trucks were faster in every scenario, by five to ten points.
+> A safety system has to hold up on bad days. We ran eight thousand more fresh episodes under eight conditions: a bad network with up to six hundred milliseconds of delay and forty percent loss, the MEC app restarting and losing its state, workers who ignore fifteen or thirty percent of alerts, noisy positioning, a dense floor and attentive drivers. Our previous policy had thirty collisions in thirty-four thousand six hundred forty-four conflicts. The current version, 3.2, had one: a worker who walked on and stopped one metre from a truck that had already stopped. Then we made the people more human, with a social force model: they drift, change pace and hesitate. Even then, no moving truck touched anyone; the previous policy had five such contacts. And trucks were faster in every scenario, by five to nine points.
 
-**뜻:** 8가지 조건(지연 600 ms · 손실 40 %의 불량 통신, 상태를 잃는 MEC 재시작, 경보 15 · 30 % 무시, 측위 오차, 밀집, 주의 깊은 운전자)에서 새 에피소드 8,000개. 이전 정책 30건, v3.1은 0건, 95 % 상한은 약 9,000건에 1건. 모든 조건에서 트럭이 5~10 %p 더 빨랐습니다.
+**뜻:** 8가지 조건(지연 600 ms · 손실 40 %의 불량 통신, 상태를 잃는 MEC 재시작, 경보 15 · 30 % 무시, 측위 오차, 밀집, 주의 깊은 운전자)에서 새 에피소드 8,000개. 이전 정책 30건, v3.2는 1건(이미 멈춘 지게차 1 m 앞에서 계속 걷던 작업자가 멈춘 경우). 사람을 더 사람답게(사회적 힘 모델: 옆으로 흐르고, 속도를 바꾸고, 머뭇거림) 바꿔도 움직이는 지게차가 사람에 닿은 경우는 0건, 이전 정책은 5건. 모든 조건에서 트럭이 5~9 %p 더 빨랐습니다.
 
-**넘기는 말:** "How did we get to zero?"
+**넘기는 말:** "How did we get there?"
 
 ### 11. 충돌마다 추적 → 원인 수정 → 새 시드로 재시험 · 약 55초 · 김기환
 
-> How did we get to zero? Not by tuning until the numbers looked good. Every collision the simulator found was traced to its cause, fixed in both the Python reference and the firmware, and checked again on seeds the fix had never seen. Four examples: stop points that crept away with position noise; a sidestep that led a worker into a second truck; a WAIT lost when the MEC app restarted, which led to the tag checking GO itself; and in version 3.1, an emergency stop that released while the person still stood in front of the truck. We train, select and test on separate seeds, and we reject candidates that are faster but less safe. The safety case lists six hazards and eight claims, each linked to the tests that are its evidence.
+> How did we get there? Not by tuning until the numbers looked good. Every collision the simulator found was traced to its cause, fixed in both the Python reference and the firmware, and checked again on seeds the fix had never seen. Four examples: stop points that crept away with position noise; a sidestep that led a worker into a second truck; a WAIT lost when the MEC app restarted, which led to the tag checking GO itself; in version 3.1, an emergency stop that released while the person still stood in front of the truck; and in 3.2, found with the more human walkers, an emergency brake that triggered a little too late. We train, select and test on separate seeds, and we reject candidates that are faster but less safe. The safety case lists six hazards and eight claims, each linked to the tests that are its evidence.
 
-**뜻:** 숫자가 좋아질 때까지 조정한 게 아닙니다. 충돌마다 원인을 추적해 파이썬과 펌웨어 둘 다 고치고, 본 적 없는 시드로 다시 확인했습니다. 예: 위치 오차로 밀리던 정지 지점, 두 번째 트럭 쪽으로 보낸 STEP ASIDE, MEC 재시작으로 잃은 WAIT(→ 태그 자체 GO 확인), v3.1의 풀려 버린 긴급 정지. 학습 · 선택 · 시험 시드를 분리하고, 빠르지만 덜 안전한 후보는 버립니다. 안전성 논증: 위험원 6, 주장 8, 각 근거 시험 연결.
+**뜻:** 숫자가 좋아질 때까지 조정한 게 아닙니다. 충돌마다 원인을 추적해 파이썬과 펌웨어 둘 다 고치고, 본 적 없는 시드로 다시 확인했습니다. 예: 위치 오차로 밀리던 정지 지점, 두 번째 트럭 쪽으로 보낸 STEP ASIDE, MEC 재시작으로 잃은 WAIT(→ 태그 자체 GO 확인), v3.1의 풀려 버린 긴급 정지, v3.2(사람다운 보행자로 찾음)의 조금 늦던 긴급제동. 학습 · 선택 · 시험 시드를 분리하고, 빠르지만 덜 안전한 후보는 버립니다. 안전성 논증: 위험원 6, 주장 8, 각 근거 시험 연결.
 
 **넘기는 말:** "Beyond a single zone."
 
@@ -160,9 +161,9 @@
 
 ### 15. 마무리 · 약 25초 · 김기환
 
-> To sum up: today sites choose between a safe alarm and a productive one. EdgeGuard gives both: zero collisions at twice the throughput of a proximity alarm, and zero in thirty-four thousand conflicts on bad days, built on standard oneM2M and ETSI MEC. The code, the judge site and the video are linked here. Thank you, we are happy to take your questions.
+> To sum up: today sites choose between a safe alarm and a productive one. EdgeGuard gives both: zero collisions at twice the throughput of a proximity alarm, and on bad days, in seventy thousand conflicts with two models of how people walk, no moving truck touched anyone. Built on standard oneM2M and ETSI MEC. The code, the judge site and the video are linked here. Thank you, we are happy to take your questions.
 
-**뜻:** 지금은 안전한 경보와 생산적인 경보 중 하나를 고릅니다. EdgeGuard는 둘 다: 근접 경보 대비 처리량 두 배에서 충돌 0, 예외 상황 3만 4천 건에서도 0. 표준 oneM2M과 ETSI MEC 위에 만들었습니다. 감사합니다, 질문 받겠습니다.
+**뜻:** 지금은 안전한 경보와 생산적인 경보 중 하나를 고릅니다. EdgeGuard는 둘 다: 근접 경보 대비 처리량 두 배에서 충돌 0, 두 가지 보행자 모델의 예외 상황 7만 건에서 움직이는 지게차의 접촉 0. 표준 oneM2M과 ETSI MEC 위에 만들었습니다. 감사합니다, 질문 받겠습니다.
 
 ---
 
@@ -188,7 +189,7 @@
 >
 > **[9]** Now the evidence, in simulation, on one thousand episodes we never used to train or tune our policy. EdgeGuard had zero collisions, like the wide alarm, at ninety-seven percent throughput, twice the alarm's, with eighty-one percent fewer alarms.
 >
-> **[10]** On eight thousand more episodes with a bad network, server restarts, workers who ignore alerts and noisy positioning, our previous policy had thirty collisions. The current one had none in thirty-four thousand conflicts, and trucks were faster in every condition.
+> **[10]** On eight thousand more episodes with a bad network, server restarts, workers who ignore alerts and noisy positioning, our previous policy had thirty collisions. The current one had one, with a truck that had already stopped, and even with more human walkers no moving truck touched anyone. Trucks were faster in every condition.
 >
 > **[11]** We got there by tracing every collision to its cause, fixing it in both the Python reference and the ESP32 firmware, and retesting on seeds the fix had never seen. A safety case ties each claim to its tests.
 >
@@ -204,14 +205,15 @@
 
 | 질문 | 영어 답 (말하는 그대로) | 뜻 |
 |---|---|---|
-| Zero collisions sounds too good. | "It's zero in simulation, on episodes we never used to train or tune. We report intervals: the upper bound is about one in nine thousand conflicts, and our previous policy's interval sits well above it." | 학습에 안 쓴 에피소드에서의 시뮬레이션 0, 95 % 상한 약 9,000건에 1건 |
+| Zero collisions sounds too good. | "On bad days it isn't zero: one in thirty-four thousand conflicts, with a truck that had already stopped. It's simulation, on episodes we never used to train or tune, and we report intervals: the upper bound is about one in six thousand, and our previous policy's interval sits well above it." | 예외 상황에선 0이 아님: 3만 4천 건 중 1건(멈춘 지게차). 학습에 안 쓴 에피소드, 95 % 상한 약 6,000건에 1건 |
+| Your people walk in straight lines. Too simple? | "We checked that. With a social force model people drift, change pace, hesitate and avoid each other. Same eight thousand episodes: no moving truck touched anyone. The four contacts were people walking into a truck that had already stopped, which only the warning can prevent." | 사회적 힘 모델로 재평가: 움직이는 지게차 접촉 0, 4건은 멈춘 지게차에 걸어 들어감(경고로만 방지) |
 | Why oneM2M, not plain MQTT? | "Because the CSE gives us subscriptions, access control per device, discovery and group fan-out out of the box, and other apps like a WMS can use our alerts just by subscribing." | 구독 · 단말별 ACP · 탐색 · 그룹 팬아웃 기본 제공, 다른 앱이 구독만으로 사용 |
 | What does MEC add? | "Latency and locality: twenty-five milliseconds at the edge against eighty-five in the cloud, trajectories stay on site, and MEC zone events drive the handover." | 지연(25 vs 85 ms), 데이터가 현장에, 구역 이벤트로 핸드오버 |
 | What if the network fails? | "Four layers. Stop points are executed on the truck, devices exchange state directly, the tag checks GO itself, and the emergency brake is always on. Under bad network and restart scenarios: zero collisions." | 4중 보호, 불량 통신 · 재시작 시나리오 충돌 0 |
 | Is the alarm comparison fair? | "Same floor, same episodes, same noise for every system. The alarm follows how commercial UWB systems behave, with two zone settings sites use. With an attentive driver the result is the same." | 같은 조건, 상용 동작 모사, 주의 깊은 운전자에서도 동일 |
 | Did you test with real hardware? | "The firmware runs unmodified against a real CSE in CI over HTTP, MQTT and mutual TLS. The physical board demo and a site pilot are our next step." | 펌웨어는 CI에서 실제 CSE와, 보드 시연 · 현장 시범은 다음 단계 |
-| What changed in v3.1? | "Our last two collisions came after an emergency stop released while the person still stood in front. The brake now holds while he is in the truck's path." | 긴급 정지 후 사람이 앞에 있는 동안 유지 |
-| Will workers obey WAIT? | "We modelled workers who ignore fifteen and thirty percent of alerts: still zero collisions. WAIT lasts only until the truck has passed, and alarms are eighty-one percent fewer, so less fatigue." | 15 · 30 % 무시해도 0, 경보 81 % 감소 |
+| What changed in v3.1 and v3.2? | "In 3.1, the emergency brake holds while the person is still in the truck's path. In 3.2, it triggers at a closest approach of one and a half metres instead of one point three; the more human walkers found a case that needed it." | v3.1 사람이 경로에 있는 동안 제동 유지, v3.2 긴급제동 기준 1.3 → 1.5 m |
+| Will workers obey WAIT? | "We modelled workers who ignore fifteen and thirty percent of alerts: no moving truck touched anyone. WAIT lasts only until the truck has passed, and alarms are eighty-one percent fewer, so less fatigue." | 15 · 30 % 무시해도 움직이는 지게차 접촉 0, 경보 81 % 감소 |
 | How much, and payback? | "About fifteen thousand dollars for a ten-thousand-square-metre site. One to three and a half years on forklift time alone; one prevented injury pays for it eight times." | 약 1.5만 달러, 1~3.5년, 부상 1건이면 8배 |
 | Which TR-0086 option, and why? | "Option C in each zone: the CSE runs on the same MEC host as our app, so alerts take twenty-five milliseconds and data stays in the zone. We also did the guide's optional handover and location steps." | 구역마다 옵션 C, 지연 25 ms · 데이터 현장 유지, 가이드의 선택 과제 5.5 · 5.6도 구현 |
 | Privacy? | "Trajectories stay in the zone's edge CSE. Only alerts and near-miss events leave the site, and federated learning moves weights, not data." | 궤적은 엣지에, 경보 · 아차사고만 외부로, 연합학습은 가중치만 |

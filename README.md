@@ -15,12 +15,13 @@ If the network or the server fails, the devices talk to each other directly (D2D
 
 Same 1,000 fresh simulated episodes for every system (8 workers, 4 forklifts, 3,617 conflicts, nobody looks out; 95 % intervals in [Key results](#key-results)):
 
-| | UWB proximity alarm 6 m / 3 m | UWB proximity alarm 4 m / 2 m | **EdgeGuard (policy v3.1)** |
+| | UWB proximity alarm 6 m / 3 m | UWB proximity alarm 4 m / 2 m | **EdgeGuard (policy v3.2)** |
 |---|---|---|---|
 | Collisions | 0 | 49 | **0** |
-| Forklift throughput | 48.3 % | 60.3 % | **97.3 % (2.0×)** |
+| Forklift throughput | 48.3 % | 60.3 % | **97.2 % (2.0×)** |
 | Alarms per episode | 37.6 | 25.7 | **7.0** |
-| Collisions under bad network, MEC restart, 70-85 % compliance, noisy UWB, dense floor (34,644 conflicts) | — | — | **0** (previous policy 30) |
+| Collisions under bad network, MEC restart, 70-85 % compliance, noisy UWB, dense floor (34,644 conflicts) | — | — | **1, truck already stopped** (previous policy 30) |
+| Same, with people who drift, change pace and hesitate ([social force](docs/robustness.md#policy-v32-and-a-second-walker-model), 35,248 conflicts): contacts with a **moving** truck | — | — | **0** (previous policy 5) |
 
 > The figures come from simulation. Device behaviour is tested on every commit by running **the board firmware unmodified on a PC** against a real oneM2M CSE (CI, 6/6 checks), and a phone serves as the worker tag ([hardware demo](docs/hardware-demo.md)).
 > **Article: [hackster.io](https://www.hackster.io/ahind012/edgeguard-stop-forklift-accidents-before-they-happen-e07309)** · **Final video: [YouTube](https://youtu.be/P2JI5ZG6PIg)** (2 min 34 s, earlier cut) · Demo videos: **`results/edgeguard_final.mp4`** (final, 3 min 31 s, spoken narration and captions, with the large-scale results; [storyboard](docs/video-script.md)) · `results/edgeguard_demo_v1.3.mp4` (live demo, 3 scenes, about 1 min 50 s) · `results/edgeguard_firmware_in_the_loop.mp4` (firmware + phone tag, about 30 s).
@@ -105,11 +106,13 @@ Same simulated floor and the **same 1,000 fresh episodes** for every system (8 w
 | UWB proximity alarm, 6 m / 3 m zones | 0 (< 1.1) | 48.3 % | 37.6 |
 | UWB proximity alarm, 4 m / 2 m zones | 49 (13.5 [10.3-17.9]) | 60.3 % | 25.7 |
 | EdgeGuard, previous policy | 1 (0.3) | 91.5 % | 6.3 |
-| **EdgeGuard (policy v3.1)** | **0 (< 1.1)** | **97.3 % [96.9-97.7]** | **7.0** |
+| **EdgeGuard (policy v3.2)** | **0 (< 1.1)** | **97.2 % [96.8-97.6]** | **7.0** |
 
 As safe as the wide proximity alarm with **2.0 x the throughput**, 81 % fewer alarms and half the worker waiting; against the narrowed alarm, **0 instead of 49 collisions and +37 points**. The worker yields and the truck brakes for **stop points** on its own.
 
-**Under exceptional conditions** (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): policy v3.1 had **no collision (95 % upper bound 0.11 per 1,000 conflicts)**, v3 had 2, v2 5, the previous policy 30, and v3.1 was **4.8-9.9 points faster in every condition**, with 41 % fewer close passes than v2 ([robustness](docs/robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)). Why it stays safe, claim by claim: [safety case](docs/safety-case.md).
+**Under exceptional conditions** (bad network, MEC restart, 85 / 70 % compliance, noisy UWB, dense floor, attentive driver; 8,000 fresh episodes, 34,644 conflicts): the previous policy had 30 collisions, v2 5, v3 2, v3.1 none; the adopted **v3.2 had 1, a worker stopping 1.0 m from a truck that had already stopped**, with **46 % fewer close passes than v3.1** and **4.8-9.2 points more throughput than the previous policy in every condition** ([robustness](docs/robustness.md#large-scale-test-8000-fresh-episodes-per-policy-with-confidence-intervals)).
+
+**With more human walkers** ([PySocialForce](https://github.com/yuxiang-gao/PySocialForce) social force model: people drift, change pace, hesitate and avoid each other; same 8,000 episodes, 35,248 conflicts): **no moving truck touched anyone under v3.2** (previous policy 5, up to 0.69 m/s). Its 4 collisions are all with a truck already standing still, which only the warning can prevent; the previous policy had 21 in total ([details](docs/robustness.md#policy-v32-and-a-second-walker-model)). Why it stays safe, claim by claim: [safety case](docs/safety-case.md).
 
 ![EdgeGuard vs site practice, 1,000 episodes](docs/img/large_eval.png)
 
@@ -127,7 +130,7 @@ The soak test in CI (burst of 2,000 notifications, camera churn, 10 s link outag
 | Blind corners (site map) | collisions 17 → **11** of 80 | no map |
 | Worker WAIT compliance 85 / 70 / 50 % | collisions 12 / 27 / 42 of 1,207 | v1.0: 145 |
 
-### Earlier milestones: productivity (v1.x, before truck priority and stop points; now 97.3 %, above)
+### Earlier milestones: productivity (v1.x, before truck priority and stop points; now 97.2 %, above)
 
 | Metric | Result | Baseline |
 |---|---|---|

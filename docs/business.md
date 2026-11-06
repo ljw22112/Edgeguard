@@ -43,7 +43,7 @@
 
 | Benefit | Calculation | Annual amount (example site) |
 |---|---|---|
-| **Safety at the same cost of time** | The narrowed proximity alarm sites choose to cut nuisance alarms let 13.5 collisions per 1,000 conflicts through in the same test; EdgeGuard 0 (upper bound 1.1), and 0 in 34,644 conflicts under bad network, MEC restart, low compliance, noisy UWB | Fewer accidents, see the next row |
+| **Safety at the same cost of time** | The narrowed proximity alarm sites choose to cut nuisance alarms let 13.5 collisions per 1,000 conflicts through in the same test; EdgeGuard 0 (upper bound 1.1); under bad network, MEC restart, low compliance and noisy UWB 1 in 34,644 conflicts, with a truck already stopped, and no contact with a moving truck also with more human walkers | Fewer accidents, see the next row |
 | **Preventing one accident** | Total cost of one injury about USD 116,000 (NSC × OSHA indirect-cost multiplier) | Preventing a single accident saves about KRW 160 million (≈ USD 116,000) — about 8× the initial cost |
 | **Forklift time saved vs a UWB proximity alarm** | Forklift time lost per encounter (a person within 6 m): proximity alarm 6 m / 3 m 1.38 s, 4 m / 2 m 1.06 s, EdgeGuard 0.07 s ([1,000-episode test](site-compare.md#large-scale-test-1000-fresh-episodes-with-confidence-intervals)) × 10–30 encounters per forklift-hour × 16 h × 300 days × 10 forklifts, at KRW 35,000 (≈ USD 25) per hour for forklift + driver | **vs the wide alarm: about KRW 6.1–18.3 million (≈ USD 4,400–13,000); vs the narrowed alarm: KRW 4.6–13.8 million (≈ USD 3,300–9,900)** |
 | Lower legal risk from accidents | Evidence for Serious Accidents Punishment Act compliance (risk records, near-miss analysis, records of corrective actions) | Not quantified |
@@ -70,7 +70,7 @@
 ## 6. Scalability
 
 - **Site size**: with adaptive reporting intervals, alert latency p95 is 256 ms with 40 devices, and the edge Mobius comfortably handles 250 writes per second (`docs/deployment.md`).
-- **Many-to-many sites**: with 8 workers and 4 forklifts, 0 collisions in 3,617 conflicts at 97.3 % throughput; dense floor (12 workers, 6 forklifts) 0 in 8,422 conflicts at 95.0 % (`results/large_eval.json`).
+- **Many-to-many sites**: with 8 workers and 4 forklifts, 0 collisions in 3,617 conflicts at 97.2 % throughput; dense floor (12 workers, 6 forklifts) 0 in 8,422 conflicts at 95.0 % (`results/large_eval.json`).
 - **Multiple sites**: an edge (Mobius + MEC app) per site, with headquarters monitoring all sites through a cloud replica (store-and-forward keeps records through WAN outages).
 - **Other industries**: the same architecture extends to ports (yard tractors and workers), construction sites (excavators and workers), and factory AGVs/AMRs alongside people — collision-course detection and WAIT/GO signals are independent of vehicle type.
 
