@@ -69,10 +69,10 @@ CARDS = {
 <tr><td class="h">Emergency brake</td><td>a person on a collision course within 1.5 s stops the truck, held while he is in front</td><td class="m">always on</td></tr></table>""",
     "site": """<p class="k">Results · same 1,000 fresh simulated episodes for every system</p><h2 style="font-size:60px">As safe as the wide proximity alarm, at 2.0× its throughput</h2>
 <img src="file://{root}/docs/img/large_eval.png" style="width:1640px;height:auto;align-self:center;border-radius:14px;background:#fff">
-<p style="font-size:34px">0 collisions in 3,617 conflicts · 97.3 % throughput vs 48.3 % · 81 % fewer alarms</p>""",
-    "robust": """<p class="k">Results · 8,000 episodes on bad days</p><h2 style="font-size:60px">30 collisions to 0 under eight exceptional conditions</h2>
+<p style="font-size:34px">0 collisions in 3,617 conflicts · 97.2 % throughput vs 48.3 % · 81 % fewer alarms</p>""",
+    "robust": """<p class="k">Results · 8,000 episodes on bad days</p><h2 style="font-size:60px">30 collisions to 1, under eight exceptional conditions</h2>
 <img src="file://{root}/docs/img/large_eval_robust.png" style="width:1640px;height:auto;align-self:center;border-radius:14px;background:#fff">
-<p style="font-size:34px">0 collisions in 34,644 conflicts · +4.8 to +9.9 points of throughput</p>""",
+<p style="font-size:34px">1 in 34,644, truck already stopped · more human walkers: 0 moving-truck contacts</p>""",
     "closing": """<div class="bands"><div style="background:#C62828"></div><div style="background:#B84A06"></div><div style="background:#2E7D32"></div></div>
 <div style="margin-top:250px;display:flex;flex-direction:column;gap:34px;width:1350px"><h1 style="font-size:96px">EdgeGuard</h1>
 <p style="font-size:44px;color:#DCE3EA">Safe and productive, not one or the other,<br>on standard oneM2M resources at the MEC edge</p>
@@ -96,7 +96,7 @@ TIMELINE = [
     ("card", "onem2m", 8, "oneM2M does the work: SDT twins with SAREF, group fan-out, polling channels, access control with TLS, and an AI agent over MCP."),
     ("card", "layers", 8, "If the network or the MEC app fails, protection is layered: stop points the truck brakes for on its own, device-to-device state, a tag that checks GO by itself, and an always-on emergency brake."),
     ("card", "site", 8, "On one thousand fresh simulated episodes, EdgeGuard had zero collisions, like the wide proximity alarm, at twice its throughput, with eighty-one percent fewer alarms."),
-    ("card", "robust", 8, "And on eight thousand episodes with a bad network, server restarts, low compliance and noisy positioning: zero collisions in thirty-four thousand conflicts, down from thirty."),
+    ("card", "robust", 8, "And on eight thousand episodes with a bad network, server restarts, low compliance and noisy positioning: thirty collisions down to one, with a truck that had already stopped. With more human walkers, no moving truck touched anyone."),
     ("card", "closing", 5, "EdgeGuard. Safe and productive. Thank you."),
 ]
 VOICE = os.environ.get("EG_VOICE", "")
