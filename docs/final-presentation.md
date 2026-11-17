@@ -2,66 +2,82 @@
 
 [← README](../README.md) · deck: Slides artifact *EdgeGuard Final Presentation* (download as PPTX / PDF from the deck) · Q&A: [interview-qa.md](interview-qa.md) · rehearsal pack (Korean): [ko/presentation-rehearsal.md](ko/presentation-rehearsal.md)
 
-Speaker notes of the 15 slides, about 11 minutes at 140 words per minute. Numbers match `results/large_eval.json`.
-Total: 1744 words, about 12 minutes.
+Speaker notes of the 16 main slides, written for a 10-minute slot (about 125 words per minute), plus three backup slides for the Q&A. Jeongwon presents slides 1-8, Kihwan slides 9-16. Numbers match `results/large_eval.json` and `results/large_eval_social.json`.
+Total (main slides): 1168 words, about 9.3 minutes at 125 words per minute.
 
 
-## 1. EdgeGuard  (73 words, ~31 s)
+## 1. EdgeGuard  (Jeongwon (jw), 59 words, ~28 s)
 
-Good morning. We are Team EdgeGuard from Sejong University. EdgeGuard predicts collisions between warehouse workers and forklifts one to three seconds ahead, on the network edge, and tells each person exactly what to do: wait, step aside, or go. It is built on oneM2M and ETSI MEC. In the next ten minutes: why today's systems force sites to choose between safety and productivity, how EdgeGuard works, and the evidence that it gives both.
+Good morning. We are Team EdgeGuard from Sejong University. I'm Jeongwon Lee, and this is my teammate Kihwan Kim. EdgeGuard predicts collisions between warehouse workers and forklifts one to three seconds ahead, on the ETSI MEC edge, and tells each person exactly what to do: wait, step aside, or go. It is built on oneM2M from end to end.
 
-## 2. People and forklifts share the same aisles  (77 words, ~33 s)
+## 2. People and forklifts share the same aisles  (Jeongwon (jw), 57 words, ~27 s)
 
-Forklifts and people share the same aisles. In Korea alone, two thousand five hundred fifty-nine people were hurt or killed in forklift accidents in two years. One injury costs a company about one hundred sixteen thousand dollars once indirect costs are counted, and in Korea a fatal accident can also bring criminal liability for executives. The hard part is time: at a blind corner, a walker may have two seconds between seeing a truck and being hit.
+Forklifts and people share the same aisles. In Korea alone, two thousand five hundred fifty-nine people were hurt or killed in forklift accidents in just two years. One injury costs a company about one hundred sixteen thousand dollars. And the hard part is time: at a blind corner, a worker may have only two seconds to react.
 
-## 3. A proximity alarm makes sites choose: safe or productive  (100 words, ~43 s)
+## 3. A proximity alarm makes sites choose: safe or productive  (Jeongwon (jw), 81 words, ~39 s)
 
-What do sites use today? Speed limits, and UWB proximity alarms: a tag on the worker, an anchor on the truck. We modelled one the way commercial systems work: a warning zone where the truck slows to walking speed, a danger zone where it stops. Set wide, at six and three metres, it prevented every collision in our test, but trucks ran at forty-eight percent of their normal throughput. So sites narrow the zones. At four and two metres the nuisance drops, but forty-nine collisions got through. The root cause is that a distance alarm has no notion of direction.
+So what do sites use today? Mostly UWB proximity alarms. We modelled one the way commercial systems work: the truck slows down in a warning zone and stops in a danger zone. With wide zones, six and three metres, there were no collisions in our test, but trucks kept only forty-eight percent of their throughput. So sites narrow the zones. At four and two metres, forty-nine collisions got through. The reason is simple: a distance alarm has no sense of direction.
 
-## 4. Predict the collision course, and tell each person what to do  (120 words, ~51 s)
+## 4. Predict the collision course, and tell each person what to do  (Jeongwon (jw), 96 words, ~46 s)
 
-EdgeGuard asks a different question: not how close, but will they meet. The test comes from missile guidance: if the bearing stays constant while the range closes, two objects are on a collision course. A truck that will pass by never raises an alert. When a meeting is coming, the worker's tag says WAIT, and GO once the truck has passed, or STEP ASIDE if the worker is standing in the lane. The truck keeps its speed as long as it can still stop short of the person; when it cannot, it gets a stop point and brakes for it by itself. The decision runs on the ETSI MEC edge in about twenty-five milliseconds, and everything is a oneM2M resource.
+EdgeGuard asks a different question: not how close, but will they meet? We borrowed a test from missile guidance. If the bearing stays the same while the distance shrinks, two objects are on a collision course. So a truck that will pass by never raises an alert. When they will meet, the worker's tag says WAIT, and GO once the truck has passed, or STEP ASIDE if the worker stands in the lane. The truck keeps its speed while it can still stop. If not, it gets a stop point and brakes for it by itself.
 
-## 5. A MEC host per zone  (124 words, ~53 s)
+## 5. A MEC host per zone  (Jeongwon (jw), 82 words, ~39 s)
 
-Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register their own application entities on that CSE. The EdgeGuard MEC app runs next to it as a container: it subscribes to positions, decides, and writes alerts back as oneM2M resources, which the CSE pushes to the tags and forklifts. A MEC interworking proxy brings ETSI MEC location and radio information into the same CSE. In the cloud, an IN-CSE holds home records for devices moving between zones, runs federated learning across sites, and hosts the AI safety agent. In the TR-0086 developer guide this is deployment option C, and we also implemented the guide's optional steps: handover between MEC zones and location-aware devices.
+Here is the architecture. Each warehouse zone has a MEC host with a oneM2M MN-CSE. Worker tags and forklift modules register as their own AEs on that CSE. Our MEC app runs right next to it. It subscribes to positions, decides in about twenty-five milliseconds, and writes alerts back as oneM2M resources. In the cloud, an IN-CSE keeps track of devices that move between zones, and runs federated learning and an AI agent. In the TR-0086 developer guide, this is option C.
 
-## 6. The CSE does the work our own server would do  (144 words, ~62 s)
+## 6. The CSE does the work our own server would do  (Jeongwon (jw), 82 words, ~39 s)
 
-Why oneM2M? Because the CSE does the work our own server would otherwise have to do. Subscriptions replaced a broker and polling code. Device twins are SDT flexContainers with labels and SAREF semantics, so a new tag is found by one discovery request and onboarded in about nine seconds, without a device list. Access control is built in: one ACP per device, and with a child-type restriction the MEC app can create subscriptions in a twin but never write data into it. A group fan-out point sends one DANGER alert to every tag in a zone in a single request, and polling channels reach tags behind NAT. Announcement and CSE handover let a forklift's presence move between zones. Devices use the MQTT binding over mutual TLS. The same code runs on Mobius and ACME, and we reported two bugs to ACME along the way.
+Why oneM2M? Because the CSE does the work our own server would otherwise have to do. Subscriptions replace a message broker and polling. Access control is built in: one ACP per device, and the MEC app can only create subscriptions, never write data into a device. One group request alerts every tag in a zone, even behind NAT. Devices use MQTT over mutual TLS. And we tested on three CSEs, Mobius, ACME and tinyIoT, and reported two ACME bugs, which were fixed.
 
-## 7. MEC services reach the app through oneM2M, both ways  (122 words, ~52 s)
+## 7. One AE per device, a standard twin  (Jeongwon (jw), 72 words, ~35 s)
 
-ETSI MEC services reach our application through oneM2M. A MEC interworking proxy subscribes to MEC 013 zone events and MEC 012 per-device signal strength and writes them into the CSE as SDT twins; oneM2M applications can also post MEC requests the other way. A zone event triggers the CSE handover, with one and a half to eight milliseconds of interruption and no samples lost. Applications are deployed by intent: one oneM2M resource drives discovery, host selection, deployment and Mp1 service registration, and when a host crashes the app runs again elsewhere in two to three seconds. On the edge the median alert latency is twenty-five milliseconds, against eighty-five for a cloud-only path. We ran this live on the public ETSI MEC Sandbox.
+This is the actual resource tree on a zone CSE. Every tag and forklift module is its own AE. Its state is an SDT flexContainer twin: kinematics, the cue it shows or the speed limit it enforces, and battery. A SAREF semantic descriptor makes each device self-describing. The MEC app finds new devices with one label query, subscribes to their kinematics, and writes risk, alerts and near misses into its own AE.
 
-## 8. No server, still safe: four layers of protection  (169 words, ~72 s)
+## 8. MEC services reach the app through oneM2M, both ways  (Jeongwon (jw), 89 words, ~43 s)
 
-A safety system is judged by its bad days, so protection is layered. The MEC app does the prediction and the guidance, and a standby takes over in under a second. Stop points live on the truck: the module brakes for its point from its own position every cycle, so a lost or late message does not delay braking. Devices broadcast their state to each other directly, signed, and when the MEC app goes quiet, for example after a restart, the tag checks for itself whether it is safe to walk on. And the last line is an always-on emergency brake on the forklift module: a person on a collision course within one and a half seconds stops the truck, and since version 3.1 the truck stays stopped while that person is in front of it; version 3.2 triggers at one and a half metres of closest approach. All of this is the same code in our Python reference and the ESP32 firmware, and CI checks that they agree.
+ETSI MEC reaches our app through oneM2M, in both directions. A MEC interworking proxy turns MEC location zone events and radio signal strength into oneM2M resources. A zone event triggers the CSE handover, with only a few milliseconds of interruption and no data lost. Apps are deployed from one intent resource, and if a host crashes, the app runs again elsewhere in two to three seconds. We also ran this on the public ETSI MEC Sandbox. Now Kihwan will show you how we keep people safe, and the evidence.
 
-## 9. As safe as the wide alarm, at twice the throughput  (99 words, ~42 s)
+## 9. No server, still safe: four layers of protection  (Kihwan, 92 words, ~44 s)
 
-Now the evidence. Every system ran on the same one thousand simulated episodes: eight workers, four forklifts, three thousand six hundred seventeen conflicts, and nobody looks out, so this is what each system alone prevents. These episodes were never used to train, select or tune our policy. EdgeGuard had zero collisions, like the wide proximity alarm, but trucks kept ninety-seven point two percent of their throughput, twice the alarm's forty-eight. It raised eighty-one percent fewer alarms and halved the time workers spent waiting. Against the narrowed alarm, it is zero collisions instead of forty-nine and thirty-seven points more throughput.
+Thank you. A safety system is judged by its bad days, so we built four layers of protection. One: the MEC app, with a standby that takes over in under a second. Two: stop points live on the truck, so a late message never delays braking. Three: devices talk to each other directly, and the tag checks GO by itself when the server is silent. Four: an always-on emergency brake on the forklift. The same logic runs in our Python code and in the ESP32 firmware, and CI checks that they agree.
 
-## 10. 30 collisions to 1, and no moving truck touching anyone  (139 words, ~60 s)
+## 10. As safe as the wide alarm, at twice the throughput  (Kihwan, 68 words, ~33 s)
 
-A safety system has to hold up on bad days. We ran eight thousand more fresh episodes under eight conditions: a bad network with up to six hundred milliseconds of delay and forty percent loss, the MEC app restarting and losing its state, workers who ignore fifteen or thirty percent of alerts, noisy positioning, a dense floor and attentive drivers. Our previous policy had thirty collisions in thirty-four thousand six hundred forty-four conflicts. The current version, 3.2, had one: a worker who walked on and stopped one metre from a truck that had already stopped. Then we made the people more human, with a social force model: they drift, change pace and hesitate. Even then, no moving truck touched anyone; the previous policy had five such contacts. And trucks were faster in every scenario, by five to nine points.
+Now the results. Every system ran on the same one thousand simulated episodes, with eight workers and four forklifts. We never used these episodes for training or tuning. EdgeGuard had zero collisions, just like the wide alarm, but trucks kept ninety-seven percent of their throughput. That is twice as much. It also raised eighty-one percent fewer alarms. Against the narrowed alarm, it is zero collisions instead of forty-nine.
 
-## 11. Trace every collision, fix the cause, retest on new seeds  (150 words, ~64 s)
+## 11. 30 collisions to 1, and no moving truck touching anyone  (Kihwan, 78 words, ~37 s)
 
-How did we get there? Not by tuning until the numbers looked good. Every collision the simulator found was traced to its cause, fixed in both the Python reference and the firmware, and checked again on seeds the fix had never seen. Four examples: stop points that crept away with position noise; a sidestep that led a worker into a second truck; a WAIT lost when the MEC app restarted, which led to the tag checking GO itself; in version 3.1, an emergency stop that released while the person still stood in front of the truck; and in 3.2, found with the more human walkers, an emergency brake that triggered a little too late. We train, select and test on separate seeds, and we reject candidates that are faster but less safe. The safety case lists six hazards and eight claims, each linked to the tests that are its evidence.
+But what about bad days? We ran eight thousand more episodes: a bad network, server restarts, workers who ignore alerts, noisy positioning and a crowded floor. Our previous policy had thirty collisions in about thirty-five thousand conflicts. The current version had one, and in that case the truck had already stopped. Then we made the people more human: they drift, change speed and hesitate. Even then, no moving truck touched anyone. And trucks were faster in every scenario.
 
-## 12. Learning across sites, trucks that coordinate, an agent that reports  (115 words, ~49 s)
+## 12. Trace every collision, fix the cause, retest on new seeds  (Kihwan, 78 words, ~37 s)
 
-Beyond a single zone. Worker trajectories are personal data, so each site trains a small motion model on its own data, and only the weights travel through oneM2M, following TR-0084. The two-second prediction error dropped from sixty to forty-nine centimetres, and new models go through canary, activation and rollback. Forklifts form a swarm: they share their plans through a oneM2M group and each computes the same conflict-free schedule, cutting total delay from twenty-three and a half seconds to fourteen and a half. And an AI safety agent writes shift reports by calling MCP servers for the cloud CSE, both zone CSEs and ETSI MEC. Every one of these demos runs in CI on every commit.
+How did we get there? Not by tuning until the numbers looked good. We traced every collision to its cause, fixed it in both the Python code and the firmware, and tested again on new seeds. For example, version 3.1 keeps the emergency brake on while the person is still in front of the truck. We also rejected a faster version because it was less safe. Our safety case links each claim to the tests behind it.
 
-## 13. Low-cost devices, paid back by forklift time  (120 words, ~51 s)
+## 13. Learning across sites, trucks that coordinate, an agent that reports  (Kihwan, 59 words, ~28 s)
 
-Is it worth it? A ten-thousand-square-metre warehouse with fifty workers and ten forklifts costs about fifteen thousand dollars up front, with low-cost ESP32 and UWB devices and two edge servers. Against a proximity alarm, a forklift loses one point four seconds per encounter with a person; with EdgeGuard, under a tenth of a second. At ten to thirty encounters an hour that pays the system back in one to three and a half years on time alone, and a single prevented injury pays for it eight times. Revenue comes from the hardware kit, a subscription, and bundling with operators' private 5G and MEC offers. And because alerts are oneM2M resources, a site's warehouse system can use them simply by subscribing.
+Beyond one zone. Sites learn together with federated learning: only model weights travel through oneM2M, never people's trajectories, and the prediction error dropped from sixty to forty-nine centimetres. Forklifts share their plans through a oneM2M group to avoid conflicts. And an AI agent writes safety reports through MCP servers. All of these demos run in CI on every commit.
 
-## 14. What is real, and what is simulated  (118 words, ~51 s)
+## 14. Low-cost devices, paid back by forklift time  (Kihwan, 77 words, ~37 s)
 
-We want to be clear about scope. What is real and checked on every commit: the oneM2M resources on real Mobius and ACME CSEs; the ESP32 firmware, compiled unmodified for a PC and run against a real CSE over HTTP, MQTT and mutual TLS; handover, orchestration, federated learning and the agent; and live runs on the public ETSI MEC Sandbox. What is simulated: the workers and drivers, with two walker models, and therefore the collision and throughput figures; and the proximity alarm uses typical settings, not one product's. Running people, people hidden from UWB and unplanned reversing are not covered yet. The next step is a board demo and a pilot at a site, measured with near-miss data.
+Is it worth it? A ten-thousand-square-metre warehouse costs about fifteen thousand dollars to equip. With a proximity alarm, a forklift loses about one point four seconds per encounter; with EdgeGuard, less than a tenth of a second. That pays the system back in one to three and a half years from time alone, and one prevented injury pays for it eight times. And because alerts are oneM2M resources, any warehouse system can use them just by subscribing.
 
-## 15. Safe and productive, not one or the other  (74 words, ~32 s)
+## 15. What is real, and what is simulated  (Kihwan, 65 words, ~31 s)
 
-To sum up: today sites choose between a safe alarm and a productive one. EdgeGuard gives both: zero collisions at twice the throughput of a proximity alarm, and on bad days, in seventy thousand conflicts with two models of how people walk, no moving truck touched anyone. Built on standard oneM2M and ETSI MEC. The code, the judge site and the video are linked here. Thank you, we are happy to take your questions.
+We want to be clear about scope. Real, and checked on every commit: the oneM2M resources on real CSEs, the ESP32 firmware running unmodified against a real CSE over MQTT and TLS, and our runs on the ETSI MEC Sandbox. Simulated: how people and drivers behave, and so the collision numbers. Next, we will demo on real boards and run a pilot at a site.
+
+## 16. Safe and productive, not one or the other  (Kihwan, 33 words, ~16 s)
+
+To sum up: today, sites must choose between a safe alarm and a productive one. EdgeGuard gives both, on standard oneM2M and ETSI MEC. Thank you. We are happy to take your questions.
+
+## Backup B1. TR-0077 clause 7 and TR-0086, item by item  (Jeongwon (jw), 57 words, ~27 s)
+
+Backup. Show this if judges ask how we cover TR-0077 clause 7 or which TR-0086 option we chose. Answer: option C in each zone, because a collision warning has a one-to-three-second budget, so the CSE, the decision and the MEC data sit on the same host: twenty-five milliseconds instead of eighty-five, and trajectories stay in the zone.
+
+## Backup B2. Each device can act only as itself  (Kihwan, 38 words, ~18 s)
+
+Backup. Show this if judges ask about security or personal data. Key line: each device can act only as itself, and people's trajectories never leave the zone. Six kinds of attack are refused in CI on every commit.
+
+## Backup B3. Tested against other people's work  (Jeongwon (jw), 46 words, ~22 s)
+
+Backup. Show this if judges ask about interoperability or our contribution to the oneM2M ecosystem. Key line: the same application runs on independent CSEs, our MEC traffic is checked against the official ETSI OpenAPI files, and the two bugs we reported to ACME were fixed upstream.
