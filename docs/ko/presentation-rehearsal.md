@@ -2,6 +2,8 @@
 
 [← README](../../README.ko.md) · 영문 대본 원본: [final-presentation.md](../final-presentation.md) · 예상 질문 전체: [interview-qa.md](../interview-qa.md)
 
+> **11/19 갱신(본선 안내 반영):** 팀당 20분, 발표 10~15분(데모 영상 포함) + 질의응답. **8장 끝에 데모 영상 `results/edgeguard_demo_clip.mp4`(1분 41초, 내레이션 · 자막 포함)를 틉니다.** jw가 "Let's see it running." 하고 재생, 끝나면 "Now Kihwan will show you how we keep people safe, and the evidence."로 넘깁니다. 발표 약 9.3분 + 영상 1.7분 = 약 11분, 질의응답 약 9분. 슬라이드는 11/22(일)까지 주최 측 구글 드라이브에 올립니다.
+
 > **11/17 갱신:** 발표 자료가 16장(7장 리소스 트리 추가) + 백업 3장으로 바뀌었고, 발표자 노트는 10분용으로 줄인 대본(약 1,170단어)입니다. 최신 영문 대본은 [final-presentation.md](../final-presentation.md)에 있습니다. 아래는 12분 기준 이전 판이며, 7장부터는 장 번호가 하나씩 밀립니다.
 
 발표 자료(Slides, 15장)의 발표자 노트와 같은 대본입니다. 슬라이드마다 **영어 대본 → 한국어 뜻 → 외울 숫자 → 다음 장으로 넘기는 말**을 정리했습니다. 발표 시간이 정해지면 아래 "시간별 버전"에서 고르면 됩니다.
@@ -218,6 +220,8 @@
 | Will workers obey WAIT? | "We modelled workers who ignore fifteen and thirty percent of alerts: no moving truck touched anyone. WAIT lasts only until the truck has passed, and alarms are eighty-one percent fewer, so less fatigue." | 15 · 30 % 무시해도 움직이는 지게차 접촉 0, 경보 81 % 감소 |
 | How much, and payback? | "About fifteen thousand dollars for a ten-thousand-square-metre site. One to three and a half years on forklift time alone; one prevented injury pays for it eight times." | 약 1.5만 달러, 1~3.5년, 부상 1건이면 8배 |
 | Which TR-0086 option, and why? | "Option C in each zone: the CSE runs on the same MEC host as our app, so alerts take twenty-five milliseconds and data stays in the zone. We also did the guide's optional handover and location steps." | 구역마다 옵션 C, 지연 25 ms · 데이터 현장 유지, 가이드의 선택 과제 5.5 · 5.6도 구현 |
+| Why not a commercial simulator? | "We wanted to test the exact code we deploy: our simulator runs the same decision logic as the MEC app and the firmware, fast enough for seventy thousand conflicts with confidence intervals. For people we use the same social force model commercial tools use. A cross-check in AnyLogic and a site pilot are next." | 배포 코드 그대로 검증, 7만 건 통계, 보행자는 상용 툴과 같은 사회적 힘 모델, 다음 단계는 AnyLogic 교차 검증 · 현장 시범 |
+| How is this different from a truck that stops with cameras or radar? | "A camera on the truck can't see around a rack corner, and it can only stop the truck. We know where everyone is through UWB and the edge, predict one to three seconds ahead, and coordinate both sides, so trucks keep ninety-seven percent of their throughput. A camera could feed the same CSE as one more sensor." | 차량 센서는 사각지대 · 정지만 가능, 우리는 양쪽 조율로 처리량 97 %, 카메라도 같은 CSE에 센서로 추가 가능 |
 | Privacy? | "Trajectories stay in the zone's edge CSE. Only alerts and near-miss events leave the site, and federated learning moves weights, not data." | 궤적은 엣지에, 경보 · 아차사고만 외부로, 연합학습은 가중치만 |
 
 ## 리허설 순서

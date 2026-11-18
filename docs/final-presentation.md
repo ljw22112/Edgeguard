@@ -3,7 +3,7 @@
 [← README](../README.md) · deck: Slides artifact *EdgeGuard Final Presentation* (download as PPTX / PDF from the deck) · Q&A: [interview-qa.md](interview-qa.md) · rehearsal pack (Korean): [ko/presentation-rehearsal.md](ko/presentation-rehearsal.md)
 
 Speaker notes of the 16 main slides, written for a 10-minute slot (about 125 words per minute), plus three backup slides for the Q&A. Jeongwon presents slides 1-8, Kihwan slides 9-16. Numbers match `results/large_eval.json` and `results/large_eval_social.json`.
-Total (main slides): 1168 words, about 9.3 minutes at 125 words per minute.
+Total (main slides): 1168 words, about 9.3 minutes at 125 words per minute. With the demo video (1 min 41 s) after slide 8: **about 11 minutes**, inside the organisers' 10-15 minutes, leaving about 9 minutes of the 20-minute slot for questions.
 
 
 ## 1. EdgeGuard  (Jeongwon (jw), 59 words, ~28 s)
@@ -36,7 +36,11 @@ This is the actual resource tree on a zone CSE. Every tag and forklift module is
 
 ## 8. MEC services reach the app through oneM2M, both ways  (Jeongwon (jw), 89 words, ~43 s)
 
-ETSI MEC reaches our app through oneM2M, in both directions. A MEC interworking proxy turns MEC location zone events and radio signal strength into oneM2M resources. A zone event triggers the CSE handover, with only a few milliseconds of interruption and no data lost. Apps are deployed from one intent resource, and if a host crashes, the app runs again elsewhere in two to three seconds. We also ran this on the public ETSI MEC Sandbox. Now Kihwan will show you how we keep people safe, and the evidence.
+ETSI MEC reaches our app through oneM2M, in both directions. A MEC interworking proxy turns MEC location zone events and radio signal strength into oneM2M resources. A zone event triggers the CSE handover, with only a few milliseconds of interruption and no data lost. Apps are deployed from one intent resource, and if a host crashes, the app runs again elsewhere in two to three seconds. We also ran this on the public ETSI MEC Sandbox. Let's see it running.
+
+## ▶ Demo video after slide 8  (play `results/edgeguard_demo_clip.mp4`, 1 min 41 s, narrated)
+
+Live demo (WAIT → GO, STEP ASIDE, two forklifts), the ESP32 firmware against a real CSE with a phone as the worker tag, and the zone handover driven by ETSI MEC events. The clip is cut from the final video and carries its own narration and captions, so nobody speaks over it. Afterwards Jeongwon hands over: "Now Kihwan will show you how we keep people safe, and the evidence."
 
 ## 9. No server, still safe: four layers of protection  (Kihwan, 92 words, ~44 s)
 
