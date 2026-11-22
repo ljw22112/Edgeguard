@@ -8,7 +8,7 @@ Total (main slides): 1168 words, about 9.3 minutes at 125 words per minute. With
 
 ## 1. EdgeGuard  (Jeongwon (jw), 59 words, ~28 s)
 
-Good morning. We are Team EdgeGuard from Sejong University. I'm Jeongwon Lee, and this is my teammate Kihwan Kim. EdgeGuard predicts collisions between warehouse workers and forklifts one to three seconds ahead, on the ETSI MEC edge, and tells each person exactly what to do: wait, step aside, or go. It is built on oneM2M from end to end.
+Hello everyone. We are Team EdgeGuard from Sejong University. I'm Jeongwon Lee, and this is my teammate Kihwan Kim. EdgeGuard predicts collisions between warehouse workers and forklifts one to three seconds ahead, on the ETSI MEC edge, and tells each person exactly what to do: wait, step aside, or go. It is built on oneM2M from end to end.
 
 ## 2. People and forklifts share the same aisles  (Jeongwon (jw), 57 words, ~27 s)
 
