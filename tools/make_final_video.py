@@ -172,7 +172,7 @@ def main():
         b.close()
     lst = os.path.join(tmp, "list.txt")
     open(lst, "w").write("".join(f"file '{x}'\n" for x in parts))
-    out = os.path.join(ROOT, "results", "edgeguard_final.mp4")
+    out = os.environ.get("EG_VIDEO_OUT") or os.path.join(ROOT, "results", "edgeguard_final.mp4")
     silent = os.path.join(tmp, "silent.mp4")
     run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", silent])
     if any(said for _, said, _ in voice):

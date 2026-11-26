@@ -1,0 +1,56 @@
+1
+00:00:00,000 --> 00:00:06,000
+EdgeGuard: worker–forklift collision prediction on oneM2M and ETSI MEC.
+
+2
+00:00:06,000 --> 00:00:30,000
+Why: forklift accidents, and alarms that make sites choose between safety and productivity.
+
+3
+00:00:30,000 --> 00:00:39,000
+Predict the collision course on the MEC edge, and tell each person WAIT, STEP ASIDE or GO.
+
+4
+00:00:39,000 --> 00:01:05,000
+How we built it: every collision traced, fixed and tested again.
+
+5
+00:01:05,000 --> 00:01:13,000
+A MEC host per zone, oneM2M CSEs, and the EdgeGuard MEC app.
+
+6
+00:01:13,000 --> 00:01:15,500
+Live demo.
+
+7
+00:01:15,500 --> 00:02:00,500
+WAIT until the forklift has passed, then GO; STEP ASIDE in the lane; two forklifts.
+
+8
+00:02:00,500 --> 00:02:03,000
+Firmware in the loop.
+
+9
+00:02:03,000 --> 00:02:19,667
+The ESP32 firmware against a real oneM2M CSE, a phone as the worker tag.
+
+10
+00:02:19,667 --> 00:02:22,167
+Mobility through ETSI MEC.
+
+11
+00:02:22,167 --> 00:02:35,667
+A MEC zone event moves the forklift's twin to zone B's CSE.
+
+12
+00:02:35,667 --> 00:02:42,667
+As safe as the wide alarm, at twice the throughput.
+
+13
+00:02:42,667 --> 00:02:49,667
+On bad days: 30 collisions to 1, and no moving truck touching anyone.
+
+14
+00:02:49,667 --> 00:02:55,667
+Thank you.
+
